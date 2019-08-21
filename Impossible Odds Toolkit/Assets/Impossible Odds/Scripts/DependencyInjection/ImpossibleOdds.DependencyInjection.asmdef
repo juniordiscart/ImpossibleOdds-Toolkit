@@ -1,0 +1,14 @@
+{
+    "name": "ImpossibleOdds.DependencyInjection",
+    "references": [
+        "ImpossibleOdds.General"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}

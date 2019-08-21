@@ -1,0 +1,14 @@
+{
+    "name": "ImpossibleOdds.Json",
+    "references": [
+        "ImpossibleOdds.DataMapping"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}

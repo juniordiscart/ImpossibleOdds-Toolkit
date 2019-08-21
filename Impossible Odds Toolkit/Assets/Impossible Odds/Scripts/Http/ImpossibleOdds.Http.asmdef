@@ -1,0 +1,17 @@
+{
+    "name": "ImpossibleOdds.Http",
+    "references": [
+        "ImpossibleOdds.Weblink",
+        "ImpossibleOdds.DataMapping",
+        "ImpossibleOdds.Json",
+        "ImpossibleOdds.Runnables"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}

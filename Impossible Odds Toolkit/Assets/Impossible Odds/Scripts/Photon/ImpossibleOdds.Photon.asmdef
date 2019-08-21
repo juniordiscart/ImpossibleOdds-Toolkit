@@ -1,0 +1,11 @@
+{
+    "name": "ImpossibleOdds.Photon",
+    "references": [
+        "ImpossibleOdds.DataMapping",
+        "ImpossibleOdds.Weblink",
+        "PhotonUnityNetworking",
+        "PhotonRealtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}
