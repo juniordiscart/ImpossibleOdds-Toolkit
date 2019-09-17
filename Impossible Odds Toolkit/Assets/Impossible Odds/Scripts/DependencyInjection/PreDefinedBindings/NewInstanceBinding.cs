@@ -6,7 +6,7 @@
 	/// Generates a new instance every time a new request is made.
 	/// </summary>
 	/// <typeparam name="T">The type of instance to generate each request.</typeparam>
-	public class NewInstanceGenerator<T> : IDependencyGenerator<T>
+	public class NewInstanceBinding<T> : IDependencyBinding<T>
 	where T : new()
 	{
 		public T GetInstance()
@@ -14,7 +14,7 @@
 			return new T();
 		}
 
-		object IDependencyGenerator.GetInstance()
+		object IDependencyBinding.GetInstance()
 		{
 			return GetInstance();
 		}

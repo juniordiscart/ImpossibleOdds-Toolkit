@@ -3,10 +3,10 @@
 	using System;
 
 	/// <summary>
-	/// A that uses a function to generate new instances with each request.
+	/// A binding that uses a function to generate new instances with each request.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	public class FunctorBinding<T> : IDependencyGenerator<T>
+	public class FunctorBinding<T> : IDependencyBinding<T>
 	{
 		private Func<T> generator;
 
@@ -25,7 +25,7 @@
 			return generator();
 		}
 
-		object IDependencyGenerator.GetInstance()
+		object IDependencyBinding.GetInstance()
 		{
 			return GetInstance();
 		}

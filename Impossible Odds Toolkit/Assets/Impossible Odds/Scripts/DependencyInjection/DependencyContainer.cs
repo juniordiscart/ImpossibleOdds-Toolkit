@@ -6,14 +6,14 @@
 
 	public class DependencyContainer : IDependencyContainer
 	{
-		private Dictionary<Type, IDependencyGenerator> bindings = new Dictionary<Type, IDependencyGenerator>();
+		private Dictionary<Type, IDependencyBinding> bindings = new Dictionary<Type, IDependencyBinding>();
 
-		public IDictionary<Type, IDependencyGenerator> Bindings
+		public IDictionary<Type, IDependencyBinding> Bindings
 		{
 			get { return bindings; }
 		}
 
-		public void Bind(IDependencyGenerator binding)
+		public void Bind(IDependencyBinding binding)
 		{
 			if (binding == null)
 			{
@@ -23,12 +23,12 @@
 			Bind(binding.GetTypeBinding(), binding);
 		}
 
-		public void Bind<T>(IDependencyGenerator binding)
+		public void Bind<T>(IDependencyBinding binding)
 		{
 			Bind(typeof(T), binding);
 		}
 
-		public void Bind(Type bindingType, IDependencyGenerator binding)
+		public void Bind(Type bindingType, IDependencyBinding binding)
 		{
 			if (bindingType == null)
 			{
@@ -52,7 +52,7 @@
 			}
 		}
 
-		public void BindWithInterfaces(IDependencyGenerator binding)
+		public void BindWithInterfaces(IDependencyBinding binding)
 		{
 			if (binding == null)
 			{
@@ -62,12 +62,12 @@
 			BindWithInterfaces(binding.GetTypeBinding(), binding);
 		}
 
-		public void BindWithInterfaces<T>(IDependencyGenerator binding)
+		public void BindWithInterfaces<T>(IDependencyBinding binding)
 		{
 			BindWithInterfaces(typeof(T), binding);
 		}
 
-		public void BindWithInterfaces(Type bindingType, IDependencyGenerator binding)
+		public void BindWithInterfaces(Type bindingType, IDependencyBinding binding)
 		{
 			if (bindingType == null)
 			{
@@ -100,12 +100,12 @@
 			return bindings.ContainsKey(bindingType);
 		}
 
-		public IDependencyGenerator GetBinding<T>()
+		public IDependencyBinding GetBinding<T>()
 		{
 			return GetBinding(typeof(T));
 		}
 
-		public IDependencyGenerator GetBinding(Type bindingType)
+		public IDependencyBinding GetBinding(Type bindingType)
 		{
 			if (bindingType == null)
 			{

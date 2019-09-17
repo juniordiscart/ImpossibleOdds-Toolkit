@@ -5,7 +5,7 @@
 
 	public interface IDependencyContainer
 	{
-		IDictionary<Type, IDependencyGenerator> Bindings
+		IDictionary<Type, IDependencyBinding> Bindings
 		{
 			get;
 		}
@@ -13,18 +13,18 @@
 		bool BindingExists<T>();
 		bool BindingExists(Type bindingType);
 
-		IDependencyGenerator GetBinding<T>();
-		IDependencyGenerator GetBinding(Type bindingType);
+		IDependencyBinding GetBinding<T>();
+		IDependencyBinding GetBinding(Type bindingType);
 
 		void RemoveBinding<T>();
 		void RemoveBinding(Type bindingType);
 
-		void Bind(IDependencyGenerator binding);
-		void Bind<T>(IDependencyGenerator binding);
-		void Bind(Type bindingType, IDependencyGenerator binding);
+		void Bind(IDependencyBinding binding);
+		void Bind<T>(IDependencyBinding binding);
+		void Bind(Type bindingType, IDependencyBinding binding);
 
-		void BindWithInterfaces(IDependencyGenerator binding);
-		void BindWithInterfaces(Type bindingType, IDependencyGenerator binding);
-		void BindWithInterfaces<T>(IDependencyGenerator binding);
+		void BindWithInterfaces(IDependencyBinding binding);
+		void BindWithInterfaces(Type bindingType, IDependencyBinding binding);
+		void BindWithInterfaces<T>(IDependencyBinding binding);
 	}
 }

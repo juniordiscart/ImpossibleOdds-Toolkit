@@ -3,10 +3,10 @@
 	using System;
 
 	/// <summary>
-	/// A generator that provides the same instance for each request.
+	/// A binding that provides the same instance for each request.
 	/// </summary>
 	/// <typeparam name="T">The type of the instance that will be provided.</typeparam>
-	public class InstanceGenerator<T> : IDependencyGenerator<T>
+	public class InstanceBinding<T> : IDependencyBinding<T>
 	{
 		private T instance;
 
@@ -24,7 +24,7 @@
 			}
 		}
 
-		public InstanceGenerator(T instance)
+		public InstanceBinding(T instance)
 		{
 			if (instance == null)
 			{
@@ -39,7 +39,7 @@
 			return instance;
 		}
 
-		object IDependencyGenerator.GetInstance()
+		object IDependencyBinding.GetInstance()
 		{
 			return GetInstance();
 		}
