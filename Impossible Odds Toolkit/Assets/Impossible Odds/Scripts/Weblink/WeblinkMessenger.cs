@@ -17,21 +17,13 @@
 
 		public bool IsPendingRequest(TRequest request)
 		{
-			if (request == null)
-			{
-				throw new ArgumentNullException("request");
-			}
-
+			request.ThrowIfNull(nameof(request));
 			return pendingRequests.Contains(request);
 		}
 
 		public void ClearRequest(TRequest request)
 		{
-			if (request == null)
-			{
-				throw new ArgumentNullException("request");
-			}
-
+			request.ThrowIfNull(nameof(request));
 			pendingRequests.Remove(request);
 		}
 
@@ -42,10 +34,7 @@
 
 		public void SendRequest(TRequest request)
 		{
-			if (request == null)
-			{
-				throw new ArgumentNullException("request");
-			}
+			request.ThrowIfNull(nameof(request));
 
 			if (IsPendingRequest(request))
 			{
@@ -72,10 +61,7 @@
 
 		public void ReceiveResponseData(object responseData)
 		{
-			if (responseData == null)
-			{
-				throw new ArgumentNullException("responseData");
-			}
+			responseData.ThrowIfNull(nameof(responseData));
 
 			for (int i = 0; i < pendingRequests.Count;)
 			{

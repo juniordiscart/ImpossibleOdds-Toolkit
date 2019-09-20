@@ -1,8 +1,8 @@
-﻿using System;
-using ImpossibleOdds.DataMapping;
-
-namespace ImpossibleOdds.Http
+﻿namespace ImpossibleOdds.Http
 {
+	using System;
+	using ImpossibleOdds.DataMapping;
+
 	public sealed class HttpBodyFieldAttribute : Attribute, ILookupParameter
 	{
 		public object Key
@@ -14,11 +14,7 @@ namespace ImpossibleOdds.Http
 
 		public HttpBodyFieldAttribute(object key)
 		{
-			if (key == null)
-			{
-				throw new ArgumentNullException("key");
-			}
-
+			key.ThrowIfNull(nameof(key));
 			this.key = key;
 		}
 	}

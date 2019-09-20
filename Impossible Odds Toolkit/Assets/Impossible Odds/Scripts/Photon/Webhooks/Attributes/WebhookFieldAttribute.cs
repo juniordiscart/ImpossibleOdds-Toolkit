@@ -17,11 +17,7 @@ namespace ImpossibleOdds.Photon.Webhooks
 
 		public WebhookFieldAttribute(object key)
 		{
-			if (key == null)
-			{
-				throw new ArgumentNullException("key");
-			}
-
+			key.ThrowIfNull(nameof(key));
 			this.key = key;
 		}
 	}

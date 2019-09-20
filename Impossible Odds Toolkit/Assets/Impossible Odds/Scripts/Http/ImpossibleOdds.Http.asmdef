@@ -1,6 +1,7 @@
 {
     "name": "ImpossibleOdds.Http",
     "references": [
+        "ImpossibleOdds.General",
         "ImpossibleOdds.Weblink",
         "ImpossibleOdds.DataMapping",
         "ImpossibleOdds.Json",

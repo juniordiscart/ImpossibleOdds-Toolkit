@@ -12,11 +12,7 @@
 
 		public FunctorBinding(Func<T> generator)
 		{
-			if (generator == null)
-			{
-				throw new ArgumentNullException("generator");
-			}
-
+			generator.ThrowIfNull(nameof(generator));
 			this.generator = generator;
 		}
 

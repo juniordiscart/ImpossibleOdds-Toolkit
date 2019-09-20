@@ -13,11 +13,9 @@
 		/// <returns>A mapped data structure </returns>
 		public static object MapToDataStructure(object source, IMappingDefinition mappingDefinition)
 		{
-			if (mappingDefinition == null)
-			{
-				throw new ArgumentNullException("mappingDefinition");
-			}
-			else if (mappingDefinition.ToDataStructureProcessors == null)
+			mappingDefinition.ThrowIfNull(nameof(mappingDefinition));
+
+			if (mappingDefinition.ToDataStructureProcessors == null)
 			{
 				throw new DataMappingException(string.Format("No mapping processors defined in the mapping definition of type {0}.", mappingDefinition.GetType().Name));
 			}
@@ -50,15 +48,9 @@
 		/// <returns>An instance of the target type if the mapping was successfull. Null otherwise.</returns>
 		public static object MapFromDataStructure(Type targetType, object source, IMappingDefinition mappingDefinition)
 		{
-			if (targetType == null)
-			{
-				throw new ArgumentNullException("targetType");
-			}
-			else if (mappingDefinition == null)
-			{
-				throw new ArgumentNullException("mappingDefinition");
-			}
-			else if (mappingDefinition.FromDataStructureProcessors == null)
+			targetType.ThrowIfNull(nameof(targetType));
+			mappingDefinition.ThrowIfNull(nameof(mappingDefinition));
+			if (mappingDefinition.FromDataStructureProcessors == null)
 			{
 				throw new DataMappingException("No unmapping processors are defined.");
 			}
@@ -83,14 +75,8 @@
 		/// <param name="mappingDefinition">Definition of how the source should get mapped to the target.</param>
 		public static void MapFromDataStructure(object target, object source, IMappingDefinition mappingDefinition)
 		{
-			if (target == null)
-			{
-				throw new ArgumentNullException("target");
-			}
-			else if (mappingDefinition == null)
-			{
-				throw new ArgumentNullException("mappingDefinition");
-			}
+			target.ThrowIfNull(nameof(target));
+			mappingDefinition.ThrowIfNull(nameof(target));
 
 			foreach (IMapFromDataStructureProcessor processor in mappingDefinition.FromDataStructureProcessors)
 			{

@@ -1,6 +1,8 @@
 {
     "name": "ImpossibleOdds.Weblink",
-    "references": [],
+    "references": [
+        "ImpossibleOdds.General"
+    ],
     "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],

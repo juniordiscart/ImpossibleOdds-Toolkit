@@ -14,11 +14,7 @@ namespace ImpossibleOdds.Http
 
 		public HttpURLFieldAttribute(object key)
 		{
-			if (key == null)
-			{
-				throw new ArgumentNullException("key");
-			}
-
+			key.ThrowIfNull(nameof(key));
 			this.key = key;
 		}
 	}

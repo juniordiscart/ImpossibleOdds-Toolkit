@@ -15,29 +15,15 @@
 
 		public static void Inject(IDependencyContainer container, object target)
 		{
-			if (container == null)
-			{
-				throw new ArgumentNullException("container");
-			}
-			else if (target == null)
-			{
-				throw new ArgumentNullException("target");
-			}
-
+			container.ThrowIfNull(nameof(container));
+			target.ThrowIfNull(nameof(target));
 			ResolveDependencies(target, container);
 		}
 
 		public static void Inject(IDependencyContainer container, IEnumerable targets)
 		{
-			if (container == null)
-			{
-				throw new ArgumentNullException("container");
-			}
-			else if (targets == null)
-			{
-				throw new ArgumentNullException("targets");
-			}
-
+			container.ThrowIfNull(nameof(container));
+			targets.ThrowIfNull(nameof(targets));
 			foreach (object target in targets)
 			{
 				if (target != null)
@@ -59,11 +45,7 @@
 
 		private static void ResolveDependencies(object objToInject, IDependencyContainer container)
 		{
-			if (container == null)
-			{
-				throw new ArgumentNullException("container");
-			}
-
+			container.ThrowIfNull(nameof(container));
 			Type objType = typeof(object);
 			Type currentType = objToInject.GetType();
 			while ((currentType != objType) && (currentType != null))

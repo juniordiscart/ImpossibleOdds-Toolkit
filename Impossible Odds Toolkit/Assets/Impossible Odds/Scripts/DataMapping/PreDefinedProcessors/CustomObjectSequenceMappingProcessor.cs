@@ -1,5 +1,6 @@
 ﻿namespace ImpossibleOdds.DataMapping.Processors
 {
+	using ImpossibleOdds;
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
@@ -101,10 +102,7 @@
 		/// <returns>True if the mapping is accepted for processing, false otherwise.</returns>
 		public bool MapFromDataStructure(object target, object sourceValue)
 		{
-			if (target == null)
-			{
-				throw new ArgumentNullException("target");
-			}
+			target.ThrowIfNull(nameof(target));
 
 			// If the source value is null, then there is little to do.
 			if (sourceValue == null)

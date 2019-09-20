@@ -15,15 +15,8 @@
 		/// <param name="target">The object to be removed from the invocation lists.</param>
 		public static void PurgeDelegatesOf(this object source, object target)
 		{
-			if (source == null)
-			{
-				throw new ArgumentNullException("source");
-			}
-			else if (target == null)
-			{
-				throw new ArgumentNullException("target");
-			}
-
+			source.ThrowIfNull(nameof(source));
+			target.ThrowIfNull(nameof(target));
 			Type sourceType = source is Type ? source as Type : source.GetType();
 			bool isStaticSource = source is Type; // Source - instance or static?
 			bool isStaticTarget = target is Type; // Target - instance or static?

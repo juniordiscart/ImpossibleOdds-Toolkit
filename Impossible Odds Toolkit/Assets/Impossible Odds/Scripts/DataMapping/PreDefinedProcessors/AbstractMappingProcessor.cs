@@ -1,6 +1,7 @@
 ﻿namespace ImpossibleOdds.DataMapping.Processors
 {
 	using System;
+	using ImpossibleOdds;
 
 	/// <summary>
 	/// Base class for mapping processors.
@@ -11,11 +12,7 @@
 
 		public AbstractMappingProcessor(IMappingDefinition definition)
 		{
-			if (definition == null)
-			{
-				throw new ArgumentNullException("definition");
-			}
-
+			definition.ThrowIfNull(nameof(definition));
 			this.definition = definition;
 		}
 	}

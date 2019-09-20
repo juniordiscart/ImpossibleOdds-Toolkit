@@ -11,10 +11,7 @@
 
 		public void Add(IRunnable runnable)
 		{
-			if (runnable == null)
-			{
-				throw new ArgumentNullException("runnable");
-			}
+			runnable.ThrowIfNull(nameof(runnable));
 
 			if (runnables.Add(runnable))
 			{
@@ -26,10 +23,7 @@
 
 		public void Add(IFixedRunnable runnable)
 		{
-			if (runnable == null)
-			{
-				throw new ArgumentNullException("runnable");
-			}
+			runnable.ThrowIfNull(nameof(runnable));
 
 			if (fixedRunnables.Add(runnable))
 			{
@@ -41,10 +35,7 @@
 
 		public void Remove(IRunnable runnable)
 		{
-			if (runnable == null)
-			{
-				throw new ArgumentNullException("runnable");
-			}
+			runnable.ThrowIfNull(nameof(runnable));
 
 			if (runnables.Remove(runnable))
 			{
@@ -56,10 +47,7 @@
 
 		public void Remove(IFixedRunnable runnable)
 		{
-			if (runnable == null)
-			{
-				throw new ArgumentNullException("runnable");
-			}
+			runnable.ThrowIfNull(nameof(runnable));
 
 			if (fixedRunnables.Remove(runnable))
 			{

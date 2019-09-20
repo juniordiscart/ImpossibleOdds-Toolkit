@@ -17,10 +17,7 @@
 		/// <typeparam name="T">The element type of the list.</typeparam>
 		public static void Shuffle<T>(this IList<T> list, Random rnd)
 		{
-			if (rnd == null)
-			{
-				throw new ArgumentNullException("rnd");
-			}
+			rnd.ThrowIfNull(nameof(rnd));
 
 			for (var i = 0; i < list.Count - 1; i++)
 			{

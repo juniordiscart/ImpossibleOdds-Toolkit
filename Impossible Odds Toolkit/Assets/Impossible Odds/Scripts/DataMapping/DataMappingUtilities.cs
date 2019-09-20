@@ -1,5 +1,6 @@
 ﻿namespace ImpossibleOdds.DataMapping
 {
+	using ImpossibleOdds;
 	using System;
 
 #if IMPOSSIBLE_ODDS_VERBOSE
@@ -15,11 +16,7 @@
 		/// <returns>True if the type is nullable, false otherwise.</returns>
 		public static bool IsNullableType(Type type)
 		{
-			if (type == null)
-			{
-				throw new ArgumentNullException("type");
-			}
-
+			type.ThrowIfNull(nameof(type));
 			return !type.IsValueType || (Nullable.GetUnderlyingType(type) != null);
 		}
 
@@ -79,10 +76,7 @@
 		/// <returns></returns>
 		public static object PostProcessRequestValue(object value, Type targetType)
 		{
-			if (targetType == null)
-			{
-				throw new ArgumentNullException("targetType");
-			}
+			targetType.ThrowIfNull(nameof(targetType));
 
 			if ((value == null) || targetType.IsAssignableFrom(value.GetType()))
 			{

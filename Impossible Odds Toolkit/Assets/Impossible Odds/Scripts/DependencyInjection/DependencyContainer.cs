@@ -1,5 +1,6 @@
 ﻿namespace ImpossibleOdds.DependencyInjection
 {
+	using ImpossibleOdds;
 	using System;
 	using System.Collections.Generic;
 	using UnityEngine;
@@ -15,11 +16,7 @@
 
 		public void Bind(IDependencyBinding binding)
 		{
-			if (binding == null)
-			{
-				throw new ArgumentNullException("binding");
-			}
-
+			binding.ThrowIfNull(nameof(binding));
 			Bind(binding.GetTypeBinding(), binding);
 		}
 
@@ -30,14 +27,8 @@
 
 		public void Bind(Type bindingType, IDependencyBinding binding)
 		{
-			if (bindingType == null)
-			{
-				throw new ArgumentNullException("bindingType");
-			}
-			else if (binding == null)
-			{
-				throw new ArgumentNullException("binding");
-			}
+			bindingType.ThrowIfNull(nameof(bindingType));
+			binding.ThrowIfNull(nameof(binding));
 
 			if (bindings.ContainsKey(bindingType))
 			{
@@ -54,11 +45,7 @@
 
 		public void BindWithInterfaces(IDependencyBinding binding)
 		{
-			if (binding == null)
-			{
-				throw new ArgumentNullException("binding");
-			}
-
+			binding.ThrowIfNull(nameof(binding));
 			BindWithInterfaces(binding.GetTypeBinding(), binding);
 		}
 
@@ -69,14 +56,8 @@
 
 		public void BindWithInterfaces(Type bindingType, IDependencyBinding binding)
 		{
-			if (bindingType == null)
-			{
-				throw new ArgumentNullException("bindingType");
-			}
-			else if (binding == null)
-			{
-				throw new ArgumentNullException("binding");
-			}
+			bindingType.ThrowIfNull(nameof(bindingType));
+			binding.ThrowIfNull(nameof(binding));
 
 			IEnumerable<Type> bindingTypes = DependencyInjectionUtilities.GetTypeAndInterfaces(bindingType);
 			foreach (Type t in bindingTypes)
@@ -92,11 +73,7 @@
 
 		public bool BindingExists(Type bindingType)
 		{
-			if (bindingType == null)
-			{
-				throw new ArgumentNullException("bindingType");
-			}
-
+			bindingType.ThrowIfNull(nameof(bindingType));
 			return bindings.ContainsKey(bindingType);
 		}
 
@@ -107,11 +84,7 @@
 
 		public IDependencyBinding GetBinding(Type bindingType)
 		{
-			if (bindingType == null)
-			{
-				throw new ArgumentNullException("bindingType");
-			}
-
+			bindingType.ThrowIfNull(nameof(bindingType));
 			return bindings.ContainsKey(bindingType) ? bindings[bindingType] : null;
 		}
 
@@ -122,11 +95,7 @@
 
 		public void RemoveBinding(Type bindingType)
 		{
-			if (bindingType == null)
-			{
-				throw new ArgumentNullException("bindingType");
-			}
-
+			bindingType.ThrowIfNull(nameof(bindingType));
 			bindings.Remove(bindingType);
 		}
 	}

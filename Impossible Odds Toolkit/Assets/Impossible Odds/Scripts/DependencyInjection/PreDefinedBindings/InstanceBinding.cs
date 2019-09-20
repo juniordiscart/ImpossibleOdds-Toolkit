@@ -15,22 +15,14 @@
 			get { return instance; }
 			set
 			{
-				if (value == null)
-				{
-					throw new ArgumentNullException("value");
-				}
-
+				value.ThrowIfNull(nameof(value));
 				instance = value;
 			}
 		}
 
 		public InstanceBinding(T instance)
 		{
-			if (instance == null)
-			{
-				throw new ArgumentNullException("instance");
-			}
-
+			instance.ThrowIfNull(nameof(instance));
 			this.instance = instance;
 		}
 

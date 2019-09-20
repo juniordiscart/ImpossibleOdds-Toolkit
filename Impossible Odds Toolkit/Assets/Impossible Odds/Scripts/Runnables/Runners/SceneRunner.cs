@@ -16,11 +16,9 @@
 
 		private static void RegisterRunner(Scene scene, SceneRunner runner)
 		{
-			if (runner == null)
-			{
-				throw new ArgumentNullException("runner");
-			}
-			else if (!scene.IsValid())
+			runner.ThrowIfNull(nameof(runner));
+
+			if (!scene.IsValid())
 			{
 				throw new RunnablesException("Cannot register a " + typeof(SceneRunner).Name + " for scene " + scene.name + " because it is invalid.");
 			}

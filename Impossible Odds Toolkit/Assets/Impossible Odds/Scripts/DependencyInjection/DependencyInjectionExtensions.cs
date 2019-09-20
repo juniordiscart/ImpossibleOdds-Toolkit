@@ -14,11 +14,7 @@
 		/// <param name="includeChildren">When true, will recursively inject all of its children as well.</param>
 		public static void Inject(this GameObject gameObj, IDependencyContext context, bool includeChildren = false)
 		{
-			if (context == null)
-			{
-				throw new ArgumentNullException("context");
-			}
-
+			context.ThrowIfNull(nameof(context));
 			IEnumerable<Component> components = gameObj.GetComponents<Component>();
 			components.Inject(context);
 
@@ -52,11 +48,7 @@
 		/// <param name="context">Context to use during injection.</param>
 		public static void Inject(this Component component, IDependencyContext context)
 		{
-			if (context == null)
-			{
-				throw new ArgumentNullException("context");
-			}
-
+			context.ThrowIfNull(nameof(context));
 			DependencyInjector.Inject(context.DependencyContainer, component);
 		}
 

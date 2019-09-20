@@ -1,5 +1,6 @@
 ﻿namespace ImpossibleOdds.DependencyInjection
 {
+	using ImpossibleOdds;
 	using System;
 	using System.Collections.Generic;
 	using UnityEngine;
@@ -18,14 +19,8 @@
 		/// <param name="context">The context to store.</param>
 		public static void Register(object key, IDependencyContext context)
 		{
-			if (key == null)
-			{
-				throw new ArgumentNullException("key");
-			}
-			else if (context == null)
-			{
-				throw new ArgumentNullException("context");
-			}
+			key.ThrowIfNull(nameof(key));
+			context.ThrowIfNull(nameof(context));
 
 			if (Exists(key))
 			{
@@ -46,11 +41,7 @@
 		/// <param name="key">Key to remove from the register.</param>
 		public static void Remove(object key)
 		{
-			if (key == null)
-			{
-				throw new ArgumentNullException("key");
-			}
-
+			key.ThrowIfNull(nameof(key));
 			if (Exists(key))
 			{
 				contextRegister.Remove(key);
@@ -64,11 +55,7 @@
 		/// <returns>True if a non-null value is registered.</returns>
 		public static bool Exists(object key)
 		{
-			if (key == null)
-			{
-				throw new ArgumentNullException("key");
-			}
-
+			key.ThrowIfNull(nameof(key));
 			return contextRegister.ContainsKey(key) && (contextRegister[key] != null);
 		}
 
@@ -79,10 +66,7 @@
 		/// <returns>Returns the context registered to the key. Null otherwise.</returns>
 		public static IDependencyContext GetContext(object key)
 		{
-			if (key == null)
-			{
-				throw new ArgumentNullException("key");
-			}
+			key.ThrowIfNull(nameof(key));
 
 			if (Exists(key))
 			{

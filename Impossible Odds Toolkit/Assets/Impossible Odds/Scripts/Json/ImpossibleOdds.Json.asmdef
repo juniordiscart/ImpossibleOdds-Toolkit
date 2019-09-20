@@ -1,6 +1,7 @@
 {
     "name": "ImpossibleOdds.Json",
     "references": [
+        "ImpossibleOdds.General",
         "ImpossibleOdds.DataMapping"
     ],
     "optionalUnityReferences": [],

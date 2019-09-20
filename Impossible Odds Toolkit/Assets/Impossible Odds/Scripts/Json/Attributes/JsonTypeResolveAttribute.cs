@@ -41,11 +41,7 @@
 
 		public JsonTypeResolveAttribute(Type target)
 		{
-			if (target == null)
-			{
-				throw new ArgumentNullException("target");
-			}
-
+			target.ThrowIfNull(nameof(target));
 			this.target = target;
 		}
 	}

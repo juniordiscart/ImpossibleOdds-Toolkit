@@ -47,10 +47,7 @@
 
 		public bool IsRejected(Type type)
 		{
-			if (type == null)
-			{
-				throw new ArgumentNullException("type");
-			}
+			type.ThrowIfNull(nameof(type));
 
 			if (rejectedTypes.ContainsKey(type))
 			{

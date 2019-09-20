@@ -11,10 +11,7 @@
 
 		public static Type GetResponseType(Type requestType)
 		{
-			if (requestType == null)
-			{
-				throw new ArgumentNullException("requestType");
-			}
+			requestType.ThrowIfNull(nameof(requestType));
 
 			Type responseType = FindResponseType(requestType);
 
