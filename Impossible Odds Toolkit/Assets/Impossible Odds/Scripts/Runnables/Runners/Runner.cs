@@ -1,7 +1,9 @@
 ﻿namespace ImpossibleOdds.Runnables
 {
-	using System;
 	using System.Collections.Generic;
+	using System.Collections;
+	using System;
+
 	using UnityEngine;
 
 	public abstract class Runner : MonoBehaviour, IRunner, IFixedRunner
@@ -15,9 +17,11 @@
 
 			if (runnables.Add(runnable))
 			{
-#if IMPOSSIBLE_ODDS_VERBOSE
+				runnable.CurrentRunner = this;
+
+				#if IMPOSSIBLE_ODDS_VERBOSE
 				Debug.LogFormat("Added runnable of type {0} to {1}.", runnable.GetType(), gameObject.name);
-#endif
+				#endif
 			}
 		}
 
@@ -27,9 +31,11 @@
 
 			if (fixedRunnables.Add(runnable))
 			{
-#if IMPOSSIBLE_ODDS_VERBOSE
+				runnable.CurrentRunner = this;
+
+				#if IMPOSSIBLE_ODDS_VERBOSE
 				Debug.LogFormat("Added fixed runnable of type {0} to {1}.", runnable.GetType(), gameObject.name);
-#endif
+				#endif
 			}
 		}
 
@@ -39,9 +45,14 @@
 
 			if (runnables.Remove(runnable))
 			{
-#if IMPOSSIBLE_ODDS_VERBOSE
+				if (runnable.CurrentRunner == (IRunner)this)
+				{
+					runnable.CurrentRunner = null;
+				}
+
+				#if IMPOSSIBLE_ODDS_VERBOSE
 				Debug.LogFormat("Removed runnable of type {0} from {1}.", runnable.GetType(), gameObject.name);
-#endif
+				#endif
 			}
 		}
 
@@ -51,10 +62,20 @@
 
 			if (fixedRunnables.Remove(runnable))
 			{
-#if IMPOSSIBLE_ODDS_VERBOSE
+				if (runnable.CurrentRunner == (IFixedRunner)this)
+				{
+					runnable.CurrentRunner = null;
+				}
+
+				#if IMPOSSIBLE_ODDS_VERBOSE
 				Debug.LogFormat("Removed fixed runnable of type {0} from {1}.", runnable.GetType(), gameObject.name);
-#endif
+				#endif
 			}
+		}
+
+		public void RunRoutine(IEnumerator routineHandle)
+		{
+			StartCoroutine(routineHandle);
 		}
 
 		protected virtual void Update()

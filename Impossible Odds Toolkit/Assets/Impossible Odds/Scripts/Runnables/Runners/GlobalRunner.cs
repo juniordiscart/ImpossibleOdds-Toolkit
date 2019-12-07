@@ -45,7 +45,7 @@
 			GlobalRunner globalContextPrefab = Resources.Load<GlobalRunner>(GlobalRunnerPath);
 			if (globalContextPrefab == null)
 			{
-				throw new RunnablesException(string.Format("No global runnaer prefab was found in Resources at path '{0}'. Did you (re)move it?", GlobalRunnerPath));
+				throw new RunnablesException(string.Format("No global runner prefab was found in Resources at path '{0}'. Did you (re)move it?", GlobalRunnerPath));
 			}
 
 			globalRunner = GameObject.Instantiate<GlobalRunner>(globalContextPrefab);

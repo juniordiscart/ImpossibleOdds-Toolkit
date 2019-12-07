@@ -2,6 +2,12 @@
 {
 	public interface IRunnable
 	{
+		IRunner CurrentRunner
+		{
+			get;
+			set;
+		}
+
 		void Update();
 	}
 }
