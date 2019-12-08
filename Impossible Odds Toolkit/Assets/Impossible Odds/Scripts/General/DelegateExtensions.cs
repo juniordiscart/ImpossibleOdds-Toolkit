@@ -3,6 +3,7 @@
 	using System;
 	using System.Reflection;
 	using System.Collections.Generic;
+	using UnityEngine.Events;
 
 	public static class DelegateExtensions
 	{
@@ -54,6 +55,186 @@
 				}
 
 				delegateInfo.SetValue(isStaticSource ? null : source, eventDelegate);
+			}
+		}
+
+		/// <summary>
+		/// Invokes a delegate if it is not null. The given parameters are resolved and passed to the delegate for invokation.
+		///
+		/// CAUTION: parameter type resolvement uses reflection and can have a memory and performance impact!
+		/// </summary>
+		/// <param name="del">The delegate to invoke, when not null.</param>
+		/// <param name="args">The parameters to pass during the delegate invokation.</param>
+		public static void InvokeIfNotNull(this Delegate del, params object[] args)
+		{
+			if (del != null)
+			{
+				del.DynamicInvoke(args);
+			}
+		}
+
+		/// <summary>
+		/// Invokes the action if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull(this Action del)
+		{
+			if (del != null)
+			{
+				del.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Invokes the action if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull<T1>(this Action<T1> del, T1 p1)
+		{
+			if (del != null)
+			{
+				del.Invoke(p1);
+			}
+		}
+
+		/// <summary>
+		/// Invokes the action if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull<T1, T2>(this Action<T1, T2> del, T1 p1, T2 p2)
+		{
+			if (del != null)
+			{
+				del.Invoke(p1, p2);
+			}
+		}
+
+		/// <summary>
+		/// Invokes the action if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull<T1, T2, T3>(this Action<T1, T2, T3> del, T1 p1, T2 p2, T3 p3)
+		{
+			if (del != null)
+			{
+				del.Invoke(p1, p2, p3);
+			}
+		}
+
+		/// <summary>
+		/// Invokes the action if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull<T1, T2, T3, T4>(this Action<T1, T2, T3, T4> del, T1 p1, T2 p2, T3 p3, T4 p4)
+		{
+			if (del != null)
+			{
+				del.Invoke(p1, p2, p3, p4);
+			}
+		}
+
+		/// <summary>
+		/// Invokes the action if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull(this UnityAction del)
+		{
+			if (del != null)
+			{
+				del.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Invokes the action if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull<T1>(this UnityAction<T1> del, T1 p1)
+		{
+			if (del != null)
+			{
+				del.Invoke(p1);
+			}
+		}
+
+		/// <summary>
+		/// Invokes the action if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull<T1, T2>(this UnityAction<T1, T2> del, T1 p1, T2 p2)
+		{
+			if (del != null)
+			{
+				del.Invoke(p1, p2);
+			}
+		}
+
+		/// <summary>
+		/// Invokes the action if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull<T1, T2, T3>(this UnityAction<T1, T2, T3> del, T1 p1, T2 p2, T3 p3)
+		{
+			if (del != null)
+			{
+				del.Invoke(p1, p2, p3);
+			}
+		}
+
+		/// <summary>
+		/// Invokes the action if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull<T1, T2, T3, T4>(this UnityAction<T1, T2, T3, T4> del, T1 p1, T2 p2, T3 p3, T4 p4)
+		{
+			if (del != null)
+			{
+				del.Invoke(p1, p2, p3, p4);
+			}
+		}
+
+		/// <summary>
+		/// Invokes the event if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull(this UnityEvent del)
+		{
+			if (del != null)
+			{
+				del.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Invokes the event if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull<T1>(this UnityEvent<T1> del, T1 p1)
+		{
+			if (del != null)
+			{
+				del.Invoke(p1);
+			}
+		}
+
+		/// <summary>
+		/// Invokes the event if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull<T1, T2>(this UnityEvent<T1, T2> del, T1 p1, T2 p2)
+		{
+			if (del != null)
+			{
+				del.Invoke(p1, p2);
+			}
+		}
+
+		/// <summary>
+		/// Invokes the event if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull<T1, T2, T3>(this UnityEvent<T1, T2, T3> del, T1 p1, T2 p2, T3 p3)
+		{
+			if (del != null)
+			{
+				del.Invoke(p1, p2, p3);
+			}
+		}
+
+		/// <summary>
+		/// Invokes the event if it is not null.
+		/// </summary>
+		public static void InvokeIfNotNull<T1, T2, T3, T4>(this UnityEvent<T1, T2, T3, T4> del, T1 p1, T2 p2, T3 p3, T4 p4)
+		{
+			if (del != null)
+			{
+				del.Invoke(p1, p2, p3, p4);
 			}
 		}
 
