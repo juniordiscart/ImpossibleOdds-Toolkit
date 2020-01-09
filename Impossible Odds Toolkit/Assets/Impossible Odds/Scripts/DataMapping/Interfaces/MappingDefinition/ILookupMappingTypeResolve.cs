@@ -10,7 +10,6 @@
 		/// <summary>
 		/// The type of the attribute that is used to resolve the type in a lookup-based data structure.
 		/// </summary>
-		/// <value></value>
 		Type TypeResolveAttribute
 		{
 			get;

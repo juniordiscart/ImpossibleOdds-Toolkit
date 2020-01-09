@@ -69,13 +69,18 @@
 				objResult = null;
 				return DataMappingUtilities.IsNullableType(targetType);
 			}
+			else if (!(sourceValue is IDictionary))
+			{
+				objResult = null;
+				return false;
+			}
 
 			object targetInstance = null;
 			Type instanceType = ResolveTypeFromLookup(targetType, sourceValue as IDictionary);
 
 			try
 			{
-				targetInstance = Activator.CreateInstance(instanceType, true);
+				targetInstance = CreateInstance(instanceType);
 			}
 			catch (System.Exception)
 			{
@@ -222,8 +227,8 @@
 			}
 
 			ILookupTypeResolve typeResolveImplementation = definition as ILookupTypeResolve;
-			IEnumerable<Attribute> typeResolveAttributes = GetClassTypeResolves(sourceType, typeResolveImplementation.TypeResolveAttribute);
-			foreach (Attribute attr in typeResolveAttributes)
+			IEnumerable<IMappingTypeResolveParameter> typeResolveAttributes = GetClassTypeResolves(sourceType, typeResolveImplementation.TypeResolveAttribute);
+			foreach (IMappingTypeResolveParameter attr in typeResolveAttributes)
 			{
 				ILookupTypeResolveParameter typeResolveAttr = attr as ILookupTypeResolveParameter;
 				if (typeResolveAttr == null)
@@ -252,15 +257,16 @@
 			}
 
 			ILookupTypeResolve typeResolveImplementation = definition as ILookupTypeResolve;
-			ReadOnlyCollection<Attribute> typeResolveAttrs = GetClassTypeResolves(targetType, typeResolveImplementation.TypeResolveAttribute);
-			foreach (Attribute attr in typeResolveAttrs)
+			IEnumerable<IMappingTypeResolveParameter> typeResolveAttrs = GetClassTypeResolves(targetType, typeResolveImplementation.TypeResolveAttribute);
+
+			foreach (IMappingTypeResolveParameter attr in typeResolveAttrs)
 			{
 				ILookupTypeResolveParameter typeResolveAttr = attr as ILookupTypeResolveParameter;
 				if (typeResolveAttr == null)
 				{
 					throw new DataMappingException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(ILookupTypeResolveParameter).Name));
 				}
-				else if (source.Contains(typeResolveAttr.Key) && (source[typeResolveAttr.Key] == typeResolveAttr.Value))
+				else if (source.Contains(typeResolveAttr.Key) && (source[typeResolveAttr.Key].Equals(typeResolveAttr.Value)))
 				{
 					if (targetType.IsAssignableFrom(typeResolveAttr.Target))
 					{

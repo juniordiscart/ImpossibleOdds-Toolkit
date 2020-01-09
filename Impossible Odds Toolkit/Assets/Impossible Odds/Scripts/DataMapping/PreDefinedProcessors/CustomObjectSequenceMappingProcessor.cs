@@ -69,13 +69,18 @@
 				objResult = null;
 				return DataMappingUtilities.IsNullableType(targetType);
 			}
+			else if (!(sourceValue is IList))
+			{
+				objResult = null;
+				return false;
+			}
 
 			object targetInstance = null;
 			Type instanceType = ResolveTypeFromSequence(targetType, sourceValue as IList);
 
 			try
 			{
-				targetInstance = Activator.CreateInstance(instanceType, true);
+				targetInstance = CreateInstance(instanceType);
 			}
 			catch (System.Exception)
 			{
@@ -219,8 +224,8 @@
 			}
 
 			IIndexTypeResolve typeResolveImplementation = definition as IIndexTypeResolve;
-			IEnumerable<Attribute> typeResolveAttributes = GetClassTypeResolves(sourceType, typeResolveImplementation.TypeResolveAttribute);
-			foreach (Attribute attr in typeResolveAttributes)
+			IEnumerable<IMappingTypeResolveParameter> typeResolveAttributes = GetClassTypeResolves(sourceType, typeResolveImplementation.TypeResolveAttribute);
+			foreach (IMappingTypeResolveParameter attr in typeResolveAttributes)
 			{
 				IIndexTypeResolveParameter typeResolveAttr = attr as IIndexTypeResolveParameter;
 				if (typeResolveAttr == null)
@@ -249,15 +254,16 @@
 			}
 
 			IIndexTypeResolve typeResolveImplementation = definition as IIndexTypeResolve;
-			ReadOnlyCollection<Attribute> typeResolveAttrs = GetClassTypeResolves(targetType, typeResolveImplementation.TypeResolveAttribute);
-			foreach (Attribute attr in typeResolveAttrs)
+			IEnumerable<IMappingTypeResolveParameter> typeResolveAttrs = GetClassTypeResolves(targetType, typeResolveImplementation.TypeResolveAttribute);
+
+			foreach (IMappingTypeResolveParameter attr in typeResolveAttrs)
 			{
 				IIndexTypeResolveParameter typeResolveAttr = attr as IIndexTypeResolveParameter;
 				if (typeResolveAttr == null)
 				{
-					throw new DataMappingException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(ILookupTypeResolveParameter).Name));
+					throw new DataMappingException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(IIndexTypeResolveParameter).Name));
 				}
-				else if ((source.Count > typeResolveAttr.Index) && (source[typeResolveAttr.Index] == typeResolveAttr.Value))
+				else if ((source.Count > typeResolveAttr.Index) && (source[typeResolveAttr.Index].Equals(typeResolveAttr.Value)))
 				{
 					if (targetType.IsAssignableFrom(typeResolveAttr.Target))
 					{
