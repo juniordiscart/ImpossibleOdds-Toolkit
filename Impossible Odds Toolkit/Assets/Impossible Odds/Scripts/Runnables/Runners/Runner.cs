@@ -19,9 +19,9 @@
 			{
 				runnable.CurrentRunner = this;
 
-				#if IMPOSSIBLE_ODDS_VERBOSE
+#if IMPOSSIBLE_ODDS_VERBOSE
 				Debug.LogFormat("Added runnable of type {0} to {1}.", runnable.GetType(), gameObject.name);
-				#endif
+#endif
 			}
 		}
 
@@ -33,9 +33,9 @@
 			{
 				runnable.CurrentRunner = this;
 
-				#if IMPOSSIBLE_ODDS_VERBOSE
+#if IMPOSSIBLE_ODDS_VERBOSE
 				Debug.LogFormat("Added fixed runnable of type {0} to {1}.", runnable.GetType(), gameObject.name);
-				#endif
+#endif
 			}
 		}
 
@@ -50,9 +50,9 @@
 					runnable.CurrentRunner = null;
 				}
 
-				#if IMPOSSIBLE_ODDS_VERBOSE
+#if IMPOSSIBLE_ODDS_VERBOSE
 				Debug.LogFormat("Removed runnable of type {0} from {1}.", runnable.GetType(), gameObject.name);
-				#endif
+#endif
 			}
 		}
 
@@ -67,15 +67,22 @@
 					runnable.CurrentRunner = null;
 				}
 
-				#if IMPOSSIBLE_ODDS_VERBOSE
+#if IMPOSSIBLE_ODDS_VERBOSE
 				Debug.LogFormat("Removed fixed runnable of type {0} from {1}.", runnable.GetType(), gameObject.name);
-				#endif
+#endif
 			}
 		}
 
 		public void RunRoutine(IEnumerator routineHandle)
 		{
+			routineHandle.ThrowIfNull(nameof(routineHandle));
 			StartCoroutine(routineHandle);
+		}
+
+		public void StopRoutine(IEnumerator routineHandle)
+		{
+			routineHandle.ThrowIfNull(nameof(routineHandle));
+			StopCoroutine(routineHandle);
 		}
 
 		protected virtual void Update()

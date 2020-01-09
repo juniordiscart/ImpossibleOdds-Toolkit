@@ -7,5 +7,6 @@
 		void Add(IRunnable runnable);
 		void Remove(IRunnable runnable);
 		void RunRoutine(IEnumerator routineHandle);
+		void StopRoutine(IEnumerator routineHandle);
 	}
 }
