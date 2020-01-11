@@ -5,10 +5,11 @@
 	using System.Collections.Generic;
 	using System.Text;
 	using System.Text.RegularExpressions;
+	using System.Runtime.Serialization;
 
 	using UnityEngine;
 
-	using ImpossibleOdds.DataMapping;
+	using ImpossibleOdds.Serialization;
 
 	public static class JsonProcessor
 	{
@@ -18,7 +19,7 @@
 		private const string FALSE_STR = "false";
 
 		private static Regex numericalRegex = new Regex(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$");
-		private static JsonDefaultMappingDefinition defaultMappingDefinition = new JsonDefaultMappingDefinition();
+		private static JsonDefaultSerializationDefinition defaultSerializationDefinition = new JsonDefaultSerializationDefinition();
 
 		/// <summary>
 		/// Processes an object to a JSON-compliant string.
@@ -26,7 +27,7 @@
 		/// <param name="obj">Object to be processed.</param>
 		/// <param name="options">Options to modify the string output behaviour.</param>
 		/// <returns></returns>
-		public static string ToJson(object obj, JsonOptions options = null)
+		public static string Serialize(object obj, JsonOptions options = null)
 		{
 			StringBuilder builder = new StringBuilder(DEFAULT_CAPACITY);
 			RuntimeOptions runtimeOptions = (options != null) ? new RuntimeOptions(options) : new RuntimeOptions();
@@ -39,34 +40,40 @@
 		/// </summary>
 		/// <param name="jsonStr">JSON-compliant string.</param>
 		/// <returns></returns>
-		public static object FromJson(string jsonStr)
+		public static object Deserialize(string jsonStr)
 		{
-			return FromJson<Dictionary<string, object>, List<object>>(jsonStr);
+			return Deserialize<Dictionary<string, object>, List<object>>(jsonStr);
 		}
 
 		/// <summary>
-		/// Processes a JSON-compliant string value and attempts to map it to an instance of type TTarget.
+		/// Processes a JSON-compliant string value and attempts to deserialize it to an instance of type TTarget.
 		/// </summary>
 		/// <param name="jsonStr">JSON-compliant string.</param>
 		/// <typeparam name="TTarget">Target type.</typeparam>
 		/// <returns></returns>
-		public static TTarget FromJson<TTarget>(string jsonStr)
-		where TTarget : new()
+		public static TTarget Deserialize<TTarget>(string jsonStr)
 		{
-			TTarget target = new TTarget();
-			FromJson(target, jsonStr);
+			Type targetType = typeof(TTarget);
+
+			if (targetType.IsAbstract || targetType.IsInterface)
+			{
+				throw new JsonException(string.Format("Cannot create instance of type {0} because it is either astract or an interface."));
+			}
+
+			TTarget target = (TTarget)FormatterServices.GetUninitializedObject(targetType);
+			Deserialize(target, jsonStr);
 			return target;
 		}
 
 		/// <summary>
-		/// Processes a JSON-compliant string value and attempts to map it to the given target object.
+		/// Processes a JSON-compliant string value and attempts to deserialize it to the given target object.
 		/// </summary>
-		/// <param name="target">Object to which the JSON data is mapped to.</param>
+		/// <param name="target">Object to which the JSON data is applied to.</param>
 		/// <param name="jsonStr">JSON-compliant string.</param>
-		public static void FromJson(object target, string jsonStr)
+		public static void Deserialize(object target, string jsonStr)
 		{
-			object result = FromJson(jsonStr);
-			DataMapper.MapFromDataStructure(target, result, defaultMappingDefinition);
+			object result = Deserialize(jsonStr);
+			Serializer.Deserialize(target, result, defaultSerializationDefinition);
 		}
 
 		/// <summary>
@@ -76,7 +83,7 @@
 		/// <typeparam name="TJsonObject">Custom JSON object type.</typeparam>
 		/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
 		/// <returns></returns>
-		public static object FromJson<TJsonObject, TJsonArray>(string jsonStr)
+		public static object Deserialize<TJsonObject, TJsonArray>(string jsonStr)
 		where TJsonObject : IDictionary, new()
 		where TJsonArray : IList, new()
 		{
@@ -85,36 +92,36 @@
 		}
 
 		/// <summary>
-		/// Processes a JSON-compliant string value and attempts to map it to the given target object using the provided custom data structures.
+		/// Processes a JSON-compliant string value and attempts to deserialize it to the given target object using the provided custom data structures.
 		/// </summary>
-		/// <param name="target">Object to which the JSON data is mapped to.</param>
+		/// <param name="target">Object to which the JSON data is applied to.</param>
 		/// <param name="jsonStr">JSON-compliant string.</param>
 		/// <typeparam name="TJsonObject">Custom JSON object type.</typeparam>
 		/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
 		/// <returns></returns>
-		public static void FromJson<TJsonObject, TJsonArray>(object target, string jsonStr)
+		public static void Deserialize<TJsonObject, TJsonArray>(object target, string jsonStr)
 		where TJsonObject : IDictionary, new()
 		where TJsonArray : IList, new()
 		{
-			object result = FromJson<TJsonObject, TJsonArray>(jsonStr);
-			DataMapper.MapFromDataStructure(target, result, new JsonMappingDefinition<TJsonObject, TJsonArray>());
+			object result = Deserialize<TJsonObject, TJsonArray>(jsonStr);
+			Serializer.Deserialize(target, result, new JsonSerializationDefinition<TJsonObject, TJsonArray>());
 		}
 
 		/// <summary>
-		/// Processes a JSON-compliant string value and attempts to map it to the given target object using the provided data structures and mapping definition.
+		/// Processes a JSON-compliant string value and attempts to deserialize it to the given target object using the provided data structures and serialization defintion.
 		/// </summary>
-		/// <param name="target">Object to which the JSON data is mapped to.</param>
+		/// <param name="target">Object to which the JSON data is applied to.</param>
 		/// <param name="jsonStr">JSON-compliant string.</param>
-		/// <param name="mappingDefinition">Custom mapping definition.</param>
+		/// <param name="serializationDefinition">Custom serialization definition.</param>
 		/// <typeparam name="TJsonObject">Custom JSON object type.</typeparam>
 		/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
 		/// <returns></returns>
-		public static void FromJson<TJsonObject, TJsonArray>(object target, string jsonStr, IMappingDefinition mappingDefinition)
+		public static void Deserialize<TJsonObject, TJsonArray>(object target, string jsonStr, ISerializationDefinition serializationDefinition)
 		where TJsonObject : IDictionary, new()
 		where TJsonArray : IList, new()
 		{
-			object result = FromJson<TJsonObject, TJsonArray>(jsonStr);
-			DataMapper.MapFromDataStructure(target, result, mappingDefinition);
+			object result = Deserialize<TJsonObject, TJsonArray>(jsonStr);
+			Serializer.Deserialize(target, result, serializationDefinition);
 		}
 
 		#region To Json
@@ -158,13 +165,13 @@
 				try
 				{
 					// If we can't directly process the object, we attempt to deconstruct it to blocks we can handle.
-					object data = DataMapper.MapToDataStructure(obj, options.mappingDefinition);
+					object data = Serializer.Serialize(obj, options.serializationDefinition);
 					ToJson(data, builder, options);
 				}
 				catch (System.Exception e)
 				{
 					Debug.LogException(e);
-					throw new JsonException(string.Format("Unexpected JSON building scenario. Failed to map object of type {0}.\n{1} message:\n{2}", obj.GetType().Name, e.GetType().Name, e.Message));
+					throw new JsonException(string.Format("Unexpected JSON building scenario. Failed to serialize object of type {0}.\n{1} message:\n{2}", obj.GetType().Name, e.GetType().Name, e.Message));
 				}
 			}
 		}
@@ -663,7 +670,7 @@
 		{
 			public readonly bool escapeSlashChar;
 			public readonly bool prettyPrint;
-			public readonly IMappingDefinition mappingDefinition;
+			public readonly ISerializationDefinition serializationDefinition;
 
 			private int indentLvl;
 			private string indentStr;
@@ -687,14 +694,14 @@
 			{
 				escapeSlashChar = true;
 				prettyPrint = false;
-				mappingDefinition = defaultMappingDefinition;
+				serializationDefinition = defaultSerializationDefinition;
 			}
 
 			public RuntimeOptions(JsonOptions options)
 			{
 				escapeSlashChar = options.EscapeSlashCharacter;
 				prettyPrint = !options.Minify;
-				mappingDefinition = (options.CustomMappingDefinition != null) ? options.CustomMappingDefinition : defaultMappingDefinition;
+				serializationDefinition = (options.CustomSerializationDefinition != null) ? options.CustomSerializationDefinition : defaultSerializationDefinition;
 			}
 		}
 	}

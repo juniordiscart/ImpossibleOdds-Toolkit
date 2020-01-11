@@ -3,9 +3,8 @@
 namespace ImpossibleOdds.Photon.Webhooks
 {
 	using ImpossibleOdds.Weblink;
-	using ImpossibleOdds.DataMapping;
+	using ImpossibleOdds.Serialization;
 
-	using System;
 	using System.Collections.Generic;
 
 	using global::Photon.Realtime;
@@ -16,7 +15,7 @@ namespace ImpossibleOdds.Photon.Webhooks
 
 	public class WebhookMessenger : WeblinkMessenger<WebhookAbstractRequest, WebhookAbstractResponse, WebhookResponseAssociationAttribute>, IWebRpcCallback
 	{
-		private static readonly WebhookMappingDefinition mappingDefinition = new WebhookMappingDefinition();
+		private static readonly WebhookSerializationDefinition serialization = new WebhookSerializationDefinition();
 
 		public WebhookMessenger()
 		{
@@ -39,7 +38,7 @@ namespace ImpossibleOdds.Photon.Webhooks
 
 		protected override bool SendRequestData(WebhookAbstractRequest request)
 		{
-			object requestData = DataMapper.MapToDataStructure(request, mappingDefinition);
+			object requestData = Serializer.Serialize(request, serialization);
 			return CustomOpWebRPC(request, requestData);
 		}
 
@@ -55,7 +54,7 @@ namespace ImpossibleOdds.Photon.Webhooks
 #endif
 
 			Dictionary<string, object> parameters = photonResponse.Parameters as Dictionary<string, object>;
-			DataMapper.MapFromDataStructure(response, parameters, mappingDefinition);
+			Serializer.Deserialize(response, parameters, serialization);
 		}
 
 		// Since ExitGames still doesn't allow sending of WebRPC calls with full options,

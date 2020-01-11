@@ -1,5 +1,5 @@
 ﻿using System;
-using ImpossibleOdds.DataMapping;
+using ImpossibleOdds.Serialization;
 
 namespace ImpossibleOdds.Http
 {

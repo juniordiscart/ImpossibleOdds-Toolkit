@@ -1,7 +1,7 @@
 ﻿namespace ImpossibleOdds.Json
 {
 	using System;
-	using ImpossibleOdds.DataMapping;
+	using ImpossibleOdds.Serialization;
 
 	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
 	public sealed class JsonFieldAttribute : Attribute, ILookupParameter<string>

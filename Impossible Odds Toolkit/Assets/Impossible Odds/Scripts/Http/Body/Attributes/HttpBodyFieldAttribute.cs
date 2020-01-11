@@ -1,7 +1,7 @@
 ﻿namespace ImpossibleOdds.Http
 {
 	using System;
-	using ImpossibleOdds.DataMapping;
+	using ImpossibleOdds.Serialization;
 
 	public sealed class HttpBodyFieldAttribute : Attribute, ILookupParameter
 	{

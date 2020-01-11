@@ -4,7 +4,7 @@ namespace ImpossibleOdds.Photon.Webhooks
 {
 	using System.Collections.Generic;
 
-	using ImpossibleOdds.DataMapping;
+	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Weblink;
 
 	using global::Photon.Realtime;

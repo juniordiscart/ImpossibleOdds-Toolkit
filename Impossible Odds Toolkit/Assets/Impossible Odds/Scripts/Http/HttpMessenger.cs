@@ -5,7 +5,7 @@
 	using System.Collections.Generic;
 
 	using ImpossibleOdds.Weblink;
-	using ImpossibleOdds.DataMapping;
+	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Json;
 	using ImpossibleOdds.Runnables;
 
@@ -14,9 +14,9 @@
 
 	public class HttpMessenger : WeblinkMessenger<HttpAbstractRequest, HttpAbstractResponse, HttpResponseAssociationAttribute>
 	{
-		private static HttpURLMappingDefinition urlMappingDefinition = new HttpURLMappingDefinition();
-		private static HttpHeaderMappingDefinition headerMappingDefinition = new HttpHeaderMappingDefinition();
-		private static HttpBodyMappingDefinition bodyMappingDefinition = new HttpBodyMappingDefinition();
+		private static HttpURLSerializationDefinition urlDefinition = new HttpURLSerializationDefinition();
+		private static HttpHeaderSerializationDefinition headerDefinition = new HttpHeaderSerializationDefinition();
+		private static HttpBodySerializationDefinition bodyDefinition = new HttpBodySerializationDefinition();
 
 		protected override bool SendRequestData(HttpAbstractRequest request)
 		{
@@ -45,15 +45,14 @@
 			Debug.LogFormat("Received HTTP response {0} of type {1}.", request.ID, response.GetType().Name);
 #endif
 
-			// Map the headers.
-			DataMapper.MapFromDataStructure(response, webRequest.GetResponseHeaders(), headerMappingDefinition);
+			Serializer.Deserialize(response, webRequest.GetResponseHeaders(), headerDefinition);
 
 			// If the response defines that a JSON response is expected.
 			if (response is IHttpJsonResponse)
 			{
 				string jsonResponse = webRequest.downloadHandler.text;
-				object jsonData = JsonProcessor.FromJson(jsonResponse);
-				DataMapper.MapFromDataStructure(response, jsonData, bodyMappingDefinition);
+				object jsonData = JsonProcessor.Deserialize(jsonResponse);
+				Serializer.Deserialize(response, jsonData, bodyDefinition);
 			}
 
 			// If the response defines a custom response handler, then we hand over the data.
@@ -65,7 +64,7 @@
 
 		private string GenerateURL(HttpAbstractRequest request)
 		{
-			Dictionary<string, string> urlParams = DataMapper.MapToDataStructure(request, urlMappingDefinition) as Dictionary<string, string>;
+			Dictionary<string, string> urlParams = Serializer.Serialize(request, urlDefinition) as Dictionary<string, string>;
 
 			if ((urlParams == null) || (urlParams.Count == 0))
 			{
@@ -110,7 +109,7 @@
 					unityRequest = UnityWebRequest.Get(url);
 					break;
 				case HttpAbstractRequest.RequestMethod.POST:
-					object postData = DataMapper.MapToDataStructure(request, bodyMappingDefinition);
+					object postData = Serializer.Serialize(request, bodyDefinition);
 					if (postData is Dictionary<string, string>)
 					{
 						unityRequest = UnityWebRequest.Post(url, postData as Dictionary<string, string>);
@@ -139,7 +138,7 @@
 			}
 
 			// Add the headers to the request
-			Dictionary<string, string> headerData = DataMapper.MapToDataStructure(request, headerMappingDefinition) as Dictionary<string, string>;
+			Dictionary<string, string> headerData = Serializer.Serialize(request, headerDefinition) as Dictionary<string, string>;
 			if (headerData != null)
 			{
 				foreach (KeyValuePair<string, string> header in headerData)

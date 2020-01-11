@@ -3,7 +3,7 @@
     "references": [
         "ImpossibleOdds.General",
         "ImpossibleOdds.Weblink",
-        "ImpossibleOdds.DataMapping",
+        "ImpossibleOdds.Serialization",
         "ImpossibleOdds.Json",
         "ImpossibleOdds.Runnables"
     ],

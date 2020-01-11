@@ -2,7 +2,7 @@
     "name": "ImpossibleOdds.Json",
     "references": [
         "ImpossibleOdds.General",
-        "ImpossibleOdds.DataMapping"
+        "ImpossibleOdds.Serialization"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],

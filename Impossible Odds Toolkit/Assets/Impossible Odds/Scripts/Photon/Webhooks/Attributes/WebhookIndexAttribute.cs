@@ -3,7 +3,7 @@
 namespace ImpossibleOdds.Photon.Webhooks
 {
 	using System;
-	using ImpossibleOdds.DataMapping;
+	using ImpossibleOdds.Serialization;
 
 	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
 	public sealed class WebhookIndexAttribute : Attribute, IIndexParameter

@@ -1,7 +1,7 @@
 ﻿namespace ImpossibleOdds.Json
 {
 	using System;
-	using ImpossibleOdds.DataMapping;
+	using ImpossibleOdds.Serialization;
 
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Struct, AllowMultiple = true)]
 	public class JsonTypeResolveAttribute : Attribute, ILookupTypeResolveParameter
