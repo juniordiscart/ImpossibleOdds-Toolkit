@@ -3,7 +3,6 @@
 	using System;
 	using System.Linq;
 	using System.Collections.Generic;
-	using UnityEngine;
 
 	public static class WeblinkUtilities
 	{
@@ -15,12 +14,10 @@
 
 			Type responseType = FindResponseType(requestType);
 
-#if IMPOSSIBLE_ODDS_VERBOSE
 			if (responseType == null)
 			{
-				Debug.LogWarningFormat("Could not find an associated response type for requests of type {0}.", requestType.Name);
+				Debug.Warning("Could not find an associated response type for requests of type {0}.", requestType.Name);
 			}
-#endif
 
 			return responseType;
 		}

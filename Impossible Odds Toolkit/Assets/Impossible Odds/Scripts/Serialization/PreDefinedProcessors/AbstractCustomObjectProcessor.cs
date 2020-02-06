@@ -6,7 +6,6 @@
 	using System.Linq;
 	using System.Reflection;
 	using System.Runtime.Serialization;
-	using UnityEngine;
 
 	public abstract class AbstractCustomObjectProcessor : AbstractProcessor
 	{
@@ -170,7 +169,7 @@
 				ReadOnlyCollection<FieldAtrributeTuple> fields = GetAttributeFields(type, attributeType);
 				foreach (FieldAtrributeTuple field in fields)
 				{
-					maxIndex = Mathf.Max((field.attribute as IIndexParameter).Index, maxIndex);
+					maxIndex = Math.Max((field.attribute as IIndexParameter).Index, maxIndex);
 				}
 
 				type = type.BaseType;

@@ -10,7 +10,6 @@ namespace ImpossibleOdds.Photon.Webhooks
 	using global::Photon.Realtime;
 	using global::Photon.Pun;
 
-	using UnityEngine;
 	using ExitGames.Client.Photon;
 
 	public class WebhookMessenger : WeblinkMessenger<WebhookAbstractRequest, WebhookAbstractResponse, WebhookResponseAssociationAttribute>, IWebRpcCallback
@@ -26,9 +25,7 @@ namespace ImpossibleOdds.Photon.Webhooks
 		{
 			if (response.ReturnCode != 0)
 			{
-#if IMPOSSIBLE_ODDS_VERBOSE
-				Debug.LogErrorFormat("A WebRPC call did not complete successfully. Return code: {0}.", response.ReturnCode);
-#endif
+				Debug.Error("A WebRPC call did not complete successfully. Return code: {0}.", response.ReturnCode);
 				return;
 			}
 
@@ -46,12 +43,10 @@ namespace ImpossibleOdds.Photon.Webhooks
 		{
 			WebRpcResponse photonResponse = responseData as WebRpcResponse;
 
-#if IMPOSSIBLE_ODDS_VERBOSE
 			if (string.IsNullOrEmpty(photonResponse.DebugMessage))
 			{
-				Debug.Log(photonResponse.DebugMessage);
+				Debug.Info(photonResponse.DebugMessage);
 			}
-#endif
 
 			Dictionary<string, object> parameters = photonResponse.Parameters as Dictionary<string, object>;
 			Serializer.Deserialize(response, parameters, serialization);

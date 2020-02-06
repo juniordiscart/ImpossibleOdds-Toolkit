@@ -7,8 +7,6 @@
 	using System.Text.RegularExpressions;
 	using System.Runtime.Serialization;
 
-	using UnityEngine;
-
 	using ImpossibleOdds.Serialization;
 
 	public static class JsonProcessor
@@ -170,7 +168,7 @@
 				}
 				catch (System.Exception e)
 				{
-					Debug.LogException(e);
+					Debug.Exception(e);
 					throw new JsonException(string.Format("Unexpected JSON building scenario. Failed to serialize object of type {0}.\n{1} message:\n{2}", obj.GetType().Name, e.GetType().Name, e.Message));
 				}
 			}
@@ -680,7 +678,7 @@
 				get { return indentLvl; }
 				set
 				{
-					indentLvl = Mathf.Max(0, value);
+					indentLvl = Math.Max(0, value);
 					indentStr = new String('\t', value);
 				}
 			}

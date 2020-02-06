@@ -2,6 +2,8 @@
 {
 	using UnityEngine;
 
+	using Debug = ImpossibleOdds.Debug;
+
 	[ScriptExecutionOrder(-9999)]
 	public class GlobalDependencyContext : MonoBehaviour, IDependencyContext
 	{
@@ -18,9 +20,7 @@
 
 			if (globalContextInstance == null)
 			{
-#if IMPOSSIBLE_ODDS_VERBOSE
-				Debug.LogWarningFormat("No global dependecy context could be found in Resources at path '{0}'.", ResourcesPath);
-#endif
+				Debug.Warning("No global dependency context could be found in Resources at path '{0}'.", ResourcesPath);
 				return;
 			}
 

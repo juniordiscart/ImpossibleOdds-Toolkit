@@ -7,7 +7,9 @@
 	using System.Linq;
 	using System.Collections.Generic;
 
-	public class PhotonSettings : AbstractSetting
+	using Debug = ImpossibleOdds.Debug;
+
+	public class PhotonSettings : AbstractSingleSetting
 	{
 		private const string PhotonRealTimeAssembly = "PhotonRealtime";
 		private const string PhotonUnityAssembly = "PhotonUnityNetworking";
@@ -27,7 +29,7 @@
 			get { return EnableCachingSymbol; }
 		}
 
-		public override void DisplayGUI()
+		public override void DisplayGUI(string searchContext)
 		{
 			EditorGUI.BeginDisabledGroup(isLocked);
 			isSet = EditorGUILayout.Toggle("Enable Photon module." + (IsChanged ? "*" : string.Empty), isSet);
@@ -44,9 +46,9 @@
 			}
 		}
 
-		public override void ApplySetting()
+		public override void ApplyChanges()
 		{
-			base.ApplySetting();
+			base.ApplyChanges();
 			UpdatePhotonModuleReferences();
 		}
 
@@ -71,7 +73,7 @@
 			string photonModulePath = AssetDatabase.GUIDToAssetPath(PhotonModuleGUID);
 			if (string.IsNullOrEmpty(photonModulePath))
 			{
-				Debug.LogError("Could not load the Impossible Odds Photon assembly definition file.");
+				Debug.Error("Could not load the Impossible Odds Photon assembly definition file.");
 				return;
 			}
 

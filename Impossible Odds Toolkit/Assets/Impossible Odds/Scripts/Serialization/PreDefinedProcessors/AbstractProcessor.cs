@@ -1,8 +1,5 @@
 ﻿namespace ImpossibleOdds.Serialization.Processors
 {
-	using System;
-	using ImpossibleOdds;
-
 	/// <summary>
 	/// Base class for (de)serialization processors.
 	/// </summary>

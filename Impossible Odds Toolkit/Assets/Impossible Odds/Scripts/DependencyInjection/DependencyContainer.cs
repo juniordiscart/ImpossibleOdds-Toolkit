@@ -1,9 +1,7 @@
 ﻿namespace ImpossibleOdds.DependencyInjection
 {
-	using ImpossibleOdds;
 	using System;
 	using System.Collections.Generic;
-	using UnityEngine;
 
 	public class DependencyContainer : IDependencyContainer
 	{
@@ -32,9 +30,7 @@
 
 			if (bindings.ContainsKey(bindingType))
 			{
-#if IMPOSSIBLE_ODDS_VERBOSE
-				Debug.LogWarningFormat("A binding for type {0} already exists. Override with new binding.", bindingType.Name);
-#endif
+				Debug.Warning("A binding for type {0} already exists. Override with new binding.", bindingType.Name);
 				bindings[bindingType] = binding;
 			}
 			else

@@ -1,11 +1,9 @@
 ﻿namespace ImpossibleOdds.Serialization.Processors
 {
-	using ImpossibleOdds;
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
-	using UnityEngine;
 
 	/// <summary>
 	/// A (de)serialization processor to process custom object to list-like data structures.
@@ -138,7 +136,7 @@
 			IIndexTypeResolveParameter typeResolveAttr = ResolveTypeToSequence(sourceType);
 			if (typeResolveAttr != null)
 			{
-				nrOfElements = Mathf.Max(typeResolveAttr.Index + 1, nrOfElements);
+				nrOfElements = Math.Max(typeResolveAttr.Index + 1, nrOfElements);
 			}
 
 			// Create the instance of the index-based type. Arrays are a special case.
@@ -180,9 +178,7 @@
 
 			if (values[index] != null)
 			{
-#if IMPOSSIBLE_ODDS_VERBOSE
-				Debug.LogWarningFormat("Index {0} for processing an instance of type {1} is used multiple times.", index, sourceType.Name);
-#endif
+				Debug.Warning("Index {0} for processing an instance of type {1} is used multiple times.", index, sourceType.Name);
 			}
 
 			values[index] = value;
@@ -200,9 +196,7 @@
 				// Check whether the source has such an index.
 				if (source.Count <= indexParam.Index)
 				{
-#if IMPOSSIBLE_ODDS_VERBOSE
-					Debug.LogWarningFormat("The source does not contain a value at index '{0}' for a target of type {1}.", indexParam.Index, target.GetType().Name);
-#endif
+					Debug.Warning("The source does not contain a value at index '{0}' for a target of type {1}.", indexParam.Index, target.GetType().Name);
 					continue;
 				}
 

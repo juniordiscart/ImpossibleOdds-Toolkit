@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using UnityEngine;
 
 	/// <summary>
 	/// A (de)serialization processor for dictionary-like data structures.
@@ -156,9 +155,7 @@
 				processedKey = SerializationUtilities.PostProcessRequestValue(processedKey, keyType);
 				if ((processedKey == null) || (isKeyTypeConstrained && !PassesTypeRestriction(processedKey, keyType)))
 				{
-#if IMPOSSIBLE_ODDS_VERBOSE
-					Debug.LogWarningFormat("A key of type {0} could not be processed to a valid key for target of type {1}. Skipping key and value.", key.GetType(), targetType.Name);
-#endif
+					Debug.Warning("A key of type {0} could not be processed to a valid key for target of type {1}. Skipping key and value.", key.GetType(), targetType.Name);
 					continue;
 				}
 
@@ -166,16 +163,14 @@
 				processedValue = SerializationUtilities.PostProcessRequestValue(processedValue, valueType);
 				if (isValueTypeConstrained && !PassesTypeRestriction(processedValue, valueType))
 				{
-#if IMPOSSIBLE_ODDS_VERBOSE
 					if (sourceValues[key] == null)
 					{
-						Debug.LogWarningFormat("A null value could not be processed to a valid value for target of type {0}. Skipping key and value.", targetType.Name);
+						Debug.Warning("A null value could not be processed to a valid value for target of type {0}. Skipping key and value.", targetType.Name);
 					}
 					else
 					{
-						Debug.LogWarningFormat("A value of type {0} could not be processed to a valid value for target of type {1}. Skipping key and value.", sourceValues[key].GetType().Name, targetType.Name);
+						Debug.Warning("A value of type {0} could not be processed to a valid value for target of type {1}. Skipping key and value.", sourceValues[key].GetType().Name, targetType.Name);
 					}
-#endif
 					continue;
 				}
 

@@ -4,8 +4,6 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
-	using UnityEngine;
-	using ImpossibleOdds;
 
 	/// <summary>
 	/// A (de)serialization processor to process custom object to dictionary-like data structures.
@@ -167,9 +165,7 @@
 			if (properties.Contains(key))
 			{
 				properties[key] = value;
-#if IMPOSSIBLE_ODDS_VERBOSE
-				Debug.LogWarningFormat("A key with value '{0}' has been defined more than once for source object of type {1}.", key.ToString(), sourceType.Name);
-#endif
+				Debug.Warning("A key with value '{0}' has been defined more than once for source object of type {1}.", key.ToString(), sourceType.Name);
 			}
 			else
 			{
@@ -196,9 +192,7 @@
 					}
 					else
 					{
-#if IMPOSSIBLE_ODDS_VERBOSE
-						Debug.LogWarningFormat("The source does not contain a value associated with key '{0}' for a target of type {1}.", key, target.GetType().Name);
-#endif
+						Debug.Warning("The source does not contain a value associated with key '{0}' for a target of type {1}.", key, target.GetType().Name);
 						continue;
 					}
 				}

@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using UnityEngine;
 
 	/// <summary>
 	/// A (de)serialization processor for list-like data structures.
@@ -191,9 +190,7 @@
 					}
 					else
 					{
-#if IMPOSSIBLE_ODDS_VERBOSE
-						Debug.LogWarningFormat("The target array is shorter than the source collection. Excess values have not been processed.");
-#endif
+						Debug.Warning("The target array is shorter than the source collection. Excess values have not been processed.");
 						break;
 					}
 				}
@@ -219,19 +216,17 @@
 					{
 						targetCollection.Add(processedValue);
 					}
-#if IMPOSSIBLE_ODDS_VERBOSE
 					else
 					{
 						if (sourceValues[i] == null)
 						{
-							Debug.LogWarningFormat("A null value could not be processed to a valid value for target of type {0}. Skipping value.", targetType.Name);
+							Debug.Warning("A null value could not be processed to a valid value for target of type {0}. Skipping value.", targetType.Name);
 						}
 						else
 						{
-							Debug.LogWarningFormat("A value of type {0} could not be processed to a valid value for target of type {1}. Skipping value.", sourceValues[i].GetType().Name, targetType.Name);
+							Debug.Warning("A value of type {0} could not be processed to a valid value for target of type {1}. Skipping value.", sourceValues[i].GetType().Name, targetType.Name);
 						}
 					}
-#endif
 				}
 			}
 

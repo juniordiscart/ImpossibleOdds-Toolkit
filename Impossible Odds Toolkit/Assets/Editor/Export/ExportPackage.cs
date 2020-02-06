@@ -30,14 +30,14 @@ public static class ExportPackage
 		EditorPrefs.SetString(ExportPackageDirectoryKey, path);
 		EditorPrefs.SetString(ExportPackageNameKey, name);
 
-		HashSet<string> loadedSymbols = ImpossibleOddsSettings.GetProjectSymbols(EditorUserBuildSettings.selectedBuildTargetGroup);
+		HashSet<string> loadedSymbols = ProjectSettings.GetProjectSymbols(EditorUserBuildSettings.selectedBuildTargetGroup);
 		PhotonSettings photonSetting = new PhotonSettings(loadedSymbols);
 		bool isSet = photonSetting.IsSet;
 
 		if (isSet)
 		{
 			photonSetting.IsSet = false;
-			photonSetting.ApplySetting();
+			photonSetting.ApplyChanges();
 			ApplyLoadedSymbols(loadedSymbols, EditorUserBuildSettings.selectedBuildTargetGroup);
 		}
 
@@ -46,7 +46,7 @@ public static class ExportPackage
 		if (isSet)
 		{
 			photonSetting.IsSet = true;
-			photonSetting.ApplySetting();
+			photonSetting.ApplyChanges();
 			ApplyLoadedSymbols(loadedSymbols, EditorUserBuildSettings.selectedBuildTargetGroup);
 		}
 	}

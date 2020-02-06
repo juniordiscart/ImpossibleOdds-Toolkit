@@ -1,9 +1,6 @@
 ﻿namespace ImpossibleOdds.DependencyInjection
 {
-	using ImpossibleOdds;
-	using System;
 	using System.Collections.Generic;
-	using UnityEngine;
 
 	/// <summary>
 	/// A registry for dependency injection contexts.
@@ -24,9 +21,7 @@
 
 			if (Exists(key))
 			{
-#if IMPOSSIBLE_ODDS_VERBOSE
-				Debug.LogWarningFormat("A context registered to key {0} already exists. Overriding with new context.", key.ToString());
-#endif
+				Debug.Warning("A context registered to key {0} already exists. Overriding with new context.", key.ToString());
 				contextRegister[key] = context;
 			}
 			else
@@ -74,9 +69,7 @@
 			}
 			else
 			{
-#if IMPOSSIBLE_ODDS_VERBOSE
-				Debug.LogWarningFormat("The dependency context register does not have a context registered under key {0}", key.ToString());
-#endif
+				Debug.Warning("The dependency context register does not have a context registered under key {0}", key.ToString());
 				return null;
 			}
 		}

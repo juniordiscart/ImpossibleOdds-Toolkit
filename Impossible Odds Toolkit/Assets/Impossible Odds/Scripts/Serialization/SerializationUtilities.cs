@@ -1,11 +1,6 @@
 ﻿namespace ImpossibleOdds.Serialization
 {
-	using ImpossibleOdds;
 	using System;
-
-#if IMPOSSIBLE_ODDS_VERBOSE
-	using UnityEngine;
-#endif
 
 	public static class SerializationUtilities
 	{
@@ -90,9 +85,7 @@
 			}
 			else
 			{
-#if IMPOSSIBLE_ODDS_VERBOSE
-				Debug.LogWarningFormat("Target type {0} does not implement the {1} interface to post-process a value of type {2}.", targetType.Name, typeof(IConvertible).Name, value.GetType().Name);
-#endif
+				Debug.Warning("Target type {0} does not implement the {1} interface to post-process a value of type {2}.", targetType.Name, typeof(IConvertible).Name, value.GetType().Name);
 				return value;
 			}
 		}

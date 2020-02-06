@@ -6,6 +6,8 @@
 
 	using UnityEngine;
 
+	using Debug = ImpossibleOdds.Debug;
+
 	public abstract class Runner : MonoBehaviour, IRunner, IFixedRunner
 	{
 		private HashSet<IRunnable> runnables = new HashSet<IRunnable>();
@@ -18,10 +20,7 @@
 			if (runnables.Add(runnable))
 			{
 				runnable.CurrentRunner = this;
-
-#if IMPOSSIBLE_ODDS_VERBOSE
-				Debug.LogFormat("Added runnable of type {0} to {1}.", runnable.GetType(), gameObject.name);
-#endif
+				Debug.Info("Added runnable of type {0} to {1}.", runnable.GetType(), gameObject.name);
 			}
 		}
 
@@ -32,10 +31,7 @@
 			if (fixedRunnables.Add(runnable))
 			{
 				runnable.CurrentRunner = this;
-
-#if IMPOSSIBLE_ODDS_VERBOSE
-				Debug.LogFormat("Added fixed runnable of type {0} to {1}.", runnable.GetType(), gameObject.name);
-#endif
+				Debug.Info("Added fixed runnable of type {0} to {1}.", runnable.GetType(), gameObject.name);
 			}
 		}
 
@@ -50,9 +46,7 @@
 					runnable.CurrentRunner = null;
 				}
 
-#if IMPOSSIBLE_ODDS_VERBOSE
-				Debug.LogFormat("Removed runnable of type {0} from {1}.", runnable.GetType(), gameObject.name);
-#endif
+				Debug.Info("Removed runnable of type {0} from {1}.", runnable.GetType(), gameObject.name);
 			}
 		}
 
@@ -67,9 +61,7 @@
 					runnable.CurrentRunner = null;
 				}
 
-#if IMPOSSIBLE_ODDS_VERBOSE
-				Debug.LogFormat("Removed fixed runnable of type {0} from {1}.", runnable.GetType(), gameObject.name);
-#endif
+				Debug.Info("Removed fixed runnable of type {0} from {1}.", runnable.GetType(), gameObject.name);
 			}
 		}
 

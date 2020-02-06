@@ -3,9 +3,7 @@
     "references": [
         "ImpossibleOdds.General",
         "ImpossibleOdds.Serialization",
-        "ImpossibleOdds.Weblink",
-        "PhotonUnityNetworking",
-        "PhotonRealtime"
+        "ImpossibleOdds.Weblink"
     ],
     "includePlatforms": [],
     "excludePlatforms": []
