@@ -20,5 +20,37 @@
 
 			return argument;
 		}
+
+		/// <summary>
+		/// Throws an ArgumentNullException if the string is null or empty. Returns the string otherwise.
+		/// </summary>
+		/// <param name="argument">The string to check for null or emptiness.</param>
+		/// <param name="argumentName">The name of the string in case it is null or empty.</param>
+		/// <returns>Returns the string.</returns>
+		public static string ThrowIfNullOrEmpty(this string argument, string argumentName)
+		{
+			if (string.IsNullOrEmpty(argument))
+			{
+				throw new ArgumentNullException(argumentName);
+			}
+
+			return argument;
+		}
+
+		/// <summary>
+		/// Throws an ArgumentNullException if the string is null or whitespace. Returns the string otherwise.
+		/// </summary>
+		/// <param name="argument">The string to check for null or whitespaces.</param>
+		/// <param name="argumentName">The name of the string in case it is null or just whitespace.</param>
+		/// <returns>Returns the string.</returns>
+		public static string ThrowIfNullOrWhitespace(this string argument, string argumentName)
+		{
+			if (string.IsNullOrWhiteSpace(argument))
+			{
+				throw new ArgumentNullException(argumentName);
+			}
+
+			return argument;
+		}
 	}
 }
