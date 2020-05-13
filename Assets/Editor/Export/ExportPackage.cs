@@ -12,7 +12,7 @@ public static class ExportPackage
 
 	private const string PackageExtension = "unitypackage";
 
-	[MenuItem("Assets/Impossible Odds/Export")]
+	[MenuItem("Assets/Impossible Odds/Export Toolkit")]
 	private static void Export()
 	{
 		string path = EditorPrefs.GetString(ExportPackageDirectoryKey, Application.dataPath);
