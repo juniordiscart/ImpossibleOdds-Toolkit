@@ -1,7 +1,7 @@
 {
     "name": "ImpossibleOdds.Http",
     "references": [
-        "ImpossibleOdds.General",
+        "ImpossibleOdds.Core",
         "ImpossibleOdds.Weblink",
         "ImpossibleOdds.Serialization",
         "ImpossibleOdds.Json",

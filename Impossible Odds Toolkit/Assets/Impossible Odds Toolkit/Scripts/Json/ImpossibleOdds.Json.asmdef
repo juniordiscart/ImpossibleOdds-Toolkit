@@ -1,7 +1,7 @@
 {
     "name": "ImpossibleOdds.Json",
     "references": [
-        "ImpossibleOdds.General",
+        "ImpossibleOdds.Core",
         "ImpossibleOdds.Serialization"
     ],
     "optionalUnityReferences": [],

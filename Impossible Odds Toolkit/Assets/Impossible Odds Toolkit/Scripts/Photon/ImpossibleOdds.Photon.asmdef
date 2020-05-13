@@ -1,10 +1,16 @@
 {
     "name": "ImpossibleOdds.Photon",
     "references": [
-        "ImpossibleOdds.General",
+        "ImpossibleOdds.Core",
         "ImpossibleOdds.Serialization",
         "ImpossibleOdds.Weblink"
     ],
+    "optionalUnityReferences": [],
     "includePlatforms": [],
-    "excludePlatforms": []
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
 }
