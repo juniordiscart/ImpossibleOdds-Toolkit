@@ -93,7 +93,6 @@
 			{
 				new EditorExtensionSettings(currentSymbols),
 				new LoggingSettings(currentSymbols),
-				new PhotonSettings(currentSymbols)
 			};
 
 			loadedSettingsGroup = targetGroup;

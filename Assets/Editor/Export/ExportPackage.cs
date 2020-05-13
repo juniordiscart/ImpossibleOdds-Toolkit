@@ -1,9 +1,6 @@
 ﻿using System.IO;
-using System.Linq;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using ImpossibleOdds.Settings;
 
 public static class ExportPackage
 {
@@ -30,30 +27,6 @@ public static class ExportPackage
 		EditorPrefs.SetString(ExportPackageDirectoryKey, path);
 		EditorPrefs.SetString(ExportPackageNameKey, name);
 
-		HashSet<string> loadedSymbols = ProjectSettings.GetProjectSymbols(EditorUserBuildSettings.selectedBuildTargetGroup);
-		PhotonSettings photonSetting = new PhotonSettings(loadedSymbols);
-		bool isSet = photonSetting.IsSet;
-
-		if (isSet)
-		{
-			photonSetting.IsSet = false;
-			photonSetting.ApplyChanges();
-			ApplyLoadedSymbols(loadedSymbols, EditorUserBuildSettings.selectedBuildTargetGroup);
-		}
-
 		AssetDatabase.ExportPackage("Assets/Impossible Odds", fullPath, ExportPackageOptions.Recurse);
-
-		if (isSet)
-		{
-			photonSetting.IsSet = true;
-			photonSetting.ApplyChanges();
-			ApplyLoadedSymbols(loadedSymbols, EditorUserBuildSettings.selectedBuildTargetGroup);
-		}
-	}
-
-	private static void ApplyLoadedSymbols(HashSet<string> symbols, BuildTargetGroup targetGroup)
-	{
-		string symbolStr = string.Join(";", symbols.ToArray());
-		PlayerSettings.SetScriptingDefineSymbolsForGroup(targetGroup, symbolStr);
 	}
 }
