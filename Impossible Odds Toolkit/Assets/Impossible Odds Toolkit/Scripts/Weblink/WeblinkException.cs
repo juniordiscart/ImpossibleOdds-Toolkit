@@ -1,12 +1,16 @@
-﻿using System;
-
-namespace ImpossibleOdds.Weblink
+﻿namespace ImpossibleOdds.Weblink
 {
-	public sealed class WeblinkException : Exception
+	public sealed class WeblinkException : ImpossibleOddsException
 	{
-		public WeblinkException() {}
+		public WeblinkException()
+		{ }
 
-		public WeblinkException(string message)
-		: base(message) {}
+		public WeblinkException(string errMsg)
+		: base(errMsg)
+		{ }
+
+		public WeblinkException(string errMsg, params object[] format)
+		: base(string.Format(errMsg, format))
+		{ }
 	}
 }
