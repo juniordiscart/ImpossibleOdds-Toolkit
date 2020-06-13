@@ -31,6 +31,13 @@
 		{
 			get;
 		}
+
+		/// <summary>
+		/// Create an instance of the supported index-based collection type with the desired capacity.
+		/// </summary>
+		/// <param name="capacity">The capacity the collection should have.</param>
+		/// <returns>Instance of the collection with the desired capacity.</returns>
+		IList CreateSequenceInstance(int capacity);
 	}
 
 	/// <summary>
@@ -43,5 +50,12 @@
 	where T : Attribute, IIndexDataStructure
 	where U : Attribute, IIndexParameter
 	where V : IList
-	{ }
+	{
+		/// <summary>
+		/// Create an instance of the supported index-based collection type with the desired capacity.
+		/// </summary>
+		/// <param name="capacity">The capacity the collection should have.</param>
+		/// <returns>Instance of the collection with the desired capacity.</returns>
+		new V CreateSequenceInstance(int capacity);
+	}
 }

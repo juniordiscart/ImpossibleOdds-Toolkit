@@ -39,32 +39,21 @@
 			}
 
 			IDictionary sourceValues = (IDictionary)objectToSerialize;
-			IDictionary lookupSet = Activator.CreateInstance(definition.LookupBasedDataType, true) as IDictionary;
+			Dictionary<object, object> processedValues = new Dictionary<object, object>(sourceValues.Count);
 
-			Type genericType = SerializationUtilities.GetGenericType(definition.LookupBasedDataType, typeof(IDictionary<,>));
-			Type[] genericParams = (genericType != null) ? genericType.GetGenericArguments() : null;
-			bool isKeyTypeConstrained = (genericParams != null) && (genericParams[0] != typeof(object));
-			bool isValueTypeConstrained = (genericParams != null) && (genericParams[1] != typeof(object));
-
+			// Process the source key and value pairs.
 			ICollection keys = sourceValues.Keys;
 			foreach (object key in keys)
 			{
 				object processedKey = Serializer.Serialize(key, definition);
-				if (isKeyTypeConstrained && !PassesTypeRestriction(processedKey, genericParams[0]))
-				{
-					continue;
-				}
-
 				object processedValue = Serializer.Serialize(sourceValues[key], definition);
-				if (isValueTypeConstrained && !PassesTypeRestriction(processedValue, genericParams[1]))
-				{
-					continue;
-				}
-
-				lookupSet.Add(processedKey, processedValue);
+				processedValues.Add(processedKey, processedValue);
 			}
 
-			serializedResult = lookupSet;
+			// Fill up the result with the processed keys and values.
+			IDictionary resultCollection = definition.CreateLookupInstance(sourceValues.Count);
+			SerializationUtilities.FillLookup(processedValues, resultCollection);
+			serializedResult = resultCollection;
 			return true;
 		}
 
@@ -152,7 +141,7 @@
 			foreach (object key in keys)
 			{
 				object processedKey = Serializer.Deserialize(keyType, key, definition);
-				processedKey = SerializationUtilities.PostProcessRequestValue(processedKey, keyType);
+				processedKey = SerializationUtilities.PostProcessValue(processedKey, keyType);
 				if ((processedKey == null) || (isKeyTypeConstrained && !PassesTypeRestriction(processedKey, keyType)))
 				{
 					Debug.Warning("A key of type {0} could not be processed to a valid key for target of type {1}. Skipping key and value.", key.GetType(), targetType.Name);
@@ -160,7 +149,7 @@
 				}
 
 				object processedValue = Serializer.Deserialize(valueType, sourceValues[key], definition);
-				processedValue = SerializationUtilities.PostProcessRequestValue(processedValue, valueType);
+				processedValue = SerializationUtilities.PostProcessValue(processedValue, valueType);
 				if (isValueTypeConstrained && !PassesTypeRestriction(processedValue, valueType))
 				{
 					if (sourceValues[key] == null)

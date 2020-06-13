@@ -41,51 +41,17 @@
 			IEnumerable sourceValues = (IEnumerable)objectToSerialize;
 			int sourceCount = CountElements(sourceValues);
 
-			// Depending on whether the given type is an array or another type of list, we need to treat element insertion differently.
-			if (definition.IndexBasedDataType.IsArray)
+			// Process each individual element
+			List<object> processedValues = new List<object>(sourceCount);
+			foreach (object sourceValue in sourceValues)
 			{
-				Type elementType = definition.IndexBasedDataType.GetElementType();
-				bool isTypeConstrained = (elementType != typeof(object));
-				Array collection = Array.CreateInstance(elementType, sourceCount);
-
-				int i = 0;
-				IEnumerator it = sourceValues.GetEnumerator();
-				while (it.MoveNext())
-				{
-					object processedValue = Serializer.Serialize(it.Current, definition);
-					if (!isTypeConstrained || PassesTypeRestriction(processedValue, elementType))
-					{
-						collection.SetValue(processedValue, i);
-					}
-
-					++i;
-				}
-
-				serializedResult = collection;
-			}
-			else
-			{
-				IList collection = Activator.CreateInstance(definition.IndexBasedDataType, true) as IList;
-				Type genericType = SerializationUtilities.GetGenericType(definition.IndexBasedDataType, typeof(IList<>));
-				Type genericParam = (genericType != null) ? genericType.GetGenericArguments()[0] : null;
-				bool isTypeConstrained = (genericParam != null) && (genericParam != typeof(object));
-
-				int i = 0;
-				IEnumerator it = sourceValues.GetEnumerator();
-				while (it.MoveNext())
-				{
-					object processedValue = Serializer.Serialize(it.Current, definition);
-					if (!isTypeConstrained || PassesTypeRestriction(processedValue, genericParam))
-					{
-						collection.Add(processedValue);
-					}
-
-					++i;
-				}
-
-				serializedResult = collection;
+				processedValues.Add(Serializer.Serialize(sourceValue, definition));
 			}
 
+			// Fill up the target collection with the pre processed values
+			IList resultCollection = definition.CreateSequenceInstance(sourceCount);
+			SerializationUtilities.FillSequence(processedValues, resultCollection);
+			serializedResult = resultCollection;
 			return true;
 		}
 
@@ -181,7 +147,7 @@
 					if (i < targetCollection.Length)
 					{
 						object processedValue = Serializer.Deserialize(elementType, sourceValues[i], definition);
-						processedValue = SerializationUtilities.PostProcessRequestValue(processedValue, elementType);
+						processedValue = SerializationUtilities.PostProcessValue(processedValue, elementType);
 
 						if (!isTypeConstrained || PassesTypeRestriction(processedValue, elementType))
 						{
@@ -210,7 +176,7 @@
 				for (int i = 0; i < sourceValues.Count; ++i)
 				{
 					object processedValue = Serializer.Deserialize(elementType, sourceValues[i], definition);
-					processedValue = SerializationUtilities.PostProcessRequestValue(processedValue, elementType);
+					processedValue = SerializationUtilities.PostProcessValue(processedValue, elementType);
 
 					if (!isTypeConstrained || PassesTypeRestriction(processedValue, elementType))
 					{

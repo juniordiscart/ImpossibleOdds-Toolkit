@@ -58,5 +58,18 @@
 		public abstract IEnumerable<ISerializationProcessor> SerializationProcessors { get; }
 		public abstract IEnumerable<IDeserializationProcessor> DeserializationProcessors { get; }
 		public abstract HashSet<Type> SupportedTypes { get; }
+
+		public abstract V CreateSequenceInstance(int capacity);
+		public abstract Z CreateLookupInstance(int capacity);
+
+		IList IIndexSerializationDefinition.CreateSequenceInstance(int capacity)
+		{
+			return (this as IIndexSerializationDefinition<T, U, V>).CreateSequenceInstance(capacity);
+		}
+
+		IDictionary ILookupSerializationDefinition.CreateLookupInstance(int capacity)
+		{
+			return (this as ILookupSerializationDefinition<X, Y, Z>).CreateLookupInstance(capacity);
+		}
 	}
 }

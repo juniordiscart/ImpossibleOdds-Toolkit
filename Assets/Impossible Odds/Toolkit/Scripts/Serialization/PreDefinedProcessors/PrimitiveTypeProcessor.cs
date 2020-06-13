@@ -85,8 +85,8 @@
 		/// <summary>
 		/// Attempts to deserialize the object to a primitive type.
 		/// </summary>
-		/// <param name="targetType">The target type to deserialize the given data.</param>
-		/// <param name="dataToDeserialize">The data deserialize and apply to the result.</param>
+		/// <param name="targetType">The target type to deserialize the given data to.</param>
+		/// <param name="dataToDeserialize">The data to deserialize.</param>
 		/// <param name="deserializedResult">The result unto which the data is applied.</param>
 		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
 		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)

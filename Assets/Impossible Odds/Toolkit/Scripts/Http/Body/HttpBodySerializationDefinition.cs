@@ -40,6 +40,14 @@
 				new PrimitiveTypeProcessor(this),
 				new DateTimeProcessor(this),
 				new StringProcessor(this),
+				new Vector2Processor(this as ILookupSerializationDefinition),
+				new Vector2IntProcessor(this as ILookupSerializationDefinition),
+				new Vector3Processor(this as ILookupSerializationDefinition),
+				new Vector3IntProcessor(this as ILookupSerializationDefinition),
+				new Vector4Processor(this as ILookupSerializationDefinition),
+				new QuaternionProcessor(this as ILookupSerializationDefinition),
+				new ColorProcessor(this as ILookupSerializationDefinition),
+				new Color32Processor(this as ILookupSerializationDefinition),
 				new LookupProcessor(this),
 				new SequenceProcessor(this),
 				new CustomObjectSequenceProcessor(this),
@@ -62,6 +70,16 @@
 				typeof(bool),
 				typeof(string)
 			};
+		}
+
+		public override List<object> CreateSequenceInstance(int capacity)
+		{
+			return new List<object>(capacity);
+		}
+
+		public override Dictionary<string, object> CreateLookupInstance(int capacity)
+		{
+			return new Dictionary<string, object>(capacity);
 		}
 	}
 }

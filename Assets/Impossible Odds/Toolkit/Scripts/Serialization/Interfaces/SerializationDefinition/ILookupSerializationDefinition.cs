@@ -31,6 +31,13 @@
 		{
 			get;
 		}
+
+		/// <summary>
+		/// Create an instance of the supported lookup-based collection type.
+		/// </summary>
+		/// <param name="capacity">The capacity the collection should have.</param>
+		/// <returns>Instance of the collection.</returns>
+		IDictionary CreateLookupInstance(int capacity);
 	}
 
 	/// <summary>
@@ -43,5 +50,12 @@
 	where T : Attribute, ILookupDataStructure
 	where U : Attribute, ILookupParameter
 	where V : IDictionary
-	{ }
+	{
+		/// <summary>
+		/// Create an instance of the supported lookup-based collection type.
+		/// </summary>
+		/// <param name="capacity">The capacity the collection should have.</param>
+		/// <returns>Instance of the collection.</returns>
+		new V CreateLookupInstance(int capacity);
+	}
 }

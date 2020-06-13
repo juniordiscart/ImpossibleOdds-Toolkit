@@ -35,5 +35,12 @@
 		public abstract IEnumerable<ISerializationProcessor> SerializationProcessors { get; }
 		public abstract IEnumerable<IDeserializationProcessor> DeserializationProcessors { get; }
 		public abstract HashSet<Type> SupportedTypes { get; }
+
+		public abstract V CreateSequenceInstance(int capacity);
+
+		IList IIndexSerializationDefinition.CreateSequenceInstance(int capacity)
+		{
+			return CreateSequenceInstance(capacity);
+		}
 	}
 }

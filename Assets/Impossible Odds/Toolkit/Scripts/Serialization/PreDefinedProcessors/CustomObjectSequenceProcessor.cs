@@ -127,61 +127,47 @@
 
 		private IList Serialize(Type sourceType, object source)
 		{
-			// Create the collection in which we will store the values.
-			IList values;
+			// Check how many element we need to store.
 			int nrOfElements = GetMaxDefinedIndex(source.GetType(), definition.IndexBasedFieldAttribute);
 			nrOfElements += (nrOfElements >= 0) ? 1 : 0;
 
-			// Check whether we want to include type information
+			// Check whether we want to include type information.
 			IIndexTypeResolveParameter typeResolveAttr = ResolveTypeToSequence(sourceType);
 			if (typeResolveAttr != null)
 			{
 				nrOfElements = Math.Max(typeResolveAttr.Index + 1, nrOfElements);
 			}
 
-			// Create the instance of the index-based type. Arrays are a special case.
-			GenericTypeInfo genericInfo = new GenericTypeInfo(definition);
-			if (definition.IndexBasedDataType.IsArray)
-			{
-				values = Array.CreateInstance(definition.IndexBasedDataType.GetElementType(), nrOfElements);
-			}
-			else
-			{
-				values = Array.CreateInstance(genericInfo.isTypeConstrained ? genericInfo.genericParam : typeof(object), nrOfElements);
-				values = Activator.CreateInstance(definition.IndexBasedDataType, new object[] { values }) as IList;
-			}
-
-			// Process the marked fields.
+			// Create the list of values that will get added.
+			object[] processedValues = new object[nrOfElements];
 			ReadOnlyCollection<FieldAtrributeTuple> sourceFields = GetAttributeFields(sourceType, definition.IndexBasedFieldAttribute);
 			foreach (FieldAtrributeTuple sourceField in sourceFields)
 			{
 				IIndexParameter indexAttribute = sourceField.attribute as IIndexParameter;
-				object value = Serializer.Serialize(sourceField.field.GetValue(source), definition);
-				InsertValueInSequence(sourceType, values, genericInfo, indexAttribute.Index, value);
+
+				if (processedValues[indexAttribute.Index] != null)
+				{
+					Debug.Warning("Index {0} for processing an instance of type {1} is used multiple times.", indexAttribute.Index, sourceType.Name);
+				}
+
+				processedValues[indexAttribute.Index] = Serializer.Serialize(sourceField.field.GetValue(source), definition);
 			}
 
 			// Include the type information, if any was found.
 			if (typeResolveAttr != null)
 			{
-				InsertValueInSequence(sourceType, values, genericInfo, typeResolveAttr.Index, typeResolveAttr.Value);
+				if (processedValues[typeResolveAttr.Index] != null)
+				{
+					Debug.Warning("Index {0} for processing an instance of type {1} is used multiple times.", typeResolveAttr.Index, sourceType.Name);
+				}
+
+				processedValues[typeResolveAttr.Index] = typeResolveAttr.Value;
 			}
 
-			return values;
-		}
-
-		private void InsertValueInSequence(Type sourceType, IList values, GenericTypeInfo sequenceGenericInfo, int index, object value)
-		{
-			if ((value != null) && sequenceGenericInfo.isTypeConstrained)
-			{
-				value = SerializationUtilities.PostProcessRequestValue(value, sequenceGenericInfo.genericParam);
-			}
-
-			if (values[index] != null)
-			{
-				Debug.Warning("Index {0} for processing an instance of type {1} is used multiple times.", index, sourceType.Name);
-			}
-
-			values[index] = value;
+			// Create the collection and start filling it.
+			IList resultCollection = definition.CreateSequenceInstance(nrOfElements);
+			SerializationUtilities.FillSequence(processedValues, resultCollection);
+			return resultCollection;
 		}
 
 		private void Deserialize(object target, IList source)
@@ -275,20 +261,6 @@
 			}
 
 			return targetType;
-		}
-
-		private struct GenericTypeInfo
-		{
-			public readonly Type genericType;
-			public readonly Type genericParam;
-			public readonly bool isTypeConstrained;
-
-			public GenericTypeInfo(IIndexSerializationDefinition definition)
-			{
-				genericType = SerializationUtilities.GetGenericType(definition.IndexBasedDataType, typeof(IList<>));
-				genericParam = (genericType != null) ? genericType.GetGenericArguments()[0] : null;
-				isTypeConstrained = (genericParam != null) && (genericParam != typeof(object));
-			}
 		}
 	}
 }

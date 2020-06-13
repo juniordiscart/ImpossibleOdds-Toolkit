@@ -6,7 +6,7 @@
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Struct, AllowMultiple = true)]
 	public class JsonTypeResolveAttribute : Attribute, ILookupTypeResolveParameter
 	{
-		public const string TypeKey = "xsi:type";
+		public const string TypeKey = "jsi:type";
 
 		private Type target = null;
 		private string key = null;
@@ -35,7 +35,7 @@
 
 		public string Value
 		{
-			get { return value; }
+			get { return string.IsNullOrEmpty(value) ? target.Name : value; }
 			set { this.value = value; }
 		}
 

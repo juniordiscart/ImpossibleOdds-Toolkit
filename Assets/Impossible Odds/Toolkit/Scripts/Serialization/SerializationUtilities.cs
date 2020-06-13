@@ -1,6 +1,7 @@
 ﻿namespace ImpossibleOdds.Serialization
 {
 	using System;
+	using System.Collections;
 
 	public static class SerializationUtilities
 	{
@@ -69,7 +70,7 @@
 		/// <param name="value"></param>
 		/// <param name="targetType"></param>
 		/// <returns></returns>
-		public static object PostProcessRequestValue(object value, Type targetType)
+		public static object PostProcessValue(object value, Type targetType)
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 
@@ -87,6 +88,93 @@
 			{
 				Debug.Warning("Target type {0} does not implement the {1} interface to post-process a value of type {2}.", targetType.Name, typeof(IConvertible).Name, value.GetType().Name);
 				return value;
+			}
+		}
+
+		/// <summary>
+		/// Checks whether the given value can be assigned to the given type and checks whether the type is nullable.
+		/// </summary>
+		/// <param name="value">The value to test against the type.</param>
+		/// <param name="elementType">The type to check against.</param>
+		/// <returns>True if the value can be assigned, false otherwise.</returns>
+		public static bool PassesElementTypeRestriction(object value, Type elementType)
+		{
+			bool isNullable = IsNullableType(elementType);
+			if ((value == null) && !isNullable)
+			{
+				return false;
+			}
+			else if ((value != null) && !elementType.IsAssignableFrom(value.GetType()))
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Insert every element from the source values into the target collection.
+		/// Each value is given a post processing step to match the element type of the target collection.
+		/// </summary>
+		/// <param name="sourceValues">The source values to insert in the target collection.</param>
+		/// <param name="targetCollection">The target collection in which to insert the source values.</param>
+		public static void FillSequence(IEnumerable sourceValues, IList targetCollection)
+		{
+			sourceValues.ThrowIfNull(nameof(sourceValues));
+			targetCollection.ThrowIfNull(nameof(targetCollection));
+			SequenceCollectionTypeInfo collectionTypeInfo = new SequenceCollectionTypeInfo(targetCollection);
+
+			int i = 0;
+			IEnumerator it = sourceValues.GetEnumerator();
+			while (it.MoveNext())
+			{
+				object currentValue = it.Current;
+				if (collectionTypeInfo.isTypeConstrained && !PassesElementTypeRestriction(currentValue, collectionTypeInfo.elementType))
+				{
+					currentValue = PostProcessValue(currentValue, collectionTypeInfo.elementType);
+				}
+
+				if (collectionTypeInfo.isArray)
+				{
+					(targetCollection as Array).SetValue(currentValue, i);
+				}
+				else
+				{
+					targetCollection.Add(currentValue);
+				}
+
+				++i;
+			}
+		}
+
+		/// <summary>
+		/// Insert every key-value pair found in the source values into the target collection.
+		/// Each key and value is given a post processing step to match the key and value types of the target collection.
+		/// </summary>
+		/// <param name="sourceValues">The source values to insert in the target collection.</param>
+		/// <param name="targetCollection">The target collection in which to transfer the key-value pairs from the source values.</param>
+		public static void FillLookup(IDictionary sourceValues, IDictionary targetCollection)
+		{
+			sourceValues.ThrowIfNull(nameof(sourceValues));
+			targetCollection.ThrowIfNull(nameof(targetCollection));
+			LookupCollectionTypeInfo collectionTypeInfo = new LookupCollectionTypeInfo(targetCollection);
+
+			IDictionaryEnumerator it = sourceValues.GetEnumerator();
+			while (it.MoveNext())
+			{
+				object currentKey = it.Key;
+				if (collectionTypeInfo.isKeyTypeConstrained && !PassesElementTypeRestriction(currentKey, collectionTypeInfo.keyType))
+				{
+					currentKey = PostProcessValue(currentKey, collectionTypeInfo.keyType);
+				}
+
+				object currentValue = it.Value;
+				if (collectionTypeInfo.isValueTypeConstrained && !PassesElementTypeRestriction(currentValue, collectionTypeInfo.valueType))
+				{
+					currentValue = PostProcessValue(currentValue, collectionTypeInfo.valueType);
+				}
+
+				targetCollection.Add(currentKey, currentValue);
 			}
 		}
 	}

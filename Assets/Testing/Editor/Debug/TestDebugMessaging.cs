@@ -1,6 +1,4 @@
-﻿#define EDITOR_LOG_LEVEL_INFO
-
-using UnityEngine;
+﻿using UnityEngine;
 
 using Debug = ImpossibleOdds.Debug;
 

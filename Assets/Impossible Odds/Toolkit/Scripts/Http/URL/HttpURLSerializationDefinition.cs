@@ -61,5 +61,10 @@
 				typeof(string)
 			};
 		}
+
+		public override Dictionary<string, string> CreateLookupInstance(int capacity)
+		{
+			return new Dictionary<string, string>(capacity);
+		}
 	}
 }

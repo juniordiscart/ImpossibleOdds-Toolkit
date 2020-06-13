@@ -90,22 +90,6 @@
 		}
 
 		/// <summary>
-		/// Processes a JSON-compliant string value and attempts to deserialize it to the given target object using the provided custom data structures.
-		/// </summary>
-		/// <param name="target">Object to which the JSON data is applied to.</param>
-		/// <param name="jsonStr">JSON-compliant string.</param>
-		/// <typeparam name="TJsonObject">Custom JSON object type.</typeparam>
-		/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
-		/// <returns></returns>
-		public static void Deserialize<TJsonObject, TJsonArray>(object target, string jsonStr)
-		where TJsonObject : IDictionary, new()
-		where TJsonArray : IList, new()
-		{
-			object result = Deserialize<TJsonObject, TJsonArray>(jsonStr);
-			Serializer.Deserialize(target, result, new JsonSerializationDefinition<TJsonObject, TJsonArray>());
-		}
-
-		/// <summary>
 		/// Processes a JSON-compliant string value and attempts to deserialize it to the given target object using the provided data structures and serialization defintion.
 		/// </summary>
 		/// <param name="target">Object to which the JSON data is applied to.</param>
@@ -113,7 +97,6 @@
 		/// <param name="serializationDefinition">Custom serialization definition.</param>
 		/// <typeparam name="TJsonObject">Custom JSON object type.</typeparam>
 		/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
-		/// <returns></returns>
 		public static void Deserialize<TJsonObject, TJsonArray>(object target, string jsonStr, ISerializationDefinition serializationDefinition)
 		where TJsonObject : IDictionary, new()
 		where TJsonArray : IList, new()

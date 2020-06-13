@@ -36,5 +36,12 @@
 		public abstract IEnumerable<ISerializationProcessor> SerializationProcessors { get; }
 		public abstract IEnumerable<IDeserializationProcessor> DeserializationProcessors { get; }
 		public abstract HashSet<Type> SupportedTypes { get; }
+
+		public abstract V CreateLookupInstance(int capacity);
+
+		IDictionary ILookupSerializationDefinition.CreateLookupInstance(int capacity)
+		{
+			return CreateLookupInstance(capacity);
+		}
 	}
 }

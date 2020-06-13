@@ -13,12 +13,12 @@
 	/// </summary>
 	/// <typeparam name="TJsonObject">Custom JSON object type.</typeparam>
 	/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
-	public class JsonSerializationDefinition<TJsonObject, TJsonArray> :
+	public abstract class JsonSerializationDefinition<TJsonObject, TJsonArray> :
 	IndexAndLookupDefinition<JsonArrayAttribute, JsonIndexAttribute, TJsonArray, JsonObjectAttribute, JsonFieldAttribute, TJsonObject>,
 	ISerializationCallbacks<OnJsonSerializingAttribute, OnJsonSerializedAttribute, OnJsonDeserializingAttribute, OnJsonDeserializedAttribute>,
 	ILookupBasedTypeResolve<JsonTypeResolveAttribute>
-	where TJsonObject : IDictionary, new()
-	where TJsonArray : IList, new()
+	where TJsonObject : IDictionary
+	where TJsonArray : IList
 	{
 		public Type JsonObjectType
 		{
@@ -84,6 +84,14 @@
 				new DecimalProcessor(this),
 				new DateTimeProcessor(this),
 				new StringProcessor(this),
+				new Vector2Processor(this as ILookupSerializationDefinition),
+				new Vector2IntProcessor(this as ILookupSerializationDefinition),
+				new Vector3Processor(this as ILookupSerializationDefinition),
+				new Vector3IntProcessor(this as ILookupSerializationDefinition),
+				new Vector4Processor(this as ILookupSerializationDefinition),
+				new QuaternionProcessor(this as ILookupSerializationDefinition),
+				new ColorProcessor(this as ILookupSerializationDefinition),
+				new Color32Processor(this as ILookupSerializationDefinition),
 				new LookupProcessor(this),
 				new SequenceProcessor(this),
 				new CustomObjectSequenceProcessor(this),
@@ -115,6 +123,16 @@
 		public JsonDefaultSerializationDefinition()
 		: base()
 		{ }
+
+		public override Dictionary<string, object> CreateLookupInstance(int capacity)
+		{
+			return new Dictionary<string, object>(capacity);
+		}
+
+		public override List<object> CreateSequenceInstance(int capacity)
+		{
+			return new List<object>(capacity);
+		}
 	}
 
 }

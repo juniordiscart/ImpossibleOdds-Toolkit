@@ -39,7 +39,7 @@
 				new EnumProcessor(this),
 				new PrimitiveTypeProcessor(this),
 				new DateTimeProcessor(this),
-				new StringProcessor(this),
+				new StringProcessor(this)
 			};
 
 			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>();
@@ -58,6 +58,11 @@
 				typeof(bool),
 				typeof(string)
 			};
+		}
+
+		public override Dictionary<string, string> CreateLookupInstance(int capacity)
+		{
+			return new Dictionary<string, string>(capacity);
 		}
 	}
 }

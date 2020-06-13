@@ -127,39 +127,41 @@
 
 		private IDictionary Serialize(Type sourceType, object source)
 		{
-			IDictionary properties = (IDictionary)Activator.CreateInstance(definition.LookupBasedDataType, false);
-			GenericTypeInfo lookupGenericInfo = new GenericTypeInfo(definition);
-
 			ReadOnlyCollection<FieldAtrributeTuple> sourceFields = GetAttributeFields(sourceType, definition.LookupBasedFieldAttribute);
+			Dictionary<object, object> processedValues = new Dictionary<object, object>(sourceFields.Count);
+
+			// Process the source key and value pairs.
 			foreach (FieldAtrributeTuple sourceField in sourceFields)
 			{
-				object key = GetKey(sourceField);
-				object value = sourceField.field.GetValue(source);
-				InsertKeyValuePairInLookup(sourceType, properties, lookupGenericInfo, key, value);
+				object processedKey = Serializer.Serialize(GetKey(sourceField), definition);
+				object processedValue = Serializer.Serialize(sourceField.field.GetValue(source), definition);
+				processedValues.Add(processedKey, processedValue);
 			}
 
 			// Include type information, if available.
 			ILookupTypeResolveParameter typeResolveAttr = ResolveTypeToLookup(sourceType);
 			if (typeResolveAttr != null)
 			{
-				InsertKeyValuePairInLookup(sourceType, properties, lookupGenericInfo, typeResolveAttr.Key, typeResolveAttr.Value);
+				processedValues.Add(typeResolveAttr.Key, typeResolveAttr.Value);
 			}
 
-			return properties;
+			IDictionary resultCollection = definition.CreateLookupInstance(sourceFields.Count);
+			SerializationUtilities.FillLookup(processedValues, resultCollection);
+			return resultCollection;
 		}
 
-		private void InsertKeyValuePairInLookup(Type sourceType, IDictionary properties, GenericTypeInfo lookupGenericInfo, object key, object value)
+		private void InsertKeyValuePairInLookup(Type sourceType, IDictionary properties, LookupCollectionTypeInfo collectionInfo, object key, object value)
 		{
 			// Process the key if type constraints are set.
-			if (lookupGenericInfo.isKeyTypeConstrained)
+			if (collectionInfo.isKeyTypeConstrained)
 			{
-				key = SerializationUtilities.PostProcessRequestValue(key, lookupGenericInfo.genericParams[0]);
+				key = SerializationUtilities.PostProcessValue(key, collectionInfo.genericParams[0]);
 			}
 
 			// Process the value if type constraints are set.
-			if ((value != null) && lookupGenericInfo.isValueTypeConstrained)
+			if ((value != null) && collectionInfo.isValueTypeConstrained)
 			{
-				value = SerializationUtilities.PostProcessRequestValue(value, lookupGenericInfo.genericParams[1]);
+				value = SerializationUtilities.PostProcessValue(value, collectionInfo.genericParams[1]);
 			}
 
 			if (properties.Contains(key))
@@ -278,22 +280,6 @@
 			}
 
 			return targetType;
-		}
-
-		private struct GenericTypeInfo
-		{
-			public readonly Type genericType;
-			public readonly Type[] genericParams;
-			public readonly bool isKeyTypeConstrained;
-			public readonly bool isValueTypeConstrained;
-
-			public GenericTypeInfo(ILookupSerializationDefinition definition)
-			{
-				genericType = SerializationUtilities.GetGenericType(definition.LookupBasedDataType, typeof(IDictionary<,>));
-				genericParams = (genericType != null) ? genericType.GetGenericArguments() : null;
-				isKeyTypeConstrained = (genericParams != null) && (genericParams[0] != typeof(object));
-				isValueTypeConstrained = (genericParams != null) && (genericParams[1] != typeof(object));
-			}
 		}
 	}
 }
