@@ -19,7 +19,7 @@
 
 		protected override bool SendRequestData(HttpAbstractRequest request)
 		{
-			GlobalRunner.Default.StartCoroutine(ProcessRequest(request));
+			GlobalRunner.GetRunner.StartCoroutine(ProcessRequest(request));
 			return true;
 		}
 

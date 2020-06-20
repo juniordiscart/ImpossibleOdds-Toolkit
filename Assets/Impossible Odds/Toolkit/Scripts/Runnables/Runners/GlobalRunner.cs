@@ -2,55 +2,28 @@
 {
 	using UnityEngine;
 
-	public class GlobalRunner : AbstractRunnerCollection
+	public class GlobalRunner : Runner
 	{
-		private const string GlobalRunnerName = "ImpossibleOdds_GlobalRunner";
-		private const string GlobalRunnerPath = "ImpossibleOdds/Runnables/GlobalRunner";
 		private static GlobalRunner globalRunner = null;
 
-		public static new EarlyRunner Early
+		public static GlobalRunner GetRunner
 		{
 			get
 			{
-				LoadGlobalRunner();
-				return ((AbstractRunnerCollection)globalRunner).Early;
+				if (globalRunner == null)
+				{
+					CreateGlobalRunner();
+				}
+
+				return globalRunner;
 			}
 		}
 
-		public static new DefaultRunner Default
+		private static void CreateGlobalRunner()
 		{
-			get
-			{
-				LoadGlobalRunner();
-				return ((AbstractRunnerCollection)globalRunner).Default;
-			}
-		}
-
-		public static new LateRunner Late
-		{
-			get
-			{
-				LoadGlobalRunner();
-				return ((AbstractRunnerCollection)globalRunner).Late;
-			}
-		}
-
-		private static void LoadGlobalRunner()
-		{
-			if (globalRunner != null)
-			{
-				return;
-			}
-
-			GlobalRunner globalContextPrefab = Resources.Load<GlobalRunner>(GlobalRunnerPath);
-			if (globalContextPrefab == null)
-			{
-				throw new RunnablesException(string.Format("No global runner prefab was found in Resources at path '{0}'. Did you (re)move it?", GlobalRunnerPath));
-			}
-
-			globalRunner = GameObject.Instantiate<GlobalRunner>(globalContextPrefab);
+			GameObject globalRunnerObj = new GameObject("ImpossibleOdds_GlobalRunner");
+			globalRunner = globalRunnerObj.AddComponent<GlobalRunner>();
 			GameObject.DontDestroyOnLoad(globalRunner);
-			globalRunner.name = GlobalRunnerName;
 		}
 	}
 }

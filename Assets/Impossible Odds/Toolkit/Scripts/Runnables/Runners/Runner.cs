@@ -2,25 +2,25 @@
 {
 	using System.Collections.Generic;
 	using System.Collections;
-	using System;
 
 	using UnityEngine;
 
 	using Debug = ImpossibleOdds.Debug;
 
-	public abstract class Runner : MonoBehaviour, IRunner, IFixedRunner
+	public class Runner : MonoBehaviour, IRunner, IFixedRunner, ILateRunner, IRoutineRunner
 	{
-		private HashSet<IRunnable> runnables = new HashSet<IRunnable>();
-		private HashSet<IFixedRunnable> fixedRunnables = new HashSet<IFixedRunnable>();
+		private List<IRunnable> runnables = new List<IRunnable>();
+		private List<IFixedRunnable> fixedRunnables = new List<IFixedRunnable>();
+		private List<ILateRunnable> lateRunnables = new List<ILateRunnable>();
 
 		public void Add(IRunnable runnable)
 		{
 			runnable.ThrowIfNull(nameof(runnable));
 
-			if (runnables.Add(runnable))
+			if (!runnables.Contains(runnable))
 			{
-				runnable.CurrentRunner = this;
-				Debug.Info("Added runnable of type {0} to {1}.", runnable.GetType(), gameObject.name);
+				runnables.Add(runnable);
+				Debug.Info("Added runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
 			}
 		}
 
@@ -28,10 +28,21 @@
 		{
 			runnable.ThrowIfNull(nameof(runnable));
 
-			if (fixedRunnables.Add(runnable))
+			if (!fixedRunnables.Contains(runnable))
 			{
-				runnable.CurrentRunner = this;
-				Debug.Info("Added fixed runnable of type {0} to {1}.", runnable.GetType(), gameObject.name);
+				fixedRunnables.Add(runnable);
+				Debug.Info("Added fixed runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
+			}
+		}
+
+		public void Add(ILateRunnable runnable)
+		{
+			runnable.ThrowIfNull(nameof(runnable));
+
+			if (!lateRunnables.Contains(runnable))
+			{
+				lateRunnables.Add(runnable);
+				Debug.Info("Added late runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
 			}
 		}
 
@@ -41,12 +52,7 @@
 
 			if (runnables.Remove(runnable))
 			{
-				if (runnable.CurrentRunner == (IRunner)this)
-				{
-					runnable.CurrentRunner = null;
-				}
-
-				Debug.Info("Removed runnable of type {0} from {1}.", runnable.GetType(), gameObject.name);
+				Debug.Info("Removed runnable of type {0} from {1}.", runnable.GetType().Name, gameObject.name);
 			}
 		}
 
@@ -56,58 +62,51 @@
 
 			if (fixedRunnables.Remove(runnable))
 			{
-				if (runnable.CurrentRunner == (IFixedRunner)this)
-				{
-					runnable.CurrentRunner = null;
-				}
-
-				Debug.Info("Removed fixed runnable of type {0} from {1}.", runnable.GetType(), gameObject.name);
+				Debug.Info("Removed fixed runnable of type {0} from {1}.", runnable.GetType().Name, gameObject.name);
 			}
 		}
 
-		public void RunRoutine(IEnumerator routineHandle)
+		public void Remove(ILateRunnable runnable)
 		{
-			routineHandle.ThrowIfNull(nameof(routineHandle));
-			StartCoroutine(routineHandle);
+			runnable.ThrowIfNull(nameof(runnable));
+
+			if (lateRunnables.Remove(runnable))
+			{
+				Debug.Info("Removed late runnable of type {0} from {1}.", runnable.GetType().Name, gameObject.name);
+			}
 		}
 
-		public void StopRoutine(IEnumerator routineHandle)
+		public new Coroutine StartCoroutine(IEnumerator routineHandle)
 		{
 			routineHandle.ThrowIfNull(nameof(routineHandle));
-			StopCoroutine(routineHandle);
+			return base.StartCoroutine(routineHandle);
+		}
+
+		public new void StopCoroutine(IEnumerator routineHandle)
+		{
+			routineHandle.ThrowIfNull(nameof(routineHandle));
+			base.StopCoroutine(routineHandle);
+		}
+
+		public new void StopCoroutine(Coroutine routineHandle)
+		{
+			routineHandle.ThrowIfNull(nameof(routineHandle));
+			base.StopCoroutine(routineHandle);
 		}
 
 		protected virtual void Update()
 		{
-			foreach (IRunnable runnable in runnables)
-			{
-				if (runnable != null)
-				{
-					runnable.Update();
-				}
-			}
+			runnables.ForEach(r => r.Update());
 		}
 
 		protected virtual void FixedUpdate()
 		{
-			foreach (IFixedRunnable runnable in fixedRunnables)
-			{
-				if (runnable != null)
-				{
-					runnable.FixedUpdate();
-				}
-			}
+			fixedRunnables.ForEach(r => r.FixedUpdate());
 		}
 
-		protected virtual void OnDestroy()
+		protected virtual void LateUpdate()
 		{
-			foreach (IRunnable runnable in runnables)
-			{
-				if ((runnable != null) && (runnable is IDisposable))
-				{
-					(runnable as IDisposable).Dispose();
-				}
-			}
+			lateRunnables.ForEach(r => r.LateUpdate());
 		}
 	}
 }
