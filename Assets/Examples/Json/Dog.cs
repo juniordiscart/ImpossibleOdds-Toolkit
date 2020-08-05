@@ -1,4 +1,4 @@
-﻿namespace ImpossibleOdds.Testing.Json
+﻿namespace ImpossibleOdds.Examples.Json
 {
 	using System;
 	using UnityEngine;

@@ -1,15 +1,10 @@
-﻿namespace ImpossibleOdds.Testing.Json
+﻿namespace ImpossibleOdds.Examples.Json
 {
 	using System;
-	using System.IO;
-	using System.Runtime.Serialization.Formatters.Binary;
 	using UnityEngine;
 	using UnityEngine.UI;
 	using TMPro;
 	using ImpossibleOdds.Json;
-
-	using Debug = ImpossibleOdds.Debug;
-
 
 	public class TestJsonSerialization : MonoBehaviour
 	{
@@ -58,7 +53,7 @@
 			animalRegister.AddAnimal(dundee);
 
 			JsonOptions options = new JsonOptions();
-			options.Minify = false;
+			options.CompactOutput = false;
 			serializedResult = JsonProcessor.Serialize(animalRegister, options);
 			txtJsonResult.text = serializedResult;
 

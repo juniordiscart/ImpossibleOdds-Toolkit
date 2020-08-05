@@ -1,4 +1,4 @@
-﻿namespace ImpossibleOdds.Testing.Runnables
+﻿namespace ImpossibleOdds.Examples.Runnables
 {
 	using ImpossibleOdds.Runnables;
 

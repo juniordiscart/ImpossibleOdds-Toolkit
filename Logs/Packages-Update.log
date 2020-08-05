@@ -82,3 +82,11 @@ The following packages were updated:
   com.unity.textmeshpro from version 1.4.1 to 2.0.1
 The following packages were removed:
   com.unity.package-manager-ui@2.0.8
+
+=== Wed Jun 24 21:19:25 2020
+
+Packages were changed.
+Update Mode: updateDependencies
+
+The following packages were updated:
+  com.unity.ide.vscode from version 1.2.0 to 1.2.1

@@ -1,4 +1,4 @@
-﻿namespace ImpossibleOdds.Testing.DependencyInjection
+﻿namespace ImpossibleOdds.Examples.DependencyInjection
 {
 	public interface IInputManager
 	{

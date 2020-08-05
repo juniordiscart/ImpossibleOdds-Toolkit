@@ -1,4 +1,4 @@
-﻿namespace ImpossibleOdds.Testing.DependencyInjection
+﻿namespace ImpossibleOdds.Examples.DependencyInjection
 {
 	using UnityEngine;
 	using ImpossibleOdds.DependencyInjection;
