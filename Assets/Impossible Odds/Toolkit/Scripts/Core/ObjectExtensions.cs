@@ -52,5 +52,33 @@
 
 			return argument;
 		}
+
+		/// <summary>
+		/// Logs an error when the argument is null.
+		/// </summary>
+		/// <param name="argument">The argument to test.</param>
+		/// <param name="argumentName">The name of the argument. This will be printed in the error message.</param>
+		/// <typeparam name="T"></typeparam>
+		/// <returns>True if the argument is null. False otherwise.</returns>
+		public static bool LogErrorIfNull<T>(this T argument, string argumentName)
+		{
+			if (argument == null)
+			{
+				if (argument is UnityEngine.Object unityArg)
+				{
+					Debug.Error(unityArg, "Argument '{0}' is null.", argumentName);
+				}
+				else
+				{
+					Debug.Error("Argument '{0}' is null.", argumentName);
+				}
+
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
 	}
 }
