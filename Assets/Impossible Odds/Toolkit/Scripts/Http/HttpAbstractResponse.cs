@@ -3,7 +3,5 @@
 	using ImpossibleOdds.Weblink;
 
 	public abstract class HttpAbstractResponse : IWeblinkResponse
-	{
-
-	}
+	{ }
 }

@@ -1,7 +1,6 @@
 ﻿namespace ImpossibleOdds.Weblink
 {
 	using System;
-	using System.Reflection;
 	using System.Collections.Generic;
 
 	public abstract class WeblinkMessenger<TRequest, TResponse, TResponseAssociation>
@@ -94,16 +93,8 @@
 				throw new WeblinkException(errMsg);
 			}
 
-			// Instantiate using a default constructor, else we use the activator
-			ConstructorInfo c = responseType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
-			if (c != null)
-			{
-				return (TResponse)c.Invoke(null);
-			}
-			else
-			{
-				return (TResponse)Activator.CreateInstance(responseType);
-			}
+			// Instantiate a response
+			return (TResponse)Activator.CreateInstance(responseType);
 		}
 
 		protected abstract bool SendRequestData(TRequest request);

@@ -5,9 +5,9 @@
 	public class JsonOptions
 	{
 		/// <summary>
-		/// Enable/disable whether the output should get minified.
+		/// Enable/disable whether the output should waste as little space as possible.
 		/// </summary>
-		public bool Minify
+		public bool CompactOutput
 		{
 			get; set;
 		}
@@ -30,7 +30,7 @@
 
 		public JsonOptions()
 		{
-			Minify = true;
+			CompactOutput = true;
 			EscapeSlashCharacter = true;
 			CustomSerializationDefinition = null;
 		}

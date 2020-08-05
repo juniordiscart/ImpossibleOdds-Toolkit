@@ -681,7 +681,7 @@
 			public RuntimeOptions(JsonOptions options)
 			{
 				escapeSlashChar = options.EscapeSlashCharacter;
-				prettyPrint = !options.Minify;
+				prettyPrint = !options.CompactOutput;
 				serializationDefinition = (options.CustomSerializationDefinition != null) ? options.CustomSerializationDefinition : defaultSerializationDefinition;
 			}
 		}

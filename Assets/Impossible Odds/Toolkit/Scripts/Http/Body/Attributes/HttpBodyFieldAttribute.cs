@@ -3,18 +3,27 @@
 	using System;
 	using ImpossibleOdds.Serialization;
 
-	public sealed class HttpBodyFieldAttribute : Attribute, ILookupParameter
+	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+	public sealed class HttpBodyFieldAttribute : Attribute, ILookupParameter<string>
 	{
-		public object Key
+		private string key = null;
+
+		object ILookupParameter.Key
 		{
-			get { return key; }
+			get { return Key; }
 		}
 
-		private readonly object key;
-
-		public HttpBodyFieldAttribute(object key)
+		public string Key
 		{
-			key.ThrowIfNull(nameof(key));
+			get { return key; }
+			set { key = value; }
+		}
+
+		public HttpBodyFieldAttribute()
+		{ }
+
+		public HttpBodyFieldAttribute(string key)
+		{
 			this.key = key;
 		}
 	}

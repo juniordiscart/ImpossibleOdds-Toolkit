@@ -1,10 +1,7 @@
 ﻿namespace ImpossibleOdds.Http
 {
-	using System.Globalization;
-
-	using ImpossibleOdds.Weblink;
-
 	using UnityEngine.Networking;
+	using ImpossibleOdds.Weblink;
 
 	public abstract class HttpAbstractRequest : IWeblinkRequest
 	{
@@ -17,7 +14,7 @@
 
 		private static int requestIDCount = 0;
 
-		[HttpHeaderField("Id")]
+		[HttpHeaderField(Key = "Id")]
 		private int id;
 
 		public HttpAbstractRequest()

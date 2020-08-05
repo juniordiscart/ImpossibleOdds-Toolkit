@@ -1,20 +1,29 @@
-﻿using System;
-using ImpossibleOdds.Serialization;
-
-namespace ImpossibleOdds.Http
+﻿namespace ImpossibleOdds.Http
 {
-	public sealed class HttpURLFieldAttribute : Attribute, ILookupParameter
+	using System;
+	using ImpossibleOdds.Serialization;
+
+	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+	public sealed class HttpURLFieldAttribute : Attribute, ILookupParameter<string>
 	{
-		public object Key
+		private string key = null;
+
+		object ILookupParameter.Key
 		{
-			get { return key; }
+			get { return Key; }
 		}
 
-		private readonly object key;
-
-		public HttpURLFieldAttribute(object key)
+		public string Key
 		{
-			key.ThrowIfNull(nameof(key));
+			get { return key; }
+			set { key = value; }
+		}
+
+		public HttpURLFieldAttribute()
+		{ }
+
+		public HttpURLFieldAttribute(string key)
+		{
 			this.key = key;
 		}
 	}

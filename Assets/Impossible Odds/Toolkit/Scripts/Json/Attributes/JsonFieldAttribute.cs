@@ -21,5 +21,10 @@
 
 		public JsonFieldAttribute()
 		{ }
+
+		public JsonFieldAttribute(string key)
+		{
+			this.key = key;
+		}
 	}
 }
