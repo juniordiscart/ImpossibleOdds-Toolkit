@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.Globalization;
 
 	using ImpossibleOdds.Serialization.Processors;
 
@@ -25,6 +26,8 @@
 	where Y : Attribute, ILookupParameter
 	where Z : IDictionary
 	{
+		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
+
 		public Type IndexBasedClassMarkingAttribute
 		{
 			get { return typeof(T); }
@@ -53,6 +56,12 @@
 		public Type LookupBasedDataType
 		{
 			get { return typeof(Z); }
+		}
+
+		public IFormatProvider FormatProvider
+		{
+			get { return formatProvider; }
+			set { formatProvider = value; }
 		}
 
 		public abstract IEnumerable<ISerializationProcessor> SerializationProcessors { get; }

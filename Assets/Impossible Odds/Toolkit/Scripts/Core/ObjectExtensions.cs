@@ -38,7 +38,7 @@
 		}
 
 		/// <summary>
-		/// Throws an ArgumentNullException if the string is null or whitespace. Returns the string otherwise.
+		/// Throws an ArgumentNullException if the string is null or only contains whitespace characters. Returns the string otherwise.
 		/// </summary>
 		/// <param name="argument">The string to check for null or whitespaces.</param>
 		/// <param name="argumentName">The name of the string in case it is null or just whitespace.</param>

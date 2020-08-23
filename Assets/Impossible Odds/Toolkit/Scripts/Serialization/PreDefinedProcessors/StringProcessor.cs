@@ -32,7 +32,7 @@
 				return true;
 			}
 
-			deserializedResult = Convert.ChangeType(dataToDeserialize, targetType);
+			deserializedResult = Convert.ChangeType(dataToDeserialize, targetType, definition.FormatProvider);
 			return true;
 		}
 	}

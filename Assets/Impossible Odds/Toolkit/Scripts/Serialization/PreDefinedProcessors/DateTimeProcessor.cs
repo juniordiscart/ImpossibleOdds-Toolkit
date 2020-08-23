@@ -10,7 +10,11 @@
 	{
 		private string dateTimeFormat = string.Empty;
 
-		public DateTimeProcessor(ISerializationDefinition definition, string dateTimeFormat = DefaultOptions.DateTimeFormat)
+		public DateTimeProcessor(ISerializationDefinition definition)
+		: base(definition)
+		{ }
+
+		public DateTimeProcessor(ISerializationDefinition definition, string dateTimeFormat)
 		: base(definition)
 		{
 			this.dateTimeFormat = dateTimeFormat;
@@ -36,7 +40,9 @@
 				return true;
 			}
 
-			string strValue = ((DateTime)objectToSerialize).ToString(dateTimeFormat);
+			DateTime dtValue = (DateTime)objectToSerialize;
+			string strValue = string.IsNullOrWhiteSpace(dateTimeFormat) ? dtValue.ToString(definition.FormatProvider) : dtValue.ToString(dateTimeFormat);
+
 			if (!definition.SupportedTypes.Contains(strValue.GetType()))
 			{
 				throw new SerializationException(string.Format("The converted type of a {0} type is not supported.", typeof(DateTime).Name));
@@ -73,7 +79,7 @@
 				throw new SerializationException(string.Format("Only values of type {0} can be used to convert to a {1} value.", typeof(string).Name, typeof(DateTime).Name));
 			}
 
-			deserializedResult = DateTime.ParseExact(dataToDeserialize as string, dateTimeFormat, CultureInfo.InvariantCulture);
+			deserializedResult = string.IsNullOrWhiteSpace(dateTimeFormat) ? DateTime.Parse(dataToDeserialize as string, definition.FormatProvider) : DateTime.ParseExact(dataToDeserialize as string, dateTimeFormat, CultureInfo.InvariantCulture);
 			return true;
 		}
 	}

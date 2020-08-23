@@ -65,7 +65,7 @@
 						continue;
 					}
 
-					serializedResult = Convert.ChangeType(objectToSerialize, targetType);
+					serializedResult = Convert.ChangeType(objectToSerialize, targetType, definition.FormatProvider);
 					return true;
 				}
 			}
@@ -75,7 +75,7 @@
 			// Last resort: check whether a string-type is accepted.
 			if (definition.SupportedTypes.Contains(typeof(string)))
 			{
-				serializedResult = objectToSerialize.ToString();
+				serializedResult = ((IConvertible)objectToSerialize).ToString(definition.FormatProvider);
 				return true;
 			}
 
@@ -104,7 +104,7 @@
 			}
 			else
 			{
-				deserializedResult = Convert.ChangeType(dataToDeserialize, targetType);
+				deserializedResult = Convert.ChangeType(dataToDeserialize, targetType, definition.FormatProvider);
 			}
 			return true;
 		}
@@ -121,11 +121,11 @@
 					case FALSE_STRING_ALT:
 						return false;
 					default:
-						return Convert.ChangeType(objToParse, typeof(bool));
+						return Convert.ChangeType(objToParse, typeof(bool), definition.FormatProvider);
 				}
 			}
 
-			return Convert.ChangeType(objToParse, typeof(bool));
+			return Convert.ChangeType(objToParse, typeof(bool), definition.FormatProvider);
 		}
 	}
 }

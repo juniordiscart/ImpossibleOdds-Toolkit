@@ -34,5 +34,13 @@
 		{
 			get;
 		}
+
+		/// <summary>
+		/// Format provider to process culture-defined settings and formatting.
+		/// </summary>
+		IFormatProvider FormatProvider
+		{
+			get;
+		}
 	}
 }

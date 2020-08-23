@@ -131,7 +131,7 @@
 			}
 			else if (obj.GetType().IsPrimitive)
 			{
-				builder.Append(obj);
+				builder.Append(((IConvertible)obj).ToString(options.serializationDefinition.FormatProvider));
 			}
 			else if (obj is IDictionary)
 			{
