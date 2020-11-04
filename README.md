@@ -53,7 +53,7 @@ There's also a variant that supports more than four parameters (using `params ob
 
 ### Enums
 
-There are situations where you might want to display an enum value properly instead of its internal value name. The usual way to go about it is to write a `switch`-statement and list all possibilities, but that becomes tedious the more values there are, as well as on how many places you want to display these values.
+There are situations where you might want to display an enum value properly instead of its internal value name. The usual way to go about it is to write a `switch`-statement and list all possibilities, but that becomes tedious the more values there are, as well as in how many places you want to display these values.
 
 Introducing enum display names and translation keys! Using the `DisplayNameAttribute`, you can decorate your enum values with a direct display name and/or a translation key you can use to retrieve its proper translation from your localization system.
 
@@ -83,7 +83,7 @@ When calling the `DisplayName()` extension method, if no name is set, it will re
 
 ### Logging
 
-A custom logging utility to replace Unity's default way of logging. Internally, it still uses Unity's `Debug` class, but allows you to outright disable certain logging levels. This not only clears up your log file, but can also save memory allocations (and in the end, a round of garbage collection), by disabling the lines of code calling to log a message.
+A custom logging utility to replace Unity's default way of logging. Internally, it still uses Unity's `Debug` class, but allows you to outright disable certain logging levels. This not only clears up your log file, but can also save memory allocations (and in the end, rounds of garbage collection), by disabling the lines of code calling to log a message.
 
 ```cs
 Log.Info();
@@ -94,11 +94,11 @@ Log.Exception();
 
 The naming and parameter format deviates slightly from Unity's `Debug` class to keep them from having conflicts. All of these also have the option to directly provide any `string.Format()` parameters.
 
-You can set different logging levels for the player and the editor, allowing you to keep valuable info messages while testing in editor, while removing them from the player build. See the [Editor Setting](#editor-settings) section for more details on how to enable/disable these.
+You can set different logging levels for the player and the editor, allowing you to keep valuable info messages while testing in editor, while removing them from the player build. See the [Editor Settings](#editor-settings) section for more details on how to enable/disable these.
 
 ### Value Checking
 
-All to frequently, there are situations where you need to check if certain values are not `null`, or a string is not empty, these can save you some lines and time:
+All to frequently, there are situations where you need to check if certain values are `null` or not, or a string is not empty. Then these can save you some lines and time:
 
 ```cs
 value.ThrowIfNull(); // ArgumentNullException if null.
@@ -121,7 +121,7 @@ The `ImpossibleOdds.DependencyInjection` namespace contains a simple framework f
 
 ## Runnables
 
-The `ImpossibleOdds.Runnables` namespace provides the tools to ditch the GameObject and MonoBheaviour methodology for classes and data that require the `Update()` functionality, but don't need everything else.
+The `ImpossibleOdds.Runnables` namespace provides the tools to ditch the GameObject and MonoBheaviour methodology for classes and data that require the `Update()` functionality, but don't need anything else.
 
 > Documentation is under construction and API is not finalized!
 
@@ -157,17 +157,21 @@ Most settings are saved using preprocessor directives in the ProjectSettings.ass
 
 ## Advanced
 
-The sections found below are most likely not sections you'll need to be in direct contact with unless you wish to build and expand upon the features provided in this toolkit.
+The sub-sections found below are most likely not sections you'll come in direct contact with unless you wish to build and expand upon the features provided in this toolkit.
 
 ### Weblink
 
 The `ImpossibleOdds.Weblink` namespace contains a general purpose messaging framework for sending requests and processing matching responses. It performs an automatic response class mapping in order to formulate the response data in a way which makes them directly workable for your classes.
+
+> Documentation is under construction and API is not finalized!
 
 It's currently used by the [`ImpossibleOdds.Http`](#http) namespace.
 
 ### Serialization
 
 The `ImpossibleOdds.Serialization` namespace has several data processing classes to transform your data to/from intermediate data structures. This intermediate data can then be used to easily process them to other formats. What this intermediate data looks like can be defined using several flavors of 'serialization definitions'. They define what data types are natively supported by the target data format, and which data processors are used to transform the more complex data.
+
+> Documentation is under construction and API is not finalized!
 
 This is extensively used by the [`ImpossibleOdds.Json`](#json) and [`ImpossibleOdds.Http`](#http) namespaces.
 
