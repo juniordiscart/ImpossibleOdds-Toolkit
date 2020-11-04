@@ -144,7 +144,7 @@
 				processedKey = SerializationUtilities.PostProcessValue(processedKey, keyType);
 				if ((processedKey == null) || (isKeyTypeConstrained && !PassesTypeRestriction(processedKey, keyType)))
 				{
-					Debug.Warning("A key of type {0} could not be processed to a valid key for target of type {1}. Skipping key and value.", key.GetType(), targetType.Name);
+					Log.Warning("A key of type {0} could not be processed to a valid key for target of type {1}. Skipping key and value.", key.GetType(), targetType.Name);
 					continue;
 				}
 
@@ -154,11 +154,11 @@
 				{
 					if (sourceValues[key] == null)
 					{
-						Debug.Warning("A null value could not be processed to a valid value for target of type {0}. Skipping key and value.", targetType.Name);
+						Log.Warning("A null value could not be processed to a valid value for target of type {0}. Skipping key and value.", targetType.Name);
 					}
 					else
 					{
-						Debug.Warning("A value of type {0} could not be processed to a valid value for target of type {1}. Skipping key and value.", sourceValues[key].GetType().Name, targetType.Name);
+						Log.Warning("A value of type {0} could not be processed to a valid value for target of type {1}. Skipping key and value.", sourceValues[key].GetType().Name, targetType.Name);
 					}
 					continue;
 				}

@@ -156,7 +156,7 @@
 					}
 					else
 					{
-						Debug.Warning("The target array is shorter than the source collection. Excess values have not been processed.");
+						Log.Warning("The target array is shorter than the source collection. Excess values have not been processed.");
 						break;
 					}
 				}
@@ -186,11 +186,11 @@
 					{
 						if (sourceValues[i] == null)
 						{
-							Debug.Warning("A null value could not be processed to a valid value for target of type {0}. Skipping value.", targetType.Name);
+							Log.Warning("A null value could not be processed to a valid value for target of type {0}. Skipping value.", targetType.Name);
 						}
 						else
 						{
-							Debug.Warning("A value of type {0} could not be processed to a valid value for target of type {1}. Skipping value.", sourceValues[i].GetType().Name, targetType.Name);
+							Log.Warning("A value of type {0} could not be processed to a valid value for target of type {1}. Skipping value.", sourceValues[i].GetType().Name, targetType.Name);
 						}
 					}
 				}

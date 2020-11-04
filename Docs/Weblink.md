@@ -1,2 +1,0 @@
-# `ImpossibleOdds.Weblink`
-TODO

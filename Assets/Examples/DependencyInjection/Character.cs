@@ -3,8 +3,6 @@
 	using UnityEngine;
 	using ImpossibleOdds.DependencyInjection;
 
-	using Debug = ImpossibleOdds.Debug;
-
 	[RequireComponent(typeof(CharacterController))]
 	public class Character : MonoBehaviour
 	{
@@ -36,12 +34,12 @@
 		{
 			if (inputManager == null)
 			{
-				Debug.Error("No instance of {0} has been given. Character will not be able to move around.", typeof(IInputManager).Name);
+				Log.Error("No instance of {0} has been given. Character will not be able to move around.", typeof(IInputManager).Name);
 			}
 
 			if (mainCamera == null)
 			{
-				Debug.Error("No instance of {0} has been given. The camera will not follow the character around.", typeof(Camera).Name);
+				Log.Error("No instance of {0} has been given. The camera will not follow the character around.", typeof(Camera).Name);
 			}
 			else
 			{

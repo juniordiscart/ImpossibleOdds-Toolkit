@@ -3,8 +3,6 @@
 	using System.Collections.Generic;
 	using ImpossibleOdds.Json;
 
-	using Debug = ImpossibleOdds.Debug;
-
 	[JsonObject]
 	public class AnimalRegister
 	{
@@ -15,7 +13,7 @@
 		{
 			if (registeredAnimals.Contains(animal))
 			{
-				Debug.Error("An animal can only be registered once.");
+				Log.Error("An animal can only be registered once.");
 				return;
 			}
 
@@ -25,25 +23,25 @@
 		[OnJsonSerializing]
 		private void OnSerializingRegister()
 		{
-			Debug.Info("Serializing the animal register.");
+			Log.Info("Serializing the animal register.");
 		}
 
 		[OnJsonSerialized]
 		private void OnSerializedRegister()
 		{
-			Debug.Info("Serialized the animal register.");
+			Log.Info("Serialized the animal register.");
 		}
 
 		[OnJsonDeserializing]
 		private void OnDeserializingRegister()
 		{
-			Debug.Info("Deserializing the animal register.");
+			Log.Info("Deserializing the animal register.");
 		}
 
 		[OnJsonDeserialized]
 		private void OnDeserializedRegister()
 		{
-			Debug.Info("Deserialized the animal register.");
+			Log.Info("Deserialized the animal register.");
 		}
 
 

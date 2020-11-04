@@ -21,7 +21,7 @@
 
 			if (Exists(key))
 			{
-				Debug.Warning("A context registered to key {0} already exists. Overriding with new context.", key.ToString());
+				Log.Warning("A context registered to key {0} already exists. Overriding with new context.", key.ToString());
 				contextRegister[key] = context;
 			}
 			else
@@ -69,7 +69,7 @@
 			}
 			else
 			{
-				Debug.Warning("The dependency context register does not have a context registered under key {0}", key.ToString());
+				Log.Warning("The dependency context register does not have a context registered under key {0}", key.ToString());
 				return null;
 			}
 		}

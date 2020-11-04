@@ -5,7 +5,7 @@
 
 	public class EditorExtensionSettings : AbstractSingleSetting
 	{
-		private const string EnableCachingSymbol = "IMPOSSIBLE_ODDS_DISABLE_EDITOR_EXT";
+		private const string EnableCachingSymbol = "IMPOSSIBLE_ODDS_ENABLE_EDITOR_EXT";
 
 		public EditorExtensionSettings(HashSet<string> loadedSymbols) : base(loadedSymbols)
 		{ }
@@ -17,8 +17,8 @@
 
 		public override void DisplayGUI(string searchContext)
 		{
-			isSet = EditorGUILayout.Toggle("Disable editor extensions." + (IsChanged ? "*" : string.Empty), isSet);
-			EditorGUILayout.HelpBox("Editor extensions are enabled by default. Tick the box to disable them.", MessageType.None);
+			isSet = EditorGUILayout.Toggle("Enable editor extensions." + (IsChanged ? "*" : string.Empty), isSet);
+			EditorGUILayout.HelpBox("Editor extensions are disabled by default. Tick the box to enable them.", MessageType.None);
 		}
 	}
 }

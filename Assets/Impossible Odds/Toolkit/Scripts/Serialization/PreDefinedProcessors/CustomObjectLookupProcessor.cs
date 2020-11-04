@@ -167,7 +167,7 @@
 			if (properties.Contains(key))
 			{
 				properties[key] = value;
-				Debug.Warning("A key with value '{0}' has been defined more than once for source object of type {1}.", key.ToString(), sourceType.Name);
+				Log.Warning("A key with value '{0}' has been defined more than once for source object of type {1}.", key.ToString(), sourceType.Name);
 			}
 			else
 			{
@@ -194,7 +194,7 @@
 					}
 					else
 					{
-						Debug.Warning("The source does not contain a value associated with key '{0}' for a target of type {1}.", key, target.GetType().Name);
+						Log.Warning("The source does not contain a value associated with key '{0}' for a target of type {1}.", key, target.GetType().Name);
 						continue;
 					}
 				}

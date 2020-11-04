@@ -66,11 +66,11 @@
 			{
 				if (argument is UnityEngine.Object unityArg)
 				{
-					Debug.Error(unityArg, "Argument '{0}' is null.", argumentName);
+					Log.Error(unityArg, "Argument '{0}' is null.", argumentName);
 				}
 				else
 				{
-					Debug.Error("Argument '{0}' is null.", argumentName);
+					Log.Error("Argument '{0}' is null.", argumentName);
 				}
 
 				return true;

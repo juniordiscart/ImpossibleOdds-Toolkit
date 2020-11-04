@@ -14,6 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rejectedNamespaces:
   - AOT
+  - AssetBundleBrowser
+  - AssetBundleBrowser.AssetBundleDataSource
+  - AssetBundleBrowser.AssetBundleModel
   - CollabProxy.UI
   - ExCSS
   - ExCSS.Model
@@ -34,18 +37,28 @@ MonoBehaviour:
   - ImpossibleOdds.DataMapping.Processors
   - ImpossibleOdds.DependencyInjection
   - ImpossibleOdds.DependencyInjection.Editor
+  - ImpossibleOdds.DependencyInjection.Extensions
   - ImpossibleOdds.Editor
+  - ImpossibleOdds.Examples.Http
+  - ImpossibleOdds.Examples.Json
+  - ImpossibleOdds.Examples.Runnables
   - ImpossibleOdds.Http
   - ImpossibleOdds.Json
   - ImpossibleOdds.Json.Demo
   - ImpossibleOdds.Photon.Webhooks
   - ImpossibleOdds.Runnables
+  - ImpossibleOdds.Serialization
+  - ImpossibleOdds.Serialization.Processors
   - ImpossibleOdds.Settings
   - ImpossibleOdds.Weblink
   - Internal.Runtime.Augments
   - Internal.Runtime.CompilerServices
   - JetBrains.Annotations
+  - JetBrains.Rider.Unity.Editor
+  - Microsoft.Cci
+  - Microsoft.Cci.Pdb
   - Microsoft.CSharp
+  - Microsoft.Reflection
   - Microsoft.SqlServer.Server
   - Microsoft.VisualBasic
   - Microsoft.Win32
@@ -56,9 +69,13 @@ MonoBehaviour:
   - Mono.Audio
   - Mono.Cecil
   - Mono.Cecil.Cil
+  - Mono.Cecil.Mdb
   - Mono.Cecil.Metadata
+  - Mono.Cecil.Pdb
   - Mono.Cecil.PE
+  - Mono.Cecil.Rocks
   - Mono.Collections.Generic
+  - Mono.CompilerServices.SymbolWriter
   - Mono.Globalization.Unicode
   - Mono.Http
   - Mono.Interop
@@ -106,6 +123,10 @@ MonoBehaviour:
   - NUnit.Framework.Internal.Execution
   - NUnit.Framework.Internal.Filters
   - ObjCRuntimeInternal
+  - Packages.Rider.Editor
+  - Packages.Rider.Editor.PostProcessors
+  - Packages.Rider.Editor.UnitTesting
+  - Packages.Rider.Editor.Util
   - Photon.Pun
   - Photon.Realtime
   - Photon.SocketServer.Numeric
@@ -148,6 +169,7 @@ MonoBehaviour:
   - System.Diagnostics.Private
   - System.Diagnostics.SymbolStore
   - System.Diagnostics.Tracing
+  - System.Diagnostics.Tracing.Internal
   - System.Dynamic
   - System.Dynamic.Utils
   - System.Globalization
@@ -244,29 +266,41 @@ MonoBehaviour:
   - System.Xml.Xsl.Xslt
   - System.Xml.Xsl.XsltOld
   - System.Xml.Xsl.XsltOld.Debugger
+  - TestRunner.Callbacks
   - TMPro
   - TMPro.EditorUtilities
   - TMPro.SpriteAssetUtilities
   - TreeEditor
   - Unity
+  - Unity.Audio
+  - Unity.Baselib
+  - Unity.Baselib.LowLevel
   - Unity.Burst
   - Unity.Burst.LowLevel
+  - Unity.CodeEditor
   - Unity.Collections
   - Unity.Collections.LowLevel.Unsafe
+  - Unity.CompilationPipeline.Common.Diagnostics
+  - Unity.CompilationPipeline.Common.ILPostProcessing
   - Unity.DataContract
   - Unity.Experimental.EditorMode
   - Unity.IO.LowLevel.Unsafe
   - Unity.Jobs
   - Unity.Jobs.LowLevel.Unsafe
+  - Unity.MPE
   - Unity.PackageManager
   - Unity.PackageManager.Internal.BackingStore
   - Unity.PackageManager.Ivy
   - Unity.PackageManager.IvyInternal
   - Unity.PackageManager.UI
   - Unity.Profiling
+  - Unity.Profiling.LowLevel
   - Unity.SerializationLogic
+  - Unity.UNetWeaver
   - UnityEditor
+  - UnityEditor._2D.Sprite.Editor
   - UnityEditor.Accessibility
+  - UnityEditor.AddComponent
   - UnityEditor.AdvancedDropdown
   - UnityEditor.Advertisements
   - UnityEditor.AI
@@ -274,7 +308,9 @@ MonoBehaviour:
   - UnityEditor.Android
   - UnityEditor.AnimatedValues
   - UnityEditor.Animations
+  - UnityEditor.AssetImporters
   - UnityEditor.Audio
+  - UnityEditor.BugReporting
   - UnityEditor.Build
   - UnityEditor.Build.Content
   - UnityEditor.Build.Player
@@ -286,12 +322,15 @@ MonoBehaviour:
   - UnityEditor.Connect
   - UnityEditor.CrashReporting
   - UnityEditor.DeploymentTargets
+  - UnityEditor.EditorTools
   - UnityEditor.Events
   - UnityEditor.EventSystems
   - UnityEditor.Experimental
   - UnityEditor.Experimental.AssetImporters
   - UnityEditor.Experimental.Audio.Google
   - UnityEditor.Experimental.Build.AssetBundle
+  - UnityEditor.Experimental.GraphView
+  - UnityEditor.Experimental.Licensing
   - UnityEditor.Experimental.Networking.PlayerConnection
   - UnityEditor.Experimental.Rendering
   - UnityEditor.Experimental.RestService
@@ -306,11 +345,13 @@ MonoBehaviour:
   - UnityEditor.Graphs.AnimationBlendTree
   - UnityEditor.Graphs.AnimationStateMachine
   - UnityEditor.Hardware
+  - UnityEditor.Il2Cpp
   - UnityEditor.IMGUI.Controls
   - UnityEditor.iOS.Xcode
   - UnityEditor.iOS.Xcode.Extensions
   - UnityEditor.iOS.Xcode.PBX
   - UnityEditor.LinuxStandalone
+  - UnityEditor.Localization.Editor
   - UnityEditor.Macros
   - UnityEditor.Media
   - UnityEditor.MemoryProfiler
@@ -321,12 +362,15 @@ MonoBehaviour:
   - UnityEditor.PackageManager
   - UnityEditor.PackageManager.Requests
   - UnityEditor.PackageManager.UI
+  - UnityEditor.PackageManager.UI.AssetStore
   - UnityEditor.PlatformSupport
   - UnityEditor.Playables
   - UnityEditor.Presets
+  - UnityEditor.Profiling
   - UnityEditor.Profiling.Memory.Experimental
   - UnityEditor.ProjectWindowCallback
   - UnityEditor.Purchasing
+  - UnityEditor.Remoting
   - UnityEditor.Rendering
   - UnityEditor.RestService
   - UnityEditor.SceneManagement
@@ -336,6 +380,7 @@ MonoBehaviour:
   - UnityEditor.Scripting.ScriptCompilation
   - UnityEditor.Scripting.Serialization
   - UnityEditor.ShortcutManagement
+  - UnityEditor.Snap
   - UnityEditor.Sprites
   - UnityEditor.StyleSheets
   - UnityEditor.TestRunner
@@ -347,26 +392,42 @@ MonoBehaviour:
   - UnityEditor.TestTools.TestRunner.Api
   - UnityEditor.TestTools.TestRunner.CommandLineTest
   - UnityEditor.TestTools.TestRunner.GUI
+  - UnityEditor.TestTools.TestRunner.TestRun
+  - UnityEditor.TestTools.TestRunner.TestRun.Tasks
   - UnityEditor.TestTools.TestRunner.UnityTestProtocol
+  - UnityEditor.TextCore.LowLevel
+  - UnityEditor.Tilemaps
   - UnityEditor.Timeline
   - UnityEditor.Timeline.Analytics
   - UnityEditor.Timeline.inspectors
+  - UnityEditor.Timeline.Signals
   - UnityEditor.Timeline.Utilities
   - UnityEditor.TreeViewExamples
   - UnityEditor.U2D
   - UnityEditor.U2D.Common
   - UnityEditor.U2D.Interface
+  - UnityEditor.U2D.Sprites
   - UnityEditor.UI
   - UnityEditor.UIAutomation
+  - UnityEditor.UIElements
+  - UnityEditor.UIElements.Debugger
+  - UnityEditor.UIElements.Samples
+  - UnityEditor.UnityLinker
   - UnityEditor.Utils
   - UnityEditor.VersionControl
+  - UnityEditor.VFX
   - UnityEditor.VisualStudioIntegration
   - UnityEditor.Web
   - UnityEditor.Windows
   - UnityEditor.WindowsStandalone
+  - UnityEditor.XR
   - UnityEditor.XR.Daydream
+  - UnityEditor.XR.LegacyInputHelpers
   - UnityEditorInternal
   - UnityEditorInternal.Advertisements
+  - UnityEditorInternal.APIUpdaterExtensions
+  - UnityEditorInternal.APIUpdating
+  - UnityEditorInternal.Media
   - UnityEditorInternal.Profiling
   - UnityEditorInternal.Profiling.Memory.Experimental
   - UnityEditorInternal.Profiling.Memory.Experimental.FileFormat
@@ -374,13 +435,21 @@ MonoBehaviour:
   - UnityEditorInternal.VR
   - UnityEditorInternal.VR.iOS
   - UnityEngine
+  - UnityEngine._Scripting.APIUpdating
   - UnityEngine.Accessibility
   - UnityEngine.Advertisements
   - UnityEngine.Advertisements.Android
   - UnityEngine.Advertisements.Editor
+  - UnityEngine.Advertisements.Events
   - UnityEngine.Advertisements.iOS
+  - UnityEngine.Advertisements.Platform
+  - UnityEngine.Advertisements.Platform.Android
+  - UnityEngine.Advertisements.Platform.Editor
+  - UnityEngine.Advertisements.Platform.Unsupported
+  - UnityEngine.Advertisements.Purchasing
   - UnityEngine.Advertisements.SimpleJson
   - UnityEngine.Advertisements.SimpleJson.Reflection
+  - UnityEngine.Advertisements.Utilities
   - UnityEngine.AI
   - UnityEngine.Analytics
   - UnityEngine.Android
@@ -424,13 +493,20 @@ MonoBehaviour:
   - UnityEngine.Internal.VR
   - UnityEngine.iOS
   - UnityEngine.Jobs
+  - UnityEngine.LowLevel
+  - UnityEngine.Lumin
+  - UnityEngine.Monetization
+  - UnityEngine.Monetization.MiniJSON
   - UnityEngine.Networking
   - UnityEngine.Networking.Match
   - UnityEngine.Networking.NetworkSystem
   - UnityEngine.Networking.PlayerConnection
   - UnityEngine.Networking.Types
+  - UnityEngine.ParticleSystemJobs
   - UnityEngine.Playables
+  - UnityEngine.PlayerLoop
   - UnityEngine.Profiling
+  - UnityEngine.Profiling.Experimental
   - UnityEngine.Profiling.Memory.Experimental
   - UnityEngine.Purchasing
   - UnityEngine.Purchasing.Extension
@@ -445,10 +521,13 @@ MonoBehaviour:
   - UnityEngine.SpatialTracking
   - UnityEngine.Sprites
   - UnityEngine.StyleSheets
+  - UnityEngine.Subsystems
+  - UnityEngine.TestRunner
   - UnityEngine.TestRunner.NUnitExtensions
   - UnityEngine.TestRunner.NUnitExtensions.Filters
   - UnityEngine.TestRunner.NUnitExtensions.Runner
   - UnityEngine.TestRunner.TestLaunchers
+  - UnityEngine.TestRunner.Utils
   - UnityEngine.TestTools
   - UnityEngine.TestTools.Constraints
   - UnityEngine.TestTools.Logging
@@ -464,16 +543,27 @@ MonoBehaviour:
   - UnityEngine.tvOS
   - UnityEngine.U2D
   - UnityEngine.U2D.Interface
+  - UnityEngine.U2D.Sprites
   - UnityEngine.UI
   - UnityEngine.UI.Collections
   - UnityEngine.UI.CoroutineTween
+  - UnityEngine.UIElements
+  - UnityEngine.UIElements.Experimental
+  - UnityEngine.UIElements.StyleSheets
+  - UnityEngine.UIElements.StyleSheets.Syntax
+  - UnityEngine.UIElements.UIR
+  - UnityEngine.UIElements.UIR.Implementation
   - UnityEngine.UIR
+  - UnityEngine.VFX
   - UnityEngine.Video
   - UnityEngine.VR
   - UnityEngine.Windows
   - UnityEngine.Windows.Speech
+  - UnityEngine.Windows.WebCam
   - UnityEngine.WSA
   - UnityEngine.XR
+  - UnityEngine.XR.LegacyInputHelpers
+  - UnityEngine.XR.Provider
   - UnityEngine.XR.Tango
   - UnityEngine.XR.WSA
   - UnityEngine.XR.WSA.Input
@@ -484,6 +574,8 @@ MonoBehaviour:
   - UnityEngineInternal
   - UnityEngineInternal.Input
   - UnityEngineInternal.Video
+  - UnityEngineInternal.XR.WSA
+  - VSCodeEditor
   - WebSocketSharp
   - WebSocketSharp.Net
   - WebSocketSharp.Net.WebSockets

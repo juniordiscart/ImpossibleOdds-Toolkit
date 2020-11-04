@@ -6,7 +6,7 @@
 	/// <summary>
 	/// Adds conditional logging and pipes them through to Unity's Debug functions.
 	/// </summary>
-	public static class Debug
+	public static class Log
 	{
 		/// <summary>
 		/// Log an information message to the Unity console.

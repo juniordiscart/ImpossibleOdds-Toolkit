@@ -35,12 +35,12 @@
 			bool isNullable = SerializationUtilities.IsNullableType(elementType);
 			if ((value == null) && !isNullable)
 			{
-				Debug.Warning("A null value was returned for a data structure that expects elements of type {0} which is not nullable.", elementType.GetType());
+				Log.Warning("A null value was returned for a data structure that expects elements of type {0} which is not nullable.", elementType.GetType());
 				return false;
 			}
 			else if ((value != null) && !elementType.IsAssignableFrom(value.GetType()))
 			{
-				Debug.Warning("A value of type {0} cannot be assigned to a data structure that expects elements of type {1}.", value.GetType().Name, elementType.Name);
+				Log.Warning("A value of type {0} cannot be assigned to a data structure that expects elements of type {1}.", value.GetType().Name, elementType.Name);
 				return false;
 			}
 

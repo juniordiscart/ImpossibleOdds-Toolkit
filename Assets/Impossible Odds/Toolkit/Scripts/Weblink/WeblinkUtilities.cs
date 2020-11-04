@@ -16,7 +16,7 @@
 
 			if (responseType == null)
 			{
-				Debug.Warning("Could not find an associated response type for requests of type {0}.", requestType.Name);
+				Log.Warning("Could not find an associated response type for requests of type {0}.", requestType.Name);
 			}
 
 			return responseType;

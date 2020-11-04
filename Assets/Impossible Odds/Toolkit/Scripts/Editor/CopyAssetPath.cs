@@ -1,4 +1,4 @@
-﻿#if !IMPOSSIBLE_ODDS_DISABLE_EDITOR_EXT
+﻿#if IMPOSSIBLE_ODDS_ENABLE_EDITOR_EXT
 namespace ImpossibleOdds.Editor
 {
 	using UnityEditor;

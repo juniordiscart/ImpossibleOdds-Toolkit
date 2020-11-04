@@ -5,8 +5,6 @@
 
 	using UnityEngine;
 
-	using Debug = ImpossibleOdds.Debug;
-
 	public class Runner : MonoBehaviour, IRunner, IFixedRunner, ILateRunner, IRoutineRunner
 	{
 		private List<IRunnable> runnables = new List<IRunnable>();
@@ -20,7 +18,7 @@
 			if (!runnables.Contains(runnable))
 			{
 				runnables.Add(runnable);
-				Debug.Info("Added runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
+				Log.Info("Added runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
 			}
 		}
 
@@ -31,7 +29,7 @@
 			if (!fixedRunnables.Contains(runnable))
 			{
 				fixedRunnables.Add(runnable);
-				Debug.Info("Added fixed runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
+				Log.Info("Added fixed runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
 			}
 		}
 
@@ -42,7 +40,7 @@
 			if (!lateRunnables.Contains(runnable))
 			{
 				lateRunnables.Add(runnable);
-				Debug.Info("Added late runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
+				Log.Info("Added late runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
 			}
 		}
 
@@ -52,7 +50,7 @@
 
 			if (runnables.Remove(runnable))
 			{
-				Debug.Info("Removed runnable of type {0} from {1}.", runnable.GetType().Name, gameObject.name);
+				Log.Info("Removed runnable of type {0} from {1}.", runnable.GetType().Name, gameObject.name);
 			}
 		}
 
@@ -62,7 +60,7 @@
 
 			if (fixedRunnables.Remove(runnable))
 			{
-				Debug.Info("Removed fixed runnable of type {0} from {1}.", runnable.GetType().Name, gameObject.name);
+				Log.Info("Removed fixed runnable of type {0} from {1}.", runnable.GetType().Name, gameObject.name);
 			}
 		}
 
@@ -72,7 +70,7 @@
 
 			if (lateRunnables.Remove(runnable))
 			{
-				Debug.Info("Removed late runnable of type {0} from {1}.", runnable.GetType().Name, gameObject.name);
+				Log.Info("Removed late runnable of type {0} from {1}.", runnable.GetType().Name, gameObject.name);
 			}
 		}
 

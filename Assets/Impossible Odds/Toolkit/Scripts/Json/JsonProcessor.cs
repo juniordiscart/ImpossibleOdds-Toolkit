@@ -151,7 +151,7 @@
 				}
 				catch (System.Exception e)
 				{
-					Debug.Exception(e);
+					Log.Exception(e);
 					throw new JsonException(string.Format("Unexpected JSON building scenario. Failed to serialize object of type {0}.\n{1} message:\n{2}", obj.GetType().Name, e.GetType().Name, e.Message));
 				}
 			}

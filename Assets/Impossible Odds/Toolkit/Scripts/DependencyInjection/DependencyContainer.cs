@@ -30,7 +30,7 @@
 
 			if (bindings.ContainsKey(bindingType))
 			{
-				Debug.Warning("A binding for type {0} already exists. Override with new binding.", bindingType.Name);
+				Log.Warning("A binding for type {0} already exists. Override with new binding.", bindingType.Name);
 				bindings[bindingType] = binding;
 			}
 			else

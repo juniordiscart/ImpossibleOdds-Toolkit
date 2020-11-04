@@ -147,7 +147,7 @@
 
 				if (processedValues[indexAttribute.Index] != null)
 				{
-					Debug.Warning("Index {0} for processing an instance of type {1} is used multiple times.", indexAttribute.Index, sourceType.Name);
+					Log.Warning("Index {0} for processing an instance of type {1} is used multiple times.", indexAttribute.Index, sourceType.Name);
 				}
 
 				processedValues[indexAttribute.Index] = Serializer.Serialize(sourceField.field.GetValue(source), definition);
@@ -158,7 +158,7 @@
 			{
 				if (processedValues[typeResolveAttr.Index] != null)
 				{
-					Debug.Warning("Index {0} for processing an instance of type {1} is used multiple times.", typeResolveAttr.Index, sourceType.Name);
+					Log.Warning("Index {0} for processing an instance of type {1} is used multiple times.", typeResolveAttr.Index, sourceType.Name);
 				}
 
 				processedValues[typeResolveAttr.Index] = typeResolveAttr.Value;
@@ -182,7 +182,7 @@
 				// Check whether the source has such an index.
 				if (source.Count <= indexParam.Index)
 				{
-					Debug.Warning("The source does not contain a value at index '{0}' for a target of type {1}.", indexParam.Index, target.GetType().Name);
+					Log.Warning("The source does not contain a value at index '{0}' for a target of type {1}.", indexParam.Index, target.GetType().Name);
 					continue;
 				}
 

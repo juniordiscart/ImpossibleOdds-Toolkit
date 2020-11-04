@@ -1,13 +1,11 @@
 ﻿using UnityEngine;
 
-using Debug = ImpossibleOdds.Debug;
-
 public class TestDebugMessaging : MonoBehaviour
 {
 	private void Start()
 	{
-		Debug.Info(this, "This is an info message.");
-		Debug.Warning(this, "This is a warning message.");
-		Debug.Error(this, "This is an error message.");
+		Log.Info(this, "This is an info message.");
+		Log.Warning(this, "This is a warning message.");
+		Log.Error(this, "This is an error message.");
 	}
 }

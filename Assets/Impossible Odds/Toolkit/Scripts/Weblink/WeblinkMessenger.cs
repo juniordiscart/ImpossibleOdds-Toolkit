@@ -36,7 +36,7 @@
 			if (IsPendingRequest(request))
 			{
 				string errMsg = "This request is already sent.";
-				Debug.Error(errMsg);
+				Log.Error(errMsg);
 				throw new WeblinkException(errMsg);
 			}
 
@@ -47,7 +47,7 @@
 			else
 			{
 				string errMsg = string.Format("Failed to send request of type {0}.", request.GetType().Name);
-				Debug.Error(errMsg);
+				Log.Error(errMsg);
 				throw new WeblinkException(errMsg);
 			}
 		}
@@ -83,13 +83,13 @@
 			if (responseType == null)
 			{
 				string errMsg = string.Format("Could not determine the response type associated with requests of type {0}.", requestType.Name);
-				Debug.Error(errMsg);
+				Log.Error(errMsg);
 				throw new WeblinkException(errMsg);
 			}
 			else if (responseType.IsAbstract || responseType.IsInterface)
 			{
 				string errMsg = string.Format("Cannot create a response instance of type {0} because it is abstract or is an interface.", responseType.Name);
-				Debug.Error(errMsg);
+				Log.Error(errMsg);
 				throw new WeblinkException(errMsg);
 			}
 

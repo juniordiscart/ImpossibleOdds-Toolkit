@@ -40,7 +40,7 @@
 				throw new HttpException(string.Format("HTTP error: {0}", webRequest.error));
 			}
 
-			Debug.Info("Received HTTP response {0} of type {1}.", request.ID, response.GetType().Name);
+			Log.Info("Received HTTP response {0} of type {1}.", request.ID, response.GetType().Name);
 			Serializer.Deserialize(response, webRequest.GetResponseHeaders(), headerDefinition);
 
 			// If the response defines that a JSON response is expected.
@@ -147,7 +147,7 @@
 				throw new HttpException(string.Format("The request of type {0} did not return valid header data in the form of {1}.", request.GetType().Name, typeof(Dictionary<string, string>).Name));
 			}
 
-			Debug.Info("Sending HTTP request {0} of type {1}.", request.ID, request.GetType().Name);
+			Log.Info("Sending HTTP request {0} of type {1}.", request.ID, request.GetType().Name);
 
 			yield return unityRequest.SendWebRequest();
 			ReceiveResponseData(unityRequest);

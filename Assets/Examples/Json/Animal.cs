@@ -4,8 +4,6 @@
 	using ImpossibleOdds.Json;
 	using ImpossibleOdds.Serialization;
 
-	using Debug = ImpossibleOdds.Debug;
-
 	[JsonObject,
 	JsonTypeResolve(typeof(Cat)),
 	JsonTypeResolve(typeof(Dog)),
@@ -33,13 +31,13 @@
 		[OnJsonSerializing]
 		private void OnSerializingAnimal()
 		{
-			Debug.Info("Serializing animal '{0}'.", name);
+			Log.Info("Serializing animal '{0}'.", name);
 		}
 
 		[OnJsonDeserialized]
 		private void OnDeserializedAnimal()
 		{
-			Debug.Info("Deserialized animal '{0}', which is of type '{1}'.", name, this.GetType().Name);
+			Log.Info("Deserialized animal '{0}', which is of type '{1}'.", name, this.GetType().Name);
 		}
 
 		[EnumStringSerialization]
