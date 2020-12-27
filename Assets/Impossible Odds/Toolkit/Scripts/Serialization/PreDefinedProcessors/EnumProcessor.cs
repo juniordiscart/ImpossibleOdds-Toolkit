@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Collections.ObjectModel;
 	using System.Linq;
 	using System.Reflection;
 
@@ -98,7 +97,7 @@
 			if (typeof(string).IsAssignableFrom(dataToDeserialize.GetType()))
 			{
 				// Get the enum fields that have potential aliases defined
-				ReadOnlyCollection<FieldInfo> aliasFields = GetEnumAliases(targetType);
+				IReadOnlyList<FieldInfo> aliasFields = GetEnumAliases(targetType);
 				foreach (FieldInfo aliasField in aliasFields)
 				{
 					EnumStringAliasAttribute aliasAttr = aliasField.GetCustomAttributes(typeof(EnumStringAliasAttribute), false).First() as EnumStringAliasAttribute;
@@ -122,7 +121,7 @@
 			return true;
 		}
 
-		private ReadOnlyCollection<FieldInfo> GetEnumAliases(Type enumType)
+		private IReadOnlyList<FieldInfo> GetEnumAliases(Type enumType)
 		{
 			if (aliasAttributesCache.ContainsKey(enumType))
 			{

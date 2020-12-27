@@ -1,6 +1,7 @@
 ﻿namespace ImpossibleOdds.Examples.Json
 {
 	using System;
+	using System.Text;
 	using ImpossibleOdds.Json;
 	using ImpossibleOdds.Serialization;
 
@@ -22,22 +23,48 @@
 		[JsonField]
 		private TaxonomyClass classification;
 
-		public int NrOfLegs { get => nrOfLegs; set => nrOfLegs = value; }
-		public float Weight { get => weight; set => weight = value; }
-		public string Name { get => name; set => name = value; }
-		public DateTime DateOfBirth { get => dateOfBirth; set => dateOfBirth = value; }
-		public TaxonomyClass Classification { get => classification; set => classification = value; }
+		private StringBuilder log = null;
+
+		public int NrOfLegs
+		{
+			get { return nrOfLegs; }
+			set { nrOfLegs = value; }
+		}
+
+		public float Weight
+		{
+			get { return weight; }
+			set { weight = value; }
+		}
+
+		public string Name
+		{
+			get { return name; }
+			set { name = value; }
+		}
+
+		public DateTime DateOfBirth
+		{
+			get { return dateOfBirth; }
+			set { dateOfBirth = value; }
+		}
+
+		public TaxonomyClass Classification
+		{
+			get { return classification; }
+			set { classification = value; }
+		}
+
+		public StringBuilder Log
+		{
+			get { return log; }
+			set { log = value; }
+		}
 
 		[OnJsonSerializing]
 		private void OnSerializingAnimal()
 		{
-			Log.Info("Serializing animal '{0}'.", name);
-		}
-
-		[OnJsonDeserialized]
-		private void OnDeserializedAnimal()
-		{
-			Log.Info("Deserialized animal '{0}', which is of type '{1}'.", name, this.GetType().Name);
+			log.AppendLine(string.Format("Serializing animal '{0}'.", name));
 		}
 
 		[EnumStringSerialization]

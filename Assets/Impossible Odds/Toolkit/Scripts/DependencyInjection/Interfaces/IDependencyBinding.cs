@@ -23,7 +23,7 @@
 	/// <summary>
 	/// Generic variant to retrieve instances of the type.
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="T">Type of instances that will get returned.</typeparam>
 	public interface IDependencyBinding<T> : IDependencyBinding
 	{
 		/// <summary>

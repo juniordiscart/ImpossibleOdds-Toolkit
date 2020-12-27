@@ -37,11 +37,11 @@
 		{
 			if ((i < 0) || (i >= list.Count))
 			{
-				throw new ArgumentOutOfRangeException("i");
+				throw new ArgumentOutOfRangeException(nameof(i));
 			}
 			else if ((j < 0) || (j >= list.Count))
 			{
-				throw new ArgumentOutOfRangeException("j");
+				throw new ArgumentOutOfRangeException(nameof(j));
 			}
 
 			T temp = list[i];

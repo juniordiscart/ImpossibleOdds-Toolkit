@@ -1,6 +1,7 @@
 ﻿namespace ImpossibleOdds.Examples.Json
 {
 	using System;
+	using System.Text;
 	using UnityEngine;
 	using UnityEngine.UI;
 	using TMPro;
@@ -13,12 +14,23 @@
 		[SerializeField]
 		private Button btnDeserialize = null;
 		[SerializeField]
-		// private Text txtJsonResult = null;
-		private TextMeshProUGUI txtJsonResult = null;
+		private TextMeshProUGUI txtJson = null;
+		[SerializeField]
+		private TextMeshProUGUI txtLog = null;
 
-
-		private string serializedResult = string.Empty;
 		private AnimalRegister animalRegister = null;
+		private JsonOptions jsonOptions = null;
+		private StringBuilder jsonBuilder = null;
+		private StringBuilder logBuilder = null;
+
+		private void Awake()
+		{
+			jsonOptions = new JsonOptions();
+			jsonOptions.CompactOutput = false;
+
+			jsonBuilder = new StringBuilder();
+			logBuilder = new StringBuilder();
+		}
 
 		private void Start()
 		{
@@ -27,7 +39,8 @@
 			btnSerialize.onClick.AddListener(OnSerialize);
 			btnDeserialize.onClick.AddListener(OnDeserialize);
 			btnDeserialize.interactable = false;
-			txtJsonResult.text = "No data serialized.";
+			txtJson.text = string.Empty;
+			txtLog.text = string.Empty;
 		}
 
 		private void OnSerialize()
@@ -45,25 +58,28 @@
 			Crocodile dundee = new Crocodile();
 			dundee.Name = "Dundee";
 
-			animalRegister = new AnimalRegister();
+			animalRegister = new AnimalRegister(logBuilder);
 			animalRegister.AddAnimal(minoes);
 			animalRegister.AddAnimal(pickles);
 			animalRegister.AddAnimal(waffles);
 			animalRegister.AddAnimal(mark);
 			animalRegister.AddAnimal(dundee);
 
-			JsonOptions options = new JsonOptions();
-			options.CompactOutput = false;
-			serializedResult = JsonProcessor.Serialize(animalRegister, options);
-			txtJsonResult.text = serializedResult;
+			jsonBuilder.Clear();
+			logBuilder.Clear();
 
-			btnDeserialize.interactable = !string.IsNullOrWhiteSpace(serializedResult);
+			JsonProcessor.Serialize(animalRegister, jsonOptions, jsonBuilder);
+			btnDeserialize.interactable = (jsonBuilder.Length > 0);
+
+			txtLog.text = logBuilder.ToString();
+			txtJson.text = jsonBuilder.ToString();
 		}
 
 		private void OnDeserialize()
 		{
-			AnimalRegister deserializedRegister = new AnimalRegister();
-			JsonProcessor.Deserialize(deserializedRegister, serializedResult);
+			AnimalRegister deserializedRegister = new AnimalRegister(logBuilder);
+			JsonProcessor.Deserialize(deserializedRegister, jsonBuilder.ToString());
+			txtLog.text = logBuilder.ToString();
 		}
 	}
 }

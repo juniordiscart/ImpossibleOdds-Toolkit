@@ -2,6 +2,6 @@
 {
 	public interface IDependencyContextInstaller
 	{
-		void Install(IDependencyContext context);
+		void Install(IDependencyContainer container);
 	}
 }

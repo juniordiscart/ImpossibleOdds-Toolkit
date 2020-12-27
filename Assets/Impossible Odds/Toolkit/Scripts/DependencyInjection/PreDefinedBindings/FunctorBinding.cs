@@ -10,6 +10,12 @@
 	{
 		private Func<T> generator;
 
+		public Func<T> Generator
+		{
+			get { return generator; }
+			set { generator = value; }
+		}
+
 		public FunctorBinding(Func<T> generator)
 		{
 			generator.ThrowIfNull(nameof(generator));

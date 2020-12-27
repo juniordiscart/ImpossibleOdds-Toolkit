@@ -3,7 +3,7 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using System.Collections.ObjectModel;
+	using System.Reflection;
 
 	/// <summary>
 	/// A (de)serialization processor to process custom object to list-like data structures.
@@ -38,7 +38,7 @@
 			}
 
 			Type sourceType = objectToSerialize.GetType();
-			if (!sourceType.IsDefined(definition.IndexBasedClassMarkingAttribute, true))
+			if (!sourceType.GetTypeInfo().IsDefined(definition.IndexBasedClassMarkingAttribute, true))
 			{
 				serializedResult = null;
 				return false;
@@ -140,7 +140,7 @@
 
 			// Create the list of values that will get added.
 			object[] processedValues = new object[nrOfElements];
-			ReadOnlyCollection<FieldAtrributeTuple> sourceFields = GetAttributeFields(sourceType, definition.IndexBasedFieldAttribute);
+			IReadOnlyList<FieldAtrributeTuple> sourceFields = GetAttributeFields(sourceType, definition.IndexBasedFieldAttribute);
 			foreach (FieldAtrributeTuple sourceField in sourceFields)
 			{
 				IIndexParameter indexAttribute = sourceField.attribute as IIndexParameter;
@@ -173,7 +173,7 @@
 		private void Deserialize(object target, IList source)
 		{
 			// Get all of the fields that would like to get their value filled in
-			ReadOnlyCollection<FieldAtrributeTuple> targetFields = GetAttributeFields(target.GetType(), definition.IndexBasedFieldAttribute);
+			IReadOnlyList<FieldAtrributeTuple> targetFields = GetAttributeFields(target.GetType(), definition.IndexBasedFieldAttribute);
 
 			foreach (FieldAtrributeTuple targetField in targetFields)
 			{

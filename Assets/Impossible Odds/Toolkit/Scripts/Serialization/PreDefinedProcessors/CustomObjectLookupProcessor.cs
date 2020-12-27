@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using System.Collections.ObjectModel;
 
 	/// <summary>
 	/// A (de)serialization processor to process custom object to dictionary-like data structures.
@@ -127,7 +126,7 @@
 
 		private IDictionary Serialize(Type sourceType, object source)
 		{
-			ReadOnlyCollection<FieldAtrributeTuple> sourceFields = GetAttributeFields(sourceType, definition.LookupBasedFieldAttribute);
+			IReadOnlyList<FieldAtrributeTuple> sourceFields = GetAttributeFields(sourceType, definition.LookupBasedFieldAttribute);
 			Dictionary<object, object> processedValues = new Dictionary<object, object>(sourceFields.Count);
 
 			// Process the source key and value pairs.
@@ -178,7 +177,7 @@
 		private void Deserialize(object target, IDictionary source)
 		{
 			// Get all of the fields that would like to get their value filled in
-			ReadOnlyCollection<FieldAtrributeTuple> targetFields = GetAttributeFields(target.GetType(), definition.LookupBasedFieldAttribute);
+			IReadOnlyList<FieldAtrributeTuple> targetFields = GetAttributeFields(target.GetType(), definition.LookupBasedFieldAttribute);
 
 			foreach (FieldAtrributeTuple targetField in targetFields)
 			{

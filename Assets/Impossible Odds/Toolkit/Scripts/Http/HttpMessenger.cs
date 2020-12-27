@@ -1,156 +1,170 @@
 ﻿namespace ImpossibleOdds.Http
 {
+	using System;
 	using System.Text;
-	using System.Collections;
 	using System.Collections.Generic;
-
+	using UnityEngine.Networking;
 	using ImpossibleOdds.Weblink;
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Json;
-	using ImpossibleOdds.Runnables;
 
-	using UnityEngine.Networking;
-
-	public class HttpMessenger : WeblinkMessenger<HttpAbstractRequest, HttpAbstractResponse, HttpResponseAssociationAttribute>
+	public class HttpMessenger : WeblinkMessenger<IHttpRequest, IHttpResponse, HttpMessageHandle, HttpResponseTypeAttribute, HttpResponseCallbackAttribute>
 	{
-		private static HttpURLSerializationDefinition urlDefinition = new HttpURLSerializationDefinition();
-		private static HttpHeaderSerializationDefinition headerDefinition = new HttpHeaderSerializationDefinition();
-		private static HttpBodySerializationDefinition bodyDefinition = new HttpBodySerializationDefinition();
+		private readonly static HttpURLSerializationDefinition urlDefinition = new HttpURLSerializationDefinition();
+		private readonly static HttpHeaderSerializationDefinition headerDefinition = new HttpHeaderSerializationDefinition();
+		private readonly static HttpBodySerializationDefinition bodyDefinition = new HttpBodySerializationDefinition();
 
-		protected override bool SendRequestData(HttpAbstractRequest request)
+		private StringBuilder stringBuilderCache = null;
+
+		public HttpMessenger()
 		{
-			GlobalRunner.GetRunner.StartCoroutine(ProcessRequest(request));
-			return true;
+			stringBuilderCache = new StringBuilder();
 		}
 
-		protected override void ProcessResponseData(HttpAbstractRequest request, HttpAbstractResponse response, object responseData)
+		/// <summary>
+		/// Process the request data and sends out a UnityWebRequest
+		/// </summary>
+		/// <param name="request">The request data to be sent.</param>
+		/// <returns>A handle to keep track of the </returns>
+		public override HttpMessageHandle SendRequest(IHttpRequest request)
 		{
-			UnityWebRequest webRequest = responseData as UnityWebRequest;
+			request.ThrowIfNull(nameof(request));
 
-			if (!webRequest.isDone)
+			if (IsPending(request))
 			{
-				throw new HttpException("The request has not completed yet.");
-			}
-			else if (webRequest.isNetworkError)
-			{
-				throw new HttpException(string.Format("Network error: {0}", webRequest.error));
-			}
-			else if (webRequest.isHttpError)
-			{
-				throw new HttpException(string.Format("HTTP error: {0}", webRequest.error));
+				throw new HttpException("The request of type {0} is already pending a response.", request.GetType().Name);
 			}
 
-			Log.Info("Received HTTP response {0} of type {1}.", request.ID, response.GetType().Name);
-			Serializer.Deserialize(response, webRequest.GetResponseHeaders(), headerDefinition);
+			UnityWebRequest unityRequest = GenerateWebRequest(request);
+			HttpMessageHandle messageHandle = new HttpMessageHandle(request, unityRequest);
+			AddPendingRequest(messageHandle);
 
-			// If the response defines that a JSON response is expected.
-			if (response is IHttpJsonResponse)
+			UnityWebRequestAsyncOperation webOP = unityRequest.SendWebRequest();
+			// Log.Info("Sending request of type {0}.", request.GetType());
+
+			if (!webOP.isDone)
 			{
-				string jsonResponse = webRequest.downloadHandler.text;
-				object jsonData = JsonProcessor.Deserialize(jsonResponse);
-				Serializer.Deserialize(response, jsonData, bodyDefinition);
+				webOP.completed += (op) => OnRequestCompleted(messageHandle);
+			}
+			else
+			{
+				// In case the operation completes immediately
+				OnRequestCompleted(messageHandle);
 			}
 
-			// If the response defines a custom response handler, then we hand over the data.
-			if (response is IHttpCustomResponseHandler)
-			{
-				(response as IHttpCustomResponseHandler).ProcessResponse(webRequest);
-			}
+			return messageHandle;
 		}
 
-		private string GenerateURL(HttpAbstractRequest request)
+		private UnityWebRequest GenerateWebRequest(IHttpRequest request)
+		{
+			string url = GenerateURL(request);
+			UnityWebRequest unityWebRequest = null;
+
+			if (request is IHttpGetRequest getRequest)
+			{
+				unityWebRequest = UnityWebRequest.Get(url);
+			}
+			else if (request is IHttpPostRequest postRequest)
+			{
+				stringBuilderCache.Clear();
+				JsonProcessor.Serialize(Serializer.Serialize(request, bodyDefinition), stringBuilderCache);
+				unityWebRequest = UnityWebRequest.Post(url, stringBuilderCache.ToString());
+			}
+			else if (request is IHttpPutStringRequest putStringRequest)
+			{
+				unityWebRequest = UnityWebRequest.Put(url, putStringRequest.PutData);
+			}
+			else if (request is IHttpPutBinaryRequest putBinaryRequest)
+			{
+				unityWebRequest = UnityWebRequest.Put(url, putBinaryRequest.PutData);
+			}
+			else
+			{
+				throw new HttpException("Request of type {0} could not be mapped to a supported type of {1}.", request.GetType().Name, typeof(UnityWebRequest).Name);
+			}
+
+			Dictionary<string, string> headerData = Serializer.Serialize(request, headerDefinition) as Dictionary<string, string>;
+			if (headerData != null)
+			{
+				foreach (KeyValuePair<string, string> header in headerData)
+				{
+					unityWebRequest.SetRequestHeader(header.Key, header.Value);
+				}
+			}
+
+			return unityWebRequest;
+		}
+
+		private string GenerateURL(IHttpRequest request)
 		{
 			Dictionary<string, string> urlParams = Serializer.Serialize(request, urlDefinition) as Dictionary<string, string>;
 
 			if ((urlParams == null) || (urlParams.Count == 0))
 			{
-				return request.URIPath;
+				return request.URL;
 			}
 
-			StringBuilder addressBuilder = new StringBuilder(request.URIPath);
-			addressBuilder.Append('?');
-
 			Dictionary<string, string>.Enumerator it = urlParams.GetEnumerator();
-			int count = 0;
 
+			int count = 0;
+			stringBuilderCache.Clear();
 			while (it.MoveNext())
 			{
 				if (!string.IsNullOrEmpty(it.Current.Value))
 				{
 					if (count > 0)
 					{
-						addressBuilder.Append('&');
+						stringBuilderCache.Append('&');
 					}
 					++count;
-
-					addressBuilder
-						.Append(UnityWebRequest.EscapeURL(it.Current.Key))
-						.Append('=')
-						.Append(UnityWebRequest.EscapeURL(it.Current.Value));
+					stringBuilderCache.Append(it.Current.Key).Append('=').Append(it.Current.Value);
 				}
 			}
 
-			return addressBuilder.ToString();
+			return string.Format("{0}?{1}", request.URL, UnityWebRequest.EscapeURL(stringBuilderCache.ToString()));
 		}
 
-		private IEnumerator ProcessRequest(HttpAbstractRequest request)
+		private void OnRequestCompleted(HttpMessageHandle handle)
 		{
-			string url = GenerateURL(request);
-			UnityWebRequest unityRequest = null;
-
-			// Generate a request from one of Unity's templates
-			switch (request.Method)
+			if (IsPending(handle.Request))
 			{
-				case HttpAbstractRequest.RequestMethod.GET:
-					unityRequest = UnityWebRequest.Get(url);
-					break;
-				case HttpAbstractRequest.RequestMethod.POST:
-					object postData = Serializer.Serialize(request, bodyDefinition);
-					if (postData is Dictionary<string, string>)
-					{
-						unityRequest = UnityWebRequest.Post(url, postData as Dictionary<string, string>);
-					}
-					else
-					{
-						throw new HttpException(string.Format("The request of type {0} did not return valid POST data in the form of {1}.", request.GetType().Name, typeof(Dictionary<string, string>).Name));
-					}
-					break;
-				case HttpAbstractRequest.RequestMethod.PUT:
-					if (request is IHttpPutBinaryRequest)
-					{
-						unityRequest = UnityWebRequest.Put(url, (request as IHttpPutBinaryRequest).PutData);
-					}
-					else if (request is IHttpPutStringRequest)
-					{
-						unityRequest = UnityWebRequest.Put(url, (request as IHttpPutStringRequest).PutData);
-					}
-					else
-					{
-						throw new HttpException(string.Format("The request of type {0} does not implement either the {1} or {2} interfaces.", request.GetType().Name, typeof(IHttpPutBinaryRequest).Name, typeof(IHttpPutStringRequest).Name));
-					}
-					break;
-				default:
-					throw new HttpException(string.Format("Unhandled HTTP request method type: {0}.", request.Method.ToString()));
+				RemovePendingRequest(handle);
 			}
 
-			// Add the headers to the request
-			Dictionary<string, string> headerData = Serializer.Serialize(request, headerDefinition) as Dictionary<string, string>;
-			if (headerData != null)
+			if (handle.WebRequest.isNetworkError || handle.WebRequest.isHttpError)
 			{
-				foreach (KeyValuePair<string, string> header in headerData)
+				HandleFailed(handle);
+				return;
+			}
+
+			UnityWebRequest webOP = handle.WebRequest;
+
+			// Create the response and process the returned headers
+			IHttpResponse response = InstantiateResponse(handle);
+			Serializer.Deserialize(response, webOP.GetResponseHeaders(), headerDefinition);
+
+			// If the response expects JSON data to be returned,
+			if ((response is IHttpJsonResponseHandler) && !string.IsNullOrWhiteSpace(webOP.downloadHandler.text))
+			{
+				object jsonData = JsonProcessor.Deserialize(handle.WebRequest.downloadHandler.text);
+				Serializer.Deserialize(response, jsonData, bodyDefinition);
+			}
+
+			// If the response wants to custom handle the data returned
+			if (response is IHttpCustomResponseHandler customResponseHandler)
+			{
+				try
 				{
-					unityRequest.SetRequestHeader(header.Key, header.Value);
+					customResponseHandler.ProcessResponse(handle.WebRequest);
+				}
+				catch (Exception e)
+				{
+					Log.Exception(e);
 				}
 			}
-			else
-			{
-				throw new HttpException(string.Format("The request of type {0} did not return valid header data in the form of {1}.", request.GetType().Name, typeof(Dictionary<string, string>).Name));
-			}
 
-			Log.Info("Sending HTTP request {0} of type {1}.", request.ID, request.GetType().Name);
-
-			yield return unityRequest.SendWebRequest();
-			ReceiveResponseData(unityRequest);
+			handle.Response = response;
+			HandleCompleted(handle);
 		}
 	}
 }

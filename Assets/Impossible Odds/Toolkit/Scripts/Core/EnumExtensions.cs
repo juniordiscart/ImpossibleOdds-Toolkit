@@ -13,7 +13,7 @@ namespace ImpossibleOdds
 			get; set;
 		}
 
-		public string TranslationKey
+		public string LocalizationKey
 		{
 			get; set;
 		}
@@ -23,21 +23,26 @@ namespace ImpossibleOdds
 	{
 		private static Dictionary<FieldInfo, DisplayNameAttribute> cache = new Dictionary<FieldInfo, DisplayNameAttribute>();
 
+		/// <summary>
 		/// Retrieve the display name for the given enum value.
-		/// If no display name is available, then the value returned
-		/// is the same as using the ToString() method.
+		/// </summary>
+		/// <param name="e">Enum value</param>
+		/// <returns>The display name for the enum value. If no display name is defined, the result of ToString() is returned.</returns>
 		public static string DisplayName(this Enum e)
 		{
 			DisplayNameAttribute attr = GetAttributeFromEnum(e);
 			return ((attr != null) && (attr.Name != null)) ? attr.Name : e.ToString();
 		}
 
-		/// Retrieve the translation key for the given enum value.
-		/// If no display name is available, then an empty string is returned.
-		public static string TranslationKey(this Enum e)
+		/// <summary>
+		/// Retrieve the localization key for the given enum value.
+		/// </summary>
+		/// <param name="e">Enum value</param>
+		/// <returns>The localization key for the enum value. If no localization key is defined, an empty string is returned.</returns>
+		public static string LocalizationKey(this Enum e)
 		{
 			DisplayNameAttribute attr = GetAttributeFromEnum(e);
-			return ((attr != null) && (attr.TranslationKey != null)) ? attr.TranslationKey : string.Empty;
+			return ((attr != null) && (attr.LocalizationKey != null)) ? attr.LocalizationKey : string.Empty;
 		}
 
 		private static DisplayNameAttribute GetAttributeFromEnum(Enum e)

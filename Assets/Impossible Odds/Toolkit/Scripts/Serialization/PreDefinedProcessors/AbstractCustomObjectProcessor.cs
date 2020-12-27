@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Collections.ObjectModel;
 	using System.Linq;
 	using System.Reflection;
 	using System.Runtime.Serialization;
@@ -14,7 +13,7 @@
 		/// </summary>
 		/// <typeparam name="Type">Type of the attribute.</typeparam>
 		/// <typeparam name="AttributeFieldsCache">Cache of types with the attributes defined in them.</typeparam>
-		protected static Dictionary<Type, AttributeFieldsCache> attributeCache = new Dictionary<Type, AttributeFieldsCache>();
+		protected static Dictionary<Type, AttributeFieldsCache> attributeFieldsCache = new Dictionary<Type, AttributeFieldsCache>();
 
 		/// <summary>
 		/// Cache of type resolve parameters defines on types.
@@ -114,17 +113,17 @@
 		/// <param name="targetType">The class type of which to fetch the attributes that are defined on its fields.</param>
 		/// <param name="attributeType">The attribute type to look for that is defined on the target type's fields.</param>
 		/// <returns></returns>
-		protected static ReadOnlyCollection<FieldAtrributeTuple> GetAttributeFields(Type targetType, Type attributeType)
+		protected static IReadOnlyList<FieldAtrributeTuple> GetAttributeFields(Type targetType, Type attributeType)
 		{
-			if (!attributeCache.ContainsKey(attributeType))
+			if (!attributeFieldsCache.ContainsKey(attributeType))
 			{
-				attributeCache.Add(attributeType, new AttributeFieldsCache());
+				attributeFieldsCache.Add(attributeType, new AttributeFieldsCache());
 			}
 
-			AttributeFieldsCache attributesCache = attributeCache[attributeType];
+			AttributeFieldsCache attributesCache = attributeFieldsCache[attributeType];
 			if (attributesCache.ContainsKey(targetType))
 			{
-				return attributesCache[targetType].AsReadOnly();
+				return attributesCache[targetType];
 			}
 
 			// Collection in which we will store the cached fields.
@@ -166,7 +165,7 @@
 			int maxIndex = -1;
 			while ((type != null) && (type != typeof(object)))
 			{
-				ReadOnlyCollection<FieldAtrributeTuple> fields = GetAttributeFields(type, attributeType);
+				IReadOnlyList<FieldAtrributeTuple> fields = GetAttributeFields(type, attributeType);
 				foreach (FieldAtrributeTuple field in fields)
 				{
 					maxIndex = Math.Max((field.attribute as IIndexParameter).Index, maxIndex);
@@ -184,7 +183,7 @@
 		/// <param name="targetType">The class type of which to fetch the attributes that are defined on it.</param>
 		/// <param name="attributeType">The type of the attribute to look for.</param>
 		/// <returns>Collection of type resolve attributes that are applicable to the target type.</returns>
-		protected static IReadOnlyCollection<ISerializationTypeResolveParameter> GetClassTypeResolves(Type targetType, Type attributeType)
+		protected static IReadOnlyList<ISerializationTypeResolveParameter> GetClassTypeResolves(Type targetType, Type attributeType)
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 			attributeType.ThrowIfNull(nameof(attributeType));

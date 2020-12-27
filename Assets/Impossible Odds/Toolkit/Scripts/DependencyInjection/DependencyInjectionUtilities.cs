@@ -13,11 +13,7 @@
 		/// <returns>A collection of the current type along with implemented interfaces.</returns>
 		public static IEnumerable<Type> GetTypeAndInterfaces(object obj)
 		{
-			if (obj == null)
-			{
-				return null;
-			}
-
+			obj.ThrowIfNull(nameof(obj));
 			return GetTypeAndInterfaces(obj.GetType());
 		}
 
@@ -32,16 +28,13 @@
 		}
 
 		/// <summary>
-		/// Get the implemented interfaces by the given type as well as the type iteself again.
+		/// Get the implemented interfaces by the given type as well as the type itself again.
 		/// </summary>
 		/// <param name="type">Type to retieve the interfaces for.</param>
 		/// <returns>An array with the implemented interfaces and the type itself again (at index 0).</returns>
 		public static IEnumerable<Type> GetTypeAndInterfaces(Type type)
 		{
-			if (type == null)
-			{
-				return null;
-			}
+			type.ThrowIfNull(nameof(type));
 
 			Type[] interfaces = type.GetInterfaces();
 			List<Type> t = new List<Type>(interfaces.Length + 1);

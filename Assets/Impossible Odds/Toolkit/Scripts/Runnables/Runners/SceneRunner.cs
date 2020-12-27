@@ -19,8 +19,8 @@
 		}
 
 		/// <summary>
-		/// Get the runner that is associated with the given scene. If no
-		/// runner is available for the scene, a runner is created and registered.
+		/// Get the runner that is associated with the given scene.
+		/// If no runner is available for the scene, a runner is created and registered.
 		/// </summary>
 		/// <param name="scene">The scene to retrieve the runner for.</param>
 		/// <returns>The scene runner associated with the given scene.</returns>
@@ -29,6 +29,10 @@
 			if (!scene.IsValid())
 			{
 				throw new RunnablesException("Couldn't search a {0} for scene {1} because it is invalid.", typeof(SceneRunner).Name, scene.name);
+			}
+			else if (!scene.isLoaded)
+			{
+				throw new RunnablesException("Could'nt search a {0} for scene {1} because it isn't loaded.", typeof(SceneRunner).Name, scene.name);
 			}
 
 			if (sceneRunners.ContainsKey(scene))

@@ -1,6 +1,7 @@
 ﻿namespace ImpossibleOdds.Examples.Json
 {
 	using System.Collections.Generic;
+	using System.Text;
 	using ImpossibleOdds.Json;
 
 	[JsonObject]
@@ -8,6 +9,12 @@
 	{
 		[JsonField(Key = "AnimalRegister")]
 		private List<Animal> registeredAnimals = new List<Animal>();
+		private StringBuilder log = null;
+
+		public AnimalRegister(StringBuilder log)
+		{
+			this.log = log;
+		}
 
 		public void AddAnimal(Animal animal)
 		{
@@ -18,32 +25,31 @@
 			}
 
 			registeredAnimals.Add(animal);
+			animal.Log = log;
 		}
 
 		[OnJsonSerializing]
 		private void OnSerializingRegister()
 		{
-			Log.Info("Serializing the animal register.");
+			log.AppendLine("Serializing the animal register.");
 		}
 
 		[OnJsonSerialized]
 		private void OnSerializedRegister()
 		{
-			Log.Info("Serialized the animal register.");
+			log.AppendLine("Serialized the animal register.");
 		}
 
 		[OnJsonDeserializing]
 		private void OnDeserializingRegister()
 		{
-			Log.Info("Deserializing the animal register.");
+			log.AppendLine("Deserializing the animal register.");
 		}
 
 		[OnJsonDeserialized]
 		private void OnDeserializedRegister()
 		{
-			Log.Info("Deserialized the animal register.");
+			log.AppendLine("Deserialized the animal register.");
 		}
-
-
 	}
 }

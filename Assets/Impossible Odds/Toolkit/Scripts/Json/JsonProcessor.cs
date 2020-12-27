@@ -11,33 +11,71 @@
 
 	public static class JsonProcessor
 	{
-		private const int DEFAULT_CAPACITY = 1024;
-		private const string NULL_STR = "null";
-		private const string TRUE_STR = "true";
-		private const string FALSE_STR = "false";
+		private const int DefaultResultsCacheCapacity = 1024;
+		private const string NullStr = "null";
+		private const string TrueStr = "true";
+		private const string FalseStr = "false";
 
-		private static Regex numericalRegex = new Regex(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$");
+		private readonly static Regex numericalRegex = new Regex(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$");
+		private readonly static char[] numericalSymbols = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '+', 'e', 'E', '.' };
 		private static JsonDefaultSerializationDefinition defaultSerializationDefinition = new JsonDefaultSerializationDefinition();
 
 		/// <summary>
-		/// Processes an object to a JSON-compliant string.
+		/// Serializes the object to a JSON-string.
 		/// </summary>
-		/// <param name="obj">Object to be processed.</param>
-		/// <param name="options">Options to modify the string output behaviour.</param>
-		/// <returns></returns>
-		public static string Serialize(object obj, JsonOptions options = null)
+		/// <param name="obj">Object to serialize.</param>
+		/// <returns>A JSON representation of the given object.</returns>
+		public static string Serialize(object obj)
 		{
-			StringBuilder builder = new StringBuilder(DEFAULT_CAPACITY);
-			RuntimeOptions runtimeOptions = (options != null) ? new RuntimeOptions(options) : new RuntimeOptions();
-			ToJson(obj, builder, runtimeOptions);
-			return builder.ToString();
+			RuntimeOptions runtimeOptions = new RuntimeOptions();
+			ToJson(obj, runtimeOptions);
+			return runtimeOptions.resultStore.ToString();
 		}
 
 		/// <summary>
-		/// Processes a JSON-compliant string value to a native data structure.
+		/// Serializes the object to a JSON string and stores the result directly in the result store.
 		/// </summary>
-		/// <param name="jsonStr">JSON-compliant string.</param>
-		/// <returns></returns>
+		/// <param name="obj">Object to serialize.</param>
+		/// <param name="resultStore">Write cache for the JSON result.</param>
+		public static void Serialize(object obj, StringBuilder resultStore)
+		{
+			resultStore.ThrowIfNull(nameof(resultStore));
+			RuntimeOptions runtimeOptions = new RuntimeOptions(null, resultStore);
+			ToJson(obj, runtimeOptions);
+		}
+
+		/// <summary>
+		/// Serializes the object to a JSON string with custom formatting/processing settings.
+		/// </summary>
+		/// <param name="obj">Object to serialize.</param>
+		/// <param name="options">Options to modify the string output behaviour.</param>
+		public static string Serialize(object obj, JsonOptions options)
+		{
+			options.ThrowIfNull(nameof(options));
+			RuntimeOptions runtimeOptions = new RuntimeOptions(options);
+			ToJson(obj, runtimeOptions);
+			return runtimeOptions.resultStore.ToString();
+		}
+
+		/// <summary>
+		/// Serializes the object to a JSON string with custom formatting/processing settings
+		/// and stores the result directly in the result store.
+		/// </summary>
+		/// <param name="obj">Object to serialize.</param>
+		/// <param name="options">Options to modify the string output behaviour.</param>
+		/// <param name="resultStore">Write cache for the JSON result.</param>
+		public static void Serialize(object obj, JsonOptions options, StringBuilder resultStore)
+		{
+			options.ThrowIfNull(nameof(options));
+			resultStore.ThrowIfNull(nameof(resultStore));
+			RuntimeOptions runtimeOptions = new RuntimeOptions(options, resultStore);
+			ToJson(obj, runtimeOptions);
+		}
+
+		/// <summary>
+		/// Processes a JSON string to a data structure.
+		/// </summary>
+		/// <param name="jsonStr">JSON string to deserialize.</param>
 		public static object Deserialize(string jsonStr)
 		{
 			return Deserialize<Dictionary<string, object>, List<object>>(jsonStr);
@@ -48,7 +86,6 @@
 		/// </summary>
 		/// <param name="jsonStr">JSON-compliant string.</param>
 		/// <typeparam name="TTarget">Target type.</typeparam>
-		/// <returns></returns>
 		public static TTarget Deserialize<TTarget>(string jsonStr)
 		{
 			Type targetType = typeof(TTarget);
@@ -80,7 +117,6 @@
 		/// <param name="jsonStr">JSON-compliant string.</param>
 		/// <typeparam name="TJsonObject">Custom JSON object type.</typeparam>
 		/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
-		/// <returns></returns>
 		public static object Deserialize<TJsonObject, TJsonArray>(string jsonStr)
 		where TJsonObject : IDictionary, new()
 		where TJsonArray : IList, new()
@@ -107,39 +143,39 @@
 
 		#region To Json
 
-		private static void ToJson(object obj, StringBuilder builder, RuntimeOptions options)
+		private static void ToJson(object obj, RuntimeOptions options)
 		{
 			if (obj == null)
 			{
-				builder.Append(NULL_STR);
+				options.resultStore.Append(NullStr);
 			}
 			else if (obj is char)
 			{
-				builder.Append('"');
-				CleanStringToJson(new string((char)obj, 1), builder, options);
-				builder.Append('"');
+				options.resultStore.Append('"');
+				CleanStringToJson(new string((char)obj, 1), options);
+				options.resultStore.Append('"');
 			}
 			else if (obj is string)
 			{
-				builder.Append('"');
-				CleanStringToJson((string)obj, builder, options);
-				builder.Append('"');
+				options.resultStore.Append('"');
+				CleanStringToJson((string)obj, options);
+				options.resultStore.Append('"');
 			}
 			else if (obj is bool)
 			{
-				builder.Append((bool)obj ? TRUE_STR : FALSE_STR);
+				options.resultStore.Append((bool)obj ? TrueStr : FalseStr);
 			}
 			else if (obj.GetType().IsPrimitive)
 			{
-				builder.Append(((IConvertible)obj).ToString(options.serializationDefinition.FormatProvider));
+				options.resultStore.Append(((IConvertible)obj).ToString(options.serializationDefinition.FormatProvider));
 			}
-			else if (obj is IDictionary)
+			else if (obj is IDictionary dictionary)
 			{
-				FromLookupToJson(obj as IDictionary, builder, options);
+				FromLookupToJson(dictionary, options);
 			}
-			else if (obj is IList)
+			else if (obj is IList list)
 			{
-				FromSequenceToJson(obj as IList, builder, options);
+				FromSequenceToJson(list, options);
 			}
 			else
 			{
@@ -147,7 +183,7 @@
 				{
 					// If we can't directly process the object, we attempt to deconstruct it to blocks we can handle.
 					object data = Serializer.Serialize(obj, options.serializationDefinition);
-					ToJson(data, builder, options);
+					ToJson(data, options);
 				}
 				catch (System.Exception e)
 				{
@@ -157,12 +193,12 @@
 			}
 		}
 
-		private static void FromLookupToJson(IDictionary obj, StringBuilder builder, RuntimeOptions options)
+		private static void FromLookupToJson(IDictionary obj, RuntimeOptions options)
 		{
-			builder.Append('{');
-			if (options.prettyPrint)
+			options.resultStore.Append('{');
+			if (!options.compactOutput)
 			{
-				AdvanceLine(builder, options);
+				AdvanceLine(options);
 			}
 
 			if (obj.Count > 0)
@@ -174,42 +210,42 @@
 				{
 					if (count > 0)
 					{
-						builder.Append(',');
-						if (options.prettyPrint)
+						options.resultStore.Append(',');
+						if (!options.compactOutput)
 						{
-							NewLine(builder, options);
+							NewLine(options);
 						}
 					}
 					++count;
 
 					// Key
-					builder.Append('"');
-					CleanStringToJson(iterator.Key.ToString(), builder, options);
-					builder.Append("\":");
+					options.resultStore.Append('"');
+					CleanStringToJson(iterator.Key.ToString(), options);
+					options.resultStore.Append("\":");
 
-					if (options.prettyPrint)
+					if (!options.compactOutput)
 					{
-						builder.Append(' ');
+						options.resultStore.Append(' ');
 					}
 
 					// Value
-					ToJson(iterator.Value, builder, options);
+					ToJson(iterator.Value, options);
 				}
 			}
 
-			if (options.prettyPrint)
+			if (!options.compactOutput)
 			{
-				ReturnLine(builder, options);
+				ReturnLine(options);
 			}
-			builder.Append('}');
+			options.resultStore.Append('}');
 		}
 
-		private static void FromSequenceToJson(IList obj, StringBuilder builder, RuntimeOptions options)
+		private static void FromSequenceToJson(IList obj, RuntimeOptions options)
 		{
-			builder.Append('[');
-			if (options.prettyPrint)
+			options.resultStore.Append('[');
+			if (!options.compactOutput)
 			{
-				AdvanceLine(builder, options);
+				AdvanceLine(options);
 			}
 
 			if (obj.Count > 0)
@@ -221,96 +257,96 @@
 				{
 					if (count > 0)
 					{
-						builder.Append(',');
-						if (options.prettyPrint)
+						options.resultStore.Append(',');
+						if (!options.compactOutput)
 						{
-							NewLine(builder, options);
+							NewLine(options);
 						}
 					}
 					++count;
 
-					ToJson(iterator.Current, builder, options);
+					ToJson(iterator.Current, options);
 				}
 			}
 
-			if (options.prettyPrint)
+			if (!options.compactOutput)
 			{
-				ReturnLine(builder, options);
+				ReturnLine(options);
 			}
-			builder.Append(']');
+			options.resultStore.Append(']');
 		}
 
-		private static void CleanStringToJson(string str, StringBuilder builder, RuntimeOptions options)
+		private static void CleanStringToJson(string str, RuntimeOptions options)
 		{
 			// Regex.Escape is too agressive in removing characters.
 			// builder.Append(Regex.Escape(str));
 
 			for (int i = 0; i < str.Length; ++i)
 			{
-				CleanCharToJson(str[i], builder, options);
+				CleanCharToJson(str[i], options);
 			}
 		}
 
 		// Based on: https://stackoverflow.com/a/17691629
-		private static void CleanCharToJson(char c, StringBuilder builder, RuntimeOptions options)
+		private static void CleanCharToJson(char c, RuntimeOptions options)
 		{
 			switch (c)
 			{
 				case '\\':
 				case '"':
-					builder.Append('\\');
-					builder.Append(c);
+					options.resultStore.Append('\\');
+					options.resultStore.Append(c);
 					break;
 				case '/':
 					if (options.escapeSlashChar)
 					{
-						builder.Append('\\');
+						options.resultStore.Append('\\');
 					}
-					builder.Append(c);
+					options.resultStore.Append(c);
 					break;
 				case '\b':
-					builder.Append("\\b");
+					options.resultStore.Append("\\b");
 					break;
 				case '\t':
-					builder.Append("\\t");
+					options.resultStore.Append("\\t");
 					break;
 				case '\n':
-					builder.Append("\\n");
+					options.resultStore.Append("\\n");
 					break;
 				case '\f':
-					builder.Append("\\f");
+					options.resultStore.Append("\\f");
 					break;
 				case '\r':
-					builder.Append("\\r");
+					options.resultStore.Append("\\r");
 					break;
 				default:
 					if (('\x00' <= c) && (c <= '\x1f'))
 					{
-						builder.Append(string.Format("\\u{0:D4}", ((int)c)));
+						options.resultStore.Append(string.Format("\\u{0:D4}", ((int)c)));
 					}
 					else
 					{
-						builder.Append(c);
+						options.resultStore.Append(c);
 					}
 					break;
 			}
 		}
 
-		private static void NewLine(StringBuilder builder, RuntimeOptions options)
+		private static void NewLine(RuntimeOptions options)
 		{
-			builder.Append('\n').Append(options.IndentString);
+			options.resultStore.Append('\n').Append(options.IndentString);
 		}
 
-		private static void AdvanceLine(StringBuilder builder, RuntimeOptions options)
+		private static void AdvanceLine(RuntimeOptions options)
 		{
 			options.IndentationLevel += 1;
-			NewLine(builder, options);
+			NewLine(options);
 		}
 
-		private static void ReturnLine(StringBuilder builder, RuntimeOptions options)
+		private static void ReturnLine(RuntimeOptions options)
 		{
 			options.IndentationLevel -= 1;
-			NewLine(builder, options);
+			NewLine(options);
 		}
 
 		#endregion // To Json
@@ -337,25 +373,25 @@
 			switch (firstChar)
 			{
 				case 'n':
-					if (((index + NULL_STR.Length - 1) >= str.Length) || (str.IndexOf(NULL_STR, index, NULL_STR.Length) == -1))
+					if (((index + NullStr.Length - 1) >= str.Length) || (str.IndexOf(NullStr, index, NullStr.Length) == -1))
 					{
 						throw new JsonException("Unexpected end of string. Expected a 'null'-token.");
 					}
-					index += NULL_STR.Length;
+					index += NullStr.Length;
 					return null;
 				case 't':
-					if (((index + TRUE_STR.Length - 1) >= str.Length) || (str.IndexOf(TRUE_STR, index, TRUE_STR.Length) == -1))
+					if (((index + TrueStr.Length - 1) >= str.Length) || (str.IndexOf(TrueStr, index, TrueStr.Length) == -1))
 					{
 						throw new JsonException("Unexpected end of string. Expected a 'true'-token.");
 					}
-					index += TRUE_STR.Length;
+					index += TrueStr.Length;
 					return true;
 				case 'f':
-					if (((index + FALSE_STR.Length - 1) >= str.Length) || (str.IndexOf(FALSE_STR, index, FALSE_STR.Length) == -1))
+					if (((index + FalseStr.Length - 1) >= str.Length) || (str.IndexOf(FalseStr, index, FalseStr.Length) == -1))
 					{
 						throw new JsonException("Unexpected end of string. Expected a 'false'-token.");
 					}
-					index += FALSE_STR.Length;
+					index += FalseStr.Length;
 					return false;
 				case '"':
 					return FromJsonToString(str, ref index);
@@ -412,8 +448,6 @@
 
 		private static object FromJsonToNumerical(string str, ref int index)
 		{
-			char[] numericalSymbols = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '+', 'e', 'E', '.' };
-
 			AdvanceUntil(str, ref index, numericalSymbols);
 
 			// Look for a sequence of characters that matches the set
@@ -649,12 +683,13 @@
 
 		private class RuntimeOptions
 		{
-			public readonly bool escapeSlashChar;
-			public readonly bool prettyPrint;
-			public readonly ISerializationDefinition serializationDefinition;
+			public bool escapeSlashChar = true;
+			public bool compactOutput = true;
+			public ISerializationDefinition serializationDefinition = null;
+			public StringBuilder resultStore = null;
 
-			private int indentLvl;
-			private string indentStr;
+			private int indentLvl = 0;
+			private string indentStr = string.Empty;
 
 			public int IndentationLevel
 			{
@@ -662,7 +697,7 @@
 				set
 				{
 					indentLvl = Math.Max(0, value);
-					indentStr = new String('\t', value);
+					indentStr = (indentLvl > 0) ? new String('\t', value) : string.Empty;
 				}
 			}
 
@@ -671,18 +706,20 @@
 				get { return indentStr; }
 			}
 
-			public RuntimeOptions()
+			public RuntimeOptions(JsonOptions options = null, StringBuilder resultStore = null)
 			{
-				escapeSlashChar = true;
-				prettyPrint = false;
-				serializationDefinition = defaultSerializationDefinition;
-			}
+				if (options != null)
+				{
+					escapeSlashChar = options.EscapeSlashCharacter;
+					compactOutput = options.CompactOutput;
+					serializationDefinition = (options.SerializationDefinition != null) ? options.SerializationDefinition : defaultSerializationDefinition;
+				}
+				else
+				{
+					serializationDefinition = defaultSerializationDefinition;
+				}
 
-			public RuntimeOptions(JsonOptions options)
-			{
-				escapeSlashChar = options.EscapeSlashCharacter;
-				prettyPrint = !options.CompactOutput;
-				serializationDefinition = (options.CustomSerializationDefinition != null) ? options.CustomSerializationDefinition : defaultSerializationDefinition;
+				this.resultStore = (resultStore != null) ? resultStore : new StringBuilder(DefaultResultsCacheCapacity);
 			}
 		}
 	}

@@ -41,6 +41,8 @@
 				new PrimitiveTypeProcessor(this),
 				new DateTimeProcessor(this),
 				new StringProcessor(this),
+				new LookupProcessor(this),
+				new CustomObjectLookupProcessor(this)
 			};
 
 			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>();

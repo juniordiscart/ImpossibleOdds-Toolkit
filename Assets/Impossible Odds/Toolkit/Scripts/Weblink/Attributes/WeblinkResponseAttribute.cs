@@ -3,14 +3,14 @@
 	using System;
 
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-	public class WeblinkResponseAttribute : Attribute, IWeblinkResponseTypeAssociation
+	public abstract class WeblinkResponseAttribute : Attribute, IWeblinkResponseTypeAssociation
 	{
+		private readonly Type responseType;
+
 		public Type ResponseType
 		{
 			get { return responseType; }
 		}
-
-		private readonly Type responseType;
 
 		public WeblinkResponseAttribute(Type responseType)
 		{

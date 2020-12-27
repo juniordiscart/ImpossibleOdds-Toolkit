@@ -1,6 +1,7 @@
 ﻿namespace ImpossibleOdds.DependencyInjection
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 
 	public class DependencyContainer : IDependencyContainer
@@ -10,6 +11,16 @@
 		public IDictionary<Type, IDependencyBinding> Bindings
 		{
 			get { return bindings; }
+		}
+
+		public IEnumerator<KeyValuePair<Type, IDependencyBinding>> GetEnumerator()
+		{
+			return bindings.GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
 		}
 
 		public void Bind(IDependencyBinding binding)

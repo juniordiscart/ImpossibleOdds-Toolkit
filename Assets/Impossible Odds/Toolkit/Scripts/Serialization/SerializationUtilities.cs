@@ -2,9 +2,13 @@
 {
 	using System;
 	using System.Collections;
+	using System.Collections.Generic;
 
 	public static class SerializationUtilities
 	{
+		private static readonly Dictionary<Type, LookupCollectionTypeInfo> lookupTypeInfoCache = new Dictionary<Type, LookupCollectionTypeInfo>();
+		private static readonly Dictionary<Type, SequenceCollectionTypeInfo> sequenceTypeInfoCache = new Dictionary<Type, SequenceCollectionTypeInfo>();
+
 		/// <summary>
 		/// Test wether a type is truely nullable.
 		/// </summary>
@@ -21,7 +25,6 @@
 		/// </summary>
 		/// <param name="givenType">The type to be tested.</param>
 		/// <param name="genericTypeDefinition">The generic type to be tested against.</param>
-		/// <returns></returns>
 		public static bool IsAssignableToGenericType(Type givenType, Type genericTypeDefinition)
 		{
 			return GetGenericType(givenType, genericTypeDefinition) != null;
@@ -33,7 +36,6 @@
 		/// </summary>
 		/// <param name="givenType">The type to get the generic variant of.</param>
 		/// <param name="genericTypeDefinition">The generic type to find.</param>
-		/// <returns></returns>
 		public static Type GetGenericType(Type givenType, Type genericTypeDefinition)
 		{
 			if (!genericTypeDefinition.IsGenericTypeDefinition)
@@ -69,7 +71,6 @@
 		/// </summary>
 		/// <param name="value"></param>
 		/// <param name="targetType"></param>
-		/// <returns></returns>
 		public static object PostProcessValue(object value, Type targetType)
 		{
 			targetType.ThrowIfNull(nameof(targetType));
@@ -122,7 +123,7 @@
 		{
 			sourceValues.ThrowIfNull(nameof(sourceValues));
 			targetCollection.ThrowIfNull(nameof(targetCollection));
-			SequenceCollectionTypeInfo collectionTypeInfo = new SequenceCollectionTypeInfo(targetCollection);
+			SequenceCollectionTypeInfo collectionTypeInfo = GetCollectionTypeInfo(targetCollection);
 
 			int i = 0;
 			IEnumerator it = sourceValues.GetEnumerator();
@@ -157,7 +158,7 @@
 		{
 			sourceValues.ThrowIfNull(nameof(sourceValues));
 			targetCollection.ThrowIfNull(nameof(targetCollection));
-			LookupCollectionTypeInfo collectionTypeInfo = new LookupCollectionTypeInfo(targetCollection);
+			LookupCollectionTypeInfo collectionTypeInfo = GetCollectionTypeInfo(targetCollection);
 
 			IDictionaryEnumerator it = sourceValues.GetEnumerator();
 			while (it.MoveNext())
@@ -176,6 +177,32 @@
 
 				targetCollection.Add(currentKey, currentValue);
 			}
+		}
+
+		private static LookupCollectionTypeInfo GetCollectionTypeInfo(IDictionary instance)
+		{
+			instance.ThrowIfNull(nameof(instance));
+
+			Type instanceType = instance.GetType();
+			if (!lookupTypeInfoCache.ContainsKey(instanceType))
+			{
+				lookupTypeInfoCache[instanceType] = new LookupCollectionTypeInfo(instance);
+			}
+
+			return lookupTypeInfoCache[instanceType];
+		}
+
+		private static SequenceCollectionTypeInfo GetCollectionTypeInfo(IList instance)
+		{
+			instance.ThrowIfNull(nameof(instance));
+
+			Type instanceType = instance.GetType();
+			if (!sequenceTypeInfoCache.ContainsKey(instanceType))
+			{
+				sequenceTypeInfoCache[instanceType] = new SequenceCollectionTypeInfo(instance);
+			}
+
+			return sequenceTypeInfoCache[instanceType];
 		}
 	}
 }

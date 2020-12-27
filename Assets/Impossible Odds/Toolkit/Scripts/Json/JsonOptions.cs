@@ -23,7 +23,7 @@
 		/// <summary>
 		/// Serialization definition to alter the default behaviour of the JSON processor.
 		/// </summary>
-		public ISerializationDefinition CustomSerializationDefinition
+		public ISerializationDefinition SerializationDefinition
 		{
 			get; set;
 		}
@@ -32,7 +32,7 @@
 		{
 			CompactOutput = true;
 			EscapeSlashCharacter = true;
-			CustomSerializationDefinition = null;
+			SerializationDefinition = null;
 		}
 	}
 }
