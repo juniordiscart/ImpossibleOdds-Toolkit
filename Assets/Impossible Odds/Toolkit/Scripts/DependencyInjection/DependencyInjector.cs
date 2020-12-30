@@ -144,7 +144,8 @@
 			foreach (Pair<FieldInfo> field in injectionInfo.injectableFields)
 			{
 				Type fieldType = field.member.FieldType;
-				if (container.BindingExists(fieldType))
+				bool injectionIDsMatch = (!hasInjectionIDSet && !field.attribute.HasInjectionIDSet) || (hasInjectionIDSet && field.attribute.HasInjectionIDSet && string.Equals(injectionID, field.attribute.InjectID));
+				if (injectionIDsMatch && container.BindingExists(fieldType))
 				{
 					field.member.SetValue(objToInject, container.GetBinding(fieldType).GetInstance());
 				}
@@ -154,7 +155,8 @@
 			foreach (Pair<PropertyInfo> property in injectionInfo.injectableProperties)
 			{
 				Type propertyType = property.member.PropertyType;
-				if (container.BindingExists(propertyType))
+				bool injectionIDsMatch = (!hasInjectionIDSet && !property.attribute.HasInjectionIDSet) || (hasInjectionIDSet && property.attribute.HasInjectionIDSet && string.Equals(injectionID, property.attribute.InjectID));
+				if (injectionIDsMatch && container.BindingExists(propertyType))
 				{
 					property.member.SetValue(objToInject, container.GetBinding(propertyType).GetInstance());
 				}
@@ -163,6 +165,12 @@
 			// Methods
 			foreach (Pair<MethodInfo> method in injectionInfo.injectableMethods)
 			{
+				bool injectionIDsMatch = (!hasInjectionIDSet && !method.attribute.HasInjectionIDSet) || hasInjectionIDSet && method.attribute.HasInjectionIDSet && string.Equals(injectionID, method.attribute.InjectID);
+				if (!injectionIDsMatch)
+				{
+					continue;
+				}
+
 				ParameterInfo[] parameterInfo = method.member.GetParameters();
 				object[] parameters = GetParameterInjectionList(parameterInfo.Length);
 

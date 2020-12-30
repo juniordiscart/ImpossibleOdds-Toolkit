@@ -11,6 +11,11 @@
 	{
 		private static GlobalDependencyContext globalContext = null;
 
+		public static IDependencyContext GlobalContext
+		{
+			get { return globalContext; }
+		}
+
 		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
 		private static void InitializeGlobalContext()
 		{

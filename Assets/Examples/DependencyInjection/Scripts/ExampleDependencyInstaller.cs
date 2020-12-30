@@ -12,11 +12,11 @@
 		{
 			// Create an input manager and bind its implemented interfaces
 			KeyboardInputManager keyboard = new KeyboardInputManager();
-			container.BindWithInterfaces<KeyboardInputManager>(new InstanceBinding<KeyboardInputManager>(keyboard));
+			container.RegisterWithInterfaces<KeyboardInputManager>(new InstanceBinding<KeyboardInputManager>(keyboard));
 
 			if (settings != null)
 			{
-				container.Bind(new InstanceBinding<CharacterSettings>(settings));
+				container.Register(new InstanceBinding<CharacterSettings>(settings));
 			}
 		}
 	}

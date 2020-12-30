@@ -8,102 +8,119 @@
 	{
 		private Dictionary<Type, IDependencyBinding> bindings = new Dictionary<Type, IDependencyBinding>();
 
+		/// <inheritdoc />
 		public IDictionary<Type, IDependencyBinding> Bindings
 		{
 			get { return bindings; }
 		}
 
+		/// <inheritdoc />
 		public IEnumerator<KeyValuePair<Type, IDependencyBinding>> GetEnumerator()
 		{
 			return bindings.GetEnumerator();
 		}
 
+		/// <inheritdoc />
 		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return GetEnumerator();
 		}
 
-		public void Bind(IDependencyBinding binding)
+		/// <inheritdoc />
+		public void Register(IDependencyBinding binding)
 		{
 			binding.ThrowIfNull(nameof(binding));
-			Bind(binding.GetTypeBinding(), binding);
+			Register(binding.GetTypeBinding(), binding);
 		}
 
-		public void Bind<T>(IDependencyBinding binding)
+		/// <inheritdoc />
+		public void Register<TypeKey>(IDependencyBinding binding)
 		{
-			Bind(typeof(T), binding);
+			Register(typeof(TypeKey), binding);
 		}
 
-		public void Bind(Type bindingType, IDependencyBinding binding)
+		/// <inheritdoc />
+		public void Register(Type typeKey, IDependencyBinding binding)
 		{
-			bindingType.ThrowIfNull(nameof(bindingType));
+			typeKey.ThrowIfNull(nameof(typeKey));
 			binding.ThrowIfNull(nameof(binding));
 
-			if (bindings.ContainsKey(bindingType))
+			if (!typeKey.IsAssignableFrom(binding.GetTypeBinding()))
 			{
-				Log.Warning("A binding for type {0} already exists. Override with new binding.", bindingType.Name);
-				bindings[bindingType] = binding;
+				throw new DependencyInjectionException("Type key {0} is not assignable from type {1} as reported by {2}.", typeKey.Name, binding.GetTypeBinding().Name, nameof(binding));
 			}
-			else
+
+			if (bindings.ContainsKey(typeKey))
 			{
-				bindings.Add(bindingType, binding);
+				Log.Warning("A binding for type {0} already exists. Override=ing with new binding.", typeKey.Name);
 			}
+
+			bindings[typeKey] = binding;
 		}
 
-		public void BindWithInterfaces(IDependencyBinding binding)
+		/// <inheritdoc />
+		public void RegisterWithInterfaces(IDependencyBinding binding)
 		{
 			binding.ThrowIfNull(nameof(binding));
-			BindWithInterfaces(binding.GetTypeBinding(), binding);
+			RegisterWithInterfaces(binding.GetTypeBinding(), binding);
 		}
 
-		public void BindWithInterfaces<T>(IDependencyBinding binding)
+		/// <inheritdoc />
+		public void RegisterWithInterfaces<T>(IDependencyBinding binding)
 		{
-			BindWithInterfaces(typeof(T), binding);
+			RegisterWithInterfaces(typeof(T), binding);
 		}
 
-		public void BindWithInterfaces(Type bindingType, IDependencyBinding binding)
+		/// <inheritdoc />
+		public void RegisterWithInterfaces(Type typeKey, IDependencyBinding binding)
 		{
-			bindingType.ThrowIfNull(nameof(bindingType));
+			typeKey.ThrowIfNull(nameof(typeKey));
 			binding.ThrowIfNull(nameof(binding));
 
-			IEnumerable<Type> bindingTypes = DependencyInjectionUtilities.GetTypeAndInterfaces(bindingType);
+			IEnumerable<Type> bindingTypes = DependencyInjectionUtilities.GetTypeAndInterfaces(typeKey);
 			foreach (Type t in bindingTypes)
 			{
-				Bind(t, binding);
+				Register(t, binding);
 			}
 		}
 
-		public bool BindingExists<T>()
+		/// <inheritdoc />
+		public bool BindingExists<TypeKey>()
 		{
-			return BindingExists(typeof(T));
+			return BindingExists(typeof(TypeKey));
 		}
 
-		public bool BindingExists(Type bindingType)
+		/// <inheritdoc />
+		public bool BindingExists(Type typeKey)
 		{
-			bindingType.ThrowIfNull(nameof(bindingType));
-			return bindings.ContainsKey(bindingType);
+			typeKey.ThrowIfNull(nameof(typeKey));
+			return bindings.ContainsKey(typeKey);
 		}
 
-		public IDependencyBinding GetBinding<T>()
+		/// <inheritdoc />
+		public IDependencyBinding GetBinding<TypeKey>()
 		{
-			return GetBinding(typeof(T));
+			return GetBinding(typeof(TypeKey));
 		}
 
-		public IDependencyBinding GetBinding(Type bindingType)
+		/// <inheritdoc />
+		public IDependencyBinding GetBinding(Type typeKey)
 		{
-			bindingType.ThrowIfNull(nameof(bindingType));
-			return bindings.ContainsKey(bindingType) ? bindings[bindingType] : null;
+			typeKey.ThrowIfNull(nameof(typeKey));
+			return bindings.ContainsKey(typeKey) ? bindings[typeKey] : null;
 		}
 
-		public void RemoveBinding<T>()
+		/// <inheritdoc />
+		public bool Remove<TypeKey>()
 		{
-			RemoveBinding(typeof(T));
+			return Remove(typeof(TypeKey));
 		}
 
-		public void RemoveBinding(Type bindingType)
+		/// <inheritdoc />
+		public bool Remove(Type typeKey)
 		{
-			bindingType.ThrowIfNull(nameof(bindingType));
-			bindings.Remove(bindingType);
+			typeKey.ThrowIfNull(nameof(typeKey));
+			return bindings.Remove(typeKey);
 		}
 	}
 }

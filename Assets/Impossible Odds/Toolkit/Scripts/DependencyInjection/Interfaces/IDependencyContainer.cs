@@ -9,76 +9,78 @@
 	public interface IDependencyContainer : IEnumerable<KeyValuePair<Type, IDependencyBinding>>
 	{
 		/// <summary>
-		/// Does a binding exist for type T?
+		/// Checks whether a binding exists for the given type.
 		/// </summary>
-		/// <typeparam name="T">The type to check the binding for.</typeparam>
+		/// <typeparam name="TypeKey">The type to check the binding for.</typeparam>
 		/// <returns>True if the binding exists.</returns>
-		bool BindingExists<T>();
+		bool BindingExists<TypeKey>();
 		/// <summary>
-		/// Does a binding exist for type bindingType?
+		/// Checks whether a binding exists for the given type.
 		/// </summary>
-		/// <param name="bindingType">The type to check the binding for.</param>
+		/// <param name="typeKey">The type to check the binding for.</param>
 		/// <returns>True if the binding exists.</returns>
-		bool BindingExists(Type bindingType);
+		bool BindingExists(Type typeKey);
 
 		/// <summary>
-		/// Retrieves the binding for type T.
+		/// Retrieves the binding for type the given type.
 		/// </summary>
-		/// <typeparam name="T">The type for which to get the binding.</typeparam>
+		/// <typeparam name="TypeKey">The type for which to get the binding.</typeparam>
 		/// <returns>The binding, if it exists.</returns>
-		IDependencyBinding GetBinding<T>();
+		IDependencyBinding GetBinding<TypeKey>();
 		/// <summary>
-		/// Retrieves the binding for type bindingType.
+		/// Retrieves the binding for the given type.
 		/// </summary>
-		/// <param name="bindingType">The type for which to get the binding.</param>
+		/// <param name="typeKey">The type for which to get the binding.</param>
 		/// <returns>The binding, if it exists.</returns>
-		IDependencyBinding GetBinding(Type bindingType);
+		IDependencyBinding GetBinding(Type typeKey);
 
 		/// <summary>
-		/// Remove the binding for type T.
+		/// Remove the binding for the given type.
 		/// </summary>
 		/// <typeparam name="T">The type for which to remove the binding.</typeparam>
-		void RemoveBinding<T>();
+		/// <returns>True, when the binding got removed successfully.</returns>
+		bool Remove<T>();
 		/// <summary>
-		/// Remove the binding for type bindingType.
+		/// Remove the binding for the given type.
 		/// </summary>
-		/// <param name="bindingType">The type for which to remove the binding.</param>
-		void RemoveBinding(Type bindingType);
+		/// <param name="typeKey">The type for which to remove the binding.</param>
+		/// <returns>True, when the binding got removed successfully.</returns>
+		bool Remove(Type typeKey);
 
 		/// <summary>
-		/// Bind the type reported by the binding to the binding itself.
+		/// Register the type reported by the binding to the binding itself.
 		/// </summary>
 		/// <param name="binding">The binding to bind.</param>
-		void Bind(IDependencyBinding binding);
+		void Register(IDependencyBinding binding);
 		/// <summary>
-		/// Bind the binding to type T. The binding's reported type should be assignable to T.
+		/// Register the binding to the given type. The binding's reported type should be assignable to the given type.
 		/// </summary>
 		/// <param name="binding">The binding to bind.</param>
 		/// <typeparam name="T">The type to which the binding is to be bound.</typeparam>
-		void Bind<T>(IDependencyBinding binding);
+		void Register<T>(IDependencyBinding binding);
 		/// <summary>
-		/// Bind the binding to type bindingType. The binding's reported type should be assignable to bindingType.
+		/// Register the binding to the given type. The binding's reported type should be assignable to the given type.
 		/// </summary>
-		/// <param name="bindingType">The type to which the binding is to be bound.</param>
+		/// <param name="typeKey">The type to which the binding is to be bound.</param>
 		/// <param name="binding">The binding to bind.</param>
-		void Bind(Type bindingType, IDependencyBinding binding);
+		void Register(Type typeKey, IDependencyBinding binding);
 
 		/// <summary>
-		/// Bind the type reported by the binding and all its implemented interfaces to itself.
+		/// Register the binding to its reported type and all of its implemented interfaces.
 		/// </summary>
-		/// <param name="binding">The binding to bind.</param>
-		void BindWithInterfaces(IDependencyBinding binding);
+		/// <param name="binding">The binding to register.</param>
+		void RegisterWithInterfaces(IDependencyBinding binding);
 		/// <summary>
-		///
+		/// Register the binding to the type and its implemented interfaces. The binding's reported type should be assignable to the given type.
 		/// </summary>
-		/// <param name="binding"></param>
-		/// <typeparam name="T"></typeparam>
-		void BindWithInterfaces<T>(IDependencyBinding binding);
+		/// <param name="binding">The binding to register.</param>
+		/// <typeparam name="TypeKey">The type key to which the binding is to be registered.</typeparam>
+		void RegisterWithInterfaces<TypeKey>(IDependencyBinding binding);
 		/// <summary>
-		/// Bind the binding to type bindingType and its implemented interfaces. The binding's reported type should be assignable to the bindingType.
+		/// Register the binding to the type and its implemented interfaces. The binding's reported type should be assignable to the given type.
 		/// </summary>
-		/// <param name="bindingType">The type to which the binding is to be bound.</param>
-		/// <param name="binding">The binding to bind.</param>
-		void BindWithInterfaces(Type bindingType, IDependencyBinding binding);
+		/// <param name="typeKey">The type key to which the binding is to be registered.</param>
+		/// <param name="binding">The binding to register.</param>
+		void RegisterWithInterfaces(Type typeKey, IDependencyBinding binding);
 	}
 }

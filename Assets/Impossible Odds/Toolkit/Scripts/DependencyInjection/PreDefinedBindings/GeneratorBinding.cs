@@ -3,9 +3,9 @@
 	using System;
 
 	/// <summary>
-	/// A binding that uses a function to generate new instances with each request.
+	/// A binding that uses a generator to create new instances.
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="T">Type of the instance that is returned by the generator.</typeparam>
 	public class FunctorBinding<T> : IDependencyBinding<T>
 	{
 		private Func<T> generator;
