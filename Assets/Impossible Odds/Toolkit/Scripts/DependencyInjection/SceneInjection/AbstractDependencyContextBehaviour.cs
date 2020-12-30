@@ -19,7 +19,7 @@
 
 		public abstract void Inject();
 
-		private void Awake()
+		protected virtual void Awake()
 		{
 			InstallContainer();
 
@@ -29,7 +29,7 @@
 			}
 		}
 
-		private void Start()
+		protected virtual void Start()
 		{
 			if (injectOnStart && (container != null))
 			{

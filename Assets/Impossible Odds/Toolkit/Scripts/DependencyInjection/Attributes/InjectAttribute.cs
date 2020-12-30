@@ -18,7 +18,7 @@
 
 		public bool HasInjectionIDSet
 		{
-			get { return string.IsNullOrWhiteSpace(injectID); }
+			get { return !string.IsNullOrEmpty(injectID); }
 		}
 
 		public InjectAttribute()

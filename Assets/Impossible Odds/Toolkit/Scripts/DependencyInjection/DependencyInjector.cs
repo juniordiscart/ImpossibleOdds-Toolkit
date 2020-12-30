@@ -127,8 +127,6 @@
 				return;
 			}
 
-			bool hasInjectionIDSet = !string.IsNullOrWhiteSpace(injectionID);
-
 			// Inject the base types first, like we do with constructors
 			ResolveDependenciesForObject(objToInject, currentType.BaseType, container, injectionID);
 
@@ -144,8 +142,7 @@
 			foreach (Pair<FieldInfo> field in injectionInfo.injectableFields)
 			{
 				Type fieldType = field.member.FieldType;
-				bool injectionIDsMatch = (!hasInjectionIDSet && !field.attribute.HasInjectionIDSet) || (hasInjectionIDSet && field.attribute.HasInjectionIDSet && string.Equals(injectionID, field.attribute.InjectID));
-				if (injectionIDsMatch && container.BindingExists(fieldType))
+				if (InjectionIDsMatch(field.attribute, injectionID) && container.BindingExists(fieldType))
 				{
 					field.member.SetValue(objToInject, container.GetBinding(fieldType).GetInstance());
 				}
@@ -155,8 +152,7 @@
 			foreach (Pair<PropertyInfo> property in injectionInfo.injectableProperties)
 			{
 				Type propertyType = property.member.PropertyType;
-				bool injectionIDsMatch = (!hasInjectionIDSet && !property.attribute.HasInjectionIDSet) || (hasInjectionIDSet && property.attribute.HasInjectionIDSet && string.Equals(injectionID, property.attribute.InjectID));
-				if (injectionIDsMatch && container.BindingExists(propertyType))
+				if (InjectionIDsMatch(property.attribute, injectionID) && container.BindingExists(propertyType))
 				{
 					property.member.SetValue(objToInject, container.GetBinding(propertyType).GetInstance());
 				}
@@ -165,8 +161,7 @@
 			// Methods
 			foreach (Pair<MethodInfo> method in injectionInfo.injectableMethods)
 			{
-				bool injectionIDsMatch = (!hasInjectionIDSet && !method.attribute.HasInjectionIDSet) || hasInjectionIDSet && method.attribute.HasInjectionIDSet && string.Equals(injectionID, method.attribute.InjectID);
-				if (!injectionIDsMatch)
+				if (!InjectionIDsMatch(method.attribute, injectionID))
 				{
 					continue;
 				}
@@ -212,6 +207,12 @@
 			}
 
 			return typeInjectionCache[type];
+		}
+
+		private static bool InjectionIDsMatch(InjectAttribute attr, string injectionID)
+		{
+			bool hasInjectionIDSet = !string.IsNullOrEmpty(injectionID);
+			return (!hasInjectionIDSet && !attr.HasInjectionIDSet) || hasInjectionIDSet && attr.HasInjectionIDSet && string.Equals(injectionID, attr.InjectID);
 		}
 
 		private static bool IsInjectable(Type type)

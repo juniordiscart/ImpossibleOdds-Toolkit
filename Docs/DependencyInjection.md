@@ -13,7 +13,7 @@ public class Character : MonoBehaviour
 }
 ```
 
-The advantage of such an approach is that you can easily replace resources or implementations on a much higher level, to adapt the project or game for other means. However, nothing is magical, and having your resources ready for injection requires some setup work, and most likely, a change in project and code structure as well. Further down you'll find the details about the dependency injection process, but here's a first glance of what to expect:
+The advantage of such an approach is that you can easily replace resources or implementations on a much higher level, adapt the project or game for other means. However, nothing is magical, and having your resources ready for injection requires some setup work, and most likely, a change in project and code structure as well. Further down you'll find the details about the dependency injection process, but here's a first glance of what to expect:
 
 * Define which resources your classes need using the `Injectable` and `Inject` attributes.
 * Create binding objects that connect a type to a way on how to get an instance of that resource.
@@ -188,6 +188,8 @@ public class MySceneInstaller : MonoBheaviour, IDependencyContextInstaller
 
 When the `Inject` method is called on the context, either in `Start` or manually, it will scan the scene for any injectable components and inject them with the resources bound to its container.
 
+**Note**: the `SceneDependencyContext` dependency context has a low script execution order value, so that its injection happens before others, ensuring all resources are delivered before other objects initiate their `Start` phase.
+
 #### Advanced
 
 Just like in the global context, a custom container implementation can be provided. Here, this is done by one of its (child) components that implements the `IDependencyContainerProvider` interface.
@@ -206,6 +208,8 @@ public class CustomSceneContextProvider : MonoBehaviour, IDependencyContainerPro
 ### Hierarchy Context
 
 The `HierarchyDependencyContext` is exactly the same as the [scene context](#scene-context) except it only operates on itself and any child GameObjects instead of the whole scene.
+
+**Note**: the `HierarchyDependencyContext` also has a low script execution order value, but slightly higher than the one from `SceneDependencyContext`.
 
 ## Custom Dependency Injection
 
@@ -285,4 +289,7 @@ myGameObjects.Inject(myContainer, false);
 
 Check out the dependency injection sample scene for a hands-on example!
 
+![Dependency Injection Sample][SampleImg]
+
 [Logo]: ./Images/ImpossibleOddsLogo.png
+[SampleImg]: ./Images/DependencyInjectionSample.png
