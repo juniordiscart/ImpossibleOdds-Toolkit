@@ -6,18 +6,29 @@
 	/// <summary>
 	/// Abstract class for processors that work on collection-like data structures, i.e. lists, arrays, dictionaries, ...
 	/// </summary>
-	public abstract class AbstractCollectionProcessor : AbstractProcessor
+	public abstract class AbstractCollectionProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
+		private bool strictTypeChecking;
+		private ISerializationDefinition definition = null;
+
+		public ISerializationDefinition Definition
+		{
+			get { return definition; }
+		}
+
 		public bool StrictTypeChecking
 		{
 			get { return strictTypeChecking; }
 			set { strictTypeChecking = value; }
 		}
 
-		private bool strictTypeChecking;
-
 		public AbstractCollectionProcessor(ISerializationDefinition definition, bool strictTypeChecking = DefaultOptions.StrictTypeChecking)
-		: base(definition) { }
+		{
+			this.definition = definition;
+		}
+
+		public abstract bool Serialize(object objectToSerialize, out object serializedResult);
+		public abstract bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult);
 
 		/// <summary>
 		/// Checks whether the given value can be assigned to a value of elementType. Also takes into account whether the element type is nullable.

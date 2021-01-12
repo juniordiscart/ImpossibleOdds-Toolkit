@@ -6,8 +6,23 @@
 	using System.Reflection;
 	using System.Runtime.Serialization;
 
-	public abstract class AbstractCustomObjectProcessor : AbstractProcessor
+	public abstract class AbstractCustomObjectProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
+		private ISerializationDefinition definition = null;
+
+		public ISerializationDefinition Definition
+		{
+			get { return definition; }
+		}
+
+		public AbstractCustomObjectProcessor(ISerializationDefinition definition)
+		{
+			this.definition = definition;
+		}
+
+		public abstract bool Serialize(object objectToSerialize, out object serializedResult);
+		public abstract bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult);
+
 		/// <summary>
 		/// Cache of attributes, organized by attribute type.
 		/// </summary>
@@ -36,10 +51,6 @@
 		{
 			get { return definition is ISerializationCallbacks; }
 		}
-
-		public AbstractCustomObjectProcessor(ISerializationDefinition definition)
-		: base(definition)
-		{ }
 
 		/// <summary>
 		/// Let the target object know that serialization will start.
@@ -266,7 +277,7 @@
 		}
 
 		/// <summary>
-		/// Creates a bew instance of the requested type.
+		/// Creates a new instance of the requested type.
 		/// </summary>
 		/// <returns>Instance of the requested type.</returns>
 		protected static object CreateInstance(Type instanceType)

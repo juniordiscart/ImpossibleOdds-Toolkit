@@ -7,9 +7,9 @@
 	/// <summary>
 	/// A (de)serialization processor for list-like data structures.
 	/// </summary>
-	public class SequenceProcessor : AbstractCollectionProcessor, ISerializationProcessor, IDeserializationToTargetProcessor
+	public class SequenceProcessor : AbstractCollectionProcessor, IDeserializationToTargetProcessor
 	{
-		private new IIndexSerializationDefinition definition;
+		private IIndexSerializationDefinition definition;
 
 		public SequenceProcessor(IIndexSerializationDefinition definition, bool strictTypeChecking = DefaultOptions.StrictTypeChecking)
 		: base(definition, strictTypeChecking)
@@ -23,7 +23,7 @@
 		/// <param name="objectToSerialize">The object to serialize.</param>
 		/// <param name="serializedResult">The serialized object.</param>
 		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
-		public bool Serialize(object objectToSerialize, out object serializedResult)
+		public override bool Serialize(object objectToSerialize, out object serializedResult)
 		{
 			// Accept null values.
 			if ((objectToSerialize == null))
@@ -62,7 +62,7 @@
 		/// <param name="dataToDeserialize">The data deserialize and apply to the result.</param>
 		/// <param name="deserializedResult">The result unto which the data is applied.</param>
 		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		public override bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
 			// Check if the target implements the general IList interface, if not, we can just skip it altogether.
 			if ((targetType == null) || !typeof(IList).IsAssignableFrom(targetType))

@@ -4,6 +4,6 @@
 	using ImpossibleOdds.Serialization;
 
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-	public sealed class HttpObjectAttribute : Attribute, ILookupDataStructure
+	public sealed class HttpBodyObjectAttribute : Attribute, ILookupDataStructure
 	{ }
 }

@@ -5,11 +5,19 @@
 	/// <summary>
 	/// A (de)serialization processor specifically for the Decimal type.
 	/// </summary>
-	public class DecimalProcessor : AbstractProcessor, ISerializationProcessor, IDeserializationProcessor
+	public class DecimalProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
+		private ISerializationDefinition definition = null;
+
+		public ISerializationDefinition Definition
+		{
+			get { return definition; }
+		}
+
 		public DecimalProcessor(ISerializationDefinition definition)
-		: base(definition)
-		{ }
+		{
+			this.definition = definition;
+		}
 
 		/// <summary>
 		/// Attempts to serialize the object as a Decimal to a supported type as defined by serialization definition.

@@ -11,7 +11,8 @@
 		private List<IFixedRunnable> fixedRunnables = new List<IFixedRunnable>();
 		private List<ILateRunnable> lateRunnables = new List<ILateRunnable>();
 
-		public void Add(IRunnable runnable)
+		/// <inheritdoc />
+		public void AddUpdate(IRunnable runnable)
 		{
 			runnable.ThrowIfNull(nameof(runnable));
 
@@ -22,7 +23,8 @@
 			}
 		}
 
-		public void Add(IFixedRunnable runnable)
+		/// <inheritdoc />
+		public void AddFixedUpdate(IFixedRunnable runnable)
 		{
 			runnable.ThrowIfNull(nameof(runnable));
 
@@ -33,7 +35,8 @@
 			}
 		}
 
-		public void Add(ILateRunnable runnable)
+		/// <inheritdoc />
+		public void AddLateUpdate(ILateRunnable runnable)
 		{
 			runnable.ThrowIfNull(nameof(runnable));
 
@@ -44,7 +47,32 @@
 			}
 		}
 
-		public void Remove(IRunnable runnable)
+		/// <summary>
+		/// Adds an object to every kind of update, depending on the object's implemented interfaces.
+		/// </summary>
+		/// <param name="runnable">The object to hook into every type of update.</param>
+		public void AddForAllUpdates(object runnable)
+		{
+			runnable.ThrowIfNull(nameof(runnable));
+
+			if (runnable is IRunnable regularUpdate)
+			{
+				AddUpdate(regularUpdate);
+			}
+
+			if (runnable is IFixedRunnable fixedUpdate)
+			{
+				AddFixedUpdate(fixedUpdate);
+			}
+
+			if (runnable is ILateRunnable lateUpdate)
+			{
+				AddLateUpdate(lateUpdate);
+			}
+		}
+
+		/// <inheritdoc />
+		public void RemoveUpdate(IRunnable runnable)
 		{
 			runnable.ThrowIfNull(nameof(runnable));
 
@@ -54,7 +82,8 @@
 			}
 		}
 
-		public void Remove(IFixedRunnable runnable)
+		/// <inheritdoc />
+		public void RemoveFixedUpdate(IFixedRunnable runnable)
 		{
 			runnable.ThrowIfNull(nameof(runnable));
 
@@ -64,7 +93,8 @@
 			}
 		}
 
-		public void Remove(ILateRunnable runnable)
+		/// <inheritdoc />
+		public void RemoveLateUpdate(ILateRunnable runnable)
 		{
 			runnable.ThrowIfNull(nameof(runnable));
 
@@ -74,18 +104,45 @@
 			}
 		}
 
+		/// <summary>
+		/// Removes the object from every kind of update, depending on the object's implemented interfaces.
+		/// </summary>
+		/// <param name="runnable">The object to unhook from every type of update.</param>
+		public void RemoveFromAllUpdates(object runnable)
+		{
+			runnable.ThrowIfNull(nameof(runnable));
+
+			if (runnable is IRunnable regularUpdate)
+			{
+				RemoveUpdate(regularUpdate);
+			}
+
+			if (runnable is IFixedRunnable fixedUpdate)
+			{
+				RemoveFixedUpdate(fixedUpdate);
+			}
+
+			if (runnable is ILateRunnable lateUpdate)
+			{
+				RemoveLateUpdate(lateUpdate);
+			}
+		}
+
+		/// <inheritdoc />
 		public new Coroutine StartCoroutine(IEnumerator routineHandle)
 		{
 			routineHandle.ThrowIfNull(nameof(routineHandle));
 			return base.StartCoroutine(routineHandle);
 		}
 
+		/// <inheritdoc />
 		public new void StopCoroutine(IEnumerator routineHandle)
 		{
 			routineHandle.ThrowIfNull(nameof(routineHandle));
 			base.StopCoroutine(routineHandle);
 		}
 
+		/// <inheritdoc />
 		public new void StopCoroutine(Coroutine routineHandle)
 		{
 			routineHandle.ThrowIfNull(nameof(routineHandle));

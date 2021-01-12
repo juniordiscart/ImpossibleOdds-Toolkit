@@ -54,7 +54,7 @@ public class MyInjectableClass
 
 A binding is an association of a type with a way on how to get an instance of that type. When a resource for an object is about to be injected, the binding defines how that instance is delivered. For example, loading an asset from Resources or from the file system, a new instance every injection, etc.
 
-These pre-defined bindings are available to use already:
+These predefined bindings are available to use already:
 
 * The `InstanceBinding` takes an instance upon creation and serves it with each injection.
 * The `GeneratorBinding` invokes a function each injection of which the result is injected into the target.
@@ -72,7 +72,7 @@ new GeneratorBinding(delegate()
 
 ### Advanced
 
-These pre-defined bindings are very generic and broadly usable, though might not be adequate enough to resolve all situations. To create new kinds of bindings, implement the `IDependencyBinding` or `IDependencyBinding<T>` interface.
+These predefined bindings are very generic and broadly usable, though might not be adequate enough to resolve all situations. To create new kinds of bindings, implement the `IDependencyBinding` or `IDependencyBinding<T>` interface.
 
 ## Containers
 
@@ -121,11 +121,11 @@ container.RegisterWithInterfaces<InputManager>(binding);	// Registers the type a
 
 ### Advanced
 
-The pre-defined `DependencyContainer` type can be used to store bindings suitable for injection. A custom container type can be created however by implementing the `IDependencyContainer` interface.
+The predefined `DependencyContainer` type can be used to store bindings suitable for injection. A custom container type can be created however by implementing the `IDependencyContainer` interface.
 
 ## Contexts & Installers
 
-A dependency injection context defines _when_ and _who_ will be injected with the resources bound to a container. For example, this toolkit has three pre-defined contexts to start out with:
+A dependency injection context defines _when_ and _who_ will be injected with the resources bound to a container. For example, this toolkit has three predefined contexts to start out with:
 
 * The `GlobalDependencyContext` exists during the game's lifetime. Ideal for resources that should always be available.
 * The `SceneDependencyContext` exists on a per-scene basis. It's constrained to objects found in the scene it operates in.
@@ -156,7 +156,7 @@ Now that global resources have been installed, each time a scene is loaded, it w
 
 #### Advanced
 
-If you have a custom container implementation, you can provide an instance of this container by decorating a static method with the `[GlobalContainerProvider]` attribute.
+If you have a custom container implementation, you can provide an instance of this container by decorating a static method with the `GlobalContainerProvider` attribute.
 
 ```cs
 private static class CustomGlobalContextProvider

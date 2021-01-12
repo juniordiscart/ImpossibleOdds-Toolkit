@@ -4,7 +4,7 @@
 	/// Injects the current scene's GameObjects with a DependencyContainer
 	/// populated by context installers on this GameObject and its children.
 	/// </summary>
-	[ScriptExecutionOrder(ExecutionOrderValue)]
+	[ExecuteAt(ExecutionOrderValue)]
 	public class SceneDependencyContext : AbstractDependencyContextBehaviour
 	{
 		public const int ExecutionOrderValue = -9999;

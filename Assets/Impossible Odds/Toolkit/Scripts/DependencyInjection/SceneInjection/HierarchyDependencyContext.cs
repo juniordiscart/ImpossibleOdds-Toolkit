@@ -4,7 +4,7 @@
 	/// Injects only the current hierarchy of GameObjects found below this GameObject with
 	/// a DependencyContainer populated by context installers on this GameObject and its children.
 	/// </summary>
-	[ScriptExecutionOrder(SceneDependencyContext.ExecutionOrderValue + 1)]
+	[ExecuteAfter(typeof(SceneDependencyContext))]
 	public class HierarchyDependencyContext : AbstractDependencyContextBehaviour
 	{
 		public override void Inject()

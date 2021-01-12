@@ -7,9 +7,9 @@
 	/// <summary>
 	/// A (de)serialization processor for dictionary-like data structures.
 	/// </summary>
-	public class LookupProcessor : AbstractCollectionProcessor, ISerializationProcessor, IDeserializationToTargetProcessor
+	public class LookupProcessor : AbstractCollectionProcessor, IDeserializationToTargetProcessor
 	{
-		private new ILookupSerializationDefinition definition;
+		private ILookupSerializationDefinition definition;
 
 		public LookupProcessor(ILookupSerializationDefinition definition, bool strictTypeChecking = DefaultOptions.StrictTypeChecking)
 		: base(definition, strictTypeChecking)
@@ -23,7 +23,7 @@
 		/// <param name="objectToSerialize">The object to serialize.</param>
 		/// <param name="serializedResult">The serialized object.</param>
 		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
-		public bool Serialize(object objectToSerialize, out object serializedResult)
+		public override bool Serialize(object objectToSerialize, out object serializedResult)
 		{
 			// Accept null values.
 			if ((objectToSerialize == null))
@@ -64,7 +64,7 @@
 		/// <param name="dataToDeserialize">The data deserialize and apply to the result.</param>
 		/// <param name="deserializedResult">The result unto which the data is applied.</param>
 		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		public override bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
 			// Check if the target implements the general IDictionary interface, if not, we can just skip altogether.
 			if ((targetType == null) || !typeof(IDictionary).IsAssignableFrom(targetType))

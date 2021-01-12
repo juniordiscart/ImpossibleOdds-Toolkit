@@ -3,7 +3,7 @@
 	using ImpossibleOdds.Http;
 	using ImpossibleOdds.Json;
 
-	[HttpList, JsonObject]
+	[HttpBodyArray, JsonObject]
 	public class LeaderboardEntry
 	{
 		[HttpBodyIndex(0), JsonField]

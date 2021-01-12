@@ -18,9 +18,16 @@
 	where V : IList
 	where W : Attribute, IIndexTypeResolveParameter
 	{
+		/// <inheritdoc />
 		public Type TypeResolveAttribute
 		{
 			get { return typeof(W); }
+		}
+
+		/// <inheritdoc />
+		public abstract int TypeResolveIndex
+		{
+			get;
 		}
 	}
 }

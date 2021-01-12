@@ -2,7 +2,7 @@
 {
 	using ImpossibleOdds.Http;
 
-	[HttpObject, HttpResponseType(typeof(GetLeaderboardResponse))]
+	[HttpBodyObject, HttpResponseType(typeof(GetLeaderboardResponse))]
 	public class GetLeaderboardRequest : IHttpPostRequest
 	{
 		[HttpBodyField("LeaderboardId")]

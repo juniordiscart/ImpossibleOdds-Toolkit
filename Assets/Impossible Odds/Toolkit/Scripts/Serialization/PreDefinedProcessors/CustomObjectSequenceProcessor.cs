@@ -10,17 +10,19 @@
 	/// </summary>
 	public class CustomObjectSequenceProcessor : AbstractCustomObjectProcessor, ISerializationProcessor, IDeserializationToTargetProcessor
 	{
-		private new IIndexSerializationDefinition definition;
+		private IIndexSerializationDefinition definition = null;
+		private IIndexBasedTypeResolve typeResolveDefinition = null;
 
 		private bool SupportsTypeResolvement
 		{
-			get { return definition is IIndexBasedTypeResolve; }
+			get { return typeResolveDefinition != null; }
 		}
 
 		public CustomObjectSequenceProcessor(IIndexSerializationDefinition definition)
 		: base(definition)
 		{
 			this.definition = definition;
+			this.typeResolveDefinition = (definition is IIndexBasedTypeResolve) ? (definition as IIndexBasedTypeResolve) : null;
 		}
 
 		/// <summary>
@@ -29,7 +31,7 @@
 		/// <param name="objectToSerialize">The object to serialize.</param>
 		/// <param name="serializedResult">The serialized object.</param>
 		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
-		public bool Serialize(object objectToSerialize, out object serializedResult)
+		public override bool Serialize(object objectToSerialize, out object serializedResult)
 		{
 			if (objectToSerialize == null)
 			{
@@ -57,7 +59,7 @@
 		/// <param name="dataToDeserialize">The data deserialize and apply to the result.</param>
 		/// <param name="deserializedResult">The result unto which the data is applied.</param>
 		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		public override bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
 			if (targetType == null)
 			{
@@ -131,11 +133,14 @@
 			int nrOfElements = GetMaxDefinedIndex(source.GetType(), definition.IndexBasedFieldAttribute);
 			nrOfElements += (nrOfElements >= 0) ? 1 : 0;
 
-			// Check whether we want to include type information.
-			IIndexTypeResolveParameter typeResolveAttr = ResolveTypeToSequence(sourceType);
-			if (typeResolveAttr != null)
+			// Check whether a type resolve parameter will be there, and at what index it will be.
+			if (SupportsTypeResolvement)
 			{
-				nrOfElements = Math.Max(typeResolveAttr.Index + 1, nrOfElements);
+				IIndexTypeResolveParameter typeResolveAttr = ResolveTypeToSequence(sourceType);
+				if (typeResolveAttr != null)
+				{
+					nrOfElements = Math.Max(typeResolveDefinition.TypeResolveIndex, nrOfElements);
+				}
 			}
 
 			// Create the list of values that will get added.
@@ -154,14 +159,18 @@
 			}
 
 			// Include the type information, if any was found.
-			if (typeResolveAttr != null)
+			if (SupportsTypeResolvement)
 			{
-				if (processedValues[typeResolveAttr.Index] != null)
+				IIndexTypeResolveParameter typeResolveAttr = ResolveTypeToSequence(sourceType);
+				if (typeResolveAttr != null)
 				{
-					Log.Warning("Index {0} for processing an instance of type {1} is used multiple times.", typeResolveAttr.Index, sourceType.Name);
-				}
+					if (processedValues[typeResolveDefinition.TypeResolveIndex] != null)
+					{
+						Log.Warning("Index {0} for processing an instance of type {1} is used multiple times. The type information takes precedence and will override the stored information.", typeResolveDefinition.TypeResolveIndex, sourceType.Name);
+					}
 
-				processedValues[typeResolveAttr.Index] = typeResolveAttr.Value;
+					processedValues[typeResolveDefinition.TypeResolveIndex] = typeResolveAttr.Value;
+				}
 			}
 
 			// Create the collection and start filling it.
@@ -237,9 +246,7 @@
 				return targetType;
 			}
 
-			IIndexBasedTypeResolve typeResolveImplementation = definition as IIndexBasedTypeResolve;
-			IEnumerable<ISerializationTypeResolveParameter> typeResolveAttrs = GetClassTypeResolves(targetType, typeResolveImplementation.TypeResolveAttribute);
-
+			IEnumerable<ISerializationTypeResolveParameter> typeResolveAttrs = GetClassTypeResolves(targetType, typeResolveDefinition.TypeResolveAttribute);
 			foreach (ISerializationTypeResolveParameter attr in typeResolveAttrs)
 			{
 				IIndexTypeResolveParameter typeResolveAttr = attr as IIndexTypeResolveParameter;
@@ -247,7 +254,7 @@
 				{
 					throw new SerializationException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(IIndexTypeResolveParameter).Name));
 				}
-				else if ((source.Count > typeResolveAttr.Index) && (source[typeResolveAttr.Index].Equals(typeResolveAttr.Value)))
+				else if ((source.Count > typeResolveDefinition.TypeResolveIndex) && (source[typeResolveDefinition.TypeResolveIndex].Equals(typeResolveAttr.Value)))
 				{
 					if (targetType.IsAssignableFrom(typeResolveAttr.Target))
 					{

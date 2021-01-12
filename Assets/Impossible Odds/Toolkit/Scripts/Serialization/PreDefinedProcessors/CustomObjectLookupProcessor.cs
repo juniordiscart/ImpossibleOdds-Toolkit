@@ -7,9 +7,10 @@
 	/// <summary>
 	/// A (de)serialization processor to process custom object to dictionary-like data structures.
 	/// </summary>
-	public class CustomObjectLookupProcessor : AbstractCustomObjectProcessor, ISerializationProcessor, IDeserializationToTargetProcessor
+	public class CustomObjectLookupProcessor : AbstractCustomObjectProcessor, IDeserializationToTargetProcessor
 	{
-		private new ILookupSerializationDefinition definition;
+		private ILookupSerializationDefinition definition = null;
+		private ILookupBasedTypeResolve typeResolveDefinition = null;
 
 		private bool SupportsTypeResolvement
 		{
@@ -20,6 +21,7 @@
 		: base(definition)
 		{
 			this.definition = definition;
+			this.typeResolveDefinition = (definition is ILookupBasedTypeResolve) ? (definition as ILookupBasedTypeResolve) : null;
 		}
 
 		/// <summary>
@@ -28,7 +30,7 @@
 		/// <param name="objectToSerialize">The object to serialize.</param>
 		/// <param name="serializedResult">The serialized object.</param>
 		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
-		public bool Serialize(object objectToSerialize, out object serializedResult)
+		public override bool Serialize(object objectToSerialize, out object serializedResult)
 		{
 			if (objectToSerialize == null)
 			{
@@ -56,7 +58,7 @@
 		/// <param name="dataToDeserialize">The data deserialize and apply to the result.</param>
 		/// <param name="deserializedResult">The result unto which the data is applied.</param>
 		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		public override bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
 			if (targetType == null)
 			{
@@ -138,10 +140,13 @@
 			}
 
 			// Include type information, if available.
-			ILookupTypeResolveParameter typeResolveAttr = ResolveTypeToLookup(sourceType);
-			if (typeResolveAttr != null)
+			if (SupportsTypeResolvement)
 			{
-				processedValues.Add(typeResolveAttr.Key, typeResolveAttr.Value);
+				ILookupTypeResolveParameter typeResolveAttr = ResolveTypeToLookup(sourceType);
+				if (typeResolveAttr != null)
+				{
+					processedValues.Add(Serializer.Serialize(typeResolveDefinition.TypeResolveKey, definition), typeResolveAttr.Value);
+				}
 			}
 
 			IDictionary resultCollection = definition.CreateLookupInstance(sourceFields.Count);
@@ -165,13 +170,10 @@
 
 			if (properties.Contains(key))
 			{
-				properties[key] = value;
 				Log.Warning("A key with value '{0}' has been defined more than once for source object of type {1}.", key.ToString(), sourceType.Name);
 			}
-			else
-			{
-				properties.Add(key, value);
-			}
+
+			properties.Add(key, value);
 		}
 
 		private void Deserialize(object target, IDictionary source)
@@ -255,8 +257,7 @@
 				return targetType;
 			}
 
-			ILookupBasedTypeResolve typeResolveImplementation = definition as ILookupBasedTypeResolve;
-			IEnumerable<ISerializationTypeResolveParameter> typeResolveAttrs = GetClassTypeResolves(targetType, typeResolveImplementation.TypeResolveAttribute);
+			IEnumerable<ISerializationTypeResolveParameter> typeResolveAttrs = GetClassTypeResolves(targetType, typeResolveDefinition.TypeResolveAttribute);
 
 			foreach (ISerializationTypeResolveParameter attr in typeResolveAttrs)
 			{
@@ -265,7 +266,7 @@
 				{
 					throw new SerializationException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(ILookupTypeResolveParameter).Name));
 				}
-				else if (source.Contains(typeResolveAttr.Key) && (source[typeResolveAttr.Key].Equals(typeResolveAttr.Value)))
+				else if (source.Contains(typeResolveDefinition.TypeResolveKey) && (source[typeResolveDefinition.TypeResolveKey].Equals(typeResolveAttr.Value)))
 				{
 					if (targetType.IsAssignableFrom(typeResolveAttr.Target))
 					{

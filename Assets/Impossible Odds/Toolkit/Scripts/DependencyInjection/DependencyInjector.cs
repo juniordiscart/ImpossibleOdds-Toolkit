@@ -180,7 +180,7 @@
 					}
 					else
 					{
-						parameters[i] = parameterType.GetTypeInfo().IsValueType ? Activator.CreateInstance(parameterType) : null;
+						parameters[i] = parameterType.GetTypeInfo().IsValueType ? Activator.CreateInstance(parameterType, true) : null;
 					}
 				}
 

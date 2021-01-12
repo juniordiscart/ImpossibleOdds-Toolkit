@@ -14,6 +14,14 @@
 		{
 			get;
 		}
+
+		/// <summary>
+		/// Index of where the type information can be found in the index-based data structure.
+		/// </summary>
+		int TypeResolveIndex
+		{
+			get;
+		}
 	}
 
 	/// <summary>

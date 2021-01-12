@@ -27,11 +27,25 @@
 	where Z : IDictionary
 	where B : Attribute, ILookupTypeResolveParameter
 	{
+		/// <inheritdoc />
+		public abstract object TypeResolveKey
+		{
+			get;
+		}
+
+		/// <inheritdoc />
+		public int TypeResolveIndex
+		{
+			get;
+		}
+
+		/// <inheritdoc />
 		Type IIndexBasedTypeResolve.TypeResolveAttribute
 		{
 			get { return typeof(A); }
 		}
 
+		/// <inheritdoc />
 		Type ILookupBasedTypeResolve.TypeResolveAttribute
 		{
 			get { return typeof(B); }

@@ -4,5 +4,10 @@
 	/// Denotes that an object can work as a (de)serialization processor.
 	/// </summary>
 	public interface IProcessor
-	{ }
+	{
+		ISerializationDefinition Definition
+		{
+			get;
+		}
+	}
 }

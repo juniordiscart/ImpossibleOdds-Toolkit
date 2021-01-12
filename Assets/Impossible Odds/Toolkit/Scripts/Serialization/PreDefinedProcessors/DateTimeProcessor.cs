@@ -6,17 +6,24 @@
 	/// <summary>
 	/// A (de)serialization processor specifically to process DateTime values.
 	/// </summary>
-	public class DateTimeProcessor : AbstractProcessor, ISerializationProcessor, IDeserializationProcessor
+	public class DateTimeProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
 		private string dateTimeFormat = string.Empty;
+		private ISerializationDefinition definition = null;
+
+		public ISerializationDefinition Definition
+		{
+			get { return definition; }
+		}
 
 		public DateTimeProcessor(ISerializationDefinition definition)
-		: base(definition)
-		{ }
+		{
+			this.definition = definition;
+		}
 
 		public DateTimeProcessor(ISerializationDefinition definition, string dateTimeFormat)
-		: base(definition)
 		{
+			this.definition = definition;
 			this.dateTimeFormat = dateTimeFormat;
 		}
 

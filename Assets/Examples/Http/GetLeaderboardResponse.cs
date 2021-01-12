@@ -12,8 +12,8 @@
 		INVALID_OFFSET = 1 << 2
 	}
 
-	[HttpObject]
-	public class GetLeaderboardResponse : IHttpJsonResponseHandler
+	[HttpBodyObject]
+	public class GetLeaderboardResponse : IHttpJsonResponse
 	{
 		[HttpBodyField("ErrorCode")]
 		private ResponseError responseError = 0;

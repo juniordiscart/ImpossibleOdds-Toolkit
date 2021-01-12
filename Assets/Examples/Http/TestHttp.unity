@@ -1414,7 +1414,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 50, y: 0}
-  m_SizeDelta: {x: 1820.6936, y: 0}
+  m_SizeDelta: {x: 1821.2632, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1418634626
 MonoBehaviour:
@@ -2172,7 +2172,7 @@ MonoBehaviour:
     As an example,
     a POST request is generated to fetch a leaderboard from the server. The server
     will return the leaderboard along with some entries of this leaderboard. Both
-    the request and response data are generated based on the class'' datastructure
+    the request and response data are generated based on the class'' data structure
     along with any implemented interfaces and applied attributes.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -2242,10 +2242,10 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 1917303609}
-    characterCount: 368
+    characterCount: 369
     spriteCount: 0
-    spaceCount: 56
-    wordCount: 56
+    spaceCount: 57
+    wordCount: 57
     linkCount: 0
     lineCount: 6
     pageCount: 1

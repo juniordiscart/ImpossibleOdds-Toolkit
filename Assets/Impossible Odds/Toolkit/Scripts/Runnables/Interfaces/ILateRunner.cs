@@ -9,11 +9,11 @@
 		/// Add runnable that wishes to hook into the LateUpdate loop.
 		/// </summary>
 		/// <param name="runnable">Runnable to register.</param>
-		void Add(ILateRunnable runnable);
+		void AddLateUpdate(ILateRunnable runnable);
 		/// <summary>
 		/// Remove runnable that whishes to unhook from the LateUpdate loop.
 		/// </summary>
 		/// <param name="runnable">Runnable to remove.</param>
-		void Remove(ILateRunnable runnable);
+		void RemoveLateUpdate(ILateRunnable runnable);
 	}
 }

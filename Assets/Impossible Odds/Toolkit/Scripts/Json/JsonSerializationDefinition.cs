@@ -20,54 +20,72 @@
 	where TJsonObject : IDictionary
 	where TJsonArray : IList
 	{
+		public const string JsonTypeKey = "jsi:type";
+
+		/// <inheritdoc />
 		public Type JsonObjectType
 		{
 			get { return typeof(TJsonObject); }
 		}
 
+		/// <inheritdoc />
 		public Type JsonArrayType
 		{
 			get { return typeof(TJsonArray); }
 		}
 
+		/// <inheritdoc />
 		public override IEnumerable<ISerializationProcessor> SerializationProcessors
 		{
 			get { return serializationProcessors; }
 		}
 
+		/// <inheritdoc />
 		public override IEnumerable<IDeserializationProcessor> DeserializationProcessors
 		{
 			get { return deserializationProcessors; }
 		}
 
+		/// <inheritdoc />
 		public override HashSet<Type> SupportedTypes
 		{
 			get { return supportedTypes; }
 		}
 
+		/// <inheritdoc />
 		public Type TypeResolveAttribute
 		{
 			get { return typeof(JsonTypeResolveAttribute); }
 		}
 
+		/// <inheritdoc />
 		public Type OnSerializationCallbackType
 		{
 			get { return typeof(OnJsonSerializingAttribute); }
 		}
 
+		/// <inheritdoc />
 		public Type OnSerializedCallbackType
 		{
 			get { return typeof(OnJsonSerializedAttribute); }
 		}
 
+		/// <inheritdoc />
 		public Type OnDeserializionCallbackType
 		{
 			get { return typeof(OnJsonDeserializingAttribute); }
 		}
 
+		/// <inheritdoc />
 		public Type OnDeserializedCallbackType
 		{
 			get { return typeof(OnJsonDeserializedAttribute); }
+		}
+
+		/// <inheritdoc />
+		public virtual object TypeResolveKey
+		{
+			get { return JsonTypeKey; }
 		}
 
 		private IEnumerable<ISerializationProcessor> serializationProcessors;

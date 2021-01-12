@@ -9,11 +9,11 @@
 		/// Add runnable that wishes to hook into the FixedUpdate loop.
 		/// </summary>
 		/// <param name="runnable">Runnable to register.</param>
-		void Add(IFixedRunnable runnable);
+		void AddFixedUpdate(IFixedRunnable runnable);
 		/// <summary>
 		/// Remove runnable that wishes to unhook from the FixedUpdate loop.
 		/// </summary>
 		/// <param name="runnable">Runnable to remove.</param>
-		void Remove(IFixedRunnable runnable);
+		void RemoveFixedUpdate(IFixedRunnable runnable);
 	}
 }

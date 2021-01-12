@@ -12,10 +12,17 @@
 		/// Get the runner that is associated with the currently active scene.
 		/// If no runner is available for the current scene, one is created and registered.
 		/// </summary>
-		/// <returns>The scene runner associated with the currently active scene.</returns>
-		public static SceneRunner GetRunner()
+		public static SceneRunner Get
 		{
-			return GetRunner(SceneManager.GetActiveScene());
+			get { return GetRunnerForScene(SceneManager.GetActiveScene()); }
+		}
+
+		/// <summary>
+		/// Checks whether a scene runner exists for the currently active scene.
+		/// </summary>
+		public static bool Exists
+		{
+			get { return ExistsForScene(SceneManager.GetActiveScene()); }
 		}
 
 		/// <summary>
@@ -24,7 +31,7 @@
 		/// </summary>
 		/// <param name="scene">The scene to retrieve the runner for.</param>
 		/// <returns>The scene runner associated with the given scene.</returns>
-		public static SceneRunner GetRunner(Scene scene)
+		public static SceneRunner GetRunnerForScene(Scene scene)
 		{
 			if (!scene.IsValid())
 			{
@@ -40,7 +47,7 @@
 				return sceneRunners[scene];
 			}
 
-			GameObject sceneRunnerObj = new GameObject("ImpossibleOdds_SceneRunner_" + scene.name);
+			GameObject sceneRunnerObj = new GameObject("ImpossibleOdds::SceneRunner_" + scene.name);
 			SceneRunner sceneRunner = sceneRunnerObj.AddComponent<SceneRunner>();
 
 			// Move the object to the requested scene, if necessary
@@ -53,20 +60,11 @@
 		}
 
 		/// <summary>
-		/// Checks whether a scene runner exists for the currently active scene.
-		/// </summary>
-		/// <returns>True if a scene runner exists for the currently active scene. False otherwise.</returns>
-		public static bool SceneRunnerExists()
-		{
-			return SceneRunnerExists(SceneManager.GetActiveScene());
-		}
-
-		/// <summary>
 		/// Checks whether a scene runner exists for the given scene.
 		/// </summary>
 		/// <param name="scene">The scene to check for whether a scene runner exists.</param>
 		/// <returns>True if a runner is associated with the given scene. False otherwise.</returns>
-		public static bool SceneRunnerExists(Scene scene)
+		public static bool ExistsForScene(Scene scene)
 		{
 			return sceneRunners.ContainsKey(scene);
 		}

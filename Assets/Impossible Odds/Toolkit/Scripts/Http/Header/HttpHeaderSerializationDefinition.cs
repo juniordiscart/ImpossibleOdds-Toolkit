@@ -10,7 +10,7 @@
 	/// Serialization definition for the header of HTTP requests.
 	/// </summary>
 	public class HttpHeaderSerializationDefinition : LookupDefinition
-	<HttpObjectAttribute, HttpHeaderFieldAttribute, Dictionary<string, string>>
+	<HttpBodyObjectAttribute, HttpHeaderFieldAttribute, Dictionary<string, string>>
 	{
 		public override IEnumerable<ISerializationProcessor> SerializationProcessors
 		{
@@ -56,6 +56,7 @@
 				typeof(uint),
 				typeof(long),
 				typeof(ulong),
+				typeof(float),
 				typeof(double),
 				typeof(bool),
 				typeof(string)

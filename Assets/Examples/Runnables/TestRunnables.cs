@@ -19,9 +19,8 @@
 			Application.targetFrameRate = 60;
 
 			frameCounter = new FrameCounter();
-			SceneRunner runner = SceneRunner.GetRunner();
-			runner.Add(frameCounter as IRunnable);
-			runner.Add(frameCounter as IFixedRunnable);
+			SceneRunner.Get.AddUpdate(frameCounter);
+			SceneRunner.Get.AddFixedUpdate(frameCounter);
 
 			OnPrintFrames();
 			btnPrintFrames.onClick.AddListener(OnPrintFrames);

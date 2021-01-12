@@ -6,10 +6,10 @@
 	/// <summary>
 	/// A (de)serialization processor for primitive types, i.e. int, bool, float, ...
 	/// </summary>
-	public class PrimitiveTypeProcessor : AbstractProcessor, ISerializationProcessor, IDeserializationProcessor
+	public class PrimitiveTypeProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
-		private const string TRUE_STRING_ALT = "1";
-		private const string FALSE_STRING_ALT = "0";
+		private const string TrueStringAlternative = "1";
+		private const string FalseStringAlternative = "0";
 
 		private static List<Type> primitiveTypeOrder = new List<Type>()
 		{
@@ -27,9 +27,17 @@
 			typeof(double)
 		};
 
+		private ISerializationDefinition definition = null;
+
+		public ISerializationDefinition Definition
+		{
+			get { return definition; }
+		}
+
 		public PrimitiveTypeProcessor(ISerializationDefinition definition)
-		: base(definition)
-		{ }
+		{
+			this.definition = definition;
+		}
 
 		/// <summary>
 		/// Attempt to serialize the object to a single instance of a primitive type as defined by the serialization definition.
@@ -116,9 +124,9 @@
 				string strValue = (string)objToParse;
 				switch (strValue)
 				{
-					case TRUE_STRING_ALT:
+					case TrueStringAlternative:
 						return true;
-					case FALSE_STRING_ALT:
+					case FalseStringAlternative:
 						return false;
 					default:
 						return Convert.ChangeType(objToParse, typeof(bool), definition.FormatProvider);

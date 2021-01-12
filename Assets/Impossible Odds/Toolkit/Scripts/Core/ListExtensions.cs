@@ -1,6 +1,11 @@
-﻿namespace ImpossibleOdds
+﻿/// <summary>
+/// Sorted list extensions found on: https://www.jacksondunstan.com/articles/3189
+/// </summary>
+
+namespace ImpossibleOdds
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 
 	/// <summary>
@@ -47,6 +52,95 @@
 			T temp = list[i];
 			list[i] = list[j];
 			list[j] = temp;
+		}
+
+		/// <summary>
+		/// Inserts a value in the list, assuming it is already sorted, preserving the order of elements.
+		/// </summary>
+		/// <param name="list">The list in which to insert the element.</param>
+		/// <param name="value">Value to insert.</param>
+		/// <typeparam name="T">The element type of the list.</typeparam>
+		public static void SortedInsert<T>(this IList<T> list, T value)
+		where T : IComparable<T>
+		{
+			SortedInsert(list, value, (a, b) => a.CompareTo(b));
+		}
+
+		/// <summary>
+		/// Inserts a value in the list, assuming it is already sorted, preserving the order of elements.
+		/// </summary>
+		/// <param name="list">The list in which to insert the element.</param>
+		/// <param name="value">Value to insert.</param>
+		/// <param name="comparison">Comparison operator to determine the order of elements.</param>
+		/// <typeparam name="T">The element type of the list.</typeparam>
+		public static void SortedInsert<T>(this IList<T> list, T value, Comparison<T> comparison)
+		{
+			int startIndex = 0;
+			int endIndex = list.Count;
+			while (endIndex > startIndex)
+			{
+				int windowSize = endIndex - startIndex;
+				int middleIndex = startIndex + (windowSize / 2);
+				T middleValue = list[middleIndex];
+				int compareToResult = comparison(middleValue, value);
+				if (compareToResult == 0)
+				{
+					list.Insert(middleIndex, value);
+					return;
+				}
+				else if (compareToResult < 0)
+				{
+					startIndex = middleIndex + 1;
+				}
+				else
+				{
+					endIndex = middleIndex;
+				}
+			}
+			list.Insert(startIndex, value);
+		}
+
+		/// <summary>
+		/// Inserts a value in the list, assuming it is already sorted, preserving the order of elements.
+		/// </summary>
+		/// <param name="list">The list in which to insert the element.</param>
+		/// <param name="value">Value to insert.</param>
+		public static void SortedInsert(this IList list, IComparable value)
+		{
+			SortedInsert(list, value, (a, b) => a.CompareTo(b));
+		}
+
+		/// <summary>
+		/// Inserts a value in the list, assuming it is already sorted, preserving the order of elements.
+		/// </summary>
+		/// <param name="list">The list in which to insert the element.</param>
+		/// <param name="value">Value to insert.</param>
+		/// <param name="comparison">Comparison operator to determine the order of elements.</param>
+		public static void SortedInsert(this IList list, IComparable value, Comparison<IComparable> comparison)
+		{
+			int startIndex = 0;
+			int endIndex = list.Count;
+			while (endIndex > startIndex)
+			{
+				int windowSize = endIndex - startIndex;
+				int middleIndex = startIndex + (windowSize / 2);
+				IComparable middleValue = (IComparable)list[middleIndex];
+				int compareToResult = comparison(middleValue, value);
+				if (compareToResult == 0)
+				{
+					list.Insert(middleIndex, value);
+					return;
+				}
+				else if (compareToResult < 0)
+				{
+					startIndex = middleIndex + 1;
+				}
+				else
+				{
+					endIndex = middleIndex;
+				}
+			}
+			list.Insert(startIndex, value);
 		}
 	}
 }

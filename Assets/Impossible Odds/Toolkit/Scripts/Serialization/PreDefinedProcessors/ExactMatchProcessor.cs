@@ -5,11 +5,19 @@
 	/// <summary>
 	/// Simple (de)serialization processor that checks if the type and data are an exact match and can directly be applied.
 	/// </summary>
-	public class ExactMatchProcessor : AbstractProcessor, ISerializationProcessor, IDeserializationProcessor
+	public class ExactMatchProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
+		private ISerializationDefinition definition = null;
+
+		public ISerializationDefinition Definition
+		{
+			get { return definition; }
+		}
+
 		public ExactMatchProcessor(ISerializationDefinition definition)
-		: base(definition)
-		{ }
+		{
+			this.definition = definition;
+		}
 
 		/// <summary>
 		/// Attempts to serialize the object to a directly supported type by the definition.

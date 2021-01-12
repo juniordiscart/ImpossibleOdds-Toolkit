@@ -2,7 +2,7 @@
 {
 	using System;
 
-	public abstract class ImpossibleOddsException : Exception
+	public class ImpossibleOddsException : Exception
 	{
 		public ImpossibleOddsException()
 		{ }

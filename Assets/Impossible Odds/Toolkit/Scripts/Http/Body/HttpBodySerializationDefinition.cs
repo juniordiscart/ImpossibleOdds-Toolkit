@@ -10,7 +10,7 @@
 	/// Serialization definition for the body of HTTP requests.
 	/// </summary>
 	public class HttpBodySerializationDefinition : IndexAndLookupDefinition
-	<HttpListAttribute, HttpBodyIndexAttribute, List<object>, HttpObjectAttribute, HttpBodyFieldAttribute, Dictionary<string, object>>
+	<HttpBodyArrayAttribute, HttpBodyIndexAttribute, List<object>, HttpBodyObjectAttribute, HttpBodyFieldAttribute, Dictionary<string, object>>
 	{
 		public override IEnumerable<ISerializationProcessor> SerializationProcessors
 		{
@@ -66,6 +66,7 @@
 				typeof(uint),
 				typeof(long),
 				typeof(ulong),
+				typeof(float),
 				typeof(double),
 				typeof(bool),
 				typeof(string)

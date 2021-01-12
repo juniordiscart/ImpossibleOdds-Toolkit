@@ -8,13 +8,21 @@
 	/// <summary>
 	/// A (de)serialization processor for enum values. This includes potential alias values for the enum values.
 	/// </summary>
-	public class EnumProcessor : AbstractProcessor, ISerializationProcessor, IDeserializationProcessor
+	public class EnumProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
+		private ISerializationDefinition definition = null;
 		private static Dictionary<Type, List<FieldInfo>> aliasAttributesCache = new Dictionary<Type, List<FieldInfo>>();
 
+		public ISerializationDefinition Definition
+		{
+			get { return definition; }
+		}
+
+
 		public EnumProcessor(ISerializationDefinition definition)
-		: base(definition)
-		{ }
+		{
+			this.definition = definition;
+		}
 
 		/// <summary>
 		/// Attempts to serialize the enum value to a supported type defined by the serialization definition. If an alias is defined, then the alias is serialized.

@@ -7,9 +7,15 @@
 	/// Abstract processor for common Unity types.
 	/// </summary>
 	/// <typeparam name="T">A Unity pimitive type.</typeparam>
-	public abstract class AbstractUnityPrimitiveProcessor<T> : AbstractProcessor, ISerializationProcessor, IDeserializationProcessor
+	public abstract class AbstractUnityPrimitiveProcessor<T> : ISerializationProcessor, IDeserializationProcessor
 	{
 		private bool preferSequenceOverLookup = false;
+		private ISerializationDefinition definition = null;
+
+		public ISerializationDefinition Definition
+		{
+			get { return definition; }
+		}
 
 		private IIndexSerializationDefinition IndexBasedDefinition
 		{
@@ -27,9 +33,9 @@
 		/// </summary>
 		/// <param name="definition"></param>
 		protected AbstractUnityPrimitiveProcessor(IIndexSerializationDefinition definition)
-		: base(definition)
 		{
 			this.preferSequenceOverLookup = true;
+			this.definition = definition;
 		}
 
 		/// <summary>
@@ -38,9 +44,9 @@
 		/// </summary>
 		/// <param name="definition"></param>
 		protected AbstractUnityPrimitiveProcessor(ILookupSerializationDefinition definition)
-		: base(definition)
 		{
 			this.preferSequenceOverLookup = false;
+			this.definition = definition;
 		}
 
 		/// <summary>

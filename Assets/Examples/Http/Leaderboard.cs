@@ -4,7 +4,7 @@
 	using ImpossibleOdds.Http;
 	using ImpossibleOdds.Json;
 
-	[HttpObject, JsonObject]
+	[HttpBodyObject, JsonObject]
 	public class Leaderboard
 	{
 		[HttpBodyField("Name"), JsonField]

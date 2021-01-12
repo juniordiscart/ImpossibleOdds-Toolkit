@@ -47,7 +47,7 @@
 			}
 		}
 
-		//// <inheritdoc />
+		/// <inheritdoc />
 		event Action<IWeblinkMessageHandle> IWeblinkMessenger.onMessageFailed
 		{
 			add
@@ -188,7 +188,7 @@
 			}
 
 			// Instantiate a response
-			return (TResponse)Activator.CreateInstance(responseType);
+			return (TResponse)Activator.CreateInstance(responseType, true);
 		}
 
 		/// Invokes callback methods on registered callback objects.

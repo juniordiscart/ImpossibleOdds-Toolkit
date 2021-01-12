@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Processors;
 
@@ -11,7 +10,7 @@
 	/// Serialization definition for parameters in the URL of HTTP requests.
 	/// </summary>
 	public class HttpURLSerializationDefinition : LookupDefinition
-	<HttpObjectAttribute, HttpURLFieldAttribute, Dictionary<string, string>>
+	<HttpBodyObjectAttribute, HttpURLFieldAttribute, Dictionary<string, string>>
 	{
 		public override IEnumerable<ISerializationProcessor> SerializationProcessors
 		{

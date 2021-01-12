@@ -5,11 +5,19 @@
 	/// <summary>
 	/// A simple deserialization-only processor to process a value to a string.
 	/// </summary>
-	public class StringProcessor : AbstractProcessor, IDeserializationProcessor
+	public class StringProcessor : IDeserializationProcessor
 	{
+		private ISerializationDefinition definition = null;
+
+		public ISerializationDefinition Definition
+		{
+			get { return definition; }
+		}
+
 		public StringProcessor(ISerializationDefinition definition)
-		: base(definition)
-		{ }
+		{
+			this.definition = definition;
+		}
 
 		/// <summary>
 		/// Attempts to deserialize a string value to a string or to a system supported type using the System.Convert method.

@@ -5,7 +5,6 @@
 	using System.Collections.Generic;
 	using System.Text;
 	using System.Text.RegularExpressions;
-	using System.Runtime.Serialization;
 
 	using ImpossibleOdds.Serialization;
 
@@ -82,22 +81,23 @@
 		}
 
 		/// <summary>
-		/// Processes a JSON-compliant string value and attempts to deserialize it to an instance of type TTarget.
+		/// Processes a JSON string value and attempts to deserialize it to an instance of the target type.
 		/// </summary>
 		/// <param name="jsonStr">JSON-compliant string.</param>
 		/// <typeparam name="TTarget">Target type.</typeparam>
 		public static TTarget Deserialize<TTarget>(string jsonStr)
 		{
-			Type targetType = typeof(TTarget);
+			return (TTarget)Deserialize(typeof(TTarget), jsonStr);
+		}
 
-			if (targetType.IsAbstract || targetType.IsInterface)
-			{
-				throw new JsonException(string.Format("Cannot create instance of type {0} because it is either astract or an interface."));
-			}
-
-			TTarget target = (TTarget)FormatterServices.GetUninitializedObject(targetType);
-			Deserialize(target, jsonStr);
-			return target;
+		/// <summary>
+		/// Processes a JSON string value and attempts to deserialize it to an instance of the target type.
+		/// </summary>
+		/// <param name="targetType">Target type.</param>
+		/// <param name="jsonStr">JSON-compliant string.</param>
+		public static object Deserialize(Type targetType, string jsonStr)
+		{
+			return Serializer.Deserialize(targetType, Deserialize(jsonStr), defaultSerializationDefinition);
 		}
 
 		/// <summary>

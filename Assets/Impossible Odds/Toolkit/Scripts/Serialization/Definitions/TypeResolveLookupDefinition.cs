@@ -17,9 +17,16 @@
 	where V : IDictionary
 	where W : Attribute, ILookupTypeResolveParameter
 	{
+		/// <inheritdoc />
 		public Type TypeResolveAttribute
 		{
 			get { return typeof(W); }
+		}
+
+		/// <inheritdoc />
+		public abstract object TypeResolveKey
+		{
+			get;
 		}
 	}
 }

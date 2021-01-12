@@ -14,6 +14,14 @@
 		{
 			get;
 		}
+
+		/// <summary>
+		/// The key that's used to store the type value in the lookup-based datastructure.
+		/// </summary>
+		object TypeResolveKey
+		{
+			get;
+		}
 	}
 
 	/// <summary>

@@ -6,7 +6,7 @@
 	{
 		private static GlobalRunner globalRunner = null;
 
-		public static GlobalRunner GetRunner
+		public static GlobalRunner Get
 		{
 			get
 			{
@@ -21,7 +21,7 @@
 
 		private static void CreateGlobalRunner()
 		{
-			GameObject globalRunnerObj = new GameObject("ImpossibleOdds_GlobalRunner");
+			GameObject globalRunnerObj = new GameObject("ImpossibleOdds::GlobalRunner");
 			globalRunner = globalRunnerObj.AddComponent<GlobalRunner>();
 			GameObject.DontDestroyOnLoad(globalRunner);
 		}

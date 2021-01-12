@@ -42,6 +42,18 @@
 		/// <summary>
 		/// Deserialize the data into a new instance of the target type based on the deserialization processors found in the definition.
 		/// </summary>
+		/// <param name="dataToDeserialize">Data to apply to the instance.</param>
+		/// <param name="deserializationDefinition">Serialization definition to guide the deserialization process.</param>
+		/// <typeparam name="TTarget">Type of deserialized instance.</typeparam>
+		/// <returns>An instance of the target type with the data applied onto it.</returns>
+		public static TTarget Deserialize<TTarget>(object dataToDeserialize, ISerializationDefinition deserializationDefinition)
+		{
+			return (TTarget)Deserialize(typeof(TTarget), dataToDeserialize, deserializationDefinition);
+		}
+
+		/// <summary>
+		/// Deserialize the data into a new instance of the target type based on the deserialization processors found in the definition.
+		/// </summary>
 		/// <param name="targetType">Type of deserialized instance.</param>
 		/// <param name="dataToDeserialize">Data to apply to the instance.</param>
 		/// <param name="deserializationDefinition">Serialization definition to guide the deserialization process.</param>
@@ -53,7 +65,7 @@
 
 			if (deserializationDefinition.DeserializationProcessors == null)
 			{
-				throw new SerializationException("No unmapping processors are defined.");
+				throw new SerializationException("No deserialization processors are defined in the definition of type {0}.", deserializationDefinition.GetType().Name);
 			}
 
 			object result = null;
@@ -65,7 +77,7 @@
 				}
 			}
 
-			throw new SerializationException(string.Format("Failed to map a source value to target type {0}.", targetType.Name));
+			throw new SerializationException(string.Format("Failed to deserialize a source value to target type {0}.", targetType.Name));
 		}
 
 		/// <summary>

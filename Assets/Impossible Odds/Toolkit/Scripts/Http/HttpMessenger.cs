@@ -62,7 +62,23 @@
 
 			if (request is IHttpGetRequest getRequest)
 			{
-				unityWebRequest = UnityWebRequest.Get(url);
+				// Check whether the get request has a further specified type, e.g. texture or audio clip.
+				if (getRequest is IHttpGetAudioClipRequest audioClipRequest)
+				{
+					unityWebRequest = UnityWebRequestMultimedia.GetAudioClip(url, audioClipRequest.AudioType);
+				}
+				else if (getRequest is IHttpGetTextureRequest textureRequest)
+				{
+					unityWebRequest = UnityWebRequestTexture.GetTexture(url);
+				}
+				else if (getRequest is IHttpGetAssetBundleRequest assetBundleRequest)
+				{
+					unityWebRequest = UnityWebRequestAssetBundle.GetAssetBundle(url);
+				}
+				else
+				{
+					unityWebRequest = UnityWebRequest.Get(url);
+				}
 			}
 			else if (request is IHttpPostRequest postRequest)
 			{
@@ -121,7 +137,27 @@
 				}
 			}
 
-			return string.Format("{0}?{1}", request.URL, UnityWebRequest.EscapeURL(stringBuilderCache.ToString()));
+			string url = request.URL;
+			string parameters = UnityWebRequest.EscapeURL(stringBuilderCache.ToString());
+
+			// If the URL already contains parameters, then the generated one are simply appended.
+			// Else, the full URL is generated.
+			if (url.Contains("?"))
+			{
+				if (url.EndsWith("&"))
+				{
+					return url + parameters;
+				}
+				else
+				{
+					return string.Format("{0}&{1}", url, parameters);
+				}
+			}
+			else
+			{
+				return string.Format("{0}?{1}", url, parameters);
+			}
+
 		}
 
 		private void OnRequestCompleted(HttpMessageHandle handle)
@@ -144,18 +180,28 @@
 			Serializer.Deserialize(response, webOP.GetResponseHeaders(), headerDefinition);
 
 			// If the response expects JSON data to be returned,
-			if ((response is IHttpJsonResponseHandler) && !string.IsNullOrWhiteSpace(webOP.downloadHandler.text))
+			if ((response is IHttpJsonResponse) && !string.IsNullOrWhiteSpace(webOP.downloadHandler.text))
 			{
 				object jsonData = JsonProcessor.Deserialize(handle.WebRequest.downloadHandler.text);
 				Serializer.Deserialize(response, jsonData, bodyDefinition);
 			}
-
-			// If the response wants to custom handle the data returned
-			if (response is IHttpCustomResponseHandler customResponseHandler)
+			else if (response is IHttpAudioClipResponse audioClipResponse)
+			{
+				audioClipResponse.AudioClip = DownloadHandlerAudioClip.GetContent(webOP);
+			}
+			else if (response is IHttpTextureResponse textureResponse)
+			{
+				textureResponse.Texture = DownloadHandlerTexture.GetContent(webOP);
+			}
+			else if (response is IHttpAssetBundleResponse assetBundleResponse)
+			{
+				assetBundleResponse.AssetBundle = DownloadHandlerAssetBundle.GetContent(webOP);
+			}
+			else if (response is IHttpCustomResponse customResponse)
 			{
 				try
 				{
-					customResponseHandler.ProcessResponse(handle.WebRequest);
+					customResponse.ProcessResponse(handle.WebRequest);
 				}
 				catch (Exception e)
 				{
