@@ -92,11 +92,11 @@ When one of these, or both, are implemented by the serialization definition, it 
 
 Each interface that represents type resolve is supported by an attribute that can be placed multiple times above a class. This attribute works similarly to [C#'s XmlType attribute][XmlTypeAttribute]. It is placed above (one of) the base classes, and defines which sub-classes can be expected/used during the serialization process.
 
-For example, the [JSON][Json] serialization definition implements support for the lookup-based type resolve technique by using the `JsonTypeResolve` attribute:
+For example, the [JSON][Json] serialization definition implements support for the lookup-based type resolve technique by using the `JsonType` attribute:
 
 ```cs
-[JsonTypeResolve(typeof(Dog)),
-JsonTypeResolve(typeof(Cat))]
+[JsonType(typeof(Dog)),
+JsonType(typeof(Cat))]
 public class Animal
 { }
 

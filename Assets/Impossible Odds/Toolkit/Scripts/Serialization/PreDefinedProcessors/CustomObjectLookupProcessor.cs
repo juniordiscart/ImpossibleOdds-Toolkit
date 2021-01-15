@@ -10,18 +10,25 @@
 	public class CustomObjectLookupProcessor : AbstractCustomObjectProcessor, IDeserializationToTargetProcessor
 	{
 		private ILookupSerializationDefinition definition = null;
-		private ILookupBasedTypeResolve typeResolveDefinition = null;
+		private ILookupTypeResolveSupport typeResolveSupport = null;
+		private IRequiredValueSupport requiredValueSupport = null;
 
 		private bool SupportsTypeResolvement
 		{
-			get { return definition is ILookupBasedTypeResolve; }
+			get { return typeResolveSupport != null; }
+		}
+
+		private bool SupportsRequiredValues
+		{
+			get { return requiredValueSupport != null; }
 		}
 
 		public CustomObjectLookupProcessor(ILookupSerializationDefinition definition)
 		: base(definition)
 		{
 			this.definition = definition;
-			this.typeResolveDefinition = (definition is ILookupBasedTypeResolve) ? (definition as ILookupBasedTypeResolve) : null;
+			this.typeResolveSupport = (definition is ILookupTypeResolveSupport) ? (definition as ILookupTypeResolveSupport) : null;
+			this.requiredValueSupport = (definition is IRequiredValueSupport) ? (definition as IRequiredValueSupport) : null;
 		}
 
 		/// <summary>
@@ -142,10 +149,10 @@
 			// Include type information, if available.
 			if (SupportsTypeResolvement)
 			{
-				ILookupTypeResolveParameter typeResolveAttr = ResolveTypeToLookup(sourceType);
+				ITypeResolveParameter typeResolveAttr = ResolveTypeToLookup(sourceType);
 				if (typeResolveAttr != null)
 				{
-					processedValues.Add(Serializer.Serialize(typeResolveDefinition.TypeResolveKey, definition), typeResolveAttr.Value);
+					processedValues.Add(Serializer.Serialize(typeResolveSupport.TypeResolveKey, definition), typeResolveAttr.Value);
 				}
 			}
 
@@ -189,7 +196,7 @@
 				if (!source.Contains(key))
 				{
 					// Check whether this field is marked as required
-					if (targetField.field.IsDefined(typeof(RequiredAttribute), false))
+					if (SupportsRequiredValues && targetField.field.IsDefined(requiredValueSupport.RequiredAttributeType, false))
 					{
 						throw new SerializationException(string.Format("The field {0} is marked as required but is not present in the source.", targetField.field.Name));
 					}
@@ -220,21 +227,21 @@
 			return (lookupAttribute.Key != null) ? lookupAttribute.Key : field.field.Name;
 		}
 
-		private ILookupTypeResolveParameter ResolveTypeToLookup(Type sourceType)
+		private ITypeResolveParameter ResolveTypeToLookup(Type sourceType)
 		{
 			if (!SupportsTypeResolvement)
 			{
 				return null;
 			}
 
-			ILookupBasedTypeResolve typeResolveImplementation = definition as ILookupBasedTypeResolve;
-			IEnumerable<ISerializationTypeResolveParameter> typeResolveAttributes = GetClassTypeResolves(sourceType, typeResolveImplementation.TypeResolveAttribute);
-			foreach (ISerializationTypeResolveParameter attr in typeResolveAttributes)
+			ILookupTypeResolveSupport typeResolveImplementation = definition as ILookupTypeResolveSupport;
+			IEnumerable<ITypeResolveParameter> typeResolveAttributes = GetClassTypeResolves(sourceType, typeResolveImplementation.TypeResolveAttribute);
+			foreach (ITypeResolveParameter attr in typeResolveAttributes)
 			{
-				ILookupTypeResolveParameter typeResolveAttr = attr as ILookupTypeResolveParameter;
+				ITypeResolveParameter typeResolveAttr = attr as ITypeResolveParameter;
 				if (typeResolveAttr == null)
 				{
-					throw new SerializationException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(ILookupTypeResolveParameter).Name));
+					throw new SerializationException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(ITypeResolveParameter).Name));
 				}
 				else if (typeResolveAttr.Target == sourceType)
 				{
@@ -251,22 +258,22 @@
 			{
 				if (targetType.IsAbstract || targetType.IsInterface)
 				{
-					throw new SerializationException(string.Format("The target type {0} is abstract or an interface, but no type resolve ({1}) is implemented in serialization definition of type {2}.", targetType.Name, typeof(ILookupBasedTypeResolve).Name, definition.GetType().Name));
+					throw new SerializationException(string.Format("The target type {0} is abstract or an interface, but no type resolve ({1}) is implemented in serialization definition of type {2}.", targetType.Name, typeof(ILookupTypeResolveSupport).Name, definition.GetType().Name));
 				}
 
 				return targetType;
 			}
 
-			IEnumerable<ISerializationTypeResolveParameter> typeResolveAttrs = GetClassTypeResolves(targetType, typeResolveDefinition.TypeResolveAttribute);
+			IEnumerable<ITypeResolveParameter> typeResolveAttrs = GetClassTypeResolves(targetType, typeResolveSupport.TypeResolveAttribute);
 
-			foreach (ISerializationTypeResolveParameter attr in typeResolveAttrs)
+			foreach (ITypeResolveParameter attr in typeResolveAttrs)
 			{
-				ILookupTypeResolveParameter typeResolveAttr = attr as ILookupTypeResolveParameter;
+				ITypeResolveParameter typeResolveAttr = attr as ITypeResolveParameter;
 				if (typeResolveAttr == null)
 				{
-					throw new SerializationException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(ILookupTypeResolveParameter).Name));
+					throw new SerializationException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(ITypeResolveParameter).Name));
 				}
-				else if (source.Contains(typeResolveDefinition.TypeResolveKey) && (source[typeResolveDefinition.TypeResolveKey].Equals(typeResolveAttr.Value)))
+				else if (source.Contains(typeResolveSupport.TypeResolveKey) && (source[typeResolveSupport.TypeResolveKey].Equals(typeResolveAttr.Value)))
 				{
 					if (targetType.IsAssignableFrom(typeResolveAttr.Target))
 					{

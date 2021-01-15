@@ -5,7 +5,7 @@
 	/// <summary>
 	/// Lookup-based interface for resolving the type of an object during (de)serialization.
 	/// </summary>
-	public interface ILookupBasedTypeResolve
+	public interface ILookupTypeResolveSupport
 	{
 		/// <summary>
 		/// The type of the attribute that is used to resolve the type in a lookup-based data structure.
@@ -28,7 +28,7 @@
 	/// Generic interface for resolving the type of an object during (de)serialization.
 	/// </summary>
 	/// <typeparam name="T">The attribute type that defines which attribute to use to resolve the type in a lookup-based data structure.</typeparam>
-	public interface ILookupBasedTypeResolve<T> : ILookupBasedTypeResolve
-	where T : Attribute, ILookupTypeResolveParameter
+	public interface ILookupTypeResolveSupport<T> : ILookupTypeResolveSupport
+	where T : Attribute, ITypeResolveParameter
 	{ }
 }

@@ -47,7 +47,7 @@
 	/// <typeparam name="U">The attribute type to denote that a field is part of the (de)serialization process.</typeparam>
 	/// <typeparam name="V">The type of the index-based data structure to use when (de)serializing data.</typeparam>
 	public interface IIndexSerializationDefinition<T, U, V> : IIndexSerializationDefinition
-	where T : Attribute, IIndexDataStructure
+	where T : Attribute
 	where U : Attribute, IIndexParameter
 	where V : IList
 	{

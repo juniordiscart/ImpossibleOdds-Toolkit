@@ -15,8 +15,10 @@
 	/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
 	public abstract class JsonSerializationDefinition<TJsonObject, TJsonArray> :
 	IndexAndLookupDefinition<JsonArrayAttribute, JsonIndexAttribute, TJsonArray, JsonObjectAttribute, JsonFieldAttribute, TJsonObject>,
-	ISerializationCallbacks<OnJsonSerializingAttribute, OnJsonSerializedAttribute, OnJsonDeserializingAttribute, OnJsonDeserializedAttribute>,
-	ILookupBasedTypeResolve<JsonTypeResolveAttribute>
+	ICallbacksSupport<OnJsonSerializingAttribute, OnJsonSerializedAttribute, OnJsonDeserializingAttribute, OnJsonDeserializedAttribute>,
+	ILookupTypeResolveSupport<JsonTypeAttribute>,
+	IRequiredValueSupport<JsonRequiredAttribute>,
+	IEnumAliasSupport<JsonEnumStringAttribute, JsonEnumAliasAttribute>
 	where TJsonObject : IDictionary
 	where TJsonArray : IList
 	{
@@ -53,12 +55,6 @@
 		}
 
 		/// <inheritdoc />
-		public Type TypeResolveAttribute
-		{
-			get { return typeof(JsonTypeResolveAttribute); }
-		}
-
-		/// <inheritdoc />
 		public Type OnSerializationCallbackType
 		{
 			get { return typeof(OnJsonSerializingAttribute); }
@@ -83,9 +79,33 @@
 		}
 
 		/// <inheritdoc />
+		public Type TypeResolveAttribute
+		{
+			get { return typeof(JsonTypeAttribute); }
+		}
+
+		/// <inheritdoc />
 		public virtual object TypeResolveKey
 		{
 			get { return JsonTypeKey; }
+		}
+
+		/// <inheritdoc />
+		public Type RequiredAttributeType
+		{
+			get { return typeof(JsonRequiredAttribute); }
+		}
+
+		/// <inheritdoc />
+		public Type EnumAsStringAttributeType
+		{
+			get { return typeof(JsonEnumStringAttribute); }
+		}
+
+		/// <inheritdoc />
+		public Type EnumAliasValueAttributeType
+		{
+			get { return typeof(JsonEnumAliasAttribute); }
 		}
 
 		private IEnumerable<ISerializationProcessor> serializationProcessors;

@@ -159,7 +159,7 @@ In certain circumstances you might want control over the script execution order 
 Placing such attributes above your scripts will automatically determine the execution order between them and assign them execution order values that respects these constraints.
 
 ```cs
-[ExecuteAt(66)] // I_AM THE SENATE!
+[ExecuteAt(66)] // I AM THE SENATE!
 public class MyBehaviour : MonoBehaviour
 {
 	...

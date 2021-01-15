@@ -4,7 +4,7 @@
 	using ImpossibleOdds.Serialization;
 
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Struct, AllowMultiple = true)]
-	public class JsonTypeResolveAttribute : Attribute, ILookupTypeResolveParameter
+	public class JsonTypeAttribute : Attribute, ITypeResolveParameter
 	{
 		private Type target = null;
 		private string value = null;
@@ -14,7 +14,7 @@
 			get { return target; }
 		}
 
-		object ILookupTypeResolveParameter.Value
+		object ITypeResolveParameter.Value
 		{
 			get { return Value; }
 		}
@@ -25,7 +25,7 @@
 			set { this.value = value; }
 		}
 
-		public JsonTypeResolveAttribute(Type target)
+		public JsonTypeAttribute(Type target)
 		{
 			target.ThrowIfNull(nameof(target));
 			this.target = target;

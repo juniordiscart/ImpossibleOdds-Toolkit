@@ -6,10 +6,10 @@
 	using ImpossibleOdds.Serialization;
 
 	[JsonObject,
-	JsonTypeResolve(typeof(Cat)),
-	JsonTypeResolve(typeof(Dog)),
-	JsonTypeResolve(typeof(Crocodile), Value = "Kroko"),
-	JsonTypeResolve(typeof(Pidgeon), Value = "Dove")]
+	JsonType(typeof(Cat)),
+	JsonType(typeof(Dog)),
+	JsonType(typeof(Crocodile), Value = "Kroko"),
+	JsonType(typeof(Pidgeon), Value = "Dove")]
 	public abstract class Animal
 	{
 		[JsonField]
@@ -67,15 +67,15 @@
 			log.AppendLine(string.Format("Serializing animal '{0}'.", name));
 		}
 
-		[EnumStringSerialization]
+		[JsonEnumString]
 		public enum TaxonomyClass
 		{
 			NONE,
-			[EnumStringAlias("Mammal")]
+			[JsonEnumAlias("Mammal")]
 			MAMMAL,
-			[EnumStringAlias("Reptile")]
+			[JsonEnumAlias("Reptile")]
 			REPTILE,
-			[EnumStringAlias("Bird")]
+			[JsonEnumAlias("Birb")]
 			BIRD
 		}
 	}

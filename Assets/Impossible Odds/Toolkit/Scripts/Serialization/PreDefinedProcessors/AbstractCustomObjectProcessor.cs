@@ -49,7 +49,7 @@
 		/// </summary>
 		protected bool SupportsSerializationCallbacks
 		{
-			get { return definition is ISerializationCallbacks; }
+			get { return definition is ICallbacksSupport; }
 		}
 
 		/// <summary>
@@ -58,7 +58,7 @@
 		/// <param name="target">Target object to notify.</param>
 		protected void InvokeOnSerializationCallback(object target)
 		{
-			if (definition is ISerializationCallbacks callbacks)
+			if (definition is ICallbacksSupport callbacks)
 			{
 				InvokeCallback(target, callbacks.OnSerializationCallbackType);
 			}
@@ -70,7 +70,7 @@
 		/// <param name="target">Target object to notify.</param>
 		protected void InvokeOnSerializedCallback(object target)
 		{
-			if (definition is ISerializationCallbacks callbacks)
+			if (definition is ICallbacksSupport callbacks)
 			{
 				InvokeCallback(target, callbacks.OnSerializedCallbackType);
 			}
@@ -82,7 +82,7 @@
 		/// <param name="target">Target object to notify.</param>
 		protected void InvokeOnDeserializationCallback(object target)
 		{
-			if (definition is ISerializationCallbacks callbacks)
+			if (definition is ICallbacksSupport callbacks)
 			{
 				InvokeCallback(target, callbacks.OnDeserializionCallbackType);
 			}
@@ -94,7 +94,7 @@
 		/// <param name="target">Target object to notify.</param>
 		protected void InvokeOnDeserializedCallback(object target)
 		{
-			if (definition is ISerializationCallbacks callbacks)
+			if (definition is ICallbacksSupport callbacks)
 			{
 				InvokeCallback(target, callbacks.OnDeserializedCallbackType);
 			}
@@ -162,7 +162,7 @@
 				targetType = targetType.BaseType;
 			}
 
-			return targetFields.AsReadOnly();
+			return targetFields;
 		}
 
 		/// <summary>
@@ -194,14 +194,14 @@
 		/// <param name="targetType">The class type of which to fetch the attributes that are defined on it.</param>
 		/// <param name="attributeType">The type of the attribute to look for.</param>
 		/// <returns>Collection of type resolve attributes that are applicable to the target type.</returns>
-		protected static IReadOnlyList<ISerializationTypeResolveParameter> GetClassTypeResolves(Type targetType, Type attributeType)
+		protected static IReadOnlyList<ITypeResolveParameter> GetClassTypeResolves(Type targetType, Type attributeType)
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 			attributeType.ThrowIfNull(nameof(attributeType));
 
-			if (!typeof(ISerializationTypeResolveParameter).IsAssignableFrom(attributeType))
+			if (!typeof(ITypeResolveParameter).IsAssignableFrom(attributeType))
 			{
-				throw new Serialization.SerializationException(string.Format("The requested attribute type to look for does not implement the {0} interface.", typeof(ISerializationTypeResolveParameter).Name));
+				throw new Serialization.SerializationException(string.Format("The requested attribute type to look for does not implement the {0} interface.", typeof(ITypeResolveParameter).Name));
 			}
 
 			if (!typeResolveCache.ContainsKey(attributeType))
@@ -212,26 +212,26 @@
 			TypeResolveCache cache = typeResolveCache[attributeType];
 			if (cache.ContainsKey(targetType))
 			{
-				return cache[targetType].AsReadOnly();
+				return cache[targetType];
 			}
 
 			// Fetch all attributes defined in the inheritance chain.
-			List<ISerializationTypeResolveParameter> typeResolveAttributes = new List<ISerializationTypeResolveParameter>();
+			List<ITypeResolveParameter> typeResolveAttributes = new List<ITypeResolveParameter>();
 
 			// Attributes defined on the class itself
-			typeResolveAttributes.AddRange(targetType.GetCustomAttributes(attributeType, true).Cast<ISerializationTypeResolveParameter>());
+			typeResolveAttributes.AddRange(targetType.GetCustomAttributes(attributeType, true).Cast<ITypeResolveParameter>());
 
 			// Attributes defined in interfaces implemented by the class or one of it's base classes.
 			foreach (Type interfaceType in targetType.GetInterfaces())
 			{
-				typeResolveAttributes.AddRange(interfaceType.GetCustomAttributes(attributeType, true).Cast<ISerializationTypeResolveParameter>());
+				typeResolveAttributes.AddRange(interfaceType.GetCustomAttributes(attributeType, true).Cast<ITypeResolveParameter>());
 			}
 
 			// Filter duplicates and types we don't care about
 			typeResolveAttributes = typeResolveAttributes.Where(t => targetType.IsAssignableFrom(t.Target)).Distinct().ToList();
 
 			cache.Add(targetType, typeResolveAttributes);
-			return typeResolveAttributes.AsReadOnly();
+			return typeResolveAttributes;
 		}
 
 		/// <summary>
@@ -318,7 +318,7 @@
 		/// Thin wrapper of a dictionary. The keys are class/interface types. The corresponding values
 		/// are a list of type resolve attributes defined of a certain type.
 		/// </summary>
-		protected class TypeResolveCache : Dictionary<Type, List<ISerializationTypeResolveParameter>> { }
+		protected class TypeResolveCache : Dictionary<Type, List<ITypeResolveParameter>> { }
 
 		/// <summary>
 		/// Thin wrapper of a dictionary. The keys are class/interface types. The corresponding values

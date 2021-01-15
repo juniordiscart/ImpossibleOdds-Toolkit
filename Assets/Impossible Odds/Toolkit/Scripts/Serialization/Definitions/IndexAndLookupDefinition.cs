@@ -19,10 +19,10 @@
 	public abstract class IndexAndLookupDefinition<T, U, V, X, Y, Z> :
 	IIndexSerializationDefinition<T, U, V>,
 	ILookupSerializationDefinition<X, Y, Z>
-	where T : Attribute, IIndexDataStructure
+	where T : Attribute
 	where U : Attribute, IIndexParameter
 	where V : IList
-	where X : Attribute, ILookupDataStructure
+	where X : Attribute
 	where Y : Attribute, ILookupParameter
 	where Z : IDictionary
 	{

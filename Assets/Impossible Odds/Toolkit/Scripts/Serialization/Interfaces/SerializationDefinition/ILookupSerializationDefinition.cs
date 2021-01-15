@@ -47,7 +47,7 @@
 	/// <typeparam name="U">The attribute type to denote that a field is part of the (de)serialization process.</typeparam>
 	/// <typeparam name="V">The type of the lookup-based data structure to use when (de)serializing data.</typeparam>
 	public interface ILookupSerializationDefinition<T, U, V> : ILookupSerializationDefinition
-	where T : Attribute, ILookupDataStructure
+	where T : Attribute
 	where U : Attribute, ILookupParameter
 	where V : IDictionary
 	{

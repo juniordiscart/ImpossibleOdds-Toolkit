@@ -11,7 +11,7 @@
 	public class CustomObjectSequenceProcessor : AbstractCustomObjectProcessor, ISerializationProcessor, IDeserializationToTargetProcessor
 	{
 		private IIndexSerializationDefinition definition = null;
-		private IIndexBasedTypeResolve typeResolveDefinition = null;
+		private IIndexTypeResolveSupport typeResolveDefinition = null;
 
 		private bool SupportsTypeResolvement
 		{
@@ -22,7 +22,7 @@
 		: base(definition)
 		{
 			this.definition = definition;
-			this.typeResolveDefinition = (definition is IIndexBasedTypeResolve) ? (definition as IIndexBasedTypeResolve) : null;
+			this.typeResolveDefinition = (definition is IIndexTypeResolveSupport) ? (definition as IIndexTypeResolveSupport) : null;
 		}
 
 		/// <summary>
@@ -136,7 +136,7 @@
 			// Check whether a type resolve parameter will be there, and at what index it will be.
 			if (SupportsTypeResolvement)
 			{
-				IIndexTypeResolveParameter typeResolveAttr = ResolveTypeToSequence(sourceType);
+				ITypeResolveParameter typeResolveAttr = ResolveTypeToSequence(sourceType);
 				if (typeResolveAttr != null)
 				{
 					nrOfElements = Math.Max(typeResolveDefinition.TypeResolveIndex, nrOfElements);
@@ -161,7 +161,7 @@
 			// Include the type information, if any was found.
 			if (SupportsTypeResolvement)
 			{
-				IIndexTypeResolveParameter typeResolveAttr = ResolveTypeToSequence(sourceType);
+				ITypeResolveParameter typeResolveAttr = ResolveTypeToSequence(sourceType);
 				if (typeResolveAttr != null)
 				{
 					if (processedValues[typeResolveDefinition.TypeResolveIndex] != null)
@@ -209,21 +209,21 @@
 			}
 		}
 
-		private IIndexTypeResolveParameter ResolveTypeToSequence(Type sourceType)
+		private ITypeResolveParameter ResolveTypeToSequence(Type sourceType)
 		{
 			if (!SupportsTypeResolvement)
 			{
 				return null;
 			}
 
-			IIndexBasedTypeResolve typeResolveImplementation = definition as IIndexBasedTypeResolve;
-			IEnumerable<ISerializationTypeResolveParameter> typeResolveAttributes = GetClassTypeResolves(sourceType, typeResolveImplementation.TypeResolveAttribute);
-			foreach (ISerializationTypeResolveParameter attr in typeResolveAttributes)
+			IIndexTypeResolveSupport typeResolveImplementation = definition as IIndexTypeResolveSupport;
+			IEnumerable<ITypeResolveParameter> typeResolveAttributes = GetClassTypeResolves(sourceType, typeResolveImplementation.TypeResolveAttribute);
+			foreach (ITypeResolveParameter attr in typeResolveAttributes)
 			{
-				IIndexTypeResolveParameter typeResolveAttr = attr as IIndexTypeResolveParameter;
+				ITypeResolveParameter typeResolveAttr = attr as ITypeResolveParameter;
 				if (typeResolveAttr == null)
 				{
-					throw new SerializationException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(IIndexTypeResolveParameter).Name));
+					throw new SerializationException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(ITypeResolveParameter).Name));
 				}
 				else if (typeResolveAttr.Target == sourceType)
 				{
@@ -240,19 +240,19 @@
 			{
 				if (targetType.IsAbstract || targetType.IsInterface)
 				{
-					throw new SerializationException(string.Format("The target type {0} is abstract or an interface, but no type resolve ({1}) is implemented in serialization definition of type {2}.", targetType.Name, typeof(IIndexBasedTypeResolve).Name, definition.GetType().Name));
+					throw new SerializationException(string.Format("The target type {0} is abstract or an interface, but no type resolve ({1}) is implemented in serialization definition of type {2}.", targetType.Name, typeof(IIndexTypeResolveSupport).Name, definition.GetType().Name));
 				}
 
 				return targetType;
 			}
 
-			IEnumerable<ISerializationTypeResolveParameter> typeResolveAttrs = GetClassTypeResolves(targetType, typeResolveDefinition.TypeResolveAttribute);
-			foreach (ISerializationTypeResolveParameter attr in typeResolveAttrs)
+			IEnumerable<ITypeResolveParameter> typeResolveAttrs = GetClassTypeResolves(targetType, typeResolveDefinition.TypeResolveAttribute);
+			foreach (ITypeResolveParameter attr in typeResolveAttrs)
 			{
-				IIndexTypeResolveParameter typeResolveAttr = attr as IIndexTypeResolveParameter;
+				ITypeResolveParameter typeResolveAttr = attr as ITypeResolveParameter;
 				if (typeResolveAttr == null)
 				{
-					throw new SerializationException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(IIndexTypeResolveParameter).Name));
+					throw new SerializationException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(ITypeResolveParameter).Name));
 				}
 				else if ((source.Count > typeResolveDefinition.TypeResolveIndex) && (source[typeResolveDefinition.TypeResolveIndex].Equals(typeResolveAttr.Value)))
 				{

@@ -5,7 +5,7 @@
 	/// <summary>
 	/// Callback attribute register.
 	/// </summary>
-	public interface ISerializationCallbacks
+	public interface ICallbacksSupport
 	{
 		/// <summary>
 		/// Attribute type that denotes serialization of the object is about to start.
@@ -47,7 +47,7 @@
 	/// <typeparam name="U">Attribute type that denotes serialization of the object has finished.</typeparam>
 	/// <typeparam name="V">Attribute type that denotes deserialization of the object about to start.</typeparam>
 	/// <typeparam name="W">Attribute type that denotes deserialization of the object has finished.</typeparam>
-	public interface ISerializationCallbacks<T, U, V, W> : ISerializationCallbacks
+	public interface ICallbacksSupport<T, U, V, W> : ICallbacksSupport
 	where T : Attribute
 	where U : Attribute
 	where V : Attribute

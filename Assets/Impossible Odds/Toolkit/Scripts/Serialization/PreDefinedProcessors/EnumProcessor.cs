@@ -11,17 +11,22 @@
 	public class EnumProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
 		private ISerializationDefinition definition = null;
-		private static Dictionary<Type, List<FieldInfo>> aliasAttributesCache = new Dictionary<Type, List<FieldInfo>>();
+		private IEnumAliasSupport enumAliasSupport = null;
+
+		public bool SupportsEnumAlias
+		{
+			get { return enumAliasSupport != null; }
+		}
 
 		public ISerializationDefinition Definition
 		{
 			get { return definition; }
 		}
 
-
 		public EnumProcessor(ISerializationDefinition definition)
 		{
 			this.definition = definition;
+			this.enumAliasSupport = (definition is IEnumAliasSupport) ? (definition as IEnumAliasSupport) : null;
 		}
 
 		/// <summary>
@@ -32,56 +37,29 @@
 		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
 		public bool Serialize(object objectToSerialize, out object serializedResult)
 		{
-			if ((objectToSerialize == null) || !objectToSerialize.GetType().IsEnum)
+			Type sourceType = objectToSerialize.GetType();
+			if ((objectToSerialize == null) || !sourceType.IsEnum)
 			{
 				serializedResult = null;
 				return false;
 			}
 
-			Type sourceType = objectToSerialize.GetType();
-
-			// Check if an encoding alias for the enum is defined
-			// We have to check for a null, since an enum can be a combo of different
-			// values and then no field info will exist.
-			FieldInfo enumField = sourceType.GetField(objectToSerialize.ToString());
-			if (enumField != null)
+			// If the definition supports enum aliases and is preferred to be sent serialized as string.
+			if (SupportsEnumAlias && IsEnumStringPreferred(enumAliasSupport, sourceType))
 			{
-				object aliasAttr = enumField.GetCustomAttributes(typeof(EnumStringAliasAttribute), false).SingleOrDefault();
-				if (aliasAttr != null)
-				{
-					string aliasValue = (aliasAttr as EnumStringAliasAttribute).aliasValue;
-					if (!definition.SupportedTypes.Contains(aliasValue.GetType()))
-					{
-						throw new SerializationException("An enum value has specifically specified an alias value, but the value's type isn't a supported type.");
-					}
+				FieldInfo enumField = sourceType.GetField(objectToSerialize.ToString());
+				string enumStringValue =
+					IsEnumValueAliased(enumAliasSupport, enumField) ?
+					GetEnumAliasValue(enumAliasSupport, enumField) :
+					((Enum)objectToSerialize).ToString();
 
-					if (!definition.SupportedTypes.Contains(aliasValue.GetType()))
-					{
-						throw new SerializationException("The serialized value of the enum is not supported.");
-					}
-
-					serializedResult = aliasValue;
-					return true;
-				}
+				serializedResult = Serializer.Serialize(enumStringValue, Definition);
+				return true;
 			}
 
-			// Check whether the enum is requested to be sent as a string, or its underlying value
-			object enumValue = null;
-			if (sourceType.IsDefined(typeof(EnumStringSerializationAttribute), false))
-			{
-				enumValue = ((Enum)objectToSerialize).ToString();
-			}
-			else
-			{
-				enumValue = Convert.ChangeType(objectToSerialize, Enum.GetUnderlyingType(sourceType));
-			}
-
-			if (!definition.SupportedTypes.Contains(enumValue.GetType()))
-			{
-				throw new SerializationException("The serialized value of the enum is not supported.");
-			}
-
-			serializedResult = enumValue;
+			// By this point, the enum should be serialized under its underlying type.
+			object enumValue = Convert.ChangeType(objectToSerialize, Enum.GetUnderlyingType(sourceType));
+			serializedResult = Serializer.Serialize(enumValue, Definition);
 			return true;
 		}
 
@@ -94,51 +72,124 @@
 		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
 		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
-			// If we're not dealing with an enum target, then don't bother
+			// If we're not dealing with an enum target, then don't bother.
 			if (!targetType.IsEnum || (dataToDeserialize == null))
 			{
 				deserializedResult = null;
 				return false;
 			}
 
-			// Check if the value is a string
+			// Check if the value is a string.
 			if (typeof(string).IsAssignableFrom(dataToDeserialize.GetType()))
 			{
-				// Get the enum fields that have potential aliases defined
-				IReadOnlyList<FieldInfo> aliasFields = GetEnumAliases(targetType);
-				foreach (FieldInfo aliasField in aliasFields)
-				{
-					EnumStringAliasAttribute aliasAttr = aliasField.GetCustomAttributes(typeof(EnumStringAliasAttribute), false).First() as EnumStringAliasAttribute;
+				string dataStr = dataToDeserialize as string;
 
-					// If we found an alias that matches the given string value
-					if (aliasAttr.aliasValue.Equals(dataToDeserialize))
-					{
-						deserializedResult = aliasField.GetValue(null);
-						return true;
-					}
+				// Get the named values of the enum, and see if the incoming data can be matched.
+				// If so, then the actual enum value can be retrieved already.
+				string[] enumNames = Enum.GetNames(targetType);
+				if (enumNames.Contains(dataStr))
+				{
+					deserializedResult = Enum.Parse(targetType, dataStr);
+					return true;
 				}
 
-				// Last resort
-				deserializedResult = Enum.Parse(targetType, dataToDeserialize as string, true);
-			}
-			else
-			{
-				deserializedResult = Enum.ToObject(targetType, dataToDeserialize);
+				// Find the aliased field.
+				IReadOnlyList<FieldInfo> aliasFields = GetAliasedFields(enumAliasSupport, targetType);
+				FieldInfo aliasField = aliasFields.FirstOrDefault(af => GetEnumAliasValue(enumAliasSupport, af).Equals(dataStr));
+				if (aliasField != null)
+				{
+					deserializedResult = aliasField.GetValue(null);
+					return true;
+				}
+
+				// If no
 			}
 
+			deserializedResult = Enum.ToObject(targetType, dataToDeserialize);
 			return true;
 		}
 
-		private IReadOnlyList<FieldInfo> GetEnumAliases(Type enumType)
+		/// <summary>
+		/// Checks whether the enum type is flagged with the System.Flags attribute.
+		/// </summary>
+		/// <param name="enumType">Type of the enum to check.</param>
+		/// <returns>True if the Flags attribute is set.</returns>
+		private bool IsEnumFlagged(Type enumType)
 		{
-			if (aliasAttributesCache.ContainsKey(enumType))
+			enumType.ThrowIfNull(nameof(enumType));
+			if (!enumType.IsEnum)
 			{
-				return aliasAttributesCache[enumType].AsReadOnly();
+				throw new SerializationException("The type {0} is not an enum.", enumType.Name);
 			}
 
-			List<FieldInfo> aliasFields = enumType.GetFields().Where(f => f.IsDefined(typeof(EnumStringAliasAttribute), false)).ToList();
-			aliasAttributesCache.Add(enumType, aliasFields);
-			return aliasFields.AsReadOnly();
+			return enumType.IsDefined(typeof(FlagsAttribute), false);
+		}
+
+		/// <summary>
+		/// Checks whether the enum type is preferred to be processed as a string value rather than its internal value.
+		/// </summary>
+		/// <param name="definition">Definition that provides the attribute to check for on the enum type.</param>
+		/// <param name="enumType">The enum type to check if it prefers to be processed as a string.</param>
+		/// <returns>True if the enum type prefers to be processed as a string value.</returns>
+		private bool IsEnumStringPreferred(IEnumAliasSupport definition, Type enumType)
+		{
+			definition.ThrowIfNull(nameof(definition));
+			enumType.ThrowIfNull(nameof(enumType));
+
+			if (!enumType.IsEnum)
+			{
+				throw new SerializationException("The type {0} is not an enum.", enumType.Name);
+			}
+
+			return enumType.IsDefined(definition.EnumAsStringAttributeType, false);
+		}
+
+		/// <summary>
+		/// Checks whether the field of the enum has an alias defined.
+		/// </summary>
+		/// <param name="definition">Definition that provides the attribute to check for on the enum field.</param>
+		/// <param name="enumField">The field to check whether it has an alias defined.</param>
+		/// <returns>True if an alias is defined.</returns>
+		private bool IsEnumValueAliased(IEnumAliasSupport definition, FieldInfo enumField)
+		{
+			definition.ThrowIfNull(nameof(definition));
+			enumField.ThrowIfNull(nameof(enumField));
+
+			return enumField.IsDefined(definition.EnumAliasValueAttributeType, false);
+		}
+
+		/// <summary>
+		/// Get the alias defined for the enum field.
+		/// </summary>
+		/// <param name="definition">Definition that provides the attribute to retrieve the alias of the enum value.</param>
+		/// <param name="enumField">The field to retrieve the alias value for.</param>
+		/// <returns>The alias value for the enum value.</returns>
+		private string GetEnumAliasValue(IEnumAliasSupport definition, FieldInfo enumField)
+		{
+			definition.ThrowIfNull(nameof(definition));
+			enumField.ThrowIfNull(nameof(enumField));
+
+			IEnumAliasParameter aliasAttr = enumField.GetCustomAttribute(definition.EnumAliasValueAttributeType) as IEnumAliasParameter;
+			return (aliasAttr != null) ? aliasAttr.Alias : string.Empty;
+		}
+
+		/// <summary>
+		/// Get all fields on the enum that have an alias defined.
+		/// </summary>
+		/// <param name="definition">Definition that provides the attribute to retrieve the aliases from the enum values.</param>
+		/// <param name="enumType">The enum type to retrieve the alias fields for.</param>
+		/// <returns>A list of fields with an alias defined.</returns>
+		private IReadOnlyList<FieldInfo> GetAliasedFields(IEnumAliasSupport definition, Type enumType)
+		{
+			definition.ThrowIfNull(nameof(definition));
+			enumType.ThrowIfNull(nameof(enumType));
+
+			if (!enumType.IsEnum)
+			{
+				throw new SerializationException("The type {0} is not an enum.", enumType.Name);
+			}
+
+			return enumType.GetFields().Where(enumField => enumField.IsDefined(enumAliasSupport.EnumAsStringAttributeType, false)).ToList();
 		}
 	}
 }

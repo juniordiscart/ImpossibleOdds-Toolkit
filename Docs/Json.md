@@ -2,7 +2,7 @@
 
 The JSON functionalty described here is all available in the `ImpossibleOdds.Json` namespace.
 
-The JSON data format is a commonly used data format to represent and save data, as well as to exchange data between client and server systems. As such, there exist a lot of tools already that allow you to process your data to/from JSON, including a built-in Unity one. However, this last one processes your data based in the same way as it processes your scripts for using with the inspector. This, of course, implies it operates with the same limitations.
+The JSON data format is a commonly used data format to represent and save data, as well as to exchange data between client and server systems. As such, there exist a lot of tools already that allow you to process your data to and from JSON, including a built-in Unity one. However, this last one processes your data based in the same way as it processes your scripts for using with the inspector. This, of course, implies it operates with the same limitations.
 
 This tool aims to provide simplicity along with extra control when necessary. Some of the things you can expect to do with this take on JSON:
 
@@ -15,7 +15,7 @@ This tool aims to provide simplicity along with extra control when necessary. So
 
 For your classes to be recognized and processed by the JSON tools here, you must mark them as such. There are two possible options for your classes to be picked up by the JSON processor:
 
-* The `JsonObject` attribute will mark your class as a JSON object. Fields of this class will be serialized under a name. The fields you want to have serialized can be marked with the `JsonField` attribute. By default, the field's name is used. But a custom one can be provided.
+* The `JsonObject` attribute will mark your class as a JSON object. Fields of this class will be serialized under a name. The fields you want to have serialized can be marked with the `JsonField` attribute. By default, the field's name is used, but a custom one can be provided.
 
 * The `JsonArray` attribute will mark your class as a JSON array. Fields of this class will be serialized using an index value. They can be marked with the `JsonIndex` attribute along with their index location.
 
@@ -49,12 +49,12 @@ public class MyClassAsArray
 
 One of the more unique features of this JSON toolkit is the ability to save type information. This allows it to reconstruct your data more accurately when deserializing the JSON data. Saving this type information doesn't happen auto-magically though. You'll have to guide the JSON processor a little for it to build a known set of types it can use. This is done in similar fashion as it is done for C#'s XML processing library: adding attributes to the base class, defining which sub-classes exist, and under what name they can be saved.
 
-By adding the `JsonTypeResolve` attribute to your base classes, you can define what child classes exist. The attribute takes in a single type, assuming that it is a child class of the type it is defined on. When an instance of that type is saved, its typename will be used as a default value. However, you can define a custom value for the type yourself using its `Value` property.
+By adding the `JsonType` attribute to your base classes, you can define what child classes exist. The attribute takes in a single type, assuming that it is a child class of the type it is defined on. When an instance of that type is saved, its typename will be used as a default value. However, you can define a custom value for the type yourself using its `Value` property.
 
 ```cs
-[JsonTypeResolve(typeof(Dog)),
-JsonTypeResolve(typeof(Cat)),
-JsonTypeResolve(typeof(Rabbit), Value = "Bunny")]
+[JsonType(typeof(Dog)),
+JsonType(typeof(Cat)),
+JsonType(typeof(Rabbit), Value = "Bunny")]
 public abstract class Animal
 {
 	[JsonField]
@@ -62,7 +62,7 @@ public abstract class Animal
 }
 ```
 
-A possible output for the above data could be:
+A possible output for a list of animals:
 
 ```json
 {
@@ -83,9 +83,64 @@ A possible output for the above data could be:
 }
 ```
 
-**Note**: specifying a custom value for a type requires it to be unique in the context of this inheritance chain.
+**Note**: specifying a custom value for a type requires it to be unique in the context of this inheritance chain (this includes interfaces on which this attribute is defined).
 
 **Another note**: serializing type information is only supported for classes that are serialized as JSON objects. It's currently not supported in this tool to save type information in JSON array objects.
+
+### Enum String Values & Aliases
+
+In many cases, when serializing an enum value, their string representation is much more readable as well as more maintainable when processing them. When you insert a new value in the enum and need to reshuffle them (and possibly changing their internal value), your previously serialized data isn't valid anymore. This is less so with their string representation.
+
+Support is provided to state that an enum should be serialized under its string form rather than its internal value representation. This can be done by marking it with the `JsonEnumString` attribute.
+
+```cs
+[JsonEnumString]
+public enum MyEnum
+{
+	None,
+	First,
+	Second,
+	Last
+}
+```
+
+Additionally, you can define an alias for a specific enum value using the `JsonEnumAlias` attribute. This of course assumes you have marked the enum with the `JsonEnumString` attribute as otherwise its internal value is used.
+
+```cs
+[JsonEnumString]
+public enum MyEnum
+{
+	None,
+	[JsonEnumAlias("1st")]
+	First,
+	[JsonEnumAlias("2nd")]
+	Second,
+	Last
+}
+```
+
+**Note**: only a single alias can be defined per enum value.
+
+### Required Values
+
+At times, certain values are required to be present in order for data to be considered valid, and when absent, doesn't need further processing.
+
+This kind of (limited) control can be exerted by using the `JsonRequired` attribute above a field in your object that should be present at all times when processing its data.
+
+```cs
+[JsonObject]
+public class MyObject
+{
+	[JsonField, JsonRequired]
+	private string name;
+}
+```
+
+When this data is not present, the serialization system will halt and throw an exception upwards to let you know the data is faulty.
+
+**Note**: only fields on a JSON object can be marked as valid. JSON arrays are not supported by this requirement feature.
+
+**Another note**: a field marked as required means that its key is expected to be present in the JSON object, not necessarily that its value can't be `null`, even though they might be equivalent. The reason for this is that data explicitly set to `null` can still be valid, while data not present might mean an error on the side where the data is generated.
 
 ## Serialization
 
@@ -141,14 +196,14 @@ object result = JsonProcessor.Deserialize(jsonData);
 If you do know, you can pass in a type for it to try and deserialize the JSON data into an instance of that type.
 
 ```cs
-// When the type of the data is know beforehand, but no instance is available.
+// When the type of the data is known beforehand, but no instance is available.
 string jsonData;
 MyClass myObject = JsonProcessor.Deserialize<MyClass>(jsonData);
 ```
 
-**Note**: the given target type is allowed to be a base class, or even an abstract class or interface, provided that it has the right type information available. See the [Type Information](#type-information) section for more details.
+**Note**: the given target type is allowed to be a base class, or even an abstract class or interface, provided that it has the right type information available for it to be able to create an instance of the expected result. See the [Type Information](#type-information) section for more details.
 
-Lastly, you can pass already pass an instance of the expected type and the processor will try to map the data onto it.
+Lastly, you can already pass an instance of the expected type and the processor will try to map the data onto it.
 
 ```cs
 // When the type of the data to be deserialized is known beforehand,
@@ -160,11 +215,11 @@ JsonProcessor.Deserialize(myObject, jsonData);
 
 ## Callbacks
 
-During the JSON (de)serialization process, objects can request to be notified when they will be (de)serialized, or when that process is done. This can help in case your object needs something done before it is being processed, e.g. pre-process or transform some data. These callbacks can be defined on methods of the target object by using the following attributes:
+During the JSON (de)serialization process, objects can request to be notified when they will be (de)serialized, or when that process is done. This can help in case an object needs something done before it is being processed, e.g. pre-process or transform some data. These callbacks can be defined on methods of the target object by using the following attributes:
 
 * `OnJsonSerializing` when the object is about to get serialized.
 * `OnJsonSerialized` when the object is done being serialized.
-* `OnJsonDeserializing` when the object is about to be deserialized. Note that, apart from the root object, this is performed on a 'naked' instance of the object. See the [Deserialization](#deserialization) section.
+* `OnJsonDeserializing` when the object is about to be deserialized.
 * `OnJsonDeserialized` when the object is done being deserialized.
 
 ```cs
@@ -197,7 +252,7 @@ public class MyClass
 }
 ```
 
-**Note**: Methods decorated with one of these attributes shouldn't have any parameters.
+**Note**: methods decorated with one of these attributes shouldn't have any parameters.
 
 ## Example
 

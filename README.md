@@ -19,22 +19,21 @@ In the overarching `ImpossibleOdds` namespace, you'll find many smaller, but use
 * Invoke actions with a null-check in a single line of code.
 * Decorate enum values with a display name or translation key.
 * Automatic script execution ordering based on execution dependencies between scripts.
-* Several useful list extenions.
 * Object and string extensions to throw or log an error when null.
 
-Check its documentations page [here][CoreUtilities].
+All details and more about these little additions can be found [here][CoreUtilities].
 
 ## Dependency Injection
 
 The `ImpossibleOdds.DependencyInjection` namespace contains a simple framework for adding the dependency injection methodology to your project. There are similar frameworks out there, packed with a ton more features and validation mechanisms. However, the goal of this particular implementation is to provide a more simple and streamlined setup that takes the essence of what dependency injection is all about.
 
-Check its documentations page [here][DependencyInjection].
+Interested in integrating this in your project? Read more about how it works [here][DependencyInjection]!
 
 ## Runnables
 
 The `ImpossibleOdds.Runnables` namespace provides the tools to ditch the GameObject and MonoBehaviour methodology for classes and data that require the `Update` functionality, but don't need anything more than that to function properly.
 
-Check its documentations page [here][Runnables].
+Read about how to get your scripts running [here][Runnables].
 
 ## JSON
 
@@ -42,7 +41,7 @@ The `ImpossibleOdds.Json` namespace allows you to (de)serialize your data from/t
 
 This implementation aims to be somewhere in between. The main advantages over Unity's `JsonUtility` class is that you can decide which fields should be serialized (from public all the way to private) and under what name they are saved. Additionally, it also provides support for serializing type information, allowing you to keep the inheritance chain intact when deserializing your data.
 
-Check its documentations page [here][Json].
+Curious to know how it works? Get all the details [here][Json].
 
 For more details about the data (de)serialization process itself, check the [Serialization][Serialization] section.
 
@@ -50,7 +49,7 @@ For more details about the data (de)serialization process itself, check the [Ser
 
 The `ImpossibleOdds.Http` namespace contains allows you to process your objects directly to requests and responses suitable to send over to your game sever as well as a helpful messenger system that takes care of performing callback operations on interested objects when a response is received.
 
-Check its documentations page [here][Http].
+To start communicating with your server, check the documentations page [here][Http].
 
 For more details about the data (de)serialization process, check the [Serialization][Serialization] section.
 
@@ -72,15 +71,19 @@ The sub-sections found below are most likely not sections you'll come in direct 
 
 ### Serialization
 
-> This documentation is under construction.
+The `ImpossibleOdds.Serialization` namespace contains a flexible data transformation framework, ideal for serialization purposes. It allows to define a blueprint for rules on how data should be processed and transformed from one format to the other. It is the backbone for the [JSON][Json] and [HTTP][Http] features found in this toolkit.
 
-[Serialization][Serialization]
+All details can be found [here][Serialization].
 
 ### Weblink
 
-> This documentation is under construction.
+The `ImpossibleOdds.Weblink` tool provides a request-response mechanism along with automated processing of the data coming through it as well as providing a plethora of ways on getting notified when a message has completed. This removes the worry to manually keep track of request objects and waiting for their responses, as well as processing their data to the right format. The [HTTP][Http] tool is a practical implementation of the Weblink tool.
 
-[Weblink][Weblink]
+For more details, check its documentations page [here][Weblink].
+
+## Contributing
+
+Contributions are more than welcome! If you have ideas on how to improve the concepts or structure of this toolkit, have additional ideas for features to add, come across a bug, or want to let me know you're using this toolkit in your project, feel free to [get in touch][Contact]!
 
 ## Unity Version
 
@@ -99,4 +102,5 @@ This package is provided under the [MIT][License] license.
 [Http]: ./Docs/Http.md
 [Weblink]: ./Docs/Weblink.md
 [Serialization]: ./Docs/Serialization.md
+[Contact]: https://www.impossible-odds.net/support-request/
 [Logo]: ./Docs/Images/ImpossibleOddsLogo.png
