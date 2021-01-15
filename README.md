@@ -2,13 +2,13 @@
 
 The Impossible Odds C# Toolkit for Unity is a set of carefully crafted tools to help you kickstart your project's codebase. It's designed with ease-of-use in mind, provide tools to keep your codebase clean and efficient. It combines several utilities and frameworks to help you think more about your game and gameplay design rather than code design.
 
-A summary of what you can expect to find in this package:
+You can expect to find the following features in this tookit:
 
 * [Core utilities](#core-utilities): extension and utility functions to speed-up programming work and reduce boiler-plate code.
 * [Dependency injection](#dependency-injection): keep your code organized and clean by removing tightly coupled design patterns.
 * [Runnables](#runnables): avoid the MonoBehaviour and GameObject tax if your classes only need the `Update` functionality.
 * [JSON](#json): serialize your data to and from the JSON data format, with support for saving type information.
-* [HTTP](#http): easily serialize your data for sending and receiving Unity's WebRequests.
+* [HTTP](#http): easily transform your objects for sending data to your server using Unity’s web requests.
 
 ## Core Utilities
 
