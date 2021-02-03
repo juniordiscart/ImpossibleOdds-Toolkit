@@ -46,8 +46,6 @@
 			DrawBuildTargetSettings(searchContext);
 			EditorGUILayout.EndScrollView();
 
-
-
 			EditorGUILayout.EndVertical();
 		}
 

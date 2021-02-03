@@ -12,9 +12,13 @@
 		/// <returns>Returns the string.</returns>
 		public static string ThrowIfNullOrEmpty(this string argument, string argumentName)
 		{
-			if (string.IsNullOrEmpty(argument))
+			if (argument == null)
 			{
 				throw new ArgumentNullException(argumentName);
+			}
+			else if (string.IsNullOrEmpty(argument))
+			{
+				throw new ArgumentException(argumentName);
 			}
 
 			return argument;
@@ -28,9 +32,13 @@
 		/// <returns>Returns the string.</returns>
 		public static string ThrowIfNullOrWhitespace(this string argument, string argumentName)
 		{
-			if (string.IsNullOrWhiteSpace(argument))
+			if (argument == null)
 			{
 				throw new ArgumentNullException(argumentName);
+			}
+			else if (string.IsNullOrWhiteSpace(argument))
+			{
+				throw new ArgumentException(argumentName);
 			}
 
 			return argument;
@@ -44,9 +52,14 @@
 		/// <returns>True if an error was logged/the argument is null or empty. False otherwise.</returns>
 		public static bool LogErrorIfNullOrEmpty(this string argument, string argumentName)
 		{
-			if (string.IsNullOrEmpty(argument))
+			if (argument == null)
 			{
-				Log.Error("Agurment '{0}' is null or empty.", argumentName);
+				Log.Error("Argument '{0}' is null.", argumentName);
+				return true;
+			}
+			else if (string.IsNullOrEmpty(argument))
+			{
+				Log.Error("Agurment '{0}' is empty.", argumentName);
 				return true;
 			}
 
@@ -61,15 +74,18 @@
 		/// <returns>True if an error was logged/the argument is null or whitespace. False otherwise.</returns>
 		public static bool LogErrorIfNullOrWhitespace(this string argument, string argumentName)
 		{
-			if (string.IsNullOrWhiteSpace(argument))
+			if (argument == null)
 			{
-				Log.Error("Agurment '{0}' is null or whitespace.", argumentName);
+				Log.Error("Argument '{0}' is null.", argumentName);
+				return true;
+			}
+			else if (string.IsNullOrWhiteSpace(argument))
+			{
+				Log.Error("Agurment '{0}' is whitespace.", argumentName);
 				return true;
 			}
 
 			return false;
 		}
-
-
 	}
 }

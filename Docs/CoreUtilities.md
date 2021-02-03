@@ -2,100 +2,76 @@
 
 These general tools can all be found by including the `ImpossibleOdds` namespace in your scripts.
 
-In here you'll find smaller but useful utilities to speed up your programming. Quick glance of what you can expect to find here:
+In here you'll find smaller but useful utilities to speed up your programming. A quick summary of what you can expect to find in here:
 
-* Extenions for delegates and events to quickly unsubscribe all functions of an object from delegates on another object.
+* Extenions for delegates and events to immediately remove an object from all delegates found on another object.
+* Extensions to quickly invoke events and delegates.
+* Extensions to quickly check if the value is null, or a string is empty.
 * Extensions for enum values, to provide them with a suitable name for display to your users.
-* Extensions to check if the value is null.
 * Custom logging tool to enable/disable certain levels of logging.
-* Define the script execution order of your `MonoBehavior` classes using an attribute.
+* Define script execution order dependencies of your scripts using attributes.
 
 ## Delegates & Events
 
-When subscribing to events in C#, a best practice is to also unsubscribe when you're done or no longer need them, e.g. when your GameObject gets destroyed. This often results in listing every method you had subscribed.
+When subscribing to events in C#, a best practice is to also unsubscribe when you're done or no longer need them, e.g. when your GameObject gets destroyed. This often results in listing every method you had subscribed to it. Manually listing these functions is tedious and can be error prone.
 
-A quick way to clear the object you're done with from all events on a particular object is:
-
-```cs
-// Clear all delegates found in myEventInvokingObject from
-// subscribed methods originating from myObjectToBeDoneWith.
-myEventInvokingObject.PurgeDelegatesOf(myObjectToBeDoneWith);
-```
-
-In some cases, you may also want to do this for events that are defined as static, or, remove all static methods of a type registered:
+A quick way to clear the object you're done with from all events on a particular object is to use the `PurgeDelegatesOf` extension method defined on all objects. It searches the object for all delegate fields and removes the target object from their invokation lists.
 
 ```cs
-// Clear all static defined delegates of type MyEventInvokingClass
-// from subscribed methods linked to myObjectToBeDoneWith.
-Type myEventInvokingType = typeof(MyEventInvokingClass);
-myEventInvokingType.PurgeDelegatesOf(myObjectToBeDoneWith);
-
-// Similarly, clear all static defined methods linked to MyClassToBeDoneWith
-// from the delegates defined on myEventInvokingObject
-myEventInvokingObject.PurgeDelegatesOf(typeof(MyTypeToBeDoneWith));
+// Clears the delegates of myObject from methods belonging to myDisposedObject.
+myObject.PurgeDelegatesOf(myDisposedObject);
 ```
 
-**Important note**: anonymous delegates subscribed to events can **not** be cleared here, as their origin cannot be tied to a specific object.
-
-**Another note**: using `PurgeDelegatesOf` uses reflection internally to look for any fields that inherit from the `System.Delegate` type. If you define your events with explicit `add` and `remove` implementations, then this behaviour will not work directly for that event unless it's backed by a delegate in that same object.
-
-## Enums
-
-There are situations where you might want to display an enum value properly instead of its internal/code name. The usual way to go about it is to write a `switch`-statement and list all possibilities, but that becomes tedious the more values there are, as well as in how many places you want to display these values.
-
-Introducing enum display names and translation keys! Using the `DisplayName` attribute, you can decorate your enum values with a direct display name and/or a translation key. The latter one you can use to retrieve its proper translation from your localization system, if any.
+The above works for instanced objects. In case there's the need to remove an object from all static events and delegates of a type, simply invoke the `PurgeDelegatesOf` on the type object.
 
 ```cs
-public enum MyEnum
-{
-	// Not interested in NONE...
-	NONE,
-	[DisplayName(Name="First", LocalizationKey="myEnum/first")]
-	FIRST,
-	[DisplayName(LocalizationKey="myEnum/second")]
-	SECOND,
-	[DisplayName(Name="Last")]
-	LAST
-}
+// Clears the static delegates defined on MyType from methods belonging to myDisposedObject.
+Type myType = typeof(MyType);
+myType.PurgeDelegatesOf(myDisposedObject);
 ```
 
-Finally, these values can be retrieved using their extension functions:
+Similarly, in case you want to remove all static methods of a type from a certain object's events and delegates:
 
 ```cs
-MyEnum value = MyEnum.First;
-string name = value.DisplayName();
-string locaKey = value.LocalizationKey();
+// Clears the delegates of myObject from static methods defined on MyType.
+myObject.PurgeDelegatesOf(typeof(MyType));
 ```
 
-When calling the `DisplayName` extension method, if no name is set, it will return the result of `ToString`. For the `LocalizationKey` extension method, if no key is set, it will just return `string.Empty`.
+**Important note**: anonymous delegates and lambdas subscribed to events can **not** be cleared using this extension method, as their origin cannot be traced to a specific object.
 
-**Note**: don't confuse the Impossible Odds `DisplayName` attribute with the C# `DisplayName` attribute found in the `System.ComponentModel` namespace.
+**Another note**: using `PurgeDelegatesOf` uses reflection internally to scan your object for any fields that inherit from the `System.Delegate` type. When you define events with explicit `add` and `remove` implementations, this method will only work if the values for these implementations are saved in a delegate in that object.
 
 ## Value Checking
 
-All to frequently, there are situations where you need to check if certain values are `null` or not, or a string contains not just whitespace characters. For example checking the incoming parameters in a method.
+All to frequently, there are situations where you need to check if certain values are `null` or not, or a string contains not just whitespace characters. For example checking the incoming parameters in a method. This often results in a sequence of `if`-statements that show a logging message, return the function already, or throw an exception.
+
+To speed up writing these value-checks, which are often all very similar, some handy extension shorthands are defined:
+
+* `ThrowIfNull` checks whether the object is null and throws an `ArgumentNullException` when it is.
+* `ThrowIfNullOrEmpty` and `ThrowIfNullOrWhitespace` are string-specific variants to check if the string isn't null, empty or just whitespace characters. In case the string is null, an `ArgumentNullException` is thrown. When the string is empty or just whitespace characters, an `ArgumentException` is thrown instead.
 
 ```cs
-// Throws an ArgumentNullException when myObject is null.
+// Throws an exception when null, empty or just whitespace characters.
 myObject.ThrowIfNull(nameof(myObject));
-
-// Variants specifically for the string type.
 myString.ThrowIfNullOrEmpty(nameof(myString));
 myString.ThrowIfNullOrWhitespace(nameof(myString));
 ```
 
-A variant, instead of throwing an exception, can also log an error in case the value is null. They also return a `bool` value in case you'd want to check if the value is valid or not.
+In case throwing exceptions is not the preferred way of working, similar extension functions are available to log an error instead:
+
+* `LogErrorIfNull` will log an error to the console when the value is null.
+* `LogErrorIfNullOrEmpty` and `LogErrorIfNullOrWhitespace` are string-specific variants that do the same, but will also check if the string isn't empty or just whitespace characters.
+
+These extension methods have a predefined error message which expects the name of the argument to be given.
 
 ```cs
-// Logs an error when myObject is null.
+// Logs an error to the console when null, empty or just whitespace characters.
 myObject.LogErrorIfNull(nameof(myObject));
-
-// Variants specifically for the string type.
 myString.LogErrorIfNullOrEmpty(nameof(myString));
 myString.LogErrorIfNullOrWhitespace(nameof(myString));
 ```
 
-These last ones are especially useful if you want to log a unique message per value checked.
+These last ones also return a boolean result, denoting whether they printed an error message. This can be useful to pack your checks into a single `if`-statement and, for example, have your function quit early:
 
 ```cs
 public void MyMethod(MyClassA param1, string param2)
@@ -107,77 +83,143 @@ public void MyMethod(MyClassA param1, string param2)
 		return;
 	}
 
-	...
+	// Arguments OK! Continue processing...
 }
 ```
 
 ### Delegates
 
-Some other useful methods include the `InvokeIfNotNull` extensions defined for instances of the `System.Action`, `System.Func` and `UnityEngine.UnityAction` types. Variants are explicitly defined for up to four parameters.
+Similarly like checking incoming values, it's a good practice to check whether a delegate or event that you're about to invoke is not null. The `InvokeIfNotNull` extension method for delegates reduces this check to a simple single line:
 
 ```cs
 // Invokes the delegate when not null.
 myDelegate.InvokeIfNotNull();
 ```
 
-There's also a variant that supports more than four parameters (using `params object[]`) but will perform type conversions and boxing of values when necessary. Use this one sparingly or in non-critical situations only!
+This extension method is also defined for instances of `System.Action`, `System.Func` and `UnityEngine.UnityAction`.
+
+Explicit variants with parameters for each of the supported types are also defined for up to four parameters.
+
+```cs
+public class MyLeaderboard
+{
+	public event Action<string, name> onNewScore;
+
+	public void UpdateScore(string name, int score)
+	{
+		// Invoke the event with parameters.
+		onNewScore.InvokeIfNotNull(name, score);
+	}
+}
+```
+
+**Note**: there's also a variant that supports more than four parameters (using `params object[]`) but will perform type conversions and boxing of values when necessary. Use this one sparingly or in non-critical situations only!
 
 ### Disposables
 
-A similar extension function is available to dispose of an object if it implements the `IDisposable` interface.
+A similar extension method is available to dispose of objects that implement the `IDisposable` interface.
 
 ```cs
 // Disposes of the object when not null.
 myDisposable.DisposeIfNotNull();
 ```
 
+## Enums
+
+There are situations where you might want to display an enum value properly instead of its internal/code name. The usual way to go about it is to write a `switch`-statement and list all possibilities, but that becomes tedious the more values there are, as well as very error prone depending on the amount of locations in your code this is used.
+
+Introducing enum display names and translation keys! Using the `DisplayName` attribute, you can decorate your enum values with a direct display name and/or a translation key. The latter one you can use to retrieve its proper translation from your localization system, if any.
+
+```cs
+public enum GameModes
+{
+	[DisplayName(Name="Race", LocalizationKey="gamemodes/race")]
+	RACE,
+	[DisplayName(Name="Time Trial", LocalizationKey="gamemodes/time_trial")]
+	TIME_TRIAL
+}
+```
+
+Finally, these values can be retrieved using their extension `DisplayName` and `LocalizationKey` methods:
+
+```cs
+// Gets the display name and localization key of the enum value.
+GameModes value = GameModes.RACE;
+string name = value.DisplayName();
+string locaKey = value.LocalizationKey();
+```
+
+**Note**: when your enum value has no display name defined, calling the `DisplayName` extension menthod will perform the `ToString` method on the value and return that result instead. The `LocalizationKey` extension method will return a `string.Empty` result when no translation key is set.
+
+**Another note**: don't confuse the Impossible Odds `DisplayName` attribute with the C# `DisplayName` attribute found in the `System.ComponentModel` namespace.
+
 ## Logging
 
-A custom logging utility to replace Unity's default way of logging. Internally, it still uses Unity's `Debug` class, but allows you to outright disable certain logging levels. This not only clears up your log file, but can also save memory allocations because the debug strings aren't generated anymore.
+Logging debug output is a necessity during development and testing to trace what's going on in your code. However, when your project edges to its release-state, you're generally only interested in the errors that may still occur, and your _info_-level messages tend to get in the way. Even worse, generating these info-level messages may allocate memory, which could trigger garbage collection. To remedy this, the custom logger in this toolkit allows you to outright disable certain levels of logging in your build, and even in the editor too, if you prefer.
+
+The static `Log` class provides the usual logging message methods:
+
+* `Log.Info` to write an info-level message to the console.
+* `Log.Warning` to write a warning-level message to the console.
+* `Log.Error` to write an error-level message to the console.
+* `Log.Exception` to log an exception.
 
 ```cs
 Log.Info("My info message.");
 Log.Warning("My warning message.");
 Log.Error("My error message.");
-Log.Exception(myCaughtException);
+Log.Exception(myException);
 ```
 
-These log methods allow you to format the provided string directly like with the `Debug.LogFormat` methods.
+The `Info`, `Warning` and `Error` methods allow you to pass string formatting parameters for quick and efficient message construction. All of the logging methods also allow to pass on a Unity context object, which can help in trace the origin of the message in your project when you click on the log message in your console.
 
-You can set different logging levels for the player and the editor, allowing you to keep valuable info messages while testing in editor, and removing them from the player build. See the [Editor Settings][Editor Settings] section for more details on how to enable/disable these.
+```cs
+public class MyBehaviour : MonoBehaviour
+{
+	public void Start()
+	{
+		Log.Info(this, "{0} successfully initialized!", name);
+	}
+}
+```
 
-**Note**: disabling a logging level will instruct the compiler to disable/remove these logging statements from the constructed assembly. This also means that, if by any chance, you do some critical calculation inside the log statement, it will not be called anymore when the log statement is disabled/removed.
+Controlling which levels of logging are enabled/disabled can be done using the Impossible Odds preferences panel, which you can find in your project's preferences. It'll tell you which levels of logging messages are still coming through as well as which ones are supressed.
+
+![Editor Settings][EditorSettingsImg]
+
+**Important note**: disabling a logging level will instruct the compiler to disable/remove these logging statements from the constructed assembly. This also means that, if by any chance, you do some critical calculation inside the log statement, it will not be called anymore when that logging level is disabled.
 
 ## Script Execution Order
 
-In certain circumstances you might want control over the script execution order for a set of scripts. For example, a specific script needs to do its `Update` before another because it depends on its result during that frame. You can already define the script execution order manually in Unity's project settings panel. However, as a project grows larger and changes are made, this execution dependency can easily be overlooked as it isn't defined explicitly anywhere. To remedy this, several attributes are defined that help in maintaining this execution order dependency:
+In an ideal Unity project environment, your scripts can work idependently from each other, meaning that, no matter in which order they get initialized and updated, the result stays the same. This is however not always the case, and you may want to define a certain order for some scripts to state that one should execute before or after another script, because its result depends on their result.
 
-* The `ExecuteAt` attribute explicitly defines an execution order value, like you'd do in the player preferences panel.
-* The `ExecuteBefore` attribute defines that a script needs to execute _before_ specific others. Multiple scripts can be set.
-* The `ExecuteAfter` attribute defines that a script needs to execute _after_ specific others. Multiple scripts can be set.
+Unity already provides this through its _script execution order_ feature found in your project settings panel. However, this view does not tell you _why_ a certain script is assigned a certain execution order value, or relative to which script that value is important. Furthermore, as a project grows larger and more and more scripts are added which may have to interact with these specific scripts for which the order is important, it becomes increasingly difficult to maintain the order of execution dependencies.
 
-Placing such attributes above your scripts will automatically determine the execution order between them and assign them execution order values that respects these constraints.
+To help in this matter, this toolkit provides several attributes which you can place on your scripts and state when or relative to they should get updated:
+
+* The `ExecuteAt` attribute explicitly defines an execution order value, like you'd do in the script execution order panel.
+* The `ExecuteBefore` attribute defines that a script needs to execute _before_ specific other scripts. Multiple scripts can be set.
+* The `ExecuteAfter` attribute defines that a script needs to execute _after_ specific other scripts. Multiple scripts can be set.
+
+Placing these attributes above your scripts will automatically determine the execution order between them and assign them execution order values that attempts to respects these constraints.
 
 ```cs
 [ExecuteAt(66)] // I AM THE SENATE!
 public class MyBehaviour : MonoBehaviour
-{
-	...
-}
+{ }
 
 [ExecuteAfter(typeof(MyBehaviour))]
 public class MyOtherBehaviour : MonoBehavior
 {
 	// This script's behaviour depends on what's being done in MyBehaviour.
-	...
 }
 ```
 
 **Important note**: cyclic dependencies as well as impossible ordering dependencies are, of course, not allowed. In that case an exception will be displayed with additional information on where the conflict is situated.
 
-**Another note**: these attributes are only valid for classes that derive from `MonoBehaviour` as the script execution order feature from Unity only relates to them.
+**Another note**: these attributes are only valid for classes that derive from `MonoBehaviour` as the script execution order feature from Unity only applies to them.
 
 **Final note**: `ExecuteAt` takes precedence over `ExecuteBefore` and `ExecuteAfter`. Meaning that, if the former is defined, the latter ones are ignored.
 
 [Logo]: ./Images/ImpossibleOddsLogo.png
-[Editor Settings]: ../README.md#editor-settings
+[EditorSettingsImg]: ./Images/EditorSettings.png

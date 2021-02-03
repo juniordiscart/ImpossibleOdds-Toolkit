@@ -1,4 +1,4 @@
-# ![Impossible Odds Logo][Logo] Impossible Odds - Unity C# Toolkit
+# ![Impossible Odds Logo][Logo] Impossible Odds - C# Toolkit
 
 The Impossible Odds C# Toolkit for Unity is a set of carefully crafted tools to help you kickstart your project's codebase. It's designed with ease-of-use in mind, provide tools to keep your codebase clean and efficient. It combines several utilities and frameworks to help you think more about your game and gameplay design rather than code design.
 

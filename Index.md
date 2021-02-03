@@ -1,3 +1,10 @@
+# ![Impossible Odds Logo][Logo] Impossible Odds - C# Toolkit Documentation
+
+This documentation is auto-generated. Not all internal links in this document may be functional. Please check out the [GitHub][GitHubLink] page of this toolkit to get the latest updates, news and documentation.
+[GitHubLink]: https://github.com/juniordiscart/ImpossibleOdds-Toolkit
+[Logo]: ./Docs/Images/ImpossibleOddsLogo.png
+<!--BREAK-->
+
 <<[README.md]
 <!--BREAK-->
 
@@ -20,8 +27,4 @@
 <!--BREAK-->
 
 <<[Docs/Weblink.md]
-<!--BREAK-->
-
-# License
-<<[License.md]
 <!--BREAK-->

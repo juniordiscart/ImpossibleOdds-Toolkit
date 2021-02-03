@@ -104,7 +104,7 @@ public enum MyEnum
 }
 ```
 
-Additionally, you can define an alias for a specific enum value using the `JsonEnumAlias` attribute. This of course assumes you have marked the enum with the `JsonEnumString` attribute as otherwise its internal value is used.
+Additionally, you can define an alias for a specific enum value using the `JsonEnumAlias` attribute. This, of course, assumes you have marked the enum with the `JsonEnumString` attribute as otherwise its internal value is used.
 
 ```cs
 [JsonEnumString]
@@ -125,7 +125,7 @@ public enum MyEnum
 
 At times, certain values are required to be present in order for data to be considered valid, and when absent, doesn't need further processing.
 
-This kind of (limited) control can be exerted by using the `JsonRequired` attribute above a field in your object that should be present at all times when processing its data.
+This kind of (limited) control can be exerted by placing the `JsonRequired` attribute above a field in your object that should be present at all times when processing its data.
 
 ```cs
 [JsonObject]
@@ -140,7 +140,7 @@ When this data is not present, the serialization system will halt and throw an e
 
 **Note**: only fields on a JSON object can be marked as valid. JSON arrays are not supported by this requirement feature.
 
-**Another note**: a field marked as required means that its key is expected to be present in the JSON object, not necessarily that its value can't be `null`, even though they might be equivalent. The reason for this is that data explicitly set to `null` can still be valid, while data not present might mean an error on the side where the data is generated.
+**Another note**: a field marked as required means that its key is expected to be present in the JSON object, not necessarily that its value can't be `null`. The reason for this is that data explicitly set to `null` can still be valid, while data not present might mean an error on the side where the data is generated.
 
 ## Serialization
 
