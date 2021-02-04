@@ -1,4 +1,4 @@
-# ![Impossible Odds Logo][Logo] Unity C# Toolkit - Runnables
+# ![Impossible Odds Logo][Logo] C# Toolkit - Runnables
 
 All functionality described in this section can be found in the `ImpossibleOdds.Runnables` namespace.
 
@@ -37,12 +37,12 @@ public class MyObject : IRunnable, IFixedRunnable, ILateRunnable
 
 To have you objects actually receive their calls to the kind of update they want, they should be registred to a runner. A runner collects the different objects that require update notifications and delegate the type of events they need.
 
-The follow types of runners are predefined for you to use:
+The following types of runners are predefined for you to use:
 
 * The `GlobalRunner` is available at all times and can be accessed from anywhere.
 * The `SceneRunner` is a per-scene runner that is available as long as the scene remains loaded.
 
-**Note**: since these work in the context of Unity, there's no magic trick involved to circumvent the `GameObject` and `MonoBehaviour` concepts entirely. In the end, the runners defined here are still a component placed on a game object, which simply delegates each kind of update to the registered runnables.
+**Note**: since these work in the context of Unity, there's no magic trick involved to circumvent the `GameObject` and `MonoBehaviour` concepts entirely. In the end, the runners defined here are still components placed on a game object, who simply delegate each kind of update to the registered runnables.
 
 ### Global Runner
 

@@ -1,4 +1,4 @@
-# ![Impossible Odds Logo][Logo] Unity C# Toolkit - Serialization
+# ![Impossible Odds Logo][Logo] C# Toolkit - Serialization
 
 The idea behind the tools found in the `ImpossibleOdds.Serialization` namespace is to be able to deconstruct complex objects into queryable and well-known datastructures, enabling further and easy post-processing to any other kind of data format. The other way should also hold true: given a structured set of known data types, it should be able to piece this data back to an instance of a complex object.
 
@@ -161,7 +161,7 @@ The `CustomObjectSequenceProcessor` and `CustomObjectLookupProcessor` support pr
 
 When a serialization definition is armed with its set of natively supported types and list of data processors, an object can then be transform to/from a structured dataset by handing it over to the static `Serializer` class. It implements a `Serialize` and `Deserialize` method.
 
-It operates by taking the set of processors defined by the definition and going by them one by one, to see if a data processor is willing to accept the data. If not, it continues to the next one. If no data processor was capable of handling the data, it will throw an exception to let know that it failed in doing so.
+It operates by taking the set of processors defined by the definition and going by them one by one, to see if a data processor is willing to accept the data. If not, it continues to the next one. If no data processor was capable of handling the data, it will throw an exception to let you know that it failed in doing so.
 
 [Logo]: ./Images/ImpossibleOddsLogo.png
 [Json]: ./Json.md

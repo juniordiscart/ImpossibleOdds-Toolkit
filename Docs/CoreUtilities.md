@@ -1,4 +1,4 @@
-# ![Impossible Odds Logo][Logo] Unity C# Toolkit - Core Utilities
+# ![Impossible Odds Logo][Logo] C# Toolkit - Core Utilities
 
 These general tools can all be found by including the `ImpossibleOdds` namespace in your scripts.
 
@@ -195,11 +195,11 @@ In an ideal Unity project environment, your scripts can work idependently from e
 
 Unity already provides this through its _script execution order_ feature found in your project settings panel. However, this view does not tell you _why_ a certain script is assigned a certain execution order value, or relative to which script that value is important. Furthermore, as a project grows larger and more and more scripts are added which may have to interact with these specific scripts for which the order is important, it becomes increasingly difficult to maintain the order of execution dependencies.
 
-To help in this matter, this toolkit provides several attributes which you can place on your scripts and state when or relative to they should get updated:
+To help in this matter, this toolkit provides several attributes which you can place on your scripts and state when or relative to what they should get updated:
 
 * The `ExecuteAt` attribute explicitly defines an execution order value, like you'd do in the script execution order panel.
-* The `ExecuteBefore` attribute defines that a script needs to execute _before_ specific other scripts. Multiple scripts can be set.
-* The `ExecuteAfter` attribute defines that a script needs to execute _after_ specific other scripts. Multiple scripts can be set.
+* The `ExecuteBefore` attribute defines that a script needs to execute _before_ specific other scripts.
+* The `ExecuteAfter` attribute defines that a script needs to execute _after_ specific other scripts.
 
 Placing these attributes above your scripts will automatically determine the execution order between them and assign them execution order values that attempts to respects these constraints.
 

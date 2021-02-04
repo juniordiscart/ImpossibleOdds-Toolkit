@@ -12,13 +12,9 @@
 		/// <returns>Returns the string.</returns>
 		public static string ThrowIfNullOrEmpty(this string argument, string argumentName)
 		{
-			if (argument == null)
+			if (string.IsNullOrEmpty(argument))
 			{
-				throw new ArgumentNullException(argumentName);
-			}
-			else if (string.IsNullOrEmpty(argument))
-			{
-				throw new ArgumentException(argumentName);
+				throw (argument == null) ? new ArgumentNullException(argumentName) : new ArgumentException(argumentName);
 			}
 
 			return argument;
@@ -32,13 +28,9 @@
 		/// <returns>Returns the string.</returns>
 		public static string ThrowIfNullOrWhitespace(this string argument, string argumentName)
 		{
-			if (argument == null)
+			if (string.IsNullOrWhiteSpace(argument))
 			{
-				throw new ArgumentNullException(argumentName);
-			}
-			else if (string.IsNullOrWhiteSpace(argument))
-			{
-				throw new ArgumentException(argumentName);
+				throw (argument == null) ? new ArgumentNullException(argumentName) : new ArgumentException(argumentName);
 			}
 
 			return argument;
@@ -52,14 +44,9 @@
 		/// <returns>True if an error was logged/the argument is null or empty. False otherwise.</returns>
 		public static bool LogErrorIfNullOrEmpty(this string argument, string argumentName)
 		{
-			if (argument == null)
+			if (string.IsNullOrEmpty(argument))
 			{
-				Log.Error("Argument '{0}' is null.", argumentName);
-				return true;
-			}
-			else if (string.IsNullOrEmpty(argument))
-			{
-				Log.Error("Agurment '{0}' is empty.", argumentName);
+				Log.Error("Agurment '{0}' is {1}.", argumentName, ((argument == null) ? "null" : "empty"));
 				return true;
 			}
 
@@ -74,14 +61,9 @@
 		/// <returns>True if an error was logged/the argument is null or whitespace. False otherwise.</returns>
 		public static bool LogErrorIfNullOrWhitespace(this string argument, string argumentName)
 		{
-			if (argument == null)
+			if (string.IsNullOrWhiteSpace(argument))
 			{
-				Log.Error("Argument '{0}' is null.", argumentName);
-				return true;
-			}
-			else if (string.IsNullOrWhiteSpace(argument))
-			{
-				Log.Error("Agurment '{0}' is whitespace.", argumentName);
+				Log.Error("Agurment '{0}' is {1}.", argumentName, ((argument == null) ? "null" : "whitespace"));
 				return true;
 			}
 

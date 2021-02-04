@@ -1,4 +1,4 @@
-# ![Impossible Odds Logo][Logo] Unity C# Toolkit - JSON
+# ![Impossible Odds Logo][Logo] C# Toolkit - JSON
 
 The JSON functionalty described here is all available in the `ImpossibleOdds.Json` namespace.
 
@@ -138,13 +138,13 @@ public class MyObject
 
 When this data is not present, the serialization system will halt and throw an exception upwards to let you know the data is faulty.
 
-**Note**: only fields on a JSON object can be marked as valid. JSON arrays are not supported by this requirement feature.
+**Note**: only fields on a JSON object can be marked as required. JSON arrays are not supported by this requirement feature.
 
 **Another note**: a field marked as required means that its key is expected to be present in the JSON object, not necessarily that its value can't be `null`. The reason for this is that data explicitly set to `null` can still be valid, while data not present might mean an error on the side where the data is generated.
 
 ## Serialization
 
-When your classes are decorated with the proper attributes, they are ready to be serialized to the JSON data format. Simply call the following method:
+When your objects are decorated with the proper attributes, they are ready to be serialized to the JSON data format. Simply use the static `JsonProcessor` class:
 
 ```cs
 MyClass myObject;
@@ -176,20 +176,20 @@ JsonProcessor.Serialize(myObject, options);
 
 #### Advanced
 
-The `JsonOptions` also has a `SerializationDefinition` property to provide a custom JSON serialization definition object which defines which processors and data structures should be used during the data transform process. When left `null`, the default internal one will be used.
+The `JsonOptions` also has a `SerializationDefinition` property to provide a custom JSON serialization definition object which defines which processors and data structures should be used during the data transformation process. When left `null`, the default internal one will be used.
 
 Please check out the [Serialization][AdvancedSerialization] documentation for more information about custom serialization definitions.
 
 ## Deserialization
 
-Deserializing your data is (almost) as easy as serializing it. However, depending on whether you know beforehand what data you're about to process, the output result may differ.
+Deserializing your data is (almost) as easy as serializing it. However, depending on whether you know beforehand what data you're about to process, the received result may differ.
 
 If you don't know beforehand what the JSON data represents, you can deserialize it, and it will return you a generic data structure (most likely a `List` or `Dictionary`, depending on the JSON data) for you to search through, or further process in a way you see fit.
 
 ```cs
 // When not knowing what will be deserialized, the returned result will be a
 // generic data structure (List, Dictionary) which can be used for further processing.
-string jsonData;
+string jsonData = File.ReadAllText("config.json");
 object result = JsonProcessor.Deserialize(jsonData);
 ```
 
@@ -197,7 +197,7 @@ If you do know, you can pass in a type for it to try and deserialize the JSON da
 
 ```cs
 // When the type of the data is known beforehand, but no instance is available.
-string jsonData;
+string jsonData = File.ReadAllText("config.json");
 MyClass myObject = JsonProcessor.Deserialize<MyClass>(jsonData);
 ```
 
@@ -209,7 +209,7 @@ Lastly, you can already pass an instance of the expected type and the processor 
 // When the type of the data to be deserialized is known beforehand,
 // instruct the processor to process to the target instance of the object.
 MyClass myObject;
-string jsonData;
+string jsonData = File.ReadAllText("config.json");
 JsonProcessor.Deserialize(myObject, jsonData);
 ```
 

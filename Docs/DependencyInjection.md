@@ -1,4 +1,4 @@
-# ![Impossible Odds Logo][Logo] Unity C# Toolkit - Dependency Injection
+# ![Impossible Odds Logo][Logo] C# Toolkit - Dependency Injection
 
 The dependency injection tools are accessed by including the `ImpossibleOdds.DependencyInjection` namespace in your scripts.
 
@@ -26,7 +26,7 @@ To have your objects be injectable, they should be decorated with the `Injectabl
 Next, define which members of your object should be injected by adding the `Inject` attribute. The following members of your objects can be injected:
 
 * Fields. These are injected first.
-* Properties. They require `set` to be defined. They are injected after the object's fields.
+* Properties. They require `set` to be defined and are injected after the object's fields.
 * Methods are injected last. If a parameter cannot be resolved, then the default value for that type is passed along.
 
 ```cs
@@ -46,7 +46,7 @@ public class MyInjectableClass
 	[Inject]
 	private void MyInjectableMethod(MyClassC dependencyC)
 	{
-		// 0, 1 or more dependency parameters can be defined.
+		// Zero, one or more dependency parameters can be defined.
 	}
 }
 ```
@@ -77,7 +77,7 @@ These predefined bindings are very generic and broadly usable, though might not 
 
 ## Containers
 
-A dependency injection container, simply put, is a collection of bindings. It allows to store, retrieve and check if a binding exists for a registered type. Such a container is used as the main source to inject your objects.
+A dependency injection container, simply put, is a collection of bindings. It allows to store, retrieve and check if a binding exists for a type. Such a container is used as the main source to inject your objects.
 
 To have your binding be registered to a type in a container, simply call its `Register` method.
 
@@ -115,7 +115,7 @@ The binding is registered under its fully qualified implementation type (which i
 InputManager input;
 IDependencyBinding binding = new InstanceBinding(input);
 container.Register<InputManager>(binding);	// Register the type to the binding.
-container.Register<IInputManager>(binding);	// Register the implemented interface to the same binding.
+container.Register<IInputManager>(binding);	// Register the interface to the same binding.
 ```
 
 That way, a single binding can be registered for multiple types in the same container. A shorthand notation is also available:
@@ -134,7 +134,7 @@ The predefined `DependencyContainer` type can be used to store bindings suitable
 
 ## Contexts & Installers
 
-Now that your objects are prepared for injection and containers have been filled with bindings, it's time to define _who_ will be injected, and _when_. This is done using the concept of a dependency injection context.
+Now that your objects are prepared for injection and containers have been populated with bindings, it's time to define _who_ will be injected, and _when_. This is done using the concept of a dependency injection context.
 
 A context defines who will be injected based on the scope of objects it has access to. For example, if the context we're talking about would be the currently active scene, then it should search through the scene to find components that have the `Injectable` attribute.
 
@@ -150,7 +150,7 @@ A context defines a single container, which is to be filled up with bindings. It
 
 The `GlobalDependencyContext` is a context that is valid throughout the entire lifetime of the game or program. In Unity, before the very first scene is loaded, it will bind the resources that should be available at all times, e.g. an input manager, a scene loading manager, a content manager, etc. This context is always created upon start of the game or program when including this framework in your project. No need to do anything yourself in terms of setting it up.
 
-To install any resources in this global container, a codebase search is performed for static methods marked with the `GlobalContextInstaller` attribute. This allows to already load in your data, scriptable objects, etc. and assign them to the global container.
+To install any resources in this global container, a codebase search is performed for static methods marked with the `GlobalContextInstaller` attribute. This allows you to already load in and prepare your data, scriptable objects, etc. and assign them to the global container.
 
 ```cs
 private static class MyGlobalContextInstaller
@@ -162,6 +162,8 @@ private static class MyGlobalContextInstaller
 	}
 }
 ```
+
+You can create multiple such methods spread across your project if your resources need to come from different places.
 
 Now that global resources have been installed, each time a scene is loaded, it will scan that scene and inject any component that requires its resources.
 

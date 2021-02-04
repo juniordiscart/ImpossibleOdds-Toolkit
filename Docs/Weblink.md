@@ -1,4 +1,4 @@
-# ![Impossible Odds Logo][Logo] Unity C# Toolkit - Weblink
+# ![Impossible Odds Logo][Logo] C# Toolkit - Weblink
 
 The `ImpossibleOdds.Weblink` namespace contains a general purpose messaging framework. It packs request objects and waits for incoming responses. When a response is received, it matches it to the request it belongs to and lets you know new data is available.
 
@@ -26,7 +26,7 @@ The handle also implements the `IEnumerator` interface which should make it yiel
 
 ## Response Mapping
 
-One of the tasks the messenger also takes on is to map any request it sents out to any response data that comes in, and processes it to a usable object, A request object should be marked with a singular `WeblinkResponse` attribute, which defines the type of the response it is to be associated with.
+One of the tasks the messenger also takes on is to map any request it sents out to any response data that comes in, and processes it to a usable object. A request object should be marked with a singular `WeblinkResponse` attribute, which defines the type of the response it is to be associated with.
 
 ```cs
 [WeblinkResponse(typeof(MyResponse))]
@@ -45,7 +45,7 @@ The `GetResponseType` method found in the static `WeblinkUtilities` class can be
 
 The messenger class provides several ways to get notified when a response comes in. The most advanced of these notification systems is the custom callback system. Any object can register itself with the messenger. These objects can mark their methods with the `WeblinkResponseCallback` attribute, which defines that a method is interested in processing a specific kind of response.
 
-The parameterlist of such a method can contain the fully type-qualified request and/or response as well as the message handle. Each parameter can be optional and can appear in any order.
+The list of parameters of such a method can contain the fully type-qualified request and/or response as well as the message handle. Each parameter is be optional and may appear in any order.
 
 ```cs
 [WeblinkResponseCallback(typeof(MyResponse))]
