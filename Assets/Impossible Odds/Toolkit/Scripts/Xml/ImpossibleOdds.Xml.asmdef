@@ -1,0 +1,16 @@
+{
+    "name": "ImpossibleOdds.Xml",
+    "references": [
+        "GUID:4770cac66e3404483a2d9621a1c054e9",
+        "GUID:ff382e00ddaf64637bcce649415c9679"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
