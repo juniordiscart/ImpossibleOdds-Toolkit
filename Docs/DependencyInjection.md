@@ -17,11 +17,11 @@ The advantage of such an approach is that you can easily replace resources or im
 
 * Define which objects require resources that should be injected.
 * Bind your injectable resources to a delivery method and bundle them in a collection of resources.
-* Define the context for this collection of resources to be used.
+* Define the scope for this collection of resources to be used.
 
 ## Injection
 
-To have your objects be injectable, they should be decorated with the `Injectable` attribute. This attributes serves as a preprocessing optimisation. Rather than going through every type of object and see if they depend on a resource, defining this attribute on an object lets the framework know that this object requires something. This eliminates all classes and structs found in namespaces that don't need to be looked at in the first place, like the `System` or `UnityEngine` namespaces.
+To have your objects have their necessary resources be injected, place the `Injectable` attribute above them. This tells the framework that your object requires resources and allows it to efficiently skip any other objects that don't need anything.
 
 Next, define which members of your object should be injected by adding the `Inject` attribute. The following members of your objects can be injected:
 
@@ -53,7 +53,7 @@ public class MyInjectableClass
 
 ## Bindings
 
-A binding is an association of a type with a delivery method on how to get an instance of that type. When one of your objects is about to be injected with a resource, it should know how to actually get that resource in the first place. For example, loading from Resources or from the file system, or maybe a new instance each time injection takes place, etc. In other words, a binding states _how_ it will deliver the resource to your object.
+A binding is an association of a resource's type with a delivery method on how to get an instance of that resource. When one of your objects is about to be injected with a resource, it should know how to actually get that resource in the first place. For example, loading from Resources or from the file system, or maybe a new instance each time injection takes place, etc. In other words, a binding states _how_ it will deliver the resource to your object.
 
 The following predefined bindings are available to use already:
 
@@ -132,31 +132,31 @@ container.RegisterWithInterfaces<InputManager>(binding);	// Registers the type a
 
 The predefined `DependencyContainer` type can be used to store bindings suitable for injection. A custom container type can be created however by implementing the `IDependencyContainer` interface.
 
-## Contexts & Installers
+## Scopes & Installers
 
-Now that your objects are prepared for injection and containers have been populated with bindings, it's time to define _who_ will be injected, and _when_. This is done using the concept of a dependency injection context.
+Now that your objects are prepared for injection and we know how containers can be populated with resources, it's time to define _who_ will be injected, and _when_. This is done using the concept of a dependency injection scope. For example, if the scope we're talking about would be the currently active scene, then it should search through the scene to find components that have the `Injectable` attribute.
 
-A context defines who will be injected based on the scope of objects it has access to. For example, if the context we're talking about would be the currently active scene, then it should search through the scene to find components that have the `Injectable` attribute.
+The following scopes are predefined by this framework:
 
-The following contexts are predefined by this framework:
+* The `GlobalDependencyScope` exists during the game's lifetime. Ideal for resources that should always be available.
+* The `SceneDependencyScope` exists on a per-scene basis. It's constrained to work on objects found in the scene in which it is defined.
+* The `HierarchyDependencyScope` operates on a specific GameObject and its children.
 
-* The `GlobalDependencyContext` exists during the game's lifetime. Ideal for resources that should always be available.
-* The `SceneDependencyContext` exists on a per-scene basis. It's constrained to objects found in the scene it operates in.
-* The `HierarchyDependencyContext` operates on a specific GameObject and its children.
+A dependency injection scope defines a single resource container. To actually fill it up with bindings to resources, it will look for installers. The scope defines how it will look for these installers, and will provide them with the container to install any available resource it has access to.
 
-A context defines a single container, which is to be filled up with bindings. It does so by looking for installers, which should install the bindings appropriate for the current context into its container. After the installation of the bindings is complete, the context is ready to inject the objects it has access to with its registered resources.
+After the installation of resources in the scope's container is complete, it's ready to start the injection process.
 
-### Global Context
+### Global Scope
 
-The `GlobalDependencyContext` is a context that is valid throughout the entire lifetime of the game or program. In Unity, before the very first scene is loaded, it will bind the resources that should be available at all times, e.g. an input manager, a scene loading manager, a content manager, etc. This context is always created upon start of the game or program when including this framework in your project. No need to do anything yourself in terms of setting it up.
+The `GlobalDependencyScope` is a scope that is valid throughout the entire lifetime of the game or program. In Unity, before the very first scene is loaded, it will bind the resources that should be available at all times, e.g. an input manager, a scene loading manager, a content manager, etc. This scope is always created upon start of the game or program when including this framework in your project. No need to do anything yourself in terms of setting it up.
 
-To install any resources in this global container, a codebase search is performed for static methods marked with the `GlobalContextInstaller` attribute. This allows you to already load in and prepare your data, scriptable objects, etc. and assign them to the global container.
+To install any resources in its container, a codebase search is performed for static methods marked with the `GlobalScopeInstaller` attribute. This allows you to already load in and prepare your data, scriptable objects, etc. and assign them to the global container.
 
 ```cs
-private static class MyGlobalContextInstaller
+private static class MyGlobalScopeInstaller
 {
-	[GlobalContextInstaller]
-	private static void InstallContext(IDependencyContainer globalContainer)
+	[GlobalScopeInstaller]
+	private static void InstallScopeResources(IDependencyContainer globalContainer)
 	{
 		// Bind any resources that should be global.
 	}
@@ -167,14 +167,12 @@ You can create multiple such methods spread across your project if your resource
 
 Now that global resources have been installed, each time a scene is loaded, it will scan that scene and inject any component that requires its resources.
 
-You can always get access to the global container by using the `GlobalDependencyContext.DependencyContainer` property. This allows you to alter it at other points in time rather than just initialization.
-
 #### Advanced
 
-If you have a custom container implementation, you can provide an instance of this container to the global context by decorating a static method with the `GlobalContainerProvider` attribute.
+If you have a custom container implementation, you can provide an instance of this container for the global scope to use by decorating a static method with the `GlobalContainerProvider` attribute.
 
 ```cs
-private static class CustomGlobalContextProvider
+private static class CustomGlobalScopeProvider
 {
 	[GlobalContainerProvider]
 	private static IDependencyContainer CreateGlobalContainer()
@@ -185,30 +183,30 @@ private static class CustomGlobalContextProvider
 }
 ```
 
-### Scene Context
+### Scene Scope
 
-The `SceneDependencyContext` is, as the name implies, a context bound to a scene. Contrary to the global context, this one is a `Component` that can be put on a GameObject. It has the option to inject its resources at `Start`, but the `Inject` method can also be called manually if another moment is more appropriate.
+The `SceneDependencyScope` is, as the name implies, a scope bound to a scene. Contrary to the global scope, this one is a `Component` that can be put on a GameObject. It has the option to inject its resources at `Start`, but the `Inject` method can also be called manually if another moment is more appropriate.
 
-To install your bindings to the scene context's container, create an installer script that implements the `IDependencyContextInstaller` interface and add it to (a child of) the scene context's game object.
+To install your bindings to the scene scope's container, create an installer script that implements the `IDependencyScopeInstaller` interface and add it to (a child of) the scene scope's game object.
 
 ```cs
-public class MySceneInstaller : MonoBheaviour, IDependencyContextInstaller
+public class MySceneInstaller : MonoBheaviour, IDependencyScopeInstaller
 {
-	void IDependencyContextInstaller.Install(IDependencyContainer container)
+	void IDependencyScopeInstaller.Install(IDependencyContainer container)
 	{
 		// Install bindings of importance to the scene.
 	}
 }
 ```
 
-When the `Inject` method is called on the scene context, either in `Start` or manually, it will scan the scene for any injectable components and inject them with the resources bound to its container.
+When the `Inject` method is called of this scope, either in `Start` or manually, it will scan the scene for any injectable components and inject them with the resources bound to its container.
 
 #### Advanced
 
-Just like in the global context, a custom container implementation can be provided. Here, this is done by one of its (child) components that implement the `IDependencyContainerProvider` interface.
+Just like in the global scope, a custom container implementation can be provided. Here, this is done by one of its (child) components that implement the `IDependencyContainerProvider` interface.
 
 ```cs
-public class CustomSceneContextProvider : MonoBehaviour, IDependencyContainerProvider
+public class CustomSceneScopeProvider : MonoBehaviour, IDependencyContainerProvider
 {
 	IDependencyContainer IDependencyContainerProvider.GetContainer()
 	{
@@ -218,21 +216,21 @@ public class CustomSceneContextProvider : MonoBehaviour, IDependencyContainerPro
 }
 ```
 
-### Hierarchy Context
+### Hierarchy Scope
 
-The `HierarchyDependencyContext` is exactly the same as the [scene context](#scene-context) except it only operates on itself and any child GameObjects rather than the whole scene.
+The `HierarchyDependencyScope` is exactly the same as the [scene scope](#scene-scope) except it only operates on itself and any child GameObjects rather than the whole scene.
 
 ### Order of Events
 
-Both the `SceneDependencyContext` and `HierarchyDependencyContext` are components to be placed on GameObjects. This means they are susceptible to being unpredictable in terms of when their injection process starts relative to other objects in the scene. That's why they have a very low script execution order value set, where the `SceneDependencyContext` is set to work before `HierarchyDependencyContext`. This works in tandem with the `GlobalDependencyContext` and is also the reason why the former two perform their work in `Start` rather than `Awake`.
+Both the `SceneDependencyScope` and `HierarchyDependencyScope` are components to be placed on GameObjects. This means they are susceptible to being unpredictable in terms of when their injection process starts relative to other objects in the scene. That's why they have a very low script execution order value set, where the `SceneDependencyScope` is set to work before `HierarchyDependencyScope`. This works in tandem with the `GlobalDependencyScope` and is also the reason why the former two perform their work in `Start` rather than `Awake`.
 
-Whenever a scene is loaded, the very first thing that happens is the `Awake` phase of all active objects in the scene. Next, Unity's scene manager notifies interested parties (among which is the `GlobalDependencyContext`), that the scene is ready, for which it will inject its resources in the objects found in this newly loaded scene. Next, the `Start` phase is initiated, where the `SceneDependencyContext` and `HierarchyDependencyContext` can inject their resources when enabled to do so, before any other object performs their `Start`.
+Whenever a scene is loaded, the very first thing that happens is the `Awake` phase of all active objects in the scene. Next, Unity's scene manager notifies interested parties (among which is the `GlobalDependencyScope`), that the scene is ready, for which it will inject its resources in the objects found in this newly loaded scene. Next, the `Start` phase is initiated, where the `SceneDependencyScope` and `HierarchyDependencyScope` can inject their resources when enabled to do so, before any other object performs their `Start`.
 
-This has the benefit that objects will have their resources injected in a top-down way, where more globally defined resources are injected first, and if a duplicate registration exists in a context that is more local to the object, it gets overridden.
+This has the benefit that objects will have their resources injected in a top-down way, where more globally defined resources are injected first, and if a duplicate registration exists in a scope that is more local to the object, it gets overridden.
 
 ## Custom Dependency Injection
 
-When a situation arises in which above outlined contexts do not fit the circumstances, it's possible to start the injection process yourself. All you need is a container with bindings and a target (or targets) to be injected. This is done using the static `DependencyInjector` class.
+When a situation arises in which above outlined scopes do not fit the circumstances, it's possible to start the injection process yourself. All you need is a container with bindings and a target (or targets) to be injected. This is done using the static `DependencyInjector` class.
 
 ```cs
 // Inject the bindings found in the container into the target.
@@ -242,10 +240,10 @@ DependencyInjector.Inject(myContainer, myTarget);
 This might be helpfull in cases that objects are spawned further down the line and still need an injection with the resources found in a container. Additionally, you can bind the container to itself and have it injected into objects that need the container later on.
 
 ```cs
-// Placed on a SceneDependencyContext.
-public class CustomContextInstaller : MonoBehaviour, IDependencyContextInstaller
+// Placed on a SceneDependencyScope.
+public class CustomScopeInstaller : MonoBehaviour, IDependencyScopeInstaller
 {
-	void IDependencyContextInstaller.Install(IDependencyContainer container)
+	void IDependencyScopeInstaller.Install(IDependencyContainer container)
 	{
 		// Bind the container to itself.
 		container.Bind<IDependencyContainer>(new InstanceBinding(container));

@@ -4,7 +4,7 @@
 	using System.Linq;
 	using UnityEngine;
 
-	public abstract class AbstractDependencyContextBehaviour : MonoBehaviour, IDependencyContext
+	public abstract class AbstractDependencyScopeBehaviour : MonoBehaviour, IDependencyScope
 	{
 		[SerializeField, Tooltip("Perform the injection process on Start.")]
 		private bool injectOnStart = true;
@@ -54,8 +54,8 @@
 
 		protected virtual void InstallBindings()
 		{
-			IDependencyContextInstaller[] installers = GetComponentsInChildren<IDependencyContextInstaller>(false);
-			foreach (IDependencyContextInstaller installer in installers)
+			IDependencyScopeInstaller[] installers = GetComponentsInChildren<IDependencyScopeInstaller>(false);
+			foreach (IDependencyScopeInstaller installer in installers)
 			{
 				installer.Install(container);
 			}
