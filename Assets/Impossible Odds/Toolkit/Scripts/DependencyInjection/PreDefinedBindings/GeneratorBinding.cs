@@ -6,7 +6,7 @@
 	/// A binding that uses a generator to create new instances.
 	/// </summary>
 	/// <typeparam name="T">Type of the instance that is returned by the generator.</typeparam>
-	public class FunctorBinding<T> : IDependencyBinding<T>
+	public class GeneratorBinding<T> : IDependencyBinding<T>
 	{
 		private Func<T> generator;
 
@@ -16,7 +16,7 @@
 			set { generator = value; }
 		}
 
-		public FunctorBinding(Func<T> generator)
+		public GeneratorBinding(Func<T> generator)
 		{
 			generator.ThrowIfNull(nameof(generator));
 			this.generator = generator;
