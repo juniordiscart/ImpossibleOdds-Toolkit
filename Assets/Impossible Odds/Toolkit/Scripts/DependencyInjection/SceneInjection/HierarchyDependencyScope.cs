@@ -2,10 +2,10 @@
 {
 	/// <summary>
 	/// Injects only the current hierarchy of GameObjects found below this GameObject with
-	/// a DependencyContainer populated by context installers on this GameObject and its children.
+	/// a DependencyContainer populated by scope installers on this GameObject and its children.
 	/// </summary>
-	[ExecuteAfter(typeof(SceneDependencyContext))]
-	public class HierarchyDependencyContext : AbstractDependencyContextBehaviour
+	[ExecuteAfter(typeof(SceneDependencyScope))]
+	public class HierarchyDependencyScope : AbstractDependencyScopeBehaviour
 	{
 		public override void Inject()
 		{

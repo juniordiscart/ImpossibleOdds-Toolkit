@@ -7,19 +7,19 @@
 	using UnityEngine;
 	using UnityEngine.SceneManagement;
 
-	public class GlobalDependencyContext : IDependencyContext
+	public class GlobalDependencyScope : IDependencyScope
 	{
-		private static GlobalDependencyContext globalContext = null;
+		private static GlobalDependencyScope globalScope = null;
 
-		public static IDependencyContext GlobalContext
+		internal static IDependencyScope GlobalScope
 		{
-			get { return globalContext; }
+			get { return globalScope; }
 		}
 
 		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-		private static void InitializeGlobalContext()
+		private static void InitializeGlobalScope()
 		{
-			globalContext = new GlobalDependencyContext();
+			globalScope = new GlobalDependencyScope();
 		}
 
 		private IDependencyContainer globalContainer = new DependencyContainer();
@@ -29,10 +29,10 @@
 			get { return globalContainer; }
 		}
 
-		private GlobalDependencyContext()
+		private GlobalDependencyScope()
 		{
 			InitializeGlobalContainer();
-			InitializeGlobalContexts();
+			InitializeGlobalScopes();
 			SceneManager.sceneLoaded += OnSceneLoaded;
 		}
 
@@ -47,11 +47,11 @@
 
 				if (containerProviderMethod.ReturnType == null)
 				{
-					throw new DependencyInjectionException("The method '{0}' defined on type '{1}' is marked as a dependency container provider for the global dependency context, but does has no return value defined.", containerProviderMethod.Name, containerProviderMethod.DeclaringType.FullName);
+					throw new DependencyInjectionException("The method '{0}' defined on type '{1}' is marked as a dependency container provider for the global dependency scope, but does has no return value defined.", containerProviderMethod.Name, containerProviderMethod.DeclaringType.FullName);
 				}
 				else if (!typeof(IDependencyContainer).IsAssignableFrom(containerProviderMethod.ReturnType))
 				{
-					throw new DependencyInjectionException("The method '{0}' defined on type '{1}' is marked as a dependency container provider for the global dependency context, but the return type is not assignable from type '{2}'.", containerProviderMethod.Name, containerProviderMethod.DeclaringType.FullName, typeof(IDependencyContainer).Name);
+					throw new DependencyInjectionException("The method '{0}' defined on type '{1}' is marked as a dependency container provider for the global dependency scope, but the return type is not assignable from type '{2}'.", containerProviderMethod.Name, containerProviderMethod.DeclaringType.FullName, typeof(IDependencyContainer).Name);
 				}
 
 				globalContainer = containerProviderMethod.Invoke(null, null) as IDependencyContainer;
@@ -62,24 +62,24 @@
 			}
 		}
 
-		private void InitializeGlobalContexts()
+		private void InitializeGlobalScopes()
 		{
-			// Find all global context initialization methods
-			IEnumerable<MethodInfo> contextInitMethods = FindStaticMethods(typeof(GlobalContextInstallerAttribute));
-			contextInitMethods = contextInitMethods.OrderBy(m => m.GetCustomAttribute<GlobalContextInstallerAttribute>(false).InstallPriority);
+			// Find all global scope initialization methods
+			IEnumerable<MethodInfo> scopeInitMethods = FindStaticMethods(typeof(GlobalScopeInstallerAttribute));
+			scopeInitMethods = scopeInitMethods.OrderBy(m => m.GetCustomAttribute<GlobalScopeInstallerAttribute>(false).InstallPriority);
 
-			// Parameter list used to invoke the global context installers
+			// Parameter list used to invoke the global scope installers
 			object[] paramList = new object[] { globalContainer };
 
 			Type currentContainerType = globalContainer.GetType();
-			foreach (MethodInfo contextInitMethod in contextInitMethods)
+			foreach (MethodInfo scopeInitMethod in scopeInitMethods)
 			{
-				ParameterInfo[] parameters = contextInitMethod.GetParameters();
+				ParameterInfo[] parameters = scopeInitMethod.GetParameters();
 
-				// Perform final check on context installer method parameters
+				// Perform final check on scope installer method parameters
 				if ((parameters.Length == 1) && parameters[0].ParameterType.IsAssignableFrom(currentContainerType))
 				{
-					contextInitMethod.Invoke(null, paramList);
+					scopeInitMethod.Invoke(null, paramList);
 				}
 			}
 		}
@@ -106,7 +106,7 @@
 
 		private void OnSceneLoaded(Scene scene, LoadSceneMode sceneLoadMode)
 		{
-			Log.Info("Injecting scene '{0}' with the global dependency context.", scene.name);
+			Log.Info("Injecting scene '{0}' with the global dependency scope.", scene.name);
 			scene.GetRootGameObjects().Inject(DependencyContainer);
 		}
 	}

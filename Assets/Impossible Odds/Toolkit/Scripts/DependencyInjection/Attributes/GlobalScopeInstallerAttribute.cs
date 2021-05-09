@@ -3,10 +3,10 @@
 	using System;
 
 	/// <summary>
-	/// Defines a static method as a global dependency context installer.
+	/// Defines a static method as a global dependency scope installer.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-	public sealed class GlobalContextInstallerAttribute : Attribute
+	public sealed class GlobalScopeInstallerAttribute : Attribute
 	{
 		private readonly int installPriority = 0;
 
@@ -15,10 +15,10 @@
 			get { return installPriority; }
 		}
 
-		public GlobalContextInstallerAttribute()
+		public GlobalScopeInstallerAttribute()
 		{ }
 
-		public GlobalContextInstallerAttribute(int installPriority)
+		public GlobalScopeInstallerAttribute(int installPriority)
 		{
 			this.installPriority = installPriority;
 		}

@@ -24,7 +24,7 @@
 		/// </summary>
 		/// <param name="gameObject">The GameObject of which the components will be injected.</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
-		/// <param name="injectionID">Name of the context these resources belong to.</param>
+		/// <param name="injectionID">Name of the scope these resources belong to.</param>
 		/// <param name="includeChildren">Include components found in children of the GameObject.</param>
 		public static void Inject(this GameObject gameObject, IDependencyContainer container, string injectionID, bool includeChildren = false)
 		{
@@ -56,7 +56,7 @@
 		/// </summary>
 		/// <param name="gameObjects">The GameObjects of which the components will be injected.</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
-		/// <param name="injectionID">Name of the context these resources belong to.</param>
+		/// <param name="injectionID">Name of the scope these resources belong to.</param>
 		/// <param name="includeChildren">Include components found in children of the GameObjects.</param>
 		public static void Inject(this IEnumerable<GameObject> gameObjects, IDependencyContainer container, string injectionID, bool includeChildren = false)
 		{
@@ -85,7 +85,7 @@
 		/// </summary>
 		/// <param name="component">Component to be injected.</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
-		/// <param name="injectionID">Name of the context these resources belong to.</param>
+		/// <param name="injectionID">Name of the scope these resources belong to.</param>
 		public static void Inject(this Component component, IDependencyContainer container, string injectionID)
 		{
 			component.ThrowIfNull(nameof(component));
@@ -111,7 +111,7 @@
 		/// </summary>
 		/// <param name="components">Components to be injected.</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
-		/// <param name="injectionID">Name of the context these resources belong to.</param>
+		/// <param name="injectionID">Name of the scope these resources belong to.</param>
 		public static void Inject(this IEnumerable<Component> components, IDependencyContainer container, string injectionID)
 		{
 			components.ThrowIfNull(nameof(components));

@@ -1,6 +1,6 @@
 ﻿namespace ImpossibleOdds.DependencyInjection
 {
-	public interface IDependencyContext
+	public interface IDependencyScope
 	{
 		IDependencyContainer DependencyContainer
 		{

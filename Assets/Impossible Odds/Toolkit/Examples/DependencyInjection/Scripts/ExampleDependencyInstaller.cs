@@ -3,7 +3,7 @@
 	using UnityEngine;
 	using ImpossibleOdds.DependencyInjection;
 
-	public class ExampleDependencyInstaller : MonoBehaviour, IDependencyContextInstaller
+	public class ExampleDependencyInstaller : MonoBehaviour, IDependencyScopeInstaller
 	{
 		[SerializeField]
 		private CharacterSettings settings = null;
