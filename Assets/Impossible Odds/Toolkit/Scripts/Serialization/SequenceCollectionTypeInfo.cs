@@ -4,6 +4,9 @@
 	using System.Collections;
 	using System.Collections.Generic;
 
+	/// <summary>
+	/// Contains type information about the sequence data structure, i.e. whether it restricts its values to be type restricted, and whether it is an array or not.
+	/// </summary>
 	public struct SequenceCollectionTypeInfo
 	{
 		/// <summary>
@@ -23,23 +26,22 @@
 		/// </summary>
 		public readonly bool isArray;
 
-		public SequenceCollectionTypeInfo(IIndexSerializationDefinition definition)
-		{
-			genericType = SerializationUtilities.GetGenericType(definition.IndexBasedDataType, typeof(IList<>));
-			elementType = (genericType != null) ? genericType.GetGenericArguments()[0] : typeof(object);
-			isTypeConstrained = elementType != typeof(object);
-			isArray = definition.IndexBasedDataType.IsArray;
-		}
-
 		public SequenceCollectionTypeInfo(IList instance)
-		{
-			instance.ThrowIfNull(nameof(instance));
-			Type instanceType = instance.GetType();
+		: this(instance.GetType())
+		{ }
 
-			genericType = SerializationUtilities.GetGenericType(instanceType, typeof(IList<>));
+		public SequenceCollectionTypeInfo(Type collectionType)
+		{
+			collectionType.ThrowIfNull(nameof(collectionType));
+			if (!typeof(IList).IsAssignableFrom(collectionType))
+			{
+				throw new ArgumentException(string.Format("{0} is not a {1}.", collectionType.Name, typeof(IList).Name));
+			}
+
+			genericType = SerializationUtilities.GetGenericType(collectionType, typeof(IList<>));
 			elementType = (genericType != null) ? genericType.GetGenericArguments()[0] : typeof(object);
 			isTypeConstrained = elementType != typeof(object);
-			isArray = instanceType.IsArray;
+			isArray = collectionType.IsArray;
 		}
 	}
 }

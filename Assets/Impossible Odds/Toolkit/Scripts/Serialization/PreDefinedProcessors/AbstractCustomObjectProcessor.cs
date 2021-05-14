@@ -4,15 +4,21 @@
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
-	using System.Runtime.Serialization;
 
 	public abstract class AbstractCustomObjectProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
+		private static Dictionary<Type, CustomObjectTypeCache> typeInfoCache = new Dictionary<Type, CustomObjectTypeCache>();
+
 		private ISerializationDefinition definition = null;
 
 		public ISerializationDefinition Definition
 		{
 			get { return definition; }
+		}
+
+		public bool SupportsSerializationCallbacks
+		{
+			get { return definition is ICallbacksSupport; }
 		}
 
 		public AbstractCustomObjectProcessor(ISerializationDefinition definition)
@@ -22,35 +28,6 @@
 
 		public abstract bool Serialize(object objectToSerialize, out object serializedResult);
 		public abstract bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult);
-
-		/// <summary>
-		/// Cache of attributes, organized by attribute type.
-		/// </summary>
-		/// <typeparam name="Type">Type of the attribute.</typeparam>
-		/// <typeparam name="AttributeFieldsCache">Cache of types with the attributes defined in them.</typeparam>
-		protected static Dictionary<Type, AttributeFieldsCache> attributeFieldsCache = new Dictionary<Type, AttributeFieldsCache>();
-
-		/// <summary>
-		/// Cache of type resolve parameters defines on types.
-		/// </summary>
-		/// <typeparam name="Type">Attribute type that is used during type resolve.</typeparam>
-		/// <typeparam name="TypeResolveCache">Cache of types that have been decorated with the type resolve attribute.</typeparam>
-		protected static Dictionary<Type, TypeResolveCache> typeResolveCache = new Dictionary<Type, TypeResolveCache>();
-
-		/// <summary>
-		/// Cache of (de)serialization callbacks for a specific callback attribute type.
-		/// </summary>
-		/// <typeparam name="Type">Attribute type that defines a (de)serialization callback.</typeparam>
-		/// <typeparam name="CallbackCache">Cache of types and methods that have the (de)serialization callback attribute defined.</typeparam>
-		protected static Dictionary<Type, CallbackCache> callbackCache = new Dictionary<Type, CallbackCache>();
-
-		/// <summary>
-		/// Checks whether the serialization definition has callback attributes defined to let the object know that (de)serialization will take place.
-		/// </summary>
-		protected bool SupportsSerializationCallbacks
-		{
-			get { return definition is ICallbacksSupport; }
-		}
 
 		/// <summary>
 		/// Let the target object know that serialization will start.
@@ -100,6 +77,23 @@
 			}
 		}
 
+		/// <summary>
+		/// Retrieve the cached information about a type.
+		/// </summary>
+		/// <param name="type">The type for which to retrieve the cached information.</param>
+		/// <returns></returns>
+		protected CustomObjectTypeCache GetTypeCache(Type type)
+		{
+			type.ThrowIfNull(nameof(type));
+
+			if (!typeInfoCache.ContainsKey(type))
+			{
+				typeInfoCache[type] = new CustomObjectTypeCache(type);
+			}
+
+			return typeInfoCache[type];
+		}
+
 		private void InvokeCallback(object target, Type callbackAttributeType)
 		{
 			target.ThrowIfNull(nameof(target));
@@ -109,221 +103,164 @@
 				return;
 			}
 
-			MethodInfo callback = GetCallback(target.GetType(), callbackAttributeType);
-			if (callback == null)
+			IEnumerable<MethodInfo> callbacks = GetTypeCache(target.GetType()).GetSerializationCallbacks(callbackAttributeType);
+			foreach (MethodInfo callback in callbacks)
 			{
-				return;
-			}
-
-			callback.Invoke(target, null);
-		}
-
-		/// <summary>
-		/// Fetch all attributes defined on the target type.
-		/// </summary>
-		/// <param name="targetType">The class type of which to fetch the attributes that are defined on its fields.</param>
-		/// <param name="attributeType">The attribute type to look for that is defined on the target type's fields.</param>
-		/// <returns></returns>
-		protected static IReadOnlyList<FieldAtrributeTuple> GetAttributeFields(Type targetType, Type attributeType)
-		{
-			if (!attributeFieldsCache.ContainsKey(attributeType))
-			{
-				attributeFieldsCache.Add(attributeType, new AttributeFieldsCache());
-			}
-
-			AttributeFieldsCache attributesCache = attributeFieldsCache[attributeType];
-			if (attributesCache.ContainsKey(targetType))
-			{
-				return attributesCache[targetType];
-			}
-
-			// Collection in which we will store the cached fields.
-			List<FieldAtrributeTuple> targetFields = new List<FieldAtrributeTuple>();
-			attributesCache.Add(targetType, targetFields);
-
-			// Fetch all fields across the type hierarchy.
-			while ((targetType != null) && (targetType != typeof(object)))
-			{
-				FieldInfo[] fields = targetType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-				foreach (FieldInfo field in fields)
+				if (callback != null)
 				{
-					if (field.DeclaringType != targetType)
-					{
-						continue;
-					}
-
-					Attribute attr = field.GetCustomAttributes(attributeType, false).SingleOrDefault() as Attribute;
-					if (attr != null)
-					{
-						targetFields.Add(new FieldAtrributeTuple(field, attr));
-					}
+					callback.Invoke(target, null);
 				}
-
-				targetType = targetType.BaseType;
-			}
-
-			return targetFields;
-		}
-
-		/// <summary>
-		/// Finds the maximum defined index in the hierarchy.
-		/// </summary>
-		/// <param name="type">Type of object for which to find the maximum defined index.</param>
-		/// <param name="attributeType">Type of the index-based parameter attribute.</param>
-		/// <returns>Returns the maximum defined index found. If no index-based parameter attributes were found, -1 is returned.</returns>
-		protected static int GetMaxDefinedIndex(Type type, Type attributeType)
-		{
-			int maxIndex = -1;
-			while ((type != null) && (type != typeof(object)))
-			{
-				IReadOnlyList<FieldAtrributeTuple> fields = GetAttributeFields(type, attributeType);
-				foreach (FieldAtrributeTuple field in fields)
-				{
-					maxIndex = Math.Max((field.attribute as IIndexParameter).Index, maxIndex);
-				}
-
-				type = type.BaseType;
-			}
-
-			return maxIndex;
-		}
-
-		/// <summary>
-		/// Fetch all attributes defined on the target type's class and across its inheritance chain which are applicable to this type.
-		/// </summary>
-		/// <param name="targetType">The class type of which to fetch the attributes that are defined on it.</param>
-		/// <param name="attributeType">The type of the attribute to look for.</param>
-		/// <returns>Collection of type resolve attributes that are applicable to the target type.</returns>
-		protected static IReadOnlyList<ITypeResolveParameter> GetClassTypeResolves(Type targetType, Type attributeType)
-		{
-			targetType.ThrowIfNull(nameof(targetType));
-			attributeType.ThrowIfNull(nameof(attributeType));
-
-			if (!typeof(ITypeResolveParameter).IsAssignableFrom(attributeType))
-			{
-				throw new Serialization.SerializationException(string.Format("The requested attribute type to look for does not implement the {0} interface.", typeof(ITypeResolveParameter).Name));
-			}
-
-			if (!typeResolveCache.ContainsKey(attributeType))
-			{
-				typeResolveCache.Add(attributeType, new TypeResolveCache());
-			}
-
-			TypeResolveCache cache = typeResolveCache[attributeType];
-			if (cache.ContainsKey(targetType))
-			{
-				return cache[targetType];
-			}
-
-			// Fetch all attributes defined in the inheritance chain.
-			List<ITypeResolveParameter> typeResolveAttributes = new List<ITypeResolveParameter>();
-
-			// Attributes defined on the class itself
-			typeResolveAttributes.AddRange(targetType.GetCustomAttributes(attributeType, true).Cast<ITypeResolveParameter>());
-
-			// Attributes defined in interfaces implemented by the class or one of it's base classes.
-			foreach (Type interfaceType in targetType.GetInterfaces())
-			{
-				typeResolveAttributes.AddRange(interfaceType.GetCustomAttributes(attributeType, true).Cast<ITypeResolveParameter>());
-			}
-
-			// Filter duplicates and types we don't care about
-			typeResolveAttributes = typeResolveAttributes.Where(t => targetType.IsAssignableFrom(t.Target)).Distinct().ToList();
-
-			cache.Add(targetType, typeResolveAttributes);
-			return typeResolveAttributes;
-		}
-
-		/// <summary>
-		/// Retrieve a callback for an instance of target type.
-		/// </summary>
-		/// <param name="targetType">The type of object on which the callback is defined.</param>
-		/// <param name="callbackAttributeType">The type of the attribute that should've been defined on the callback method.</param>
-		/// <returns>A callback method, if any was defined. Returns null otherwise.</returns>
-		protected static MethodInfo GetCallback(Type targetType, Type callbackAttributeType)
-		{
-			targetType.ThrowIfNull(nameof(targetType));
-			callbackAttributeType.ThrowIfNull(nameof(callbackAttributeType));
-
-			if (!callbackCache.ContainsKey(callbackAttributeType))
-			{
-				callbackCache.Add(callbackAttributeType, new CallbackCache());
-			}
-
-			CallbackCache cache = callbackCache[callbackAttributeType];
-			if (cache.ContainsKey(targetType))
-			{
-				return cache[targetType];
-			}
-
-			// Fetch all methods on the target type
-			Type currentType = targetType;
-			while ((currentType != null) && (currentType != typeof(object)))
-			{
-				IEnumerable<MethodInfo> methods = currentType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-				foreach (MethodInfo method in methods)
-				{
-					if (method.IsDefined(callbackAttributeType))
-					{
-						cache.Add(targetType, method);
-						return method;
-					}
-				}
-
-				currentType = currentType.BaseType;
-			}
-
-			return null;
-		}
-
-		/// <summary>
-		/// Creates a new instance of the requested type.
-		/// </summary>
-		/// <returns>Instance of the requested type.</returns>
-		protected static object CreateInstance(Type instanceType)
-		{
-			if (instanceType.IsValueType)
-			{
-				return Activator.CreateInstance(instanceType, true);
-			}
-			else
-			{
-				return FormatterServices.GetUninitializedObject(instanceType);
 			}
 		}
 
 		/// <summary>
 		/// Binds an attribute to a field for quick access.
 		/// </summary>
-		protected class FieldAtrributeTuple
+		protected class FieldAtrributeTuple : Tuple<FieldInfo, Attribute>
 		{
-			public readonly FieldInfo field;
-			public readonly Attribute attribute;
+			public FieldInfo Field
+			{
+				get { return Item1; }
+			}
+
+			public Attribute Attribute
+			{
+				get { return Item2; }
+			}
 
 			public FieldAtrributeTuple(FieldInfo field, Attribute attribute)
-			{
-				this.field = field;
-				this.attribute = attribute;
-			}
+			: base(field, attribute)
+			{ }
 		}
 
 		/// <summary>
-		/// Thin wrapper of a dictionary. The keys are class types. The corresponding values are
-		/// a list of all fields that have a certain attribute defined, stored in a tuple containing
-		/// the field and the attribute associated with it.
+		/// Type cache of attributes to commonly used data during (de)serialization for custom objects.
 		/// </summary>
-		protected class AttributeFieldsCache : Dictionary<Type, List<FieldAtrributeTuple>> { }
+		protected class CustomObjectTypeCache
+		{
+			private readonly Type type = null;
+			private Dictionary<Type, List<FieldAtrributeTuple>> fieldsWithAttributes = new Dictionary<Type, List<FieldAtrributeTuple>>();
+			private Dictionary<Type, List<ITypeResolveParameter>> typeResolveParameters = new Dictionary<Type, List<ITypeResolveParameter>>();
+			private Dictionary<Type, List<MethodInfo>> serializationCallbacks = new Dictionary<Type, List<MethodInfo>>();
 
-		/// <summary>
-		/// Thin wrapper of a dictionary. The keys are class/interface types. The corresponding values
-		/// are a list of type resolve attributes defined of a certain type.
-		/// </summary>
-		protected class TypeResolveCache : Dictionary<Type, List<ITypeResolveParameter>> { }
+			public Type Type
+			{
+				get { return type; }
+			}
 
-		/// <summary>
-		/// Thin wrapper of a dictionary. The keys are class/interface types. The corresponding values
-		/// are the methods that define the callback to be used on the object of that type.
-		/// </summary>
-		protected class CallbackCache : Dictionary<Type, MethodInfo> { }
+			public CustomObjectTypeCache(Type type)
+			{
+				type.ThrowIfNull(nameof(type));
+				this.type = type;
+			}
+
+			/// <summary>
+			/// Retrieve all fields with a specific attribute defined.
+			/// </summary>
+			/// <param name="typeOfAttribute">Type of the attribute that will be looked for on fields.</param>
+			/// <returns>A collection of fields that have the attribute defined on them.</returns>
+			public IReadOnlyList<FieldAtrributeTuple> GetFieldsWithAttribute(Type typeOfAttribute)
+			{
+				typeOfAttribute.ThrowIfNull(nameof(typeOfAttribute));
+
+				if (fieldsWithAttributes.ContainsKey(typeOfAttribute))
+				{
+					return fieldsWithAttributes[typeOfAttribute];
+				}
+
+				// Collection in which we will store the cached fields.
+				List<FieldAtrributeTuple> targetFields = new List<FieldAtrributeTuple>();
+
+				// Fetch all fields across the type hierarchy.
+				Type targetType = Type;
+				while ((targetType != null) && (targetType != typeof(object)))
+				{
+					FieldInfo[] fields = targetType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+					foreach (FieldInfo field in fields)
+					{
+						if (field.DeclaringType != targetType)
+						{
+							continue;
+						}
+
+						Attribute attr = field.GetCustomAttributes(typeOfAttribute, false).SingleOrDefault() as Attribute;
+						if (attr != null)
+						{
+							targetFields.Add(new FieldAtrributeTuple(field, attr));
+						}
+					}
+
+					targetType = targetType.BaseType;
+				}
+
+				fieldsWithAttributes[typeOfAttribute] = targetFields;
+				return targetFields;
+			}
+
+			/// <summary>
+			/// Retrieve all type resolve parameters defined on a type of a specific type resolve attribute type.
+			/// </summary>
+			/// <param name="typeOfAttribute">The type resolve parameter attribute type.</param>
+			/// <returns>A collection of all type resolve parameters defined on the type and it's inheritance tree.</returns>
+			public IReadOnlyList<ITypeResolveParameter> GetTypeResolveParameters(Type typeOfAttribute)
+			{
+				typeOfAttribute.ThrowIfNull(nameof(typeOfAttribute));
+
+				if (!typeof(ITypeResolveParameter).IsAssignableFrom(typeOfAttribute))
+				{
+					throw new Serialization.SerializationException(string.Format("The requested attribute type to look for does not implement the {0} interface.", typeof(ITypeResolveParameter).Name));
+				}
+
+				if (typeResolveParameters.ContainsKey(typeOfAttribute))
+				{
+					return typeResolveParameters[typeOfAttribute];
+				}
+
+				// Fetch all attributes defined in the inheritance chain.
+				List<ITypeResolveParameter> typeResolveAttributes = new List<ITypeResolveParameter>();
+
+				// Attributes defined on the class itself.
+				// Filter out those that aren't assignable to the current type.
+				typeResolveAttributes.AddRange(Type.GetCustomAttributes(typeOfAttribute, true).Cast<ITypeResolveParameter>().Where(t => Type.IsAssignableFrom(t.Target)));
+
+				// Attributes defined in interfaces implemented by the class or one of it's base classes.
+				// Filter out those that aren't assignable to the current type.
+				foreach (Type interfaceType in Type.GetInterfaces())
+				{
+					typeResolveAttributes.AddRange(interfaceType.GetCustomAttributes(typeOfAttribute, true).Cast<ITypeResolveParameter>().Where(t => Type.IsAssignableFrom(t.Target)));
+				}
+
+				typeResolveParameters[typeOfAttribute] = typeResolveAttributes;
+				return typeResolveAttributes;
+			}
+
+			/// <summary>
+			/// Retrieve all callback methods defined for a specific callback attribute type.
+			/// </summary>
+			/// <param name="typeOfAttribute">Type of the callback attribute.</param>
+			/// <returns>A collection of all methods that are defined as a callback.</returns>
+			public IReadOnlyList<MethodInfo> GetSerializationCallbacks(Type typeOfAttribute)
+			{
+				typeOfAttribute.ThrowIfNull(nameof(typeOfAttribute));
+
+				if (serializationCallbacks.ContainsKey(typeOfAttribute))
+				{
+					return serializationCallbacks[typeOfAttribute];
+				}
+
+				List<MethodInfo> callbackMethods = new List<MethodInfo>();
+
+				Type currentType = Type;
+				BindingFlags methodFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+				while ((currentType != null) && (currentType != typeof(object)))
+				{
+					callbackMethods.AddRange(currentType.GetMethods(methodFlags).Where(m => m.IsDefined(typeOfAttribute)));
+					currentType = currentType.BaseType;
+				}
+
+				serializationCallbacks[typeOfAttribute] = callbackMethods;
+				return callbackMethods;
+			}
+		}
 	}
 }

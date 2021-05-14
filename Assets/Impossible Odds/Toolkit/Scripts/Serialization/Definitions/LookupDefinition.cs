@@ -11,7 +11,7 @@
 	/// Abstract generic serialization definiton that only supports lookup-based serialized data.
 	/// </summary>
 	/// <typeparam name="T">Attribute type that defines if an object should be (de)serialized as a lookup-based data structure.</typeparam>
-	/// <typeparam name="U">Attribute type for the lookup-based attributes.</typeparam>
+	/// <typeparam name="U">Attribute type for the lookup-based fields and properties.</typeparam>
 	/// <typeparam name="V">Type of the lookup-based container that should get used.</typeparam>
 	public abstract class LookupDefinition<T, U, V> : ILookupSerializationDefinition<T, U, V>
 	where T : Attribute

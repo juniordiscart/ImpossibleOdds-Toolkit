@@ -24,6 +24,10 @@
 	{
 		public const string JsonTypeKey = "jsi:type";
 
+		private IEnumerable<ISerializationProcessor> serializationProcessors = null;
+		private IEnumerable<IDeserializationProcessor> deserializationProcessors = null;
+		private HashSet<Type> supportedTypes = null;
+
 		/// <inheritdoc />
 		public Type JsonObjectType
 		{
@@ -108,12 +112,20 @@
 			get { return typeof(JsonEnumAliasAttribute); }
 		}
 
-		private IEnumerable<ISerializationProcessor> serializationProcessors;
-		private IEnumerable<IDeserializationProcessor> deserializationProcessors;
-		private HashSet<Type> supportedTypes;
-
 		public JsonSerializationDefinition()
 		{
+			supportedTypes = new HashSet<Type>()
+			{
+				typeof(byte),
+				typeof(short),
+				typeof(int),
+				typeof(long),
+				typeof(double),
+				typeof(bool),
+				typeof(string),
+				typeof(char)
+			};
+
 			List<IProcessor> processors = new List<IProcessor>()
 			{
 				new ExactMatchProcessor(this),
@@ -138,18 +150,6 @@
 
 			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>();
 			deserializationProcessors = processors.Where(p => p is IDeserializationProcessor).Cast<IDeserializationProcessor>();
-
-			supportedTypes = new HashSet<Type>()
-			{
-				typeof(byte),
-				typeof(short),
-				typeof(int),
-				typeof(long),
-				typeof(double),
-				typeof(bool),
-				typeof(string),
-				typeof(char)
-			};
 		}
 	}
 

@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.Runtime.Serialization;
 
 	public static class SerializationUtilities
 	{
@@ -67,6 +68,22 @@
 		}
 
 		/// <summary>
+		/// Creates a new (uninitialized) instance of the requested type.
+		/// </summary>
+		/// <returns>Instance of the requested type.</returns>
+		public static object CreateInstance(Type instanceType)
+		{
+			if (instanceType.IsValueType)
+			{
+				return Activator.CreateInstance(instanceType, true);
+			}
+			else
+			{
+				return FormatterServices.GetUninitializedObject(instanceType);
+			}
+		}
+
+		/// <summary>
 		/// Explicitly converts a value to a certain type. A value may have been processed by a processor, but may still need a final conversion to the final type.
 		/// </summary>
 		/// <param name="value"></param>
@@ -101,11 +118,8 @@
 		public static bool PassesElementTypeRestriction(object value, Type elementType)
 		{
 			bool isNullable = IsNullableType(elementType);
-			if ((value == null) && !isNullable)
-			{
-				return false;
-			}
-			else if ((value != null) && !elementType.IsAssignableFrom(value.GetType()))
+			if (((value == null) && !isNullable) ||
+				((value != null) && !elementType.IsAssignableFrom(value.GetType())))
 			{
 				return false;
 			}
@@ -179,7 +193,12 @@
 			}
 		}
 
-		private static LookupCollectionTypeInfo GetCollectionTypeInfo(IDictionary instance)
+		/// <summary>
+		/// Get additional information about the collection's type, i.e. whether it is constraint by generic parameters.
+		/// </summary>
+		/// <param name="instance">The instance for which to fetch additional information.</param>
+		/// <returns>Information about the collection's type.</returns>
+		public static LookupCollectionTypeInfo GetCollectionTypeInfo(IDictionary instance)
 		{
 			instance.ThrowIfNull(nameof(instance));
 
@@ -192,7 +211,12 @@
 			return lookupTypeInfoCache[instanceType];
 		}
 
-		private static SequenceCollectionTypeInfo GetCollectionTypeInfo(IList instance)
+		/// <summary>
+		/// Get additional information about the collection's type, i.e. whether it is constraint by generic parameters.
+		/// </summary>
+		/// <param name="instance">The instance for which to fetch additional information.</param>
+		/// <returns>Information about the collection's type.</returns>
+		public static SequenceCollectionTypeInfo GetCollectionTypeInfo(IList instance)
 		{
 			instance.ThrowIfNull(nameof(instance));
 

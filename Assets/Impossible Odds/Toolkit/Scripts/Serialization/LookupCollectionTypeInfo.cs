@@ -1,9 +1,12 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-
-namespace ImpossibleOdds.Serialization
+﻿namespace ImpossibleOdds.Serialization
 {
+	using System;
+	using System.Collections;
+	using System.Collections.Generic;
+
+	/// <summary>
+	/// Contains type information about the lookup data structure, e.g. whether it restricts its key and/or value to be type restricted.
+	/// </summary>
 	public struct LookupCollectionTypeInfo
 	{
 		/// <summary>
@@ -31,22 +34,19 @@ namespace ImpossibleOdds.Serialization
 		/// </summary>
 		public readonly bool isValueTypeConstrained;
 
-		public LookupCollectionTypeInfo(ILookupSerializationDefinition definition)
-		{
-			genericType = SerializationUtilities.GetGenericType(definition.LookupBasedDataType, typeof(IDictionary<,>));
-			genericParams = (genericType != null) ? genericType.GetGenericArguments() : null;
-			keyType = (genericParams != null) ? genericParams[0] : typeof(object);
-			valueType = (genericParams != null) ? genericParams[1] : typeof(object);
-			isKeyTypeConstrained = (genericParams != null) && (keyType != typeof(object));
-			isValueTypeConstrained = (genericParams != null) && (valueType != typeof(object));
-		}
-
 		public LookupCollectionTypeInfo(IDictionary instance)
-		{
-			instance.ThrowIfNull(nameof(instance));
-			Type instanceType = instance.GetType();
+		: this(instance.GetType())
+		{ }
 
-			genericType = SerializationUtilities.GetGenericType(instanceType, typeof(IDictionary<,>));
+		public LookupCollectionTypeInfo(Type collectionType)
+		{
+			collectionType.ThrowIfNull(nameof(collectionType));
+			if (!typeof(IDictionary).IsAssignableFrom(collectionType))
+			{
+				throw new ArgumentException(string.Format("{0} is not a {1}.", collectionType.Name, typeof(IDictionary).Name));
+			}
+
+			genericType = SerializationUtilities.GetGenericType(collectionType, typeof(IDictionary<,>));
 			genericParams = (genericType != null) ? genericType.GetGenericArguments() : null;
 			keyType = (genericParams != null) ? genericParams[0] : typeof(object);
 			valueType = (genericParams != null) ? genericParams[1] : typeof(object);

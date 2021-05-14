@@ -13,12 +13,12 @@
 		private ILookupTypeResolveSupport typeResolveSupport = null;
 		private IRequiredValueSupport requiredValueSupport = null;
 
-		private bool SupportsTypeResolvement
+		public bool SupportsTypeResolvement
 		{
 			get { return typeResolveSupport != null; }
 		}
 
-		private bool SupportsRequiredValues
+		public bool SupportsRequiredValues
 		{
 			get { return requiredValueSupport != null; }
 		}
@@ -88,7 +88,7 @@
 
 			try
 			{
-				targetInstance = CreateInstance(instanceType);
+				targetInstance = SerializationUtilities.CreateInstance(instanceType);
 			}
 			catch (System.Exception)
 			{
@@ -113,7 +113,7 @@
 		/// <param name="deserializationTarget">The object on which the data should be applied.</param>
 		/// <param name="dataToDeserialize">The data to deserialize.</param>
 		/// <returns>True if the deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(object deserializationTarget, object dataToDeserialize)
+		public virtual bool Deserialize(object deserializationTarget, object dataToDeserialize)
 		{
 			deserializationTarget.ThrowIfNull(nameof(deserializationTarget));
 
@@ -135,14 +135,14 @@
 
 		private IDictionary Serialize(Type sourceType, object source)
 		{
-			IReadOnlyList<FieldAtrributeTuple> sourceFields = GetAttributeFields(sourceType, definition.LookupBasedFieldAttribute);
+			IReadOnlyList<FieldAtrributeTuple> sourceFields = GetTypeCache(sourceType).GetFieldsWithAttribute(definition.LookupBasedFieldAttribute);
 			Dictionary<object, object> processedValues = new Dictionary<object, object>(sourceFields.Count);
 
 			// Process the source key and value pairs.
 			foreach (FieldAtrributeTuple sourceField in sourceFields)
 			{
 				object processedKey = Serializer.Serialize(GetKey(sourceField), definition);
-				object processedValue = Serializer.Serialize(sourceField.field.GetValue(source), definition);
+				object processedValue = Serializer.Serialize(sourceField.Field.GetValue(source), definition);
 				processedValues.Add(processedKey, processedValue);
 			}
 
@@ -186,7 +186,7 @@
 		private void Deserialize(object target, IDictionary source)
 		{
 			// Get all of the fields that would like to get their value filled in
-			IReadOnlyList<FieldAtrributeTuple> targetFields = GetAttributeFields(target.GetType(), definition.LookupBasedFieldAttribute);
+			IReadOnlyList<FieldAtrributeTuple> targetFields = GetTypeCache(target.GetType()).GetFieldsWithAttribute(definition.LookupBasedFieldAttribute);
 
 			foreach (FieldAtrributeTuple targetField in targetFields)
 			{
@@ -196,9 +196,9 @@
 				if (!source.Contains(key))
 				{
 					// Check whether this field is marked as required
-					if (SupportsRequiredValues && targetField.field.IsDefined(requiredValueSupport.RequiredAttributeType, false))
+					if (SupportsRequiredValues && targetField.Field.IsDefined(requiredValueSupport.RequiredAttributeType, false))
 					{
-						throw new SerializationException(string.Format("The field {0} is marked as required but is not present in the source.", targetField.field.Name));
+						throw new SerializationException(string.Format("The field {0} is marked as required but is not present in the source.", targetField.Field.Name));
 					}
 					else
 					{
@@ -207,24 +207,24 @@
 					}
 				}
 
-				object result = Serializer.Deserialize(targetField.field.FieldType, source[key], definition);
+				object result = Serializer.Deserialize(targetField.Field.FieldType, source[key], definition);
 
 				if (result == null)
 				{
-					Type fieldType = targetField.field.FieldType;
-					targetField.field.SetValue(target, fieldType.IsValueType ? Activator.CreateInstance(fieldType, true) : null);
+					Type fieldType = targetField.Field.FieldType;
+					targetField.Field.SetValue(target, fieldType.IsValueType ? Activator.CreateInstance(fieldType, true) : null);
 				}
 				else
 				{
-					targetField.field.SetValue(target, result);
+					targetField.Field.SetValue(target, result);
 				}
 			}
 		}
 
 		private object GetKey(FieldAtrributeTuple field)
 		{
-			ILookupParameter lookupAttribute = field.attribute as ILookupParameter;
-			return (lookupAttribute.Key != null) ? lookupAttribute.Key : field.field.Name;
+			ILookupParameter lookupAttribute = field.Attribute as ILookupParameter;
+			return (lookupAttribute.Key != null) ? lookupAttribute.Key : field.Field.Name;
 		}
 
 		private ITypeResolveParameter ResolveTypeToLookup(Type sourceType)
@@ -235,7 +235,7 @@
 			}
 
 			ILookupTypeResolveSupport typeResolveImplementation = definition as ILookupTypeResolveSupport;
-			IEnumerable<ITypeResolveParameter> typeResolveAttributes = GetClassTypeResolves(sourceType, typeResolveImplementation.TypeResolveAttribute);
+			IEnumerable<ITypeResolveParameter> typeResolveAttributes = GetTypeCache(sourceType).GetTypeResolveParameters(typeResolveImplementation.TypeResolveAttribute);
 			foreach (ITypeResolveParameter attr in typeResolveAttributes)
 			{
 				ITypeResolveParameter typeResolveAttr = attr as ITypeResolveParameter;
@@ -264,7 +264,7 @@
 				return targetType;
 			}
 
-			IEnumerable<ITypeResolveParameter> typeResolveAttrs = GetClassTypeResolves(targetType, typeResolveSupport.TypeResolveAttribute);
+			IEnumerable<ITypeResolveParameter> typeResolveAttrs = GetTypeCache(targetType).GetTypeResolveParameters(typeResolveSupport.TypeResolveAttribute);
 
 			foreach (ITypeResolveParameter attr in typeResolveAttrs)
 			{

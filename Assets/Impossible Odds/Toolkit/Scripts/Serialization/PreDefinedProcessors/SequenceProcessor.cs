@@ -2,17 +2,25 @@
 {
 	using System;
 	using System.Collections;
-	using System.Collections.Generic;
 
 	/// <summary>
 	/// A (de)serialization processor for list-like data structures.
 	/// </summary>
-	public class SequenceProcessor : AbstractCollectionProcessor, IDeserializationToTargetProcessor
+	public class SequenceProcessor : ISerializationProcessor, IDeserializationProcessor, IDeserializationToTargetProcessor
 	{
 		private IIndexSerializationDefinition definition;
 
-		public SequenceProcessor(IIndexSerializationDefinition definition, bool strictTypeChecking = DefaultOptions.StrictTypeChecking)
-		: base(definition, strictTypeChecking)
+		ISerializationDefinition IProcessor.Definition
+		{
+			get { return definition; }
+		}
+
+		IIndexSerializationDefinition Definition
+		{
+			get { return definition; }
+		}
+
+		public SequenceProcessor(IIndexSerializationDefinition definition)
 		{
 			this.definition = definition;
 		}
@@ -23,7 +31,7 @@
 		/// <param name="objectToSerialize">The object to serialize.</param>
 		/// <param name="serializedResult">The serialized object.</param>
 		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
-		public override bool Serialize(object objectToSerialize, out object serializedResult)
+		public bool Serialize(object objectToSerialize, out object serializedResult)
 		{
 			// Accept null values.
 			if ((objectToSerialize == null))
@@ -32,25 +40,19 @@
 				return true;
 			}
 
-			if ((objectToSerialize is string) || !typeof(IEnumerable).IsAssignableFrom(objectToSerialize.GetType()))
+			if (!(objectToSerialize is IList))
 			{
 				serializedResult = null;
 				return false;
 			}
 
-			IEnumerable sourceValues = (IEnumerable)objectToSerialize;
-			int sourceCount = CountElements(sourceValues);
-
-			// Process each individual element
-			List<object> processedValues = new List<object>(sourceCount);
+			IList sourceValues = (IList)objectToSerialize;
+			IList resultCollection = definition.CreateSequenceInstance(sourceValues.Count);
 			foreach (object sourceValue in sourceValues)
 			{
-				processedValues.Add(Serializer.Serialize(sourceValue, definition));
+				resultCollection.Add(Serializer.Serialize(sourceValue, definition));
 			}
 
-			// Fill up the target collection with the pre processed values
-			IList resultCollection = definition.CreateSequenceInstance(sourceCount);
-			SerializationUtilities.FillSequence(processedValues, resultCollection);
 			serializedResult = resultCollection;
 			return true;
 		}
@@ -62,7 +64,7 @@
 		/// <param name="dataToDeserialize">The data deserialize and apply to the result.</param>
 		/// <param name="deserializedResult">The result unto which the data is applied.</param>
 		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public override bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
 			// Check if the target implements the general IList interface, if not, we can just skip it altogether.
 			if ((targetType == null) || !typeof(IList).IsAssignableFrom(targetType))
@@ -82,7 +84,7 @@
 			{
 				throw new SerializationException(string.Format("Target type {0} is abstract or an interface. Cannot create an instance to process the source values.", targetType.Name));
 			}
-			else if (!typeof(IList).IsAssignableFrom(dataToDeserialize.GetType()))
+			else if (!(dataToDeserialize is IList))
 			{
 				throw new SerializationException(string.Format("The source value is expected to implement the {0} interface to process to target type {1}.", typeof(IList).Name, targetType.Name));
 			}
@@ -134,22 +136,21 @@
 
 			Type targetType = deserializationTarget.GetType();
 			IList sourceValues = dataToDeserialize as IList;
+			SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(deserializationTarget as IList);
 
-			// There's a distinction between lists and arrays...
-			if (targetType.IsArray)
+			// Arrays and lists are treated differently
+			if (collectionInfo.isArray)
 			{
-				Type elementType = targetType.GetElementType();
-				bool isTypeConstrained = (elementType != typeof(object));
 				Array targetCollection = deserializationTarget as Array;
 
 				for (int i = 0; i < sourceValues.Count; ++i)
 				{
 					if (i < targetCollection.Length)
 					{
-						object processedValue = Serializer.Deserialize(elementType, sourceValues[i], definition);
-						processedValue = SerializationUtilities.PostProcessValue(processedValue, elementType);
+						object processedValue = Serializer.Deserialize(collectionInfo.elementType, sourceValues[i], definition);
+						processedValue = SerializationUtilities.PostProcessValue(processedValue, collectionInfo.elementType);
 
-						if (!isTypeConstrained || PassesTypeRestriction(processedValue, elementType))
+						if (!collectionInfo.isTypeConstrained || SerializationUtilities.PassesElementTypeRestriction(processedValue, collectionInfo.elementType))
 						{
 							targetCollection.SetValue(processedValue, i);
 						}
@@ -167,18 +168,12 @@
 				IList targetCollection = deserializationTarget as IList;
 				targetCollection.Clear();
 
-				Type genericType = SerializationUtilities.GetGenericType(targetType, typeof(List<>));
-				Type genericParam = (genericType != null) ? genericType.GetGenericArguments()[0] : null;
-				bool isTypeConstrained = (genericParam != null) && (genericParam != typeof(object));
-
-				Type elementType = isTypeConstrained ? genericParam : typeof(object);
-
 				for (int i = 0; i < sourceValues.Count; ++i)
 				{
-					object processedValue = Serializer.Deserialize(elementType, sourceValues[i], definition);
-					processedValue = SerializationUtilities.PostProcessValue(processedValue, elementType);
+					object processedValue = Serializer.Deserialize(collectionInfo.elementType, sourceValues[i], definition);
+					processedValue = SerializationUtilities.PostProcessValue(processedValue, collectionInfo.elementType);
 
-					if (!isTypeConstrained || PassesTypeRestriction(processedValue, elementType))
+					if (!collectionInfo.isTypeConstrained || SerializationUtilities.PassesElementTypeRestriction(processedValue, collectionInfo.elementType))
 					{
 						targetCollection.Add(processedValue);
 					}

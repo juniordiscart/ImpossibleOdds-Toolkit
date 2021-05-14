@@ -7,12 +7,21 @@
 	/// <summary>
 	/// A (de)serialization processor for dictionary-like data structures.
 	/// </summary>
-	public class LookupProcessor : AbstractCollectionProcessor, IDeserializationToTargetProcessor
+	public class LookupProcessor : ISerializationProcessor, IDeserializationProcessor, IDeserializationToTargetProcessor
 	{
 		private ILookupSerializationDefinition definition;
 
-		public LookupProcessor(ILookupSerializationDefinition definition, bool strictTypeChecking = DefaultOptions.StrictTypeChecking)
-		: base(definition, strictTypeChecking)
+		ISerializationDefinition IProcessor.Definition
+		{
+			get { return definition; }
+		}
+
+		ILookupSerializationDefinition Definition
+		{
+			get { return definition; }
+		}
+
+		public LookupProcessor(ILookupSerializationDefinition definition)
 		{
 			this.definition = definition;
 		}
@@ -23,7 +32,7 @@
 		/// <param name="objectToSerialize">The object to serialize.</param>
 		/// <param name="serializedResult">The serialized object.</param>
 		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
-		public override bool Serialize(object objectToSerialize, out object serializedResult)
+		public bool Serialize(object objectToSerialize, out object serializedResult)
 		{
 			// Accept null values.
 			if ((objectToSerialize == null))
@@ -32,7 +41,7 @@
 				return true;
 			}
 
-			if (!typeof(IDictionary).IsAssignableFrom(objectToSerialize.GetType()))
+			if (!(objectToSerialize is IDictionary))
 			{
 				serializedResult = null;
 				return false;
@@ -64,7 +73,7 @@
 		/// <param name="dataToDeserialize">The data deserialize and apply to the result.</param>
 		/// <param name="deserializedResult">The result unto which the data is applied.</param>
 		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public override bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
 			// Check if the target implements the general IDictionary interface, if not, we can just skip altogether.
 			if ((targetType == null) || !typeof(IDictionary).IsAssignableFrom(targetType))
@@ -84,7 +93,7 @@
 			{
 				throw new SerializationException(string.Format("Target type {0} is abstract or an interface. Cannot create an instance to process the source values.", targetType.Name));
 			}
-			else if (!typeof(IDictionary).IsAssignableFrom(dataToDeserialize.GetType()))
+			else if (!(dataToDeserialize is IDictionary))
 			{
 				throw new SerializationException(string.Format("The source value is expected to implement the {0} interface to process to target type {1}.", typeof(IDictionary), targetType.Name));
 			}
@@ -125,32 +134,24 @@
 
 			Type targetType = deserializationTarget.GetType();
 			IDictionary targetCollection = deserializationTarget as IDictionary;
-
-			// Check whether the target implements a generic variant and if the arguments apply additional type restrictions.
-			Type genericType = SerializationUtilities.GetGenericType(targetType, typeof(IDictionary<,>));
-			Type[] genericParams = (genericType != null) ? genericType.GetGenericArguments() : null;
-			bool isKeyTypeConstrained = (genericParams != null) && (genericParams[0] != typeof(object));
-			bool isValueTypeConstrained = (genericParams != null) && (genericParams[1] != typeof(object));
-
-			Type keyType = isKeyTypeConstrained ? genericParams[0] : typeof(object);
-			Type valueType = isValueTypeConstrained ? genericParams[1] : typeof(object);
+			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetCollection);
 
 			// Process each key-value pair of the source values individually.
 			IDictionary sourceValues = dataToDeserialize as IDictionary;
 			ICollection keys = sourceValues.Keys;
 			foreach (object key in keys)
 			{
-				object processedKey = Serializer.Deserialize(keyType, key, definition);
-				processedKey = SerializationUtilities.PostProcessValue(processedKey, keyType);
-				if ((processedKey == null) || (isKeyTypeConstrained && !PassesTypeRestriction(processedKey, keyType)))
+				object processedKey = Serializer.Deserialize(collectionInfo.keyType, key, definition);
+				processedKey = SerializationUtilities.PostProcessValue(processedKey, collectionInfo.keyType);
+				if ((processedKey == null) || (collectionInfo.isKeyTypeConstrained && !SerializationUtilities.PassesElementTypeRestriction(processedKey, collectionInfo.keyType)))
 				{
 					Log.Warning("A key of type {0} could not be processed to a valid key for target of type {1}. Skipping key and value.", key.GetType(), targetType.Name);
 					continue;
 				}
 
-				object processedValue = Serializer.Deserialize(valueType, sourceValues[key], definition);
-				processedValue = SerializationUtilities.PostProcessValue(processedValue, valueType);
-				if (isValueTypeConstrained && !PassesTypeRestriction(processedValue, valueType))
+				object processedValue = Serializer.Deserialize(collectionInfo.valueType, sourceValues[key], definition);
+				processedValue = SerializationUtilities.PostProcessValue(processedValue, collectionInfo.valueType);
+				if (collectionInfo.isValueTypeConstrained && !SerializationUtilities.PassesElementTypeRestriction(processedValue, collectionInfo.valueType))
 				{
 					if (sourceValues[key] == null)
 					{

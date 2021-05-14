@@ -106,7 +106,7 @@
 
 		private void OnSceneLoaded(Scene scene, LoadSceneMode sceneLoadMode)
 		{
-			Log.Info("Injecting scene '{0}' with the global dependency context.", scene.name);
+			Log.Info("Injecting scene '{0}' with the global dependency scope.", scene.name);
 			scene.GetRootGameObjects().Inject(DependencyContainer, true);
 		}
 	}

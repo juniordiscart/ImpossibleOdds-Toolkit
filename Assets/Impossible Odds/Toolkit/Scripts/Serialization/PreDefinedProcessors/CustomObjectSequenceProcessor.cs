@@ -82,9 +82,9 @@
 
 			try
 			{
-				targetInstance = CreateInstance(instanceType);
+				targetInstance = SerializationUtilities.CreateInstance(instanceType);
 			}
-			catch (System.Exception)
+			catch (Exception)
 			{
 				throw new SerializationException(string.Format("Failed to create an instance of target type {0}.", targetType.Name));
 			}
@@ -130,7 +130,7 @@
 		private IList Serialize(Type sourceType, object source)
 		{
 			// Check how many element we need to store.
-			int nrOfElements = GetMaxDefinedIndex(source.GetType(), definition.IndexBasedFieldAttribute);
+			int nrOfElements = GetMaxDefinedIndex(source.GetType());
 			nrOfElements += (nrOfElements >= 0) ? 1 : 0;
 
 			// Check whether a type resolve parameter will be there, and at what index it will be.
@@ -145,17 +145,17 @@
 
 			// Create the list of values that will get added.
 			object[] processedValues = new object[nrOfElements];
-			IReadOnlyList<FieldAtrributeTuple> sourceFields = GetAttributeFields(sourceType, definition.IndexBasedFieldAttribute);
+			IReadOnlyList<FieldAtrributeTuple> sourceFields = GetTypeCache(sourceType).GetFieldsWithAttribute(definition.IndexBasedFieldAttribute);
 			foreach (FieldAtrributeTuple sourceField in sourceFields)
 			{
-				IIndexParameter indexAttribute = sourceField.attribute as IIndexParameter;
+				IIndexParameter indexAttribute = sourceField.Attribute as IIndexParameter;
 
 				if (processedValues[indexAttribute.Index] != null)
 				{
 					Log.Warning("Index {0} for processing an instance of type {1} is used multiple times.", indexAttribute.Index, sourceType.Name);
 				}
 
-				processedValues[indexAttribute.Index] = Serializer.Serialize(sourceField.field.GetValue(source), definition);
+				processedValues[indexAttribute.Index] = Serializer.Serialize(sourceField.Field.GetValue(source), definition);
 			}
 
 			// Include the type information, if any was found.
@@ -182,11 +182,11 @@
 		private void Deserialize(object target, IList source)
 		{
 			// Get all of the fields that would like to get their value filled in
-			IReadOnlyList<FieldAtrributeTuple> targetFields = GetAttributeFields(target.GetType(), definition.IndexBasedFieldAttribute);
+			IReadOnlyList<FieldAtrributeTuple> targetFields = GetTypeCache(target.GetType()).GetFieldsWithAttribute(definition.IndexBasedFieldAttribute);
 
 			foreach (FieldAtrributeTuple targetField in targetFields)
 			{
-				IIndexParameter indexParam = targetField.attribute as IIndexParameter;
+				IIndexParameter indexParam = targetField.Attribute as IIndexParameter;
 
 				// Check whether the source has such an index.
 				if (source.Count <= indexParam.Index)
@@ -195,16 +195,16 @@
 					continue;
 				}
 
-				object result = Serializer.Deserialize(targetField.field.FieldType, source[indexParam.Index], definition);
+				object result = Serializer.Deserialize(targetField.Field.FieldType, source[indexParam.Index], definition);
 
 				if (result == null)
 				{
-					Type fieldType = targetField.field.FieldType;
-					targetField.field.SetValue(target, fieldType.IsValueType ? Activator.CreateInstance(fieldType, true) : null);
+					Type fieldType = targetField.Field.FieldType;
+					targetField.Field.SetValue(target, fieldType.IsValueType ? Activator.CreateInstance(fieldType, true) : null);
 				}
 				else
 				{
-					targetField.field.SetValue(target, result);
+					targetField.Field.SetValue(target, result);
 				}
 			}
 		}
@@ -217,7 +217,7 @@
 			}
 
 			IIndexTypeResolveSupport typeResolveImplementation = definition as IIndexTypeResolveSupport;
-			IEnumerable<ITypeResolveParameter> typeResolveAttributes = GetClassTypeResolves(sourceType, typeResolveImplementation.TypeResolveAttribute);
+			IEnumerable<ITypeResolveParameter> typeResolveAttributes = GetTypeCache(sourceType).GetTypeResolveParameters(typeResolveImplementation.TypeResolveAttribute);
 			foreach (ITypeResolveParameter attr in typeResolveAttributes)
 			{
 				ITypeResolveParameter typeResolveAttr = attr as ITypeResolveParameter;
@@ -246,7 +246,7 @@
 				return targetType;
 			}
 
-			IEnumerable<ITypeResolveParameter> typeResolveAttrs = GetClassTypeResolves(targetType, typeResolveDefinition.TypeResolveAttribute);
+			IEnumerable<ITypeResolveParameter> typeResolveAttrs = GetTypeCache(targetType).GetTypeResolveParameters(typeResolveDefinition.TypeResolveAttribute);
 			foreach (ITypeResolveParameter attr in typeResolveAttrs)
 			{
 				ITypeResolveParameter typeResolveAttr = attr as ITypeResolveParameter;
@@ -268,6 +268,23 @@
 			}
 
 			return targetType;
+		}
+
+		private int GetMaxDefinedIndex(Type type)
+		{
+			int maxIndex = int.MinValue;
+			while ((type != null) && (type != typeof(object)))
+			{
+				IReadOnlyList<FieldAtrributeTuple> fields = GetTypeCache(type).GetFieldsWithAttribute(definition.IndexBasedFieldAttribute);
+				foreach (FieldAtrributeTuple field in fields)
+				{
+					maxIndex = Math.Max((field.Attribute as IIndexParameter).Index, maxIndex);
+				}
+
+				type = type.BaseType;
+			}
+
+			return maxIndex;
 		}
 	}
 }

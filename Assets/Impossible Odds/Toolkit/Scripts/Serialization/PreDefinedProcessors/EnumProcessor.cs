@@ -80,10 +80,8 @@
 			}
 
 			// Check if the value is a string.
-			if (typeof(string).IsAssignableFrom(dataToDeserialize.GetType()))
+			if (dataToDeserialize is string dataStr)
 			{
-				string dataStr = dataToDeserialize as string;
-
 				// Get the named values of the enum, and see if the incoming data can be matched.
 				// If so, then the actual enum value can be retrieved already.
 				string[] enumNames = Enum.GetNames(targetType);
@@ -101,8 +99,6 @@
 					deserializedResult = aliasField.GetValue(null);
 					return true;
 				}
-
-				// If no
 			}
 
 			deserializedResult = Enum.ToObject(targetType, dataToDeserialize);
@@ -189,7 +185,7 @@
 				throw new SerializationException("The type {0} is not an enum.", enumType.Name);
 			}
 
-			return enumType.GetFields().Where(enumField => enumField.IsDefined(enumAliasSupport.EnumAsStringAttributeType, false)).ToList();
+			return enumType.GetFields().Where(enumField => enumField.IsDefined(enumAliasSupport.EnumAliasValueAttributeType, false)).ToList();
 		}
 	}
 }
