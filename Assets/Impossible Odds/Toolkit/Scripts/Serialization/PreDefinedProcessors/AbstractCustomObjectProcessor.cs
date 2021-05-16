@@ -81,7 +81,7 @@
 		/// Retrieve the cached information about a type.
 		/// </summary>
 		/// <param name="type">The type for which to retrieve the cached information.</param>
-		/// <returns></returns>
+		/// <returns>The type cache associated with the given type.</returns>
 		protected CustomObjectTypeCache GetTypeCache(Type type)
 		{
 			type.ThrowIfNull(nameof(type));
@@ -116,25 +116,27 @@
 		/// <summary>
 		/// Binds an attribute to a field for quick access.
 		/// </summary>
-		protected class FieldAtrributeTuple : Tuple<FieldInfo, Attribute>
+		protected struct FieldAtrributeTuple
 		{
 			public FieldInfo Field
 			{
-				get { return Item1; }
+				get; private set;
 			}
 
 			public Attribute Attribute
 			{
-				get { return Item2; }
+				get; private set;
 			}
 
 			public FieldAtrributeTuple(FieldInfo field, Attribute attribute)
-			: base(field, attribute)
-			{ }
+			{
+				Field = field;
+				Attribute = attribute;
+			}
 		}
 
 		/// <summary>
-		/// Type cache of attributes to commonly used data during (de)serialization for custom objects.
+		/// Lazy type cache of attributes for commonly used data in processing custom objects.
 		/// </summary>
 		protected class CustomObjectTypeCache
 		{
@@ -183,7 +185,7 @@
 							continue;
 						}
 
-						Attribute attr = field.GetCustomAttributes(typeOfAttribute, false).SingleOrDefault() as Attribute;
+						Attribute attr = field.GetCustomAttribute(typeOfAttribute, false);
 						if (attr != null)
 						{
 							targetFields.Add(new FieldAtrributeTuple(field, attr));
