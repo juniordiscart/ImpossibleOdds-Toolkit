@@ -145,8 +145,8 @@
 
 			// Create the list of values that will get added.
 			object[] processedValues = new object[nrOfElements];
-			IReadOnlyList<FieldAtrributeTuple> sourceFields = GetTypeCache(sourceType).GetFieldsWithAttribute(definition.IndexBasedFieldAttribute);
-			foreach (FieldAtrributeTuple sourceField in sourceFields)
+			IReadOnlyList<FieldAttributeTuple> sourceFields = GetTypeCache(sourceType).GetFieldsWithAttribute(definition.IndexBasedFieldAttribute);
+			foreach (FieldAttributeTuple sourceField in sourceFields)
 			{
 				IIndexParameter indexAttribute = sourceField.Attribute as IIndexParameter;
 
@@ -182,9 +182,9 @@
 		private void Deserialize(object target, IList source)
 		{
 			// Get all of the fields that would like to get their value filled in
-			IReadOnlyList<FieldAtrributeTuple> targetFields = GetTypeCache(target.GetType()).GetFieldsWithAttribute(definition.IndexBasedFieldAttribute);
+			IReadOnlyList<FieldAttributeTuple> targetFields = GetTypeCache(target.GetType()).GetFieldsWithAttribute(definition.IndexBasedFieldAttribute);
 
-			foreach (FieldAtrributeTuple targetField in targetFields)
+			foreach (FieldAttributeTuple targetField in targetFields)
 			{
 				IIndexParameter indexParam = targetField.Attribute as IIndexParameter;
 
@@ -275,8 +275,8 @@
 			int maxIndex = int.MinValue;
 			while ((type != null) && (type != typeof(object)))
 			{
-				IReadOnlyList<FieldAtrributeTuple> fields = GetTypeCache(type).GetFieldsWithAttribute(definition.IndexBasedFieldAttribute);
-				foreach (FieldAtrributeTuple field in fields)
+				IReadOnlyList<FieldAttributeTuple> fields = GetTypeCache(type).GetFieldsWithAttribute(definition.IndexBasedFieldAttribute);
+				foreach (FieldAttributeTuple field in fields)
 				{
 					maxIndex = Math.Max((field.Attribute as IIndexParameter).Index, maxIndex);
 				}

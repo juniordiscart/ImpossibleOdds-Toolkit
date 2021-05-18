@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	/// <summary>
 	/// A (de)serialization processor to process custom object to dictionary-like data structures.
@@ -113,7 +114,7 @@
 		/// <param name="deserializationTarget">The object on which the data should be applied.</param>
 		/// <param name="dataToDeserialize">The data to deserialize.</param>
 		/// <returns>True if the deserialization is compatible and accepted, false otherwise.</returns>
-		public virtual bool Deserialize(object deserializationTarget, object dataToDeserialize)
+		public bool Deserialize(object deserializationTarget, object dataToDeserialize)
 		{
 			deserializationTarget.ThrowIfNull(nameof(deserializationTarget));
 
@@ -135,11 +136,11 @@
 
 		private IDictionary Serialize(Type sourceType, object source)
 		{
-			IReadOnlyList<FieldAtrributeTuple> sourceFields = GetTypeCache(sourceType).GetFieldsWithAttribute(definition.LookupBasedFieldAttribute);
+			IReadOnlyList<FieldAttributeTuple> sourceFields = GetTypeCache(sourceType).GetFieldsWithAttribute(definition.LookupBasedFieldAttribute);
 			Dictionary<object, object> processedValues = new Dictionary<object, object>(sourceFields.Count);
 
 			// Process the source key and value pairs.
-			foreach (FieldAtrributeTuple sourceField in sourceFields)
+			foreach (FieldAttributeTuple sourceField in sourceFields)
 			{
 				object processedKey = Serializer.Serialize(GetKey(sourceField), definition);
 				object processedValue = Serializer.Serialize(sourceField.Field.GetValue(source), definition);
@@ -186,9 +187,9 @@
 		private void Deserialize(object target, IDictionary source)
 		{
 			// Get all of the fields that would like to get their value filled in
-			IReadOnlyList<FieldAtrributeTuple> targetFields = GetTypeCache(target.GetType()).GetFieldsWithAttribute(definition.LookupBasedFieldAttribute);
+			IReadOnlyList<FieldAttributeTuple> targetFields = GetTypeCache(target.GetType()).GetFieldsWithAttribute(definition.LookupBasedFieldAttribute);
 
-			foreach (FieldAtrributeTuple targetField in targetFields)
+			foreach (FieldAttributeTuple targetField in targetFields)
 			{
 				object key = GetKey(targetField);
 
@@ -221,7 +222,7 @@
 			}
 		}
 
-		private object GetKey(FieldAtrributeTuple field)
+		private object GetKey(FieldAttributeTuple field)
 		{
 			ILookupParameter lookupAttribute = field.Attribute as ILookupParameter;
 			return (lookupAttribute.Key != null) ? lookupAttribute.Key : field.Field.Name;
@@ -235,21 +236,8 @@
 			}
 
 			ILookupTypeResolveSupport typeResolveImplementation = definition as ILookupTypeResolveSupport;
-			IEnumerable<ITypeResolveParameter> typeResolveAttributes = GetTypeCache(sourceType).GetTypeResolveParameters(typeResolveImplementation.TypeResolveAttribute);
-			foreach (ITypeResolveParameter attr in typeResolveAttributes)
-			{
-				ITypeResolveParameter typeResolveAttr = attr as ITypeResolveParameter;
-				if (typeResolveAttr == null)
-				{
-					throw new SerializationException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(ITypeResolveParameter).Name));
-				}
-				else if (typeResolveAttr.Target == sourceType)
-				{
-					return typeResolveAttr;
-				}
-			}
-
-			return null;
+			IReadOnlyList<ITypeResolveParameter> typeResolveAttributes = GetTypeCache(sourceType).GetTypeResolveParameters(typeResolveImplementation.TypeResolveAttribute);
+			return typeResolveAttributes.FirstOrDefault(tr => tr.Target == sourceType);
 		}
 
 		private Type ResolveTypeFromLookup(Type targetType, IDictionary source)
@@ -264,16 +252,10 @@
 				return targetType;
 			}
 
-			IEnumerable<ITypeResolveParameter> typeResolveAttrs = GetTypeCache(targetType).GetTypeResolveParameters(typeResolveSupport.TypeResolveAttribute);
-
-			foreach (ITypeResolveParameter attr in typeResolveAttrs)
+			IReadOnlyList<ITypeResolveParameter> typeResolveAttrs = GetTypeCache(targetType).GetTypeResolveParameters(typeResolveSupport.TypeResolveAttribute);
+			foreach (ITypeResolveParameter typeResolveAttr in typeResolveAttrs)
 			{
-				ITypeResolveParameter typeResolveAttr = attr as ITypeResolveParameter;
-				if (typeResolveAttr == null)
-				{
-					throw new SerializationException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(ITypeResolveParameter).Name));
-				}
-				else if (source.Contains(typeResolveSupport.TypeResolveKey) && (source[typeResolveSupport.TypeResolveKey].Equals(typeResolveAttr.Value)))
+				if (source.Contains(typeResolveSupport.TypeResolveKey) && (source[typeResolveSupport.TypeResolveKey].Equals(typeResolveAttr.Value)))
 				{
 					if (targetType.IsAssignableFrom(typeResolveAttr.Target))
 					{

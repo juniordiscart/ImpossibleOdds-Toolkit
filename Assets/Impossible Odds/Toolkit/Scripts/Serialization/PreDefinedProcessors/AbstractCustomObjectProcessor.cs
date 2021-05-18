@@ -116,7 +116,7 @@
 		/// <summary>
 		/// Binds an attribute to a field for quick access.
 		/// </summary>
-		protected struct FieldAtrributeTuple
+		protected struct FieldAttributeTuple
 		{
 			public FieldInfo Field
 			{
@@ -128,7 +128,7 @@
 				get; private set;
 			}
 
-			public FieldAtrributeTuple(FieldInfo field, Attribute attribute)
+			public FieldAttributeTuple(FieldInfo field, Attribute attribute)
 			{
 				Field = field;
 				Attribute = attribute;
@@ -141,7 +141,7 @@
 		protected class CustomObjectTypeCache
 		{
 			private readonly Type type = null;
-			private Dictionary<Type, List<FieldAtrributeTuple>> fieldsWithAttributes = new Dictionary<Type, List<FieldAtrributeTuple>>();
+			private Dictionary<Type, List<FieldAttributeTuple>> fieldsWithAttributes = new Dictionary<Type, List<FieldAttributeTuple>>();
 			private Dictionary<Type, List<ITypeResolveParameter>> typeResolveParameters = new Dictionary<Type, List<ITypeResolveParameter>>();
 			private Dictionary<Type, List<MethodInfo>> serializationCallbacks = new Dictionary<Type, List<MethodInfo>>();
 
@@ -161,7 +161,7 @@
 			/// </summary>
 			/// <param name="typeOfAttribute">Type of the attribute that will be looked for on fields.</param>
 			/// <returns>A collection of fields that have the attribute defined on them.</returns>
-			public IReadOnlyList<FieldAtrributeTuple> GetFieldsWithAttribute(Type typeOfAttribute)
+			public IReadOnlyList<FieldAttributeTuple> GetFieldsWithAttribute(Type typeOfAttribute)
 			{
 				typeOfAttribute.ThrowIfNull(nameof(typeOfAttribute));
 
@@ -171,7 +171,7 @@
 				}
 
 				// Collection in which we will store the cached fields.
-				List<FieldAtrributeTuple> targetFields = new List<FieldAtrributeTuple>();
+				List<FieldAttributeTuple> targetFields = new List<FieldAttributeTuple>();
 
 				// Fetch all fields across the type hierarchy.
 				Type targetType = Type;
@@ -188,7 +188,7 @@
 						Attribute attr = field.GetCustomAttribute(typeOfAttribute, false);
 						if (attr != null)
 						{
-							targetFields.Add(new FieldAtrributeTuple(field, attr));
+							targetFields.Add(new FieldAttributeTuple(field, attr));
 						}
 					}
 
