@@ -117,8 +117,43 @@ When a serialization definitions allows the processing of complex custom objects
 
 * When an object is about to be serialized. This could be useful when some data should be transformed on the object beforehand and is only valid in the context of the serialization process.
 * When an object is done serializing. Might be of use to clean up any left-over data.
-* When an object is about to be deserialized.
+* When an object is about to be deserialized. Could be useful when an object is recycled to apply data to, and can do some cleanup first.
 * When an object is done being deserialized. This can be of use to perform some kind of initialization already that can restore the state based of on the data applied during deserialization.
+
+### Enum aliases
+
+When serializing data to a human accessible/readable format, using the internal value of an enum type is difficult to interpret its meaning. By enabling the enum alias feature on a serialization definition using the `IEnumAliasSupport`, it will write the value as something more readable.
+
+You can decorete the enum with an attribute that defines that this enum prefers to be serialized as their string value. For example the `JsonEnumString` attribute in the `JSON` serialization:
+
+```cs
+[JsonEnumString]
+public enum TaxonomyClass
+{
+	NONE,
+	MAMMAL,
+	REPTILE,
+	BIRD
+}
+```
+
+Additionally, you can define an alias for each defined value of the enum such as the `JsonEnumAlias` attribute. When an alias is defined, it will apply the alias value during serialization instead of its internal value. During deserialization, it can deal both with its original name and alias.
+
+```cs
+[JsonEnumString]
+public enum TaxonomyClass
+{
+	NONE,
+	[JsonEnumAlias("Mammal")]
+	MAMMAL,
+	[JsonEnumAlias("Reptile")]
+	REPTILE,
+	[JsonEnumAlias("Bird")]
+	BIRD
+}
+```
+
+When dealing with enums that are marked with `System.Flags`, it will apply a translation to the flags as well if an alias for that flag is defined.
 
 ## Data Processors
 
@@ -130,7 +165,7 @@ Every data processor should be designed to tackle a single kind of data, e.g. on
 
 Implementing a custom data processor can be done using the `ISerializationProcessor` and `IDeserializationProcessor` interfaces. The former is used when a processor supports serializing a certain kind of data, while the latter defines support for deserialization as well. In most cases a data processor implements both of these, but there are rare cases where this is not necessary. There's also a `IDeserializationToTargetProcessor` interface for a data processor that is capable of directly deserializing data to a target instance of an object already, whereas the `IDeserializationProcessor` interface is expected to create its own instances to which it maps the data to.
 
-All this may sound pretty abstract, and providing a simple example for the sake of having an example is not useful. Instead it is recommended to look at the many predefined data processors present in this toolkit. Here's a summary of the data processors that are present already:
+All this may sound pretty abstract, and providing a simple example for the sake of having an example is not useful. Instead, it is recommended to look at one of the many predefined data processors present in this toolkit. Here's a summary of the data processors that are present already:
 
 * `ExactMatchProcessor`: checks whether the given data is of a natively supported type and doesn't need any actual processing.
 * `EnumProcessor`: processes enum values and their potential alias values.
@@ -138,14 +173,14 @@ All this may sound pretty abstract, and providing a simple example for the sake 
 * `StringProcessor`: deserializer-only processor to convert a string to a different type, e.g. a string value that represents a float value.
 * `DecimalProcessor`: provides support for the `decimal` type.
 * `DateTimeProcessor`: provides support for the `DateTime` type.
-* `Vector2Processor`: provides support for the `Vector2` type.
-* `Vector2IntProcessor`: provides support for the `Vector2Int` type.
-* `Vector3Processor`: provides support for the `Vector3` type.
-* `Vector3IntProcessor`: provides support for the `Vector3Int` type.
-* `Vector4Processor`:  provides support for the `Vector4` type.
-* `QuaternionProcessor`: provides support for the `Quaternion` type.
-* `ColorProcessor`: provides support for the `Color` type.
-* `Color32Processor`: provides support for the `Color32` type.
+* `Vector2LookupProcessor` and `Vector2SequnceProcessor`: provides support for the `Vector2` type.
+* `Vector2IntLookupProcessor` and `Vector2IntSequnceProcessor`: provides support for the `Vector2Int` type.
+* `Vector3LookupProcessor` and `Vector3SequnceProcessor`: provides support for the `Vector3` type.
+* `Vector3IntLookupProcessor` and `Vector3IntSequnceProcessor`: provides support for the `Vector3Int` type.
+* `Vector4LookupProcessor` and `Vector4SequnceProcessor`:  provides support for the `Vector4` type.
+* `QuaternionLookupProcessor` and `QuaternionSequnceProcessor`: provides support for the `Quaternion` type.
+* `ColorLookupProcessor` and `ColorSequnceProcessor`: provides support for the `Color` type.
+* `Color32LookupProcessor` and `Color32SequnceProcessor`: provides support for the `Color32` type.
 * `LookupProcessor`: processes actual dictionary-like data structures, e.g. objects of type `Dictionary<TKey, TValue>`.
 * `SequenceProcessor`: processes actual array-like data structures, e.g. objects of type `List<T>` or `T[]`.
 * `CustomObjectSequenceProcessor`: processes custom objects to/from an array-like data structure.
