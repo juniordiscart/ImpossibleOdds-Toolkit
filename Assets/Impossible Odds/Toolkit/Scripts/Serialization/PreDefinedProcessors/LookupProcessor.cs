@@ -2,7 +2,7 @@
 {
 	using System;
 	using System.Collections;
-	using System.Collections.Generic;
+	using ImpossibleOdds.Serialization.Caching;
 
 	/// <summary>
 	/// A (de)serialization processor for dictionary-like data structures.
@@ -47,22 +47,20 @@
 				return false;
 			}
 
-			IDictionary sourceValues = (IDictionary)objectToSerialize;
-			Dictionary<object, object> processedValues = new Dictionary<object, object>(sourceValues.Count);
-
-			// Process the source key and value pairs.
-			ICollection keys = sourceValues.Keys;
-			foreach (object key in keys)
+			// Take the key-value pairs from the original source values and process
+			// them individually to data that is accepted by the serialization definition
+			// and is accepted by the underlying type restrictions of the result collection.
+			IDictionary sourceValues = objectToSerialize as IDictionary;
+			IDictionary processedValues = definition.CreateLookupInstance(sourceValues.Count);
+			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
+			foreach (DictionaryEntry keyValuePair in sourceValues)
 			{
-				object processedKey = Serializer.Serialize(key, definition);
-				object processedValue = Serializer.Serialize(sourceValues[key], definition);
-				processedValues.Add(processedKey, processedValue);
+				object processedKey = Serializer.Serialize(keyValuePair.Key, definition);
+				object processedValue = Serializer.Serialize(keyValuePair.Value, definition);
+				SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
 			}
 
-			// Fill up the result with the processed keys and values.
-			IDictionary resultCollection = definition.CreateLookupInstance(sourceValues.Count);
-			SerializationUtilities.FillLookup(processedValues, resultCollection);
-			serializedResult = resultCollection;
+			serializedResult = processedValues;
 			return true;
 		}
 
@@ -89,19 +87,15 @@
 				return true;
 			}
 
-			if (targetType.IsAbstract || targetType.IsInterface)
+			if (!(dataToDeserialize is IDictionary))
 			{
-				throw new SerializationException(string.Format("Target type {0} is abstract or an interface. Cannot create an instance to process the source values.", targetType.Name));
-			}
-			else if (!(dataToDeserialize is IDictionary))
-			{
-				throw new SerializationException(string.Format("The source value is expected to implement the {0} interface to process to target type {1}.", typeof(IDictionary), targetType.Name));
+				throw new SerializationException("The source value is expected to implement the {0} interface to process to target type {1}.", typeof(IDictionary), targetType.Name);
 			}
 
 			IDictionary targetCollection = Activator.CreateInstance(targetType, true) as IDictionary;
 			if (!Deserialize(targetCollection, dataToDeserialize))
 			{
-				throw new SerializationException(string.Format("Unexpected failure to process source value of type {0} to target collection of type {1}.", dataToDeserialize.GetType().Name, targetType.Name));
+				throw new SerializationException("Unexpected failure to process source value of type {0} to target collection of type {1}.", dataToDeserialize.GetType().Name, targetType.Name);
 			}
 
 			deserializedResult = targetCollection;
@@ -127,44 +121,19 @@
 				return true;
 			}
 
-			if (!typeof(IDictionary).IsAssignableFrom(dataToDeserialize.GetType()))
+			if (!(dataToDeserialize is IDictionary))
 			{
-				throw new SerializationException(string.Format("The source value is expected to implement the {0} interface to process to target instance of type {1}.", typeof(IDictionary), deserializationTarget.GetType().Name));
+				throw new SerializationException("The source value is expected to implement the {0} interface to process to a target instance of type {1}.", typeof(IDictionary), deserializationTarget.GetType().Name);
 			}
 
-			Type targetType = deserializationTarget.GetType();
-			IDictionary targetCollection = deserializationTarget as IDictionary;
-			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetCollection);
-
-			// Process each key-value pair of the source values individually.
 			IDictionary sourceValues = dataToDeserialize as IDictionary;
-			ICollection keys = sourceValues.Keys;
-			foreach (object key in keys)
+			IDictionary targetValues = deserializationTarget as IDictionary;
+			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetValues);
+			foreach (DictionaryEntry dictionaryEntry in sourceValues)
 			{
-				object processedKey = Serializer.Deserialize(collectionInfo.keyType, key, definition);
-				processedKey = SerializationUtilities.PostProcessValue(processedKey, collectionInfo.keyType);
-				if ((processedKey == null) || (collectionInfo.isKeyTypeConstrained && !SerializationUtilities.PassesElementTypeRestriction(processedKey, collectionInfo.keyType)))
-				{
-					Log.Warning("A key of type {0} could not be processed to a valid key for target of type {1}. Skipping key and value.", key.GetType(), targetType.Name);
-					continue;
-				}
-
-				object processedValue = Serializer.Deserialize(collectionInfo.valueType, sourceValues[key], definition);
-				processedValue = SerializationUtilities.PostProcessValue(processedValue, collectionInfo.valueType);
-				if (collectionInfo.isValueTypeConstrained && !SerializationUtilities.PassesElementTypeRestriction(processedValue, collectionInfo.valueType))
-				{
-					if (sourceValues[key] == null)
-					{
-						Log.Warning("A null value could not be processed to a valid value for target of type {0}. Skipping key and value.", targetType.Name);
-					}
-					else
-					{
-						Log.Warning("A value of type {0} could not be processed to a valid value for target of type {1}. Skipping key and value.", sourceValues[key].GetType().Name, targetType.Name);
-					}
-					continue;
-				}
-
-				targetCollection.Add(processedKey, processedValue);
+				object processedKey = Serializer.Deserialize(collectionInfo.keyType, dictionaryEntry.Key, definition);
+				object processedValue = Serializer.Deserialize(collectionInfo.valueType, dictionaryEntry.Value, definition);
+				SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
 			}
 
 			return true;

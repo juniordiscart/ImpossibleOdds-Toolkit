@@ -4,9 +4,11 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Runtime.Serialization;
+	using ImpossibleOdds.Serialization.Caching;
 
 	public static class SerializationUtilities
 	{
+		private static readonly Dictionary<Type, object> defaultValueCache = new Dictionary<Type, object>();
 		private static readonly Dictionary<Type, LookupCollectionTypeInfo> lookupTypeInfoCache = new Dictionary<Type, LookupCollectionTypeInfo>();
 		private static readonly Dictionary<Type, SequenceCollectionTypeInfo> sequenceTypeInfoCache = new Dictionary<Type, SequenceCollectionTypeInfo>();
 
@@ -68,6 +70,28 @@
 		}
 
 		/// <summary>
+		/// Gets The default value for a type.
+		/// </summary>
+		/// <param name="type">The type for which to retrieve the default value.</param>
+		/// <returns>The default value for the type. This will be null for non-value types.</returns>
+		public static object GetDefaultValue(Type type)
+		{
+			if (type.IsValueType)
+			{
+				if (!defaultValueCache.ContainsKey(type))
+				{
+					defaultValueCache[type] = Activator.CreateInstance(type);
+				}
+
+				return defaultValueCache[type];
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		/// <summary>
 		/// Creates a new (uninitialized) instance of the requested type.
 		/// </summary>
 		/// <returns>Instance of the requested type.</returns>
@@ -79,6 +103,15 @@
 			}
 			else
 			{
+				if (instanceType.IsInterface || instanceType.IsAbstract)
+				{
+					throw new SerializationException("Cannot create instane of type {0} because it is an interface.", instanceType.Name);
+				}
+				else if (instanceType.IsAbstract)
+				{
+					throw new SerializationException("Cannot create instance of type {0} because it is abstract.", instanceType.Name);
+				}
+
 				return FormatterServices.GetUninitializedObject(instanceType);
 			}
 		}
@@ -117,79 +150,84 @@
 		/// <returns>True if the value can be assigned, false otherwise.</returns>
 		public static bool PassesElementTypeRestriction(object value, Type elementType)
 		{
-			bool isNullable = IsNullableType(elementType);
-			if (((value == null) && !isNullable) ||
-				((value != null) && !elementType.IsAssignableFrom(value.GetType())))
-			{
-				return false;
-			}
-
-			return true;
+			return
+				((value == null) && IsNullableType(elementType)) ||
+				((value != null) && !elementType.IsAssignableFrom(value.GetType()));
 		}
 
 		/// <summary>
-		/// Insert every element from the source values into the target collection.
-		/// Each value is given a post processing step to match the element type of the target collection.
+		/// Insert a value in the sequence at the defined index.
+		/// Depending on the type of the collection, it may alter its size to insert the value at the requested index.
+		/// The value will be processed to a compatible element type if the collection enforces one.
 		/// </summary>
-		/// <param name="sourceValues">The source values to insert in the target collection.</param>
-		/// <param name="targetCollection">The target collection in which to insert the source values.</param>
-		public static void FillSequence(IEnumerable sourceValues, IList targetCollection)
+		/// <param name="collection">The collection into which the value should be inserted.</param>
+		/// <param name="collectionInfo">Type information about the collection.</param>
+		/// <param name="index">Index at which the value should be inserted.</param>
+		/// <param name="value">The value to be inserted.</param>
+		public static void InsertInSequence(IList collection, SequenceCollectionTypeInfo collectionInfo, int index, object value)
 		{
-			sourceValues.ThrowIfNull(nameof(sourceValues));
-			targetCollection.ThrowIfNull(nameof(targetCollection));
-			SequenceCollectionTypeInfo collectionTypeInfo = GetCollectionTypeInfo(targetCollection);
+			value = collectionInfo.PostProcessValue(value);
 
-			int i = 0;
-			IEnumerator it = sourceValues.GetEnumerator();
-			while (it.MoveNext())
+			if (collection.IsReadOnly)
 			{
-				object currentValue = it.Current;
-				if (collectionTypeInfo.isTypeConstrained && !PassesElementTypeRestriction(currentValue, collectionTypeInfo.elementType))
+				throw new SerializationException("The collection of type {0} is read-only. No elements can be inserted.", collection.GetType().Name);
+			}
+
+			// Arrays are treated differently compared to lists.
+			if (collectionInfo.isArray && (collection is Array array))
+			{
+				if (index >= array.Length)
 				{
-					currentValue = PostProcessValue(currentValue, collectionTypeInfo.elementType);
+					throw new SerializationException();
 				}
 
-				if (collectionTypeInfo.isArray)
+				array.SetValue(value, index);
+			}
+			else
+			{
+				if (index >= collection.Count)
 				{
-					(targetCollection as Array).SetValue(currentValue, i);
-				}
-				else
-				{
-					targetCollection.Add(currentValue);
+					if (collection.IsFixedSize)
+					{
+						throw new SerializationException("The collection of type {0} has a fixed size. No elements can be inserted.", collection.GetType().Name);
+					}
+
+					// Grow the collection until the value can be inserted.
+					object defaultValue = SerializationUtilities.GetDefaultValue(collectionInfo.elementType);
+					do
+					{
+						collection.Add(defaultValue);
+					} while (index >= collection.Count);
 				}
 
-				++i;
+				collection[index] = value;
 			}
 		}
 
 		/// <summary>
-		/// Insert every key-value pair found in the source values into the target collection.
-		/// Each key and value is given a post processing step to match the key and value types of the target collection.
+		/// Insert a key and value in the lookup structure.
+		/// The key and value will be processed to a compatible key or value type if the collection enforces those.
 		/// </summary>
-		/// <param name="sourceValues">The source values to insert in the target collection.</param>
-		/// <param name="targetCollection">The target collection in which to transfer the key-value pairs from the source values.</param>
-		public static void FillLookup(IDictionary sourceValues, IDictionary targetCollection)
+		/// <param name="collection">The collection into which the key and value should be inserted.</param>
+		/// <param name="collectionInfo">Type information about the collection.</param>
+		/// <param name="key">The key for the value that will be inserted.</param>
+		/// <param name="value">The value that will be inserted, associated with the key.</param>
+		public static void InsertInLookup(IDictionary collection, LookupCollectionTypeInfo collectionInfo, object key, object value)
 		{
-			sourceValues.ThrowIfNull(nameof(sourceValues));
-			targetCollection.ThrowIfNull(nameof(targetCollection));
-			LookupCollectionTypeInfo collectionTypeInfo = GetCollectionTypeInfo(targetCollection);
+			key = collectionInfo.PostProcessKey(key);
+			value = collectionInfo.PostProcessValue(value);
 
-			IDictionaryEnumerator it = sourceValues.GetEnumerator();
-			while (it.MoveNext())
+			if (collection.IsReadOnly)
 			{
-				object currentKey = it.Key;
-				if (collectionTypeInfo.isKeyTypeConstrained && !PassesElementTypeRestriction(currentKey, collectionTypeInfo.keyType))
-				{
-					currentKey = PostProcessValue(currentKey, collectionTypeInfo.keyType);
-				}
-
-				object currentValue = it.Value;
-				if (collectionTypeInfo.isValueTypeConstrained && !PassesElementTypeRestriction(currentValue, collectionTypeInfo.valueType))
-				{
-					currentValue = PostProcessValue(currentValue, collectionTypeInfo.valueType);
-				}
-
-				targetCollection.Add(currentKey, currentValue);
+				throw new SerializationException("The collection of type {0} is read-only. No elements can be inserted.", collection.GetType().Name);
+			}
+			else if (collection.IsFixedSize)
+			{
+				throw new SerializationException("The collection of type {0} has a fixed size. No elements can be inserted.", collection.GetType().Name);
+			}
+			else
+			{
+				collection[key] = value;
 			}
 		}
 

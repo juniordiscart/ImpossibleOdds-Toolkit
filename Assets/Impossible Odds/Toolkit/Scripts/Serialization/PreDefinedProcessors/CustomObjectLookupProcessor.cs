@@ -4,6 +4,7 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
+	using ImpossibleOdds.Serialization.Caching;
 
 	/// <summary>
 	/// A (de)serialization processor to process custom object to dictionary-like data structures.
@@ -22,6 +23,21 @@
 		public bool SupportsRequiredValues
 		{
 			get { return requiredValueSupport != null; }
+		}
+
+		public new ILookupSerializationDefinition Definition
+		{
+			get { return definition; }
+		}
+
+		public ILookupTypeResolveSupport TypeResolveDefinition
+		{
+			get { return typeResolveSupport; }
+		}
+
+		public IRequiredValueSupport RequiredValueDefinition
+		{
+			get { return requiredValueSupport; }
 		}
 
 		public CustomObjectLookupProcessor(ILookupSerializationDefinition definition)
@@ -84,17 +100,8 @@
 				return false;
 			}
 
-			object targetInstance = null;
 			Type instanceType = ResolveTypeFromLookup(targetType, dataToDeserialize as IDictionary);
-
-			try
-			{
-				targetInstance = SerializationUtilities.CreateInstance(instanceType);
-			}
-			catch (System.Exception)
-			{
-				throw new SerializationException(string.Format("Failed to create an instance of target type {0}.", targetType.Name));
-			}
+			object targetInstance = SerializationUtilities.CreateInstance(instanceType);
 
 			if (Deserialize(targetInstance, dataToDeserialize))
 			{
@@ -136,15 +143,16 @@
 
 		private IDictionary Serialize(Type sourceType, object source)
 		{
-			IReadOnlyList<FieldAttributeTuple> sourceFields = GetTypeCache(sourceType).GetFieldsWithAttribute(definition.LookupBasedFieldAttribute);
-			Dictionary<object, object> processedValues = new Dictionary<object, object>(sourceFields.Count);
+			IReadOnlyList<IMemberAttributeTuple> sourceMembers = GetTypeCache(sourceType).GetMembersWithAttribute(definition.LookupBasedFieldAttribute);
+			IDictionary processedValues = definition.CreateLookupInstance(sourceMembers.Count + 1); // Include capacity for type information.
+			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
 
 			// Process the source key and value pairs.
-			foreach (FieldAttributeTuple sourceField in sourceFields)
+			foreach (IMemberAttributeTuple sourceMember in sourceMembers)
 			{
-				object processedKey = Serializer.Serialize(GetKey(sourceField), definition);
-				object processedValue = Serializer.Serialize(sourceField.Field.GetValue(source), definition);
-				processedValues.Add(processedKey, processedValue);
+				object processedKey = Serializer.Serialize(GetKey(sourceMember), definition);
+				object processedValue = Serializer.Serialize(sourceMember.GetValue(source), definition);
+				SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
 			}
 
 			// Include type information, if available.
@@ -153,53 +161,31 @@
 				ITypeResolveParameter typeResolveAttr = ResolveTypeToLookup(sourceType);
 				if (typeResolveAttr != null)
 				{
-					processedValues.Add(Serializer.Serialize(typeResolveSupport.TypeResolveKey, definition), typeResolveAttr.Value);
+					object processedTypeKey = Serializer.Serialize(typeResolveSupport.TypeResolveKey, definition);
+					object processedTypeValue = Serializer.Serialize(typeResolveAttr.Value, definition);
+					SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedTypeKey, processedTypeValue);
 				}
 			}
 
-			IDictionary resultCollection = definition.CreateLookupInstance(sourceFields.Count);
-			SerializationUtilities.FillLookup(processedValues, resultCollection);
-			return resultCollection;
-		}
-
-		private void InsertKeyValuePairInLookup(Type sourceType, IDictionary properties, LookupCollectionTypeInfo collectionInfo, object key, object value)
-		{
-			// Process the key if type constraints are set.
-			if (collectionInfo.isKeyTypeConstrained)
-			{
-				key = SerializationUtilities.PostProcessValue(key, collectionInfo.genericParams[0]);
-			}
-
-			// Process the value if type constraints are set.
-			if ((value != null) && collectionInfo.isValueTypeConstrained)
-			{
-				value = SerializationUtilities.PostProcessValue(value, collectionInfo.genericParams[1]);
-			}
-
-			if (properties.Contains(key))
-			{
-				Log.Warning("A key with value '{0}' has been defined more than once for source object of type {1}.", key.ToString(), sourceType.Name);
-			}
-
-			properties.Add(key, value);
+			return processedValues;
 		}
 
 		private void Deserialize(object target, IDictionary source)
 		{
 			// Get all of the fields that would like to get their value filled in
-			IReadOnlyList<FieldAttributeTuple> targetFields = GetTypeCache(target.GetType()).GetFieldsWithAttribute(definition.LookupBasedFieldAttribute);
+			IReadOnlyList<IMemberAttributeTuple> targetMembers = GetTypeCache(target.GetType()).GetMembersWithAttribute(definition.LookupBasedFieldAttribute);
 
-			foreach (FieldAttributeTuple targetField in targetFields)
+			foreach (IMemberAttributeTuple targetMember in targetMembers)
 			{
-				object key = GetKey(targetField);
+				object key = GetKey(targetMember);
 
 				// See whether the source contains a value for this field
 				if (!source.Contains(key))
 				{
 					// Check whether this field is marked as required
-					if (SupportsRequiredValues && targetField.Field.IsDefined(requiredValueSupport.RequiredAttributeType, false))
+					if (SupportsRequiredValues && targetMember.Member.IsDefined(requiredValueSupport.RequiredAttributeType, false))
 					{
-						throw new SerializationException(string.Format("The field {0} is marked as required but is not present in the source.", targetField.Field.Name));
+						throw new SerializationException(string.Format("The field {0} is marked as required but is not present in the source.", targetMember.Member.Name));
 					}
 					else
 					{
@@ -208,24 +194,24 @@
 					}
 				}
 
-				object result = Serializer.Deserialize(targetField.Field.FieldType, source[key], definition);
+				object result = Serializer.Deserialize(targetMember.MemberType, source[key], definition);
 
 				if (result == null)
 				{
-					Type fieldType = targetField.Field.FieldType;
-					targetField.Field.SetValue(target, fieldType.IsValueType ? Activator.CreateInstance(fieldType, true) : null);
+					Type memberType = targetMember.MemberType;
+					targetMember.SetValue(target, memberType.IsValueType ? Activator.CreateInstance(memberType, true) : null);
 				}
 				else
 				{
-					targetField.Field.SetValue(target, result);
+					targetMember.SetValue(target, result);
 				}
 			}
 		}
 
-		private object GetKey(FieldAttributeTuple field)
+		private object GetKey(IMemberAttributeTuple member)
 		{
-			ILookupParameter lookupAttribute = field.Attribute as ILookupParameter;
-			return (lookupAttribute.Key != null) ? lookupAttribute.Key : field.Field.Name;
+			ILookupParameter lookupAttribute = member.Attribute as ILookupParameter;
+			return (lookupAttribute.Key != null) ? lookupAttribute.Key : member.Member.Name;
 		}
 
 		private ITypeResolveParameter ResolveTypeToLookup(Type sourceType)

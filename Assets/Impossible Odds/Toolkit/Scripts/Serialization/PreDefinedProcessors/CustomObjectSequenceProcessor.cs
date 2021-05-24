@@ -4,6 +4,7 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Reflection;
+	using ImpossibleOdds.Serialization.Caching;
 
 	/// <summary>
 	/// A (de)serialization processor to process custom object to list-like data structures.
@@ -13,9 +14,19 @@
 		private IIndexSerializationDefinition definition = null;
 		private IIndexTypeResolveSupport typeResolveDefinition = null;
 
-		private bool SupportsTypeResolvement
+		public bool SupportsTypeResolvement
 		{
 			get { return typeResolveDefinition != null; }
+		}
+
+		public IIndexTypeResolveSupport TypeResolveDefinition
+		{
+			get { return typeResolveDefinition; }
+		}
+
+		public new IIndexSerializationDefinition Definition
+		{
+			get { return definition; }
 		}
 
 		public CustomObjectSequenceProcessor(IIndexSerializationDefinition definition)
@@ -77,17 +88,8 @@
 				return false;
 			}
 
-			object targetInstance = null;
 			Type instanceType = ResolveTypeFromSequence(targetType, dataToDeserialize as IList);
-
-			try
-			{
-				targetInstance = SerializationUtilities.CreateInstance(instanceType);
-			}
-			catch (Exception)
-			{
-				throw new SerializationException(string.Format("Failed to create an instance of target type {0}.", targetType.Name));
-			}
+			object targetInstance = SerializationUtilities.CreateInstance(instanceType);
 
 			if (Deserialize(targetInstance, dataToDeserialize))
 			{
@@ -129,83 +131,78 @@
 
 		private IList Serialize(Type sourceType, object source)
 		{
-			// Check how many element we need to store.
-			int nrOfElements = GetMaxDefinedIndex(source.GetType());
-			nrOfElements += (nrOfElements >= 0) ? 1 : 0;
+			// Check how many elements need to be stored.
+			int nrOfElements = Math.Max((SupportsTypeResolvement ? typeResolveDefinition.TypeResolveIndex : 0), GetMaxDefinedIndex(source.GetType()));
+			nrOfElements += (nrOfElements >= 0) ? 1 : 0;    // Increase by 1 because of 0-based index.
 
-			// Check whether a type resolve parameter will be there, and at what index it will be.
+			// Create the collection of result values.
+			IList processedValues = definition.CreateSequenceInstance(nrOfElements);
+			SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
+
+			// Get the members that will be inserted in the collection and order them by their index.
+			IReadOnlyList<IMemberAttributeTuple> sourceMembers = GetTypeCache(sourceType).GetMembersWithAttribute(definition.IndexBasedFieldAttribute);
+			foreach (IMemberAttributeTuple sourceMember in sourceMembers)
+			{
+				object processedValue = Serializer.Serialize(sourceMember.GetValue(source), definition);
+				SerializationUtilities.InsertInSequence(processedValues, collectionInfo, GetIndex(sourceMember), processedValue);
+			}
+
+			// Add the type resolve value.
 			if (SupportsTypeResolvement)
 			{
 				ITypeResolveParameter typeResolveAttr = ResolveTypeToSequence(sourceType);
 				if (typeResolveAttr != null)
 				{
-					nrOfElements = Math.Max(typeResolveDefinition.TypeResolveIndex, nrOfElements);
+					object processedTypeValue = Serializer.Serialize(typeResolveAttr.Value, definition);
+					SerializationUtilities.InsertInSequence(processedValues, collectionInfo, typeResolveDefinition.TypeResolveIndex, processedTypeValue);
 				}
 			}
 
-			// Create the list of values that will get added.
-			object[] processedValues = new object[nrOfElements];
-			IReadOnlyList<FieldAttributeTuple> sourceFields = GetTypeCache(sourceType).GetFieldsWithAttribute(definition.IndexBasedFieldAttribute);
-			foreach (FieldAttributeTuple sourceField in sourceFields)
-			{
-				IIndexParameter indexAttribute = sourceField.Attribute as IIndexParameter;
-
-				if (processedValues[indexAttribute.Index] != null)
-				{
-					Log.Warning("Index {0} for processing an instance of type {1} is used multiple times.", indexAttribute.Index, sourceType.Name);
-				}
-
-				processedValues[indexAttribute.Index] = Serializer.Serialize(sourceField.Field.GetValue(source), definition);
-			}
-
-			// Include the type information, if any was found.
-			if (SupportsTypeResolvement)
-			{
-				ITypeResolveParameter typeResolveAttr = ResolveTypeToSequence(sourceType);
-				if (typeResolveAttr != null)
-				{
-					if (processedValues[typeResolveDefinition.TypeResolveIndex] != null)
-					{
-						Log.Warning("Index {0} for processing an instance of type {1} is used multiple times. The type information takes precedence and will override the stored information.", typeResolveDefinition.TypeResolveIndex, sourceType.Name);
-					}
-
-					processedValues[typeResolveDefinition.TypeResolveIndex] = typeResolveAttr.Value;
-				}
-			}
-
-			// Create the collection and start filling it.
-			IList resultCollection = definition.CreateSequenceInstance(nrOfElements);
-			SerializationUtilities.FillSequence(processedValues, resultCollection);
-			return resultCollection;
+			return processedValues;
 		}
 
 		private void Deserialize(object target, IList source)
 		{
 			// Get all of the fields that would like to get their value filled in
-			IReadOnlyList<FieldAttributeTuple> targetFields = GetTypeCache(target.GetType()).GetFieldsWithAttribute(definition.IndexBasedFieldAttribute);
+			IReadOnlyList<IMemberAttributeTuple> targetMembers = GetTypeCache(target.GetType()).GetMembersWithAttribute(definition.IndexBasedFieldAttribute);
 
-			foreach (FieldAttributeTuple targetField in targetFields)
+			foreach (IMemberAttributeTuple targetMember in targetMembers)
 			{
-				IIndexParameter indexParam = targetField.Attribute as IIndexParameter;
+				int index = GetIndex(targetMember);
 
 				// Check whether the source has such an index.
-				if (source.Count <= indexParam.Index)
+				if (source.Count <= index)
 				{
-					Log.Warning("The source does not contain a value at index '{0}' for a target of type {1}.", indexParam.Index, target.GetType().Name);
+					Log.Warning("The source does not contain a value at index '{0}' for a target of type {1}.", index, target.GetType().Name);
 					continue;
 				}
 
-				object result = Serializer.Deserialize(targetField.Field.FieldType, source[indexParam.Index], definition);
+				object result = Serializer.Deserialize(targetMember.MemberType, source[index], definition);
 
+				// If the result is null, get the default value for that type.
 				if (result == null)
 				{
-					Type fieldType = targetField.Field.FieldType;
-					targetField.Field.SetValue(target, fieldType.IsValueType ? Activator.CreateInstance(fieldType, true) : null);
+					result = SerializationUtilities.GetDefaultValue(targetMember.MemberType);
 				}
-				else
-				{
-					targetField.Field.SetValue(target, result);
-				}
+
+				targetMember.SetValue(target, result);
+			}
+		}
+
+		private int GetIndex(IMemberAttributeTuple member)
+		{
+			if (member.Attribute is IIndexParameter indexParameter)
+			{
+				return indexParameter.Index;
+			}
+			else
+			{
+				throw new SerializationException(
+						"Member {0} of type {1} is defined to be serialized using attribute of type {2}, but it does not implement the {3} interface.",
+						member.Member.Name,
+						member.Member.DeclaringType.Name,
+						member.Attribute.GetType().Name,
+						typeof(IIndexParameter).Name);
 			}
 		}
 
@@ -275,10 +272,10 @@
 			int maxIndex = int.MinValue;
 			while ((type != null) && (type != typeof(object)))
 			{
-				IReadOnlyList<FieldAttributeTuple> fields = GetTypeCache(type).GetFieldsWithAttribute(definition.IndexBasedFieldAttribute);
-				foreach (FieldAttributeTuple field in fields)
+				IReadOnlyList<IMemberAttributeTuple> members = GetTypeCache(type).GetMembersWithAttribute(definition.IndexBasedFieldAttribute);
+				foreach (IMemberAttributeTuple member in members)
 				{
-					maxIndex = Math.Max((field.Attribute as IIndexParameter).Index, maxIndex);
+					maxIndex = Math.Max((member.Attribute as IIndexParameter).Index, maxIndex);
 				}
 
 				type = type.BaseType;

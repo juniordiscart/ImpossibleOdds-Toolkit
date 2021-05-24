@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections;
+	using ImpossibleOdds.Serialization.Caching;
 
 	/// <summary>
 	/// A (de)serialization processor for list-like data structures.
@@ -46,14 +47,19 @@
 				return false;
 			}
 
-			IList sourceValues = (IList)objectToSerialize;
-			IList resultCollection = definition.CreateSequenceInstance(sourceValues.Count);
-			foreach (object sourceValue in sourceValues)
+			// Take the values from the original source values and process
+			// them individually to data that is accepted by the serialization definition
+			// and is accepted by the underlying type restrictions of the result collection.
+			IList sourceValues = objectToSerialize as IList;
+			IList processedValues = definition.CreateSequenceInstance(sourceValues.Count);
+			SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
+			for (int i = 0; i < sourceValues.Count; ++i)
 			{
-				resultCollection.Add(Serializer.Serialize(sourceValue, definition));
+				object processedValue = Serializer.Serialize(sourceValues[i], definition);
+				SerializationUtilities.InsertInSequence(processedValues, collectionInfo, i, processedValue);
 			}
 
-			serializedResult = resultCollection;
+			serializedResult = processedValues;
 			return true;
 		}
 
@@ -80,26 +86,16 @@
 				return true;
 			}
 
-			if (targetType.IsAbstract || targetType.IsInterface)
-			{
-				throw new SerializationException(string.Format("Target type {0} is abstract or an interface. Cannot create an instance to process the source values.", targetType.Name));
-			}
-			else if (!(dataToDeserialize is IList))
+			if (!(dataToDeserialize is IList))
 			{
 				throw new SerializationException(string.Format("The source value is expected to implement the {0} interface to process to target type {1}.", typeof(IList).Name, targetType.Name));
 			}
 
-			// Depending on whether the target type is an array or another type of list, we need to treat element insertion differently.
-			IList targetCollection;
-			if (targetType.IsArray)
-			{
-				IList sourceValues = dataToDeserialize as IList;
-				targetCollection = Array.CreateInstance(targetType.GetElementType(), sourceValues.Count);
-			}
-			else
-			{
-				targetCollection = Activator.CreateInstance(targetType, true) as IList;
-			}
+			// Arrays are treated differently.
+			IList targetCollection =
+				targetType.IsArray ?
+				Array.CreateInstance(targetType.GetElementType(), (dataToDeserialize as IList).Count) :
+				Activator.CreateInstance(targetType, true) as IList;
 
 			if (!Deserialize(targetCollection, dataToDeserialize))
 			{
@@ -129,66 +125,19 @@
 				return true;
 			}
 
-			if (!typeof(IList).IsAssignableFrom(dataToDeserialize.GetType()))
+			if (!(dataToDeserialize is IList))
 			{
 				throw new SerializationException(string.Format("The source value is expected to implement the {0} interface to process to target instance of type {1}.", typeof(IList).Name, deserializationTarget.GetType().Name));
 			}
 
-			Type targetType = deserializationTarget.GetType();
 			IList sourceValues = dataToDeserialize as IList;
-			SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(deserializationTarget as IList);
-
-			// Arrays and lists are treated differently
-			if (collectionInfo.isArray)
+			IList targetValues = deserializationTarget as IList;
+			SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetValues);
+			for (int i = 0; i < sourceValues.Count; ++i)
 			{
-				Array targetCollection = deserializationTarget as Array;
-
-				for (int i = 0; i < sourceValues.Count; ++i)
-				{
-					if (i < targetCollection.Length)
-					{
-						object processedValue = Serializer.Deserialize(collectionInfo.elementType, sourceValues[i], definition);
-						processedValue = SerializationUtilities.PostProcessValue(processedValue, collectionInfo.elementType);
-
-						if (!collectionInfo.isTypeConstrained || SerializationUtilities.PassesElementTypeRestriction(processedValue, collectionInfo.elementType))
-						{
-							targetCollection.SetValue(processedValue, i);
-						}
-					}
-					else
-					{
-						Log.Warning("The target array is shorter than the source collection. Excess values have not been processed.");
-						break;
-					}
-				}
-			}
-			else
-			{
-				// Check whether the target implements a generic variant and if the arguments apply additional type restrictions.
-				IList targetCollection = deserializationTarget as IList;
-				targetCollection.Clear();
-
-				for (int i = 0; i < sourceValues.Count; ++i)
-				{
-					object processedValue = Serializer.Deserialize(collectionInfo.elementType, sourceValues[i], definition);
-					processedValue = SerializationUtilities.PostProcessValue(processedValue, collectionInfo.elementType);
-
-					if (!collectionInfo.isTypeConstrained || SerializationUtilities.PassesElementTypeRestriction(processedValue, collectionInfo.elementType))
-					{
-						targetCollection.Add(processedValue);
-					}
-					else
-					{
-						if (sourceValues[i] == null)
-						{
-							Log.Warning("A null value could not be processed to a valid value for target of type {0}. Skipping value.", targetType.Name);
-						}
-						else
-						{
-							Log.Warning("A value of type {0} could not be processed to a valid value for target of type {1}. Skipping value.", sourceValues[i].GetType().Name, targetType.Name);
-						}
-					}
-				}
+				object processedValue = Serializer.Deserialize(collectionInfo.elementType, sourceValues[i], definition);
+				processedValue = collectionInfo.PostProcessValue(processedValue);
+				SerializationUtilities.InsertInSequence(targetValues, collectionInfo, i, processedValue);
 			}
 
 			return true;

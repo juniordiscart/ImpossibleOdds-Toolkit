@@ -24,8 +24,7 @@
 	{
 		public const string JsonTypeKey = "jsi:type";
 
-		private IEnumerable<ISerializationProcessor> serializationProcessors = null;
-		private IEnumerable<IDeserializationProcessor> deserializationProcessors = null;
+		private List<IProcessor> processors = null;
 		private HashSet<Type> supportedTypes = null;
 
 		/// <inheritdoc />
@@ -43,13 +42,31 @@
 		/// <inheritdoc />
 		public override IEnumerable<ISerializationProcessor> SerializationProcessors
 		{
-			get { return serializationProcessors; }
+			get
+			{
+				foreach (IProcessor processor in processors)
+				{
+					if (processor is ISerializationProcessor serializationProcessor)
+					{
+						yield return serializationProcessor;
+					}
+				}
+			}
 		}
 
 		/// <inheritdoc />
 		public override IEnumerable<IDeserializationProcessor> DeserializationProcessors
 		{
-			get { return deserializationProcessors; }
+			get
+			{
+				foreach (IProcessor processor in processors)
+				{
+					if (processor is IDeserializationProcessor deserializationProcessor)
+					{
+						yield return deserializationProcessor;
+					}
+				}
+			}
 		}
 
 		/// <inheritdoc />
@@ -126,7 +143,7 @@
 				typeof(char)
 			};
 
-			List<IProcessor> processors = new List<IProcessor>()
+			processors = new List<IProcessor>()
 			{
 				new ExactMatchProcessor(this),
 				new EnumProcessor(this),
@@ -134,29 +151,42 @@
 				new DecimalProcessor(this),
 				new DateTimeProcessor(this),
 				new StringProcessor(this),
-				new Vector2LookupProcessor(this),
-				new Vector2IntLookupProcessor(this),
-				new Vector3LookupProcessor(this),
-				new Vector3IntLookupProcessor(this),
-				new Vector4LookupProcessor(this),
-				new QuaternionLookupProcessor(this),
-				new ColorLookupProcessor(this),
-				new Color32LookupProcessor(this),
+				new Vector2Processor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new Vector2IntProcessor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new Vector3Processor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new Vector3IntProcessor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new Vector4Processor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new QuaternionProcessor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new ColorProcessor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new Color32Processor(this, this, PrimitiveProcessingMethod.LOOKUP),
 				new LookupProcessor(this),
 				new SequenceProcessor(this),
 				new CustomObjectSequenceProcessor(this),
 				new CustomObjectLookupProcessor(this),
 			};
+		}
 
-			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>();
-			deserializationProcessors = processors.Where(p => p is IDeserializationProcessor).Cast<IDeserializationProcessor>();
+		/// <summary>
+		/// Update the registered processors that handle Unity primitive types to switch to a different (de)serialization style.
+		/// </summary>
+		/// <param name="preferredProcessingMethod">The preferred processing method.</param>
+		public void UpdateUnityPrimitiveRepresentation(PrimitiveProcessingMethod preferredProcessingMethod)
+		{
+			foreach (IProcessor processor in processors)
+			{
+				if (processor is IUnityPrimitiveSwitchProcessor switchProcessor)
+				{
+					switchProcessor.ProcessingMethod = preferredProcessingMethod;
+				}
+			}
 		}
 	}
 
 	/// <summary>
 	/// A serialization definition with native JSON object and array type parameters.
 	/// </summary>
-	public sealed class JsonDefaultSerializationDefinition : JsonSerializationDefinition<Dictionary<string, object>, List<object>>
+	public sealed class JsonDefaultSerializationDefinition :
+	JsonSerializationDefinition<Dictionary<string, object>, ArrayList>
 	{
 		public JsonDefaultSerializationDefinition()
 		: base()
@@ -167,10 +197,9 @@
 			return new Dictionary<string, object>(capacity);
 		}
 
-		public override List<object> CreateSequenceInstance(int capacity)
+		public override ArrayList CreateSequenceInstance(int capacity)
 		{
-			return new List<object>(capacity);
+			return new ArrayList(capacity);
 		}
 	}
-
 }

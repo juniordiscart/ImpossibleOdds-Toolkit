@@ -1,8 +1,8 @@
 ﻿namespace ImpossibleOdds.Http
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
-	using System.Linq;
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Processors;
 
@@ -10,52 +10,69 @@
 	/// Serialization definition for the body of HTTP requests.
 	/// </summary>
 	public class HttpBodySerializationDefinition : IndexAndLookupDefinition
-	<HttpBodyArrayAttribute, HttpBodyIndexAttribute, List<object>, HttpBodyObjectAttribute, HttpBodyFieldAttribute, Dictionary<string, object>>
+	<HttpBodyArrayAttribute, HttpBodyIndexAttribute, ArrayList, HttpBodyObjectAttribute, HttpBodyFieldAttribute, Dictionary<string, object>>
 	{
+		private List<IProcessor> processors = null;
+		private HashSet<Type> supportedTypes;
+
+		/// <inheritdoc />
 		public override IEnumerable<ISerializationProcessor> SerializationProcessors
 		{
-			get { return serializationProcessors; }
+			get
+			{
+				foreach (IProcessor processor in processors)
+				{
+					if (processor is ISerializationProcessor serializationProcessor)
+					{
+						yield return serializationProcessor;
+					}
+				}
+			}
 		}
 
+		/// <inheritdoc />
 		public override IEnumerable<IDeserializationProcessor> DeserializationProcessors
 		{
-			get { return deserializationProcessors; }
+			get
+			{
+				foreach (IProcessor processor in processors)
+				{
+					if (processor is IDeserializationProcessor deserializationProcessor)
+					{
+						yield return deserializationProcessor;
+					}
+				}
+			}
 		}
 
+		/// <inheritdoc />
 		public override HashSet<Type> SupportedTypes
 		{
 			get { return supportedTypes; }
 		}
 
-		private IEnumerable<ISerializationProcessor> serializationProcessors;
-		private IEnumerable<IDeserializationProcessor> deserializationProcessors;
-		private HashSet<Type> supportedTypes;
-
 		public HttpBodySerializationDefinition()
 		{
-			List<IProcessor> processors = new List<IProcessor>()
+			processors = new List<IProcessor>()
 			{
 				new ExactMatchProcessor(this),
 				new EnumProcessor(this),
 				new PrimitiveTypeProcessor(this),
 				new DateTimeProcessor(this),
 				new StringProcessor(this),
-				new Vector2LookupProcessor(this),
-				new Vector2IntLookupProcessor(this),
-				new Vector3LookupProcessor(this),
-				new Vector3IntLookupProcessor(this),
-				new Vector4LookupProcessor(this),
-				new QuaternionLookupProcessor(this),
-				new ColorLookupProcessor(this),
-				new Color32LookupProcessor(this),
+				new Vector2Processor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new Vector2IntProcessor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new Vector3Processor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new Vector3IntProcessor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new Vector4Processor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new QuaternionProcessor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new ColorProcessor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new Color32Processor(this, this, PrimitiveProcessingMethod.LOOKUP),
 				new LookupProcessor(this),
 				new SequenceProcessor(this),
 				new CustomObjectSequenceProcessor(this),
 				new CustomObjectLookupProcessor(this),
 			};
-
-			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>();
-			deserializationProcessors = processors.Where(p => p is IDeserializationProcessor).Cast<IDeserializationProcessor>();
 
 			// Basic set of types
 			supportedTypes = new HashSet<Type>()
@@ -73,14 +90,31 @@
 			};
 		}
 
-		public override List<object> CreateSequenceInstance(int capacity)
+		/// <inheritdoc />
+		public override ArrayList CreateSequenceInstance(int capacity)
 		{
-			return new List<object>(capacity);
+			return new ArrayList(capacity);
 		}
 
+		/// <inheritdoc />
 		public override Dictionary<string, object> CreateLookupInstance(int capacity)
 		{
 			return new Dictionary<string, object>(capacity);
+		}
+
+		/// <summary>
+		/// Update the registered processors that handle Unity primitive types to switch to a different (de)serialization style.
+		/// </summary>
+		/// <param name="preferredProcessingMethod">The preferred processing method.</param>
+		public void UpdateUnityPrimitiveRepresentation(PrimitiveProcessingMethod preferredProcessingMethod)
+		{
+			foreach (IProcessor processor in processors)
+			{
+				if (processor is IUnityPrimitiveSwitchProcessor switchProcessor)
+				{
+					switchProcessor.ProcessingMethod = preferredProcessingMethod;
+				}
+			}
 		}
 	}
 }

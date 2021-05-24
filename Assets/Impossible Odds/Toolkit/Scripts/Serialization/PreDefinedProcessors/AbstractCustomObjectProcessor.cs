@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
+	using ImpossibleOdds.Serialization.Caching;
 
 	public abstract class AbstractCustomObjectProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
@@ -114,34 +115,12 @@
 		}
 
 		/// <summary>
-		/// Binds an attribute to a field for quick access.
-		/// </summary>
-		protected struct FieldAttributeTuple
-		{
-			public FieldInfo Field
-			{
-				get; private set;
-			}
-
-			public Attribute Attribute
-			{
-				get; private set;
-			}
-
-			public FieldAttributeTuple(FieldInfo field, Attribute attribute)
-			{
-				Field = field;
-				Attribute = attribute;
-			}
-		}
-
-		/// <summary>
 		/// Lazy type cache of attributes for commonly used data in processing custom objects.
 		/// </summary>
 		protected class CustomObjectTypeCache
 		{
 			private readonly Type type = null;
-			private Dictionary<Type, List<FieldAttributeTuple>> fieldsWithAttributes = new Dictionary<Type, List<FieldAttributeTuple>>();
+			private Dictionary<Type, List<IMemberAttributeTuple>> membersWithAttributes = new Dictionary<Type, List<IMemberAttributeTuple>>();
 			private Dictionary<Type, List<ITypeResolveParameter>> typeResolveParameters = new Dictionary<Type, List<ITypeResolveParameter>>();
 			private Dictionary<Type, List<MethodInfo>> serializationCallbacks = new Dictionary<Type, List<MethodInfo>>();
 
@@ -157,46 +136,55 @@
 			}
 
 			/// <summary>
-			/// Retrieve all fields with a specific attribute defined.
+			/// Retrieve all members with a specific attribute defined.
 			/// </summary>
-			/// <param name="typeOfAttribute">Type of the attribute that will be looked for on fields.</param>
-			/// <returns>A collection of fields that have the attribute defined on them.</returns>
-			public IReadOnlyList<FieldAttributeTuple> GetFieldsWithAttribute(Type typeOfAttribute)
+			/// <param name="typeOfAttribute">Type of the attribute that will be looked for on members.</param>
+			/// <returns>A collection of members that have the attribute defined on them.</returns>
+			public IReadOnlyList<IMemberAttributeTuple> GetMembersWithAttribute(Type typeOfAttribute)
 			{
 				typeOfAttribute.ThrowIfNull(nameof(typeOfAttribute));
 
-				if (fieldsWithAttributes.ContainsKey(typeOfAttribute))
+				if (membersWithAttributes.ContainsKey(typeOfAttribute))
 				{
-					return fieldsWithAttributes[typeOfAttribute];
+					return membersWithAttributes[typeOfAttribute];
 				}
 
 				// Collection in which we will store the cached fields.
-				List<FieldAttributeTuple> targetFields = new List<FieldAttributeTuple>();
+				List<IMemberAttributeTuple> targetMembers = new List<IMemberAttributeTuple>();
 
 				// Fetch all fields across the type hierarchy.
 				Type targetType = Type;
 				while ((targetType != null) && (targetType != typeof(object)))
 				{
-					FieldInfo[] fields = targetType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-					foreach (FieldInfo field in fields)
+					MemberInfo[] members = targetType.GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+					foreach (MemberInfo member in members)
 					{
-						if (field.DeclaringType != targetType)
+						if (member.DeclaringType != targetType)
 						{
 							continue;
 						}
 
-						Attribute attr = field.GetCustomAttribute(typeOfAttribute, false);
-						if (attr != null)
+						Attribute attr = member.GetCustomAttribute(typeOfAttribute, false);
+						if (attr == null)
 						{
-							targetFields.Add(new FieldAttributeTuple(field, attr));
+							continue;
+						}
+
+						if (member is FieldInfo field)
+						{
+							targetMembers.Add(new FieldAttributeTuple(field, attr));
+						}
+						else if (member is PropertyInfo property)
+						{
+							targetMembers.Add(new PropertyAttributeTuple(property, attr));
 						}
 					}
 
 					targetType = targetType.BaseType;
 				}
 
-				fieldsWithAttributes[typeOfAttribute] = targetFields;
-				return targetFields;
+				membersWithAttributes[typeOfAttribute] = targetMembers;
+				return targetMembers;
 			}
 
 			/// <summary>
