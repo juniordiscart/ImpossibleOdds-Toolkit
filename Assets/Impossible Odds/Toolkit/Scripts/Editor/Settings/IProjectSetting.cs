@@ -7,6 +7,11 @@
 			get;
 		}
 
+		string SettingName
+		{
+			get;
+		}
+
 		void DisplayGUI(string searchContext);
 		void ApplyChanges();
 	}

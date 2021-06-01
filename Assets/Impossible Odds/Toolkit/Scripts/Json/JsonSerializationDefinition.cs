@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using System.Linq;
 
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Processors;
@@ -106,7 +105,13 @@
 		}
 
 		/// <inheritdoc />
-		public virtual object TypeResolveKey
+		object ILookupTypeResolveSupport.TypeResolveKey
+		{
+			get { return TypeResolveKey; }
+		}
+
+
+		public virtual string TypeResolveKey
 		{
 			get { return JsonTypeKey; }
 		}
@@ -131,6 +136,13 @@
 
 		public JsonSerializationDefinition()
 		{
+			PrimitiveProcessingMethod defaultProcessingMethod =
+#if IMPOSSIBLE_ODDS_JSON_UNITY_TYPES_AS_ARRAY
+			PrimitiveProcessingMethod.SEQUENCE;
+#else
+			PrimitiveProcessingMethod.LOOKUP;
+#endif
+
 			supportedTypes = new HashSet<Type>()
 			{
 				typeof(byte),
@@ -151,14 +163,14 @@
 				new DecimalProcessor(this),
 				new DateTimeProcessor(this),
 				new StringProcessor(this),
-				new Vector2Processor(this, this, PrimitiveProcessingMethod.LOOKUP),
-				new Vector2IntProcessor(this, this, PrimitiveProcessingMethod.LOOKUP),
-				new Vector3Processor(this, this, PrimitiveProcessingMethod.LOOKUP),
-				new Vector3IntProcessor(this, this, PrimitiveProcessingMethod.LOOKUP),
-				new Vector4Processor(this, this, PrimitiveProcessingMethod.LOOKUP),
-				new QuaternionProcessor(this, this, PrimitiveProcessingMethod.LOOKUP),
-				new ColorProcessor(this, this, PrimitiveProcessingMethod.LOOKUP),
-				new Color32Processor(this, this, PrimitiveProcessingMethod.LOOKUP),
+				new Vector2Processor(this, this, defaultProcessingMethod),
+				new Vector2IntProcessor(this, this, defaultProcessingMethod),
+				new Vector3Processor(this, this, defaultProcessingMethod),
+				new Vector3IntProcessor(this, this, defaultProcessingMethod),
+				new Vector4Processor(this, this, defaultProcessingMethod),
+				new QuaternionProcessor(this, this, defaultProcessingMethod),
+				new ColorProcessor(this, this, defaultProcessingMethod),
+				new Color32Processor(this, this, defaultProcessingMethod),
 				new LookupProcessor(this),
 				new SequenceProcessor(this),
 				new CustomObjectSequenceProcessor(this),

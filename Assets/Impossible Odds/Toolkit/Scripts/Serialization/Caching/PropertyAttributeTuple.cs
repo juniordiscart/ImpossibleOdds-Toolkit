@@ -72,6 +72,8 @@
 			{
 				throw new SerializationException("The property {0} declared on type {1} does not implement a 'set'-method.", property.Name, property.DeclaringType.Name);
 			}
+
+			setMethod.Invoke(source, new object[] { value });
 		}
 	}
 }

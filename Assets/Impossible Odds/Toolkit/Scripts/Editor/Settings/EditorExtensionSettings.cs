@@ -15,9 +15,14 @@
 			get { return EnableCachingSymbol; }
 		}
 
+		public override string SettingName
+		{
+			get { return "Editor Extensions"; }
+		}
+
 		public override void DisplayGUI(string searchContext)
 		{
-			isSet = EditorGUILayout.Toggle("Enable editor extensions." + (IsChanged ? "*" : string.Empty), isSet);
+			IsSet = EditorGUILayout.ToggleLeft("Enable editor extensions." + (IsChanged ? "*" : string.Empty), isSet);
 			EditorGUILayout.HelpBox("Editor extensions are disabled by default. Tick the box to enable them.", MessageType.None);
 		}
 	}

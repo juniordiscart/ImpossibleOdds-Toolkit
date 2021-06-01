@@ -8,6 +8,7 @@ You can expect to find the following features in this tookit:
 * [Dependency injection](#dependency-injection): keep your code organized and clean by removing tightly coupled design patterns.
 * [Runnables](#runnables): avoid the MonoBehaviour and GameObject tax if your classes only need the `Update` functionality.
 * [JSON](#json): serialize your data to and from the JSON data format, with support for saving type information.
+* [XML](#xml): serialize your data to and from the XML data format using an easier alternative compared to C#'s built-in XML tools.
 * [HTTP](#http): easily transform your objects for sending data to your server using Unity’s web requests.
 
 ## Core Utilities
@@ -37,13 +38,23 @@ Read about how to get your scripts running [here][Runnables].
 
 ## JSON
 
-The `ImpossibleOdds.Json` namespace allows you to (de)serialize your data from/to the JSON data format. Unity already has a built-in `JsonUtility` class that allows you to serialize your objects. However, it lacks control in terms of which fields and under what name you want to serialize them. On the other side, there's the widely popular Json.NET library which is packed with tons of features.
+The `ImpossibleOdds.Json` namespace allows you to (de)serialize your data from/to the JSON data format. Unity already has a built-in `JsonUtility` class that allows you to serialize your objects. However, it lacks control in terms of which members and under what name you want to serialize them. On the other side, there's the widely popular Json.NET library which is packed with tons of features.
 
-This implementation aims to be somewhere in between. The main advantages over Unity's `JsonUtility` class is that you can decide which fields should be serialized (from public all the way to private) and under what name they are saved. Additionally, it also provides support for serializing type information, allowing you to keep the inheritance chain intact when deserializing your data.
+This implementation aims to be somewhere in between. The main advantages over Unity's `JsonUtility` class is that you can decide which members should be serialized (from public all the way to private) and under what name they are saved. Additionally, it also provides support for serializing type information, allowing you to keep the inheritance chain intact when deserializing your data.
 
 Curious to know how it works? Get all the details [here][Json].
 
 For more details about the data (de)serialization process itself, check the [Serialization][Serialization] section.
+
+## XML
+
+The `ImpossibleOdds.Xml` namespace provides tools to process your data to/from the XML data format. The C# language has a bunch of XML tools already available for you to use, but they have a few shortcomings such as only capable of picking up public members, or force you to use tedious classes such as the `DataContractSerializer` class.
+
+The XML implementation in this toolkit aims to give a great amount of control which members of your classes and how they should get processed.
+
+Get to know the XML tools and what they have to offer [here][Xml].
+
+For more details about the data (de)serialization process, check the [Serialization][Serialization] section.
 
 ## HTTP
 
@@ -60,6 +71,8 @@ This toolkit has a custom entry in your project settings panel. It currently all
 * Enable editor extensions: whether or not some context senstive menu's are enabled or not.
 * Editor logging level: enable/disable certain logging messages from being executed while playing in editor.
 * Player logging level: enable/disable certain logging messages from being executed in the player build.
+* Json serialization settings: define the default behaviour of the JSON serializer for certain Unity data types such as `Color`, `Vector3`, `Quaternion`, etc.
+* Xml serialization settings: define the default behavior of the XML serializer for certain Unity data types such as `Color`, `Vector3`, `Quaternion`, etc.
 
 ![Editor Settings][EditorSettings]
 
@@ -99,6 +112,7 @@ This package is provided under the [MIT][License] license.
 [DependencyInjection]: ./Docs/DependencyInjection.md
 [Runnables]: ./Docs/Runnables.md
 [Json]: ./Docs/Json.md
+[Xml]: ./Docs/Xml.md
 [Http]: ./Docs/Http.md
 [Weblink]: ./Docs/Weblink.md
 [Serialization]: ./Docs/Serialization.md

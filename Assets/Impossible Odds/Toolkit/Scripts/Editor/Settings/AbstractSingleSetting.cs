@@ -24,6 +24,11 @@
 			set { isSet = value; }
 		}
 
+		public abstract string SettingName
+		{
+			get;
+		}
+
 		public abstract string Symbol
 		{
 			get;

@@ -7,49 +7,50 @@
 	[JsonObject]
 	public class AnimalRegister
 	{
+		public static StringBuilder SerializationLog
+		{
+			get;
+			set;
+		}
+
 		[JsonField(Key = "AnimalRegister")]
 		private List<Animal> registeredAnimals = new List<Animal>();
-		private StringBuilder log = null;
 
-		public AnimalRegister(StringBuilder log)
-		{
-			this.log = log;
-		}
+		public AnimalRegister()
+		{ }
 
 		public void AddAnimal(Animal animal)
 		{
-			if (registeredAnimals.Contains(animal))
-			{
-				Log.Error("An animal can only be registered once.");
-				return;
-			}
-
 			registeredAnimals.Add(animal);
-			animal.Log = log;
+		}
+
+		public void AddAnimals(IEnumerable<Animal> animals)
+		{
+			registeredAnimals.AddRange(animals);
 		}
 
 		[OnJsonSerializing]
-		private void OnSerializingRegister()
+		private void OnSerializing()
 		{
-			log.AppendLine("Serializing the animal register.");
+			SerializationLog.AppendLine("Serializing the animal register.");
 		}
 
 		[OnJsonSerialized]
-		private void OnSerializedRegister()
+		private void OnSerialized()
 		{
-			log.AppendLine("Serialized the animal register.");
+			SerializationLog.AppendLine("Serialized the animal register.");
 		}
 
 		[OnJsonDeserializing]
-		private void OnDeserializingRegister()
+		private void OnDeserializing()
 		{
-			log.AppendLine("Deserializing the animal register.");
+			SerializationLog.AppendLine("Deserializing the animal register.");
 		}
 
 		[OnJsonDeserialized]
-		private void OnDeserializedRegister()
+		private void OnDeserialized()
 		{
-			log.AppendLine("Deserialized the animal register.");
+			SerializationLog.AppendLine("Deserialized the animal register.");
 		}
 	}
 }

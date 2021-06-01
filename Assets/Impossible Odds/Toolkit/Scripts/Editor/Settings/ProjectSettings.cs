@@ -66,6 +66,7 @@
 
 			foreach (IProjectSetting setting in settings)
 			{
+				GUILayout.Label(setting.SettingName, EditorStyles.boldLabel);
 				setting.DisplayGUI(searchContext);
 
 				if (settings.Last() != setting)
@@ -91,6 +92,8 @@
 			{
 				new EditorExtensionSettings(currentSymbols),
 				new LoggingSettings(currentSymbols),
+				new JsonProjectSettings(currentSymbols),
+				new XmlProjectSettings(currentSymbols)
 			};
 
 			loadedSettingsGroup = targetGroup;

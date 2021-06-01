@@ -1,6 +1,7 @@
 ﻿namespace ImpossibleOdds.Serialization.Processors
 {
 	using System;
+	using System.Collections;
 
 	public abstract class UnityPrimitiveSwitchProcessor<TSequenceProcessor, TLookupProcessor, TPrimitive> : IUnityPrimitiveSwitchProcessor, ISerializationProcessor, IDeserializationProcessor
 	where TSequenceProcessor : UnityPrimitiveSequenceProcessor<TPrimitive>
@@ -67,14 +68,18 @@
 
 		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
-			switch (processingMethod)
+			if (dataToDeserialize is IDictionary)
 			{
-				case PrimitiveProcessingMethod.SEQUENCE:
-					return sequenceProcessor.Deserialize(targetType, dataToDeserialize, out deserializedResult);
-				case PrimitiveProcessingMethod.LOOKUP:
-					return lookupProcessor.Deserialize(targetType, dataToDeserialize, out deserializedResult);
-				default:
-					throw new SerializationException("Unsupported processing method ('{0}') to deserialize the value.", processingMethod.ToString());
+				return lookupProcessor.Deserialize(targetType, dataToDeserialize, out deserializedResult);
+			}
+			else if (dataToDeserialize is IList)
+			{
+				return sequenceProcessor.Deserialize(targetType, dataToDeserialize, out deserializedResult);
+			}
+			else
+			{
+				deserializedResult = null;
+				return false;
 			}
 		}
 	}

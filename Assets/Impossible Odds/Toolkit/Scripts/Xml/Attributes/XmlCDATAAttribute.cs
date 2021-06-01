@@ -3,6 +3,13 @@
 	using System;
 
 	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
-	public sealed class XmlCDATAAttribute : Attribute
-	{ }
+	public sealed class XmlCDATAAttribute : AbstractXmlMemberAttribute
+	{
+		public XmlCDATAAttribute()
+		{ }
+
+		public XmlCDATAAttribute(string key)
+		: base(key)
+		{ }
+	}
 }

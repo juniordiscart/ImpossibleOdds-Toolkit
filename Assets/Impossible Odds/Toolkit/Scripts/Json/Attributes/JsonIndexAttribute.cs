@@ -3,7 +3,7 @@
 	using System;
 	using ImpossibleOdds.Serialization;
 
-	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
 	public sealed class JsonIndexAttribute : Attribute, IIndexParameter
 	{
 		public int Index

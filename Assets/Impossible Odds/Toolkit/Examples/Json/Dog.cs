@@ -14,10 +14,8 @@
 
 		public Color FurColor { get => furColor; set => furColor = value; }
 
-		public Dog(string name, DateTime dateOfBirth)
+		public Dog()
 		{
-			Name = name;
-			DateOfBirth = dateOfBirth;
 			NrOfLegs = 4;
 			Classification = TaxonomyClass.MAMMAL;
 		}

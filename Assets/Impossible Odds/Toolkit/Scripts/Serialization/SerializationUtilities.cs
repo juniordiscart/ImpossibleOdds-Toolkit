@@ -103,7 +103,7 @@
 			}
 			else
 			{
-				if (instanceType.IsInterface || instanceType.IsAbstract)
+				if (instanceType.IsInterface)
 				{
 					throw new SerializationException("Cannot create instane of type {0} because it is an interface.", instanceType.Name);
 				}

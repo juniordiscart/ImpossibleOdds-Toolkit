@@ -100,6 +100,11 @@
 			}
 		}
 
+		public string SettingName
+		{
+			get { return "Logging Settings"; }
+		}
+
 		public LoggingSettings(HashSet<string> loadedSymbols)
 		{
 			this.loadedSymbols = loadedSymbols;

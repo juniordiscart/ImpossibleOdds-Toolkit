@@ -6,6 +6,7 @@
 	using UnityEngine.UI;
 	using TMPro;
 	using ImpossibleOdds.Json;
+	using System.Collections.Generic;
 
 	public class TestJsonSerialization : MonoBehaviour
 	{
@@ -30,6 +31,9 @@
 
 			jsonBuilder = new StringBuilder();
 			logBuilder = new StringBuilder();
+
+			AnimalRegister.SerializationLog = logBuilder;
+			Animal.SerializationLog = logBuilder;
 		}
 
 		private void Start()
@@ -45,25 +49,42 @@
 
 		private void OnSerialize()
 		{
-			Cat minoes = new Cat("Minoes");
-			minoes.Chipped = false;
-			Cat pickles = new Cat("Pickles");
-			pickles.Chipped = true;
-			pickles.FurColor = Color.white;
-			Dog waffles = new Dog("Waffles", new DateTime(1990, 6, 25));
-			waffles.FurColor = Color.yellow;
-			Pidgeon mark = new Pidgeon("Mark");
-			mark.IsSpyPidgeon = true;
-			mark.Position = new Vector2(89.123f, 73.456f);
-			Crocodile dundee = new Crocodile();
-			dundee.Name = "Dundee";
+			List<Animal> animals = new List<Animal>()
+			{
+				new Cat()
+				{
+					Name = "Minoes",
+					Chipped = false,
+					Weight = 4.1f,
+				},
+				new Cat()
+				{
+					Name = "Pickles",
+					Chipped = true,
+					FurColor = Color.white,
+					Weight = 3.6f,
+				},
+				new Dog()
+				{
+					Name = "Waffles",
+					DateOfBirth = new DateTime(1990, 6, 25),
+					FurColor = Color.yellow,
+					Weight = 28.5f,
+				},
+				new Pidgeon()
+				{
+					Name = "Mark",
+					IsSpyPidgeon = true,
+					Position = new Vector2(39.0458f, 76.6413f),
+				},
+				new Crocodile()
+				{
+					Name = "Dundee",
+				}
+			};
 
-			animalRegister = new AnimalRegister(logBuilder);
-			animalRegister.AddAnimal(minoes);
-			animalRegister.AddAnimal(pickles);
-			animalRegister.AddAnimal(waffles);
-			animalRegister.AddAnimal(mark);
-			animalRegister.AddAnimal(dundee);
+			animalRegister = new AnimalRegister();
+			animalRegister.AddAnimals(animals);
 
 			jsonBuilder.Clear();
 			logBuilder.Clear();
@@ -77,8 +98,7 @@
 
 		private void OnDeserialize()
 		{
-			AnimalRegister deserializedRegister = new AnimalRegister(logBuilder);
-			JsonProcessor.Deserialize(deserializedRegister, jsonBuilder.ToString());
+			AnimalRegister animalRegister = JsonProcessor.Deserialize<AnimalRegister>(jsonBuilder.ToString());
 			txtLog.text = logBuilder.ToString();
 		}
 	}

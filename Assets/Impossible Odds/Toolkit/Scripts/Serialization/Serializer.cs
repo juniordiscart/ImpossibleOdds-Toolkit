@@ -40,6 +40,27 @@
 		}
 
 		/// <summary>
+		/// Attempt to serialize the object based on the defined serialziation processors found in the definition and return it as the requested type TTarget.
+		/// </summary>
+		/// <param name="objectToSerialize">Object to serialize.</param>
+		/// <param name="serializationDefinition">Serialization definition to guide the serialization process.</param>
+		/// <typeparam name="TTarget">The expected return type of the serialized object.</typeparam>
+		/// <returns>A serialized representation of the object.</returns>
+		public static TTarget Serialize<TTarget>(object objectToSerialize, ISerializationDefinition serializationDefinition)
+		{
+			object serializedObject = Serialize(objectToSerialize, serializationDefinition);
+
+			if (serializedObject is TTarget)
+			{
+				return (TTarget)serializedObject;
+			}
+			else
+			{
+				throw new SerializationException("The serialized result is not of type {0}.", typeof(TTarget).Name);
+			}
+		}
+
+		/// <summary>
 		/// Deserialize the data into a new instance of the target type based on the deserialization processors found in the definition.
 		/// </summary>
 		/// <param name="dataToDeserialize">Data to apply to the instance.</param>

@@ -11,9 +11,8 @@
 		[JsonField]
 		private bool chipped;
 
-		public Cat(string name)
+		public Cat()
 		{
-			Name = name;
 			NrOfLegs = 4;
 			Classification = TaxonomyClass.MAMMAL;
 		}

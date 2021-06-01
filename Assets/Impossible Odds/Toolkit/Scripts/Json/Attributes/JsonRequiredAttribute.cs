@@ -2,7 +2,7 @@
 {
 	using System;
 
-	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
 	public sealed class JsonRequiredAttribute : Attribute
 	{ }
 }

@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.Linq;
 	using System.Reflection;
 	using ImpossibleOdds.Serialization.Caching;
 
@@ -88,7 +89,14 @@
 				return false;
 			}
 
+			// Create instance
 			Type instanceType = ResolveTypeFromSequence(targetType, dataToDeserialize as IList);
+			if (!instanceType.IsDefined(Definition.IndexBasedClassMarkingAttribute, true))
+			{
+				deserializedResult = null;
+				return false;
+			}
+
 			object targetInstance = SerializationUtilities.CreateInstance(instanceType);
 
 			if (Deserialize(targetInstance, dataToDeserialize))
@@ -215,43 +223,20 @@
 
 			IIndexTypeResolveSupport typeResolveImplementation = definition as IIndexTypeResolveSupport;
 			IEnumerable<ITypeResolveParameter> typeResolveAttributes = GetTypeCache(sourceType).GetTypeResolveParameters(typeResolveImplementation.TypeResolveAttribute);
-			foreach (ITypeResolveParameter attr in typeResolveAttributes)
-			{
-				ITypeResolveParameter typeResolveAttr = attr as ITypeResolveParameter;
-				if (typeResolveAttr == null)
-				{
-					throw new SerializationException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(ITypeResolveParameter).Name));
-				}
-				else if (typeResolveAttr.Target == sourceType)
-				{
-					return typeResolveAttr;
-				}
-			}
-
-			return null;
+			return typeResolveAttributes.FirstOrDefault(tr => tr.Target == sourceType);
 		}
 
 		private Type ResolveTypeFromSequence(Type targetType, IList source)
 		{
-			if (!SupportsTypeResolvement)
+			if (!SupportsTypeResolvement || (source.Count <= typeResolveDefinition.TypeResolveIndex))
 			{
-				if (targetType.IsAbstract || targetType.IsInterface)
-				{
-					throw new SerializationException(string.Format("The target type {0} is abstract or an interface, but no type resolve ({1}) is implemented in serialization definition of type {2}.", targetType.Name, typeof(IIndexTypeResolveSupport).Name, definition.GetType().Name));
-				}
-
 				return targetType;
 			}
 
 			IEnumerable<ITypeResolveParameter> typeResolveAttrs = GetTypeCache(targetType).GetTypeResolveParameters(typeResolveDefinition.TypeResolveAttribute);
-			foreach (ITypeResolveParameter attr in typeResolveAttrs)
+			foreach (ITypeResolveParameter typeResolveAttr in typeResolveAttrs)
 			{
-				ITypeResolveParameter typeResolveAttr = attr as ITypeResolveParameter;
-				if (typeResolveAttr == null)
-				{
-					throw new SerializationException(string.Format("The attribute of type {0} does not implement the {1} interface and cannot be used for type resolving.", attr.GetType().Name, typeof(ITypeResolveParameter).Name));
-				}
-				else if ((source.Count > typeResolveDefinition.TypeResolveIndex) && (source[typeResolveDefinition.TypeResolveIndex].Equals(typeResolveAttr.Value)))
+				if (source[typeResolveDefinition.TypeResolveIndex].Equals(typeResolveAttr.Value))
 				{
 					if (targetType.IsAssignableFrom(typeResolveAttr.Target))
 					{

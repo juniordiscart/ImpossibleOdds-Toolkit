@@ -90,7 +90,7 @@ This framework also allows to add type resolve support to a serialization defini
 
 When one of these, or both, are implemented by the serialization definition, it defines that it supports saving type information to keep the inheritance structure intact. This is especially useful when re-constructing the object from a data structure.
 
-Each interface that represents type resolve is supported by an attribute that can be placed multiple times above a class. This attribute works similarly to [C#'s XmlType attribute][XmlTypeAttribute]. It is placed above (one of) the base classes, and defines which sub-classes can be expected/used during the serialization process.
+Each interface that represents type resolve is supported by an attribute that can be placed multiple times above a class. This attribute works similarly to [C#'s XmlInclude attribute][XmlIncludeAttribute]. It is placed above (one of) the base classes, and defines which sub-classes can be expected/used during the serialization process.
 
 For example, the [JSON][Json] serialization definition implements support for the lookup-based type resolve technique by using the `JsonType` attribute:
 
@@ -202,5 +202,5 @@ It operates by taking the set of processors defined by the definition and going 
 [Json]: ./Json.md
 [Http]: ./Http.md
 [Serializer]: #serializer
-[XMLTypeAttribute]: https://docs.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmltypeattribute
+[XMLIncludeAttribute]: https://docs.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlincludeattribute
 [PhotonExtensions]: https://github.com/juniordiscart/ImpossibleOdds-PhotonExtensions

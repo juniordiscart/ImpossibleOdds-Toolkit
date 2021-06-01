@@ -20,7 +20,7 @@
 		private static JsonDefaultSerializationDefinition defaultSerializationDefinition = new JsonDefaultSerializationDefinition();
 
 		/// <summary>
-		/// Serializes the object to a JSON-string.
+		/// Serialize the object to a JSON-string.
 		/// </summary>
 		/// <param name="obj">Object to serialize.</param>
 		/// <returns>A JSON representation of the given object.</returns>
@@ -32,7 +32,7 @@
 		}
 
 		/// <summary>
-		/// Serializes the object to a JSON string and stores the result directly in the result store.
+		/// Serialize the object to a JSON string and store the result directly in the result store.
 		/// </summary>
 		/// <param name="obj">Object to serialize.</param>
 		/// <param name="resultStore">Write cache for the JSON result.</param>
@@ -44,10 +44,11 @@
 		}
 
 		/// <summary>
-		/// Serializes the object to a JSON string with custom formatting/processing settings.
+		/// Serialize the object to a JSON string with custom formatting/processing settings.
 		/// </summary>
 		/// <param name="obj">Object to serialize.</param>
 		/// <param name="options">Options to modify the string output behaviour.</param>
+		/// <returns>A JSON representation of the given object.</returns>
 		public static string Serialize(object obj, JsonOptions options)
 		{
 			options.ThrowIfNull(nameof(options));
@@ -57,8 +58,8 @@
 		}
 
 		/// <summary>
-		/// Serializes the object to a JSON string with custom formatting/processing settings
-		/// and stores the result directly in the result store.
+		/// Serialize the object to a JSON string with custom formatting/processing settings
+		/// and store the result directly in the result store.
 		/// </summary>
 		/// <param name="obj">Object to serialize.</param>
 		/// <param name="options">Options to modify the string output behaviour.</param>
@@ -72,18 +73,18 @@
 		}
 
 		/// <summary>
-		/// Processes a JSON string to a data structure.
+		/// Process a JSON string to a data structure.
 		/// </summary>
-		/// <param name="jsonStr">JSON string to deserialize.</param>
+		/// <param name="jsonStr">JSON representation of an object.</param>
 		public static object Deserialize(string jsonStr)
 		{
 			return Deserialize<Dictionary<string, object>, List<object>>(jsonStr);
 		}
 
 		/// <summary>
-		/// Processes a JSON string value and attempts to deserialize it to an instance of the target type.
+		/// Process a JSON string value and attempt to deserialize it to an instance of the target type.
 		/// </summary>
-		/// <param name="jsonStr">JSON-compliant string.</param>
+		/// <param name="jsonStr">JSON representation of an object.</param>
 		/// <typeparam name="TTarget">Target type.</typeparam>
 		public static TTarget Deserialize<TTarget>(string jsonStr)
 		{
@@ -91,20 +92,20 @@
 		}
 
 		/// <summary>
-		/// Processes a JSON string value and attempts to deserialize it to an instance of the target type.
+		/// Process a JSON string value and attempt to deserialize it to an instance of the target type.
 		/// </summary>
 		/// <param name="targetType">Target type.</param>
-		/// <param name="jsonStr">JSON-compliant string.</param>
+		/// <param name="jsonStr">JSON representation of an object.</param>
 		public static object Deserialize(Type targetType, string jsonStr)
 		{
 			return Serializer.Deserialize(targetType, Deserialize(jsonStr), defaultSerializationDefinition);
 		}
 
 		/// <summary>
-		/// Processes a JSON-compliant string value and attempts to deserialize it to the given target object.
+		/// Process a JSON string value and attempt to deserialize it to the given target object.
 		/// </summary>
 		/// <param name="target">Object to which the JSON data is applied to.</param>
-		/// <param name="jsonStr">JSON-compliant string.</param>
+		/// <param name="jsonStr">JSON representation of an object.</param>
 		public static void Deserialize(object target, string jsonStr)
 		{
 			object result = Deserialize(jsonStr);
@@ -112,9 +113,9 @@
 		}
 
 		/// <summary>
-		/// Processes a JSON-compliant string value to the provided custom data structures.
+		/// Process a JSON string value to the provided custom data structures.
 		/// </summary>
-		/// <param name="jsonStr">JSON-compliant string.</param>
+		/// <param name="jsonStr">JSON representation of an object.</param>
 		/// <typeparam name="TJsonObject">Custom JSON object type.</typeparam>
 		/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
 		public static object Deserialize<TJsonObject, TJsonArray>(string jsonStr)
@@ -126,14 +127,14 @@
 		}
 
 		/// <summary>
-		/// Processes a JSON-compliant string value and attempts to deserialize it to the given target object using the provided data structures and serialization defintion.
+		/// Process a JSON string value and attempts to deserialize it to the given target object using the provided data structures and serialization defintion.
 		/// </summary>
 		/// <param name="target">Object to which the JSON data is applied to.</param>
-		/// <param name="jsonStr">JSON-compliant string.</param>
+		/// <param name="jsonStr">JSON representation of an object.</param>
 		/// <param name="serializationDefinition">Custom serialization definition.</param>
 		/// <typeparam name="TJsonObject">Custom JSON object type.</typeparam>
 		/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
-		public static void Deserialize<TJsonObject, TJsonArray>(object target, string jsonStr, ISerializationDefinition serializationDefinition)
+		public static void Deserialize<TJsonObject, TJsonArray>(object target, string jsonStr, JsonSerializationDefinition<TJsonObject, TJsonArray> serializationDefinition)
 		where TJsonObject : IDictionary, new()
 		where TJsonArray : IList, new()
 		{

@@ -101,6 +101,12 @@
 			}
 
 			Type instanceType = ResolveTypeFromLookup(targetType, dataToDeserialize as IDictionary);
+			if (!instanceType.IsDefined(Definition.LookupBasedClassMarkingAttribute, true))
+			{
+				deserializedResult = null;
+				return false;
+			}
+
 			object targetInstance = SerializationUtilities.CreateInstance(instanceType);
 
 			if (Deserialize(targetInstance, dataToDeserialize))
@@ -228,20 +234,15 @@
 
 		private Type ResolveTypeFromLookup(Type targetType, IDictionary source)
 		{
-			if (!SupportsTypeResolvement)
+			if (!SupportsTypeResolvement || !source.Contains(typeResolveSupport.TypeResolveKey))
 			{
-				if (targetType.IsAbstract || targetType.IsInterface)
-				{
-					throw new SerializationException(string.Format("The target type {0} is abstract or an interface, but no type resolve ({1}) is implemented in serialization definition of type {2}.", targetType.Name, typeof(ILookupTypeResolveSupport).Name, definition.GetType().Name));
-				}
-
 				return targetType;
 			}
 
 			IReadOnlyList<ITypeResolveParameter> typeResolveAttrs = GetTypeCache(targetType).GetTypeResolveParameters(typeResolveSupport.TypeResolveAttribute);
 			foreach (ITypeResolveParameter typeResolveAttr in typeResolveAttrs)
 			{
-				if (source.Contains(typeResolveSupport.TypeResolveKey) && (source[typeResolveSupport.TypeResolveKey].Equals(typeResolveAttr.Value)))
+				if (source[typeResolveSupport.TypeResolveKey].Equals(typeResolveAttr.Value))
 				{
 					if (targetType.IsAssignableFrom(typeResolveAttr.Target))
 					{

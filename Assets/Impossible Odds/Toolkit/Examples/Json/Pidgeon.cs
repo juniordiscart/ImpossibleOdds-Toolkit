@@ -13,11 +13,9 @@
 		public Vector2 Position { get => position; set => position = value; }
 		public bool IsSpyPidgeon { get => isSpyPidgeon; set => isSpyPidgeon = value; }
 
-		public Pidgeon(string name)
+		public Pidgeon()
 		{
-			Name = name;
 			Classification = TaxonomyClass.BIRD;
-			Weight = 0.235f;
 			NrOfLegs = 2;
 		}
 	}
