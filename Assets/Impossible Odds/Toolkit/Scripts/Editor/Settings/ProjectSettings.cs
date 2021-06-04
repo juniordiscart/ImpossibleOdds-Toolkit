@@ -90,10 +90,10 @@
 
 			settings = new List<IProjectSetting>()
 			{
-				new EditorExtensionSettings(currentSymbols),
 				new LoggingSettings(currentSymbols),
 				new JsonProjectSettings(currentSymbols),
-				new XmlProjectSettings(currentSymbols)
+				new XmlProjectSettings(currentSymbols),
+				new EditorExtensionSettings(currentSymbols),
 			};
 
 			loadedSettingsGroup = targetGroup;

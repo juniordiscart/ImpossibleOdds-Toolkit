@@ -34,7 +34,7 @@
 			}
 
 			Type sourceType = objectToSerialize.GetType();
-			if (!sourceType.IsDefined(xmlDefinition.XmlObjectAttributeType, true))
+			if (!sourceType.IsDefined(typeof(XmlObjectAttribute), true))
 			{
 				serializedResult = null;
 				return false;
@@ -65,7 +65,7 @@
 			}
 
 			Type instanceType = ResolveTypeForDeserialization(targetType, dataToDeserialize as XElement);
-			if (!instanceType.IsDefined(xmlDefinition.XmlObjectAttributeType, true))
+			if (!instanceType.IsDefined(typeof(XmlObjectAttribute), true))
 			{
 				deserializedResult = null;
 				return false;
@@ -94,7 +94,7 @@
 			{
 				return true;
 			}
-			else if (!deserializationTarget.GetType().IsDefined(xmlDefinition.XmlObjectAttributeType, true))
+			else if (!deserializationTarget.GetType().IsDefined(typeof(XmlObjectAttribute), true))
 			{
 				return false;
 			}
@@ -129,7 +129,7 @@
 				{
 					xmlResult = Serialize(value, elementField.Member, listElementAttribute);
 				}
-				else if (elementField.Attribute is XmlCDATAAttribute cdataElementAttribute)
+				else if (elementField.Attribute is XmlCDataAttribute cdataElementAttribute)
 				{
 					xmlResult = Serialize(value, elementField.Member, cdataElementAttribute);
 				}
@@ -168,7 +168,7 @@
 
 		private XAttribute Serialize(object fieldValue, MemberInfo memberInfo, XmlAttributeAttribute attributeAttribute)
 		{
-			return new XAttribute(GetElementKey(attributeAttribute, memberInfo), Serializer.Serialize(fieldValue, Definition));
+			return new XAttribute(GetElementKey(attributeAttribute, memberInfo), Serializer.Serialize(fieldValue, XmlDefinition.AttributeSerializationDefinition));
 		}
 
 		private XElement Serialize(object fieldValue, MemberInfo memberInfo, XmlListElementAttribute listElementAttribute)
@@ -196,9 +196,16 @@
 			}
 		}
 
-		private XElement Serialize(object fieldValue, MemberInfo memberInfo, XmlCDATAAttribute cdataAttribute)
+		private XElement Serialize(object fieldValue, MemberInfo memberInfo, XmlCDataAttribute cdataAttribute)
 		{
-			return new XElement(GetElementKey(cdataAttribute, memberInfo), (fieldValue != null) ? new XCData(XmlDefinition.ToCDATA(fieldValue)) : null);
+			XElement cdataParent = new XElement(GetElementKey(cdataAttribute, memberInfo));
+
+			if (fieldValue != null)
+			{
+				cdataParent.Add(new XCData(Serializer.Serialize(fieldValue, XmlDefinition.CDataSerializationDefinition) as string));
+			}
+
+			return cdataParent;
 		}
 
 		private void Deserialize(object target, XElement source)
@@ -225,7 +232,7 @@
 					{
 						processedResult = Deserialize(source, member, listElementAttribute);
 					}
-					else if (member.Attribute is XmlCDATAAttribute cdataElementAttribute)
+					else if (member.Attribute is XmlCDataAttribute cdataElementAttribute)
 					{
 						processedResult = Deserialize(source, member, cdataElementAttribute);
 					}
@@ -244,7 +251,7 @@
 			XAttribute attribute = source.Attribute(GetElementKey(attributeInfo, memberInfo.Member));
 			if (attribute != null)
 			{
-				return Serializer.Deserialize(memberInfo.MemberType, attribute.Value, Definition);
+				return Serializer.Deserialize(memberInfo.MemberType, attribute.Value, XmlDefinition.AttributeSerializationDefinition);
 			}
 			else
 			{
@@ -283,12 +290,12 @@
 			}
 		}
 
-		private object Deserialize(XElement source, IMemberAttributeTuple memberInfo, XmlCDATAAttribute cdataInfo)
+		private object Deserialize(XElement source, IMemberAttributeTuple memberInfo, XmlCDataAttribute cdataInfo)
 		{
 			XElement childElement = source.Element(GetElementKey(cdataInfo, memberInfo.Member));
 			if ((childElement != null) && (childElement.FirstNode is XCData cdata))
 			{
-				return XmlDefinition.FromCDATA(cdata.Value);
+				return Serializer.Deserialize(memberInfo.MemberType, cdata.Value, XmlDefinition.CDataSerializationDefinition);
 			}
 			else
 			{
@@ -304,7 +311,7 @@
 		private ITypeResolveParameter ResolveTypeForSerialization(Type sourceType)
 		{
 			CustomObjectTypeCache sourceTypeCache = GetTypeCache(sourceType);
-			IReadOnlyList<ITypeResolveParameter> typeResolveAttributes = sourceTypeCache.GetTypeResolveParameters(XmlDefinition.XmlTypeAttributeType);
+			IReadOnlyList<ITypeResolveParameter> typeResolveAttributes = sourceTypeCache.GetTypeResolveParameters(typeof(XmlTypeAttribute));
 			return typeResolveAttributes.FirstOrDefault(tr => tr.Target == sourceType);
 		}
 

@@ -7,21 +7,21 @@ The JSON data format is a commonly used data format to represent and save data, 
 This tool aims to provide simplicity along with extra control when necessary. Some of the things you can expect to do with this take on JSON:
 
 * Define your data easily as a JSON object or array.
-* Additional control over which fields are saved and under what name.
+* Additional control over which members are saved and under what name.
 * Save type information and keep the inheritance chain intact.
 * Convenient callbacks when an object is being processed.
 
 ## Setup
 
-For your classes to be recognized and processed by the JSON tools here, you must mark them as such. There are two possible options for your classes to be picked up by the JSON processor:
+For your objects to be recognized and processed by the JSON tools here, you must mark them as such. There are two possible options for your objects to be picked up by the JSON processor:
 
-* The `JsonObject` attribute will mark your class as a JSON object. Fields of this class will be serialized under a name. The fields you want to have serialized can be marked with the `JsonField` attribute. By default, the field's name is used, but a custom one can be provided.
+* The `JsonObject` attribute will mark your object as a JSON object. Members of this object will be serialized under a name. The members you want to have serialized can be marked with the `JsonField` attribute. By default, the field's name is used, but a custom one can be provided.
 
-* The `JsonArray` attribute will mark your class as a JSON array. Fields of this class will be serialized using an index value. They can be marked with the `JsonIndex` attribute along with their index location.
+* The `JsonArray` attribute will mark your object as a JSON array. Members of this object will be serialized using an index value. They can be marked with the `JsonIndex` attribute along with their index location.
 
 ```cs
-// Serialize the class as a JSON object.
-// Fields can be serialized under a different name.
+// Serialize the object as a JSON object.
+// Members can be serialized under a different name.
 [JsonObject]
 public class MyClassAsObject
 {
@@ -31,8 +31,8 @@ public class MyClassAsObject
 	private int score;
 }
 
-// Serialize the class as a JSON array.
-// Fields must be assigned an index.
+// Serialize the object as a JSON array.
+// Members must be assigned an index.
 [JsonArray]
 public class MyClassAsArray
 {
@@ -85,7 +85,7 @@ A possible output for a list of animals:
 
 **Note**: specifying a custom value for a type requires it to be unique in the context of this inheritance chain (this includes interfaces on which this attribute is defined).
 
-**Another note**: serializing type information is only supported for classes that are serialized as JSON objects. It's currently not supported in this tool to save type information in JSON array objects.
+**Another note**: serializing type information is only supported for objects that are serialized as JSON objects. It's currently not supported in this tool to save type information in JSON array objects.
 
 ### Enum String Values & Aliases
 
@@ -138,7 +138,7 @@ public class MyObject
 
 When this data is not present, the serialization system will halt and throw an exception upwards to let you know the data is faulty.
 
-**Note**: only fields on a JSON object can be marked as required. JSON arrays are not supported by this requirement feature.
+**Note**: only members on a JSON object can be marked as required. JSON arrays are not supported by this requirement feature.
 
 **Another note**: a field marked as required means that its key is expected to be present in the JSON object, not necessarily that its value can't be `null`. The reason for this is that data explicitly set to `null` can still be valid, while data not present might mean an error on the side where the data is generated.
 

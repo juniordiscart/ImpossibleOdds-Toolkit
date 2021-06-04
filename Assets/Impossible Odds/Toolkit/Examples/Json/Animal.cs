@@ -17,15 +17,11 @@
 			set;
 		}
 
-		[JsonField]
+		[JsonField("NrOfLegs")]
 		private int nrOfLegs;
-		[JsonField]
 		private float weight;
-		[JsonField]
 		private string name;
-		[JsonField]
 		private DateTime dateOfBirth;
-		[JsonField]
 		private TaxonomyClass classification;
 
 		public int NrOfLegs
@@ -34,24 +30,28 @@
 			set { nrOfLegs = value; }
 		}
 
+		[JsonField]
 		public float Weight
 		{
 			get { return weight; }
 			set { weight = value; }
 		}
 
+		[JsonField]
 		public string Name
 		{
 			get { return name; }
 			set { name = value; }
 		}
 
+		[JsonField]
 		public DateTime DateOfBirth
 		{
 			get { return dateOfBirth; }
 			set { dateOfBirth = value; }
 		}
 
+		[JsonField]
 		public TaxonomyClass Classification
 		{
 			get { return classification; }

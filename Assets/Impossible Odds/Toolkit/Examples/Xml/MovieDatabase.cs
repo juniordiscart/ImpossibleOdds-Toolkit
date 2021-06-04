@@ -19,7 +19,7 @@
 		private List<Director> directors = new List<Director>();
 		[XmlListElement("Productions", ListEntryName = "Production")]
 		private List<AudioVisualProduction> productions = new List<AudioVisualProduction>();
-		[XmlCDATA("Logo")]
+		[XmlCData("Logo")]
 		private byte[] logo = null;
 
 		public List<Actor> Actors { get => actors; set => actors = value; }

@@ -203,10 +203,6 @@
 				{
 					throw new XmlException("The object to serialize of type {0} has not defined an {1} attribute.", objectType.Name, typeof(XmlObjectAttribute).Name);
 				}
-				else if (!rootInfo.CanBeRoot)
-				{
-					throw new XmlException("The object to serialize of type {0} has not defined a root name.", objectType.Name);
-				}
 
 				// Serialize the object and define the name of the root element.
 				XElement rootElement = Serializer.Serialize<XElement>(objectToSerialize, definition);

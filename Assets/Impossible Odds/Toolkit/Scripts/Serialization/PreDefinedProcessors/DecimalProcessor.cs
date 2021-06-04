@@ -39,7 +39,7 @@
 				return true;
 			}
 
-			string strValue = objectToSerialize.ToString();
+			string strValue = ((decimal)objectToSerialize).ToString(definition.FormatProvider);
 			if (!definition.SupportedTypes.Contains(strValue.GetType()))
 			{
 				throw new SerializationException(string.Format("The converted type of a {0} type is not supported.", typeof(decimal).Name));

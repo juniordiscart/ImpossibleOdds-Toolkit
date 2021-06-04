@@ -3,15 +3,11 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Globalization;
-	using System.IO;
 	using System.Runtime.Serialization.Formatters.Binary;
 	using System.Xml.Linq;
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Processors;
 	using ImpossibleOdds.Xml.Processors;
-
-	public delegate string ToCDATAImpl(object obj);
-	public delegate object FromCDATAImpl(string cdata);
 
 	public class XmlSerializationDefinition :
 	ISerializationDefinition,
@@ -27,9 +23,9 @@
 		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
 		private List<IProcessor> processors = null;
 		private HashSet<Type> supportedTypes = null;
-		private ToCDATAImpl customObjectToCdata = null;
-		private FromCDATAImpl customCdataToObject = null;
 		private BinaryFormatter binaryFormatter = new BinaryFormatter();
+		private ISerializationDefinition attributeDefinition = null;
+		private ISerializationDefinition cdataDefinition = null;
 
 		private XName xmlTypeKey = null;
 
@@ -138,48 +134,22 @@
 			get { return typeof(XmlEnumAliasAttribute); }
 		}
 
-		/// <inheritdoc />
-		public Type XmlObjectAttributeType
+		/// <summary>
+		/// The serialization definition used specifically for processing XML attributes.
+		/// </summary>
+		public ISerializationDefinition AttributeSerializationDefinition
 		{
-			get { return typeof(XmlObjectAttribute); }
+			get { return attributeDefinition; }
+			set { attributeDefinition = value; }
 		}
 
-		/// <inheritdoc />
-		public Type XmlElementAttributeType
+		/// <summary>
+		/// The serialization definition used specifically for processing XML CDATA sections.
+		/// </summary>
+		public ISerializationDefinition CDataSerializationDefinition
 		{
-			get { return typeof(XmlElementAttribute); }
-		}
-
-		/// <inheritdoc />
-		public Type XmlListElementAttributeType
-		{
-			get { return typeof(XmlListElementAttribute); }
-		}
-
-		/// <inheritdoc />
-		public Type XmlAttributeAttributeType
-		{
-			get { return typeof(XmlAttributeAttribute); }
-		}
-
-		/// <inheritdoc />
-		public Type XmlTypeAttributeType
-		{
-			get { return typeof(XmlTypeAttribute); }
-		}
-
-		/// <inheritdoc />
-		public ToCDATAImpl ToCDATA
-		{
-			get { return customObjectToCdata != null ? customObjectToCdata : ObjectToCdata; }
-			set { customObjectToCdata = value; }
-		}
-
-		/// <inheritdoc />
-		public FromCDATAImpl FromCDATA
-		{
-			get { return customCdataToObject != null ? customCdataToObject : CdataToObject; }
-			set { customCdataToObject = value; }
+			get { return cdataDefinition; }
+			set { cdataDefinition = value; }
 		}
 
 		public XmlSerializationDefinition()
@@ -226,6 +196,9 @@
 			};
 
 			xmlTypeKey = XNamespace.Get(XmlSchemaURL) + XmlTypeKey;
+
+			attributeDefinition = new XmlAttributeSerializationDefinition();
+			cdataDefinition = new XmlCDataSerializationDefinition();
 		}
 
 		/// <summary>
@@ -240,44 +213,6 @@
 				{
 					switchProcessor.ProcessingMethod = preferredProcessingMethod;
 				}
-			}
-		}
-
-		/// <summary>
-		/// Process a value to a base-64 encoded string using a BinaryFormatter.
-		/// </summary>
-		/// <param name="value">The value to be processed.</param>
-		/// <returns>A base-64 string representation of the object.</returns>
-		public string ObjectToCdata(object value)
-		{
-			if (value == null)
-			{
-				return null;
-			}
-
-			using (MemoryStream ms = new MemoryStream())
-			{
-				binaryFormatter.Serialize(ms, value);
-				return Convert.ToBase64String(ms.ToArray());
-			}
-		}
-
-		/// <summary>
-		/// Processes a base-64 encoded string to an object using a BinaryFormatter.
-		/// </summary>
-		/// <param name="cdata">The base-64 encoded string.</param>
-		/// <returns>The object.</returns>
-		public object CdataToObject(string cdata)
-		{
-			if (string.IsNullOrEmpty(cdata))
-			{
-				return null;
-			}
-
-			byte[] binData = Convert.FromBase64String(cdata);
-			using (MemoryStream ms = new MemoryStream(binData))
-			{
-				return binaryFormatter.Deserialize(ms);
 			}
 		}
 	}
