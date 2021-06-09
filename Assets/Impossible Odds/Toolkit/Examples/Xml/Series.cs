@@ -4,7 +4,7 @@
 	using ImpossibleOdds.Xml;
 
 	[XmlObject]
-	public class Series : AudioVisualProduction
+	public class Series : Production
 	{
 		private int nrOfEpisodes = 0;
 		private int nrOfSeasons = 0;

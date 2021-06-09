@@ -6,6 +6,7 @@
 	[Flags, XmlEnumString]
 	public enum Genre
 	{
+		[XmlEnumAlias("Undefined")]
 		UNKNOWN = 0,
 		[XmlEnumAlias("Action")]
 		ACTION = 1 << 0,
@@ -23,6 +24,5 @@
 		THRILLER = 1 << 6,
 		[XmlEnumAlias("Animation")]
 		ANIMATION = 1 << 7,
-
 	}
 }

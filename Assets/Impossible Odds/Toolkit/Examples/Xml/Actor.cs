@@ -4,7 +4,7 @@
 	using System.Text;
 	using ImpossibleOdds.Xml;
 
-	[XmlObject, Serializable]
+	[XmlObject]
 	public class Actor
 	{
 		public static StringBuilder SerializationLog
@@ -13,7 +13,7 @@
 			set;
 		}
 
-		[XmlAttribute("Name")]
+		[XmlAttribute("Name"), XmlRequired(NullCheck = true)]
 		private string name = string.Empty;
 		[XmlElement("Biography")]
 		private string bio = string.Empty;

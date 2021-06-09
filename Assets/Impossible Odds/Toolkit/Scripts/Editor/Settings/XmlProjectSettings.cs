@@ -27,7 +27,7 @@
 			EditorGUILayout.HelpBox(
 				IsSet ?
 				"Serialize Unity types by default using XML attributes:\n<position x=\"0\" y=\"2\" z=\"-10\" />" :
-				"Serialize Unity types by default using XML elements:\n<position>\n\t<x>0</x>\n\t<y>2</y>\n\t<z>-10</z>\n</position>",
+				"Serialize Unity types by default using XML elements:\n<position>\n  <x>0</x>\n  <y>2</y>\n  <z>-10</z>\n</position>",
 				MessageType.None
 			);
 		}

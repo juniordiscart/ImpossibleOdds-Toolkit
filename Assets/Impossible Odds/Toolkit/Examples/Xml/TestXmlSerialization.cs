@@ -18,7 +18,9 @@
 		[SerializeField]
 		private Button btnDeserialize = null;
 		[SerializeField]
-		private TextMeshProUGUI txtXml = null;
+		private Button btnCopyToClipboard = null;
+		[SerializeField]
+		private TMP_InputField txtXml = null;
 		[SerializeField]
 		private TextMeshProUGUI txtLog = null;
 
@@ -40,8 +42,8 @@
 			};
 
 			Actor.SerializationLog = logBuilder;
-			Director.SerializationLog = logBuilder;
-			AudioVisualProduction.SerializationLog = logBuilder;
+			Producer.SerializationLog = logBuilder;
+			Production.SerializationLog = logBuilder;
 			MovieDatabase.SerializationLog = logBuilder;
 		}
 
@@ -51,6 +53,7 @@
 
 			btnSerialize.onClick.AddListener(OnSerialize);
 			btnDeserialize.onClick.AddListener(OnDeserialize);
+			btnCopyToClipboard.onClick.AddListener(CopySerializedResultToClipboard);
 			btnDeserialize.interactable = false;
 			txtXml.text = string.Empty;
 			txtLog.text = string.Empty;
@@ -92,21 +95,21 @@
 				},
 			};
 
-			List<Director> directors = new List<Director>()
+			List<Producer> producers = new List<Producer>()
 			{
-				new Director()
+				new Producer()
 				{
 					 Name = "Christopher Nolan",
 					 DateOfBirth = new DateTime(1970, 7, 30)
 				},
-				new Director()
+				new Producer()
 				{
 					Name = "Vince Gilligan",
 					DateOfBirth = new DateTime(1967, 2, 10)
 				},
 			};
 
-			List<AudioVisualProduction> productions = new List<AudioVisualProduction>()
+			List<Production> productions = new List<Production>()
 			{
 				new Series()
 				{
@@ -155,7 +158,7 @@
 			{
 				Logo = logo.texture.GetRawTextureData(),
 				Actors = actors,
-				Directors = directors,
+				Producers = producers,
 				Productions = productions
 			};
 
@@ -171,8 +174,13 @@
 
 		private void OnDeserialize()
 		{
-			MovieDatabase movieDatabase = XmlProcessor.Deserialize<MovieDatabase>(xmlBuilder.ToString());
+			MovieDatabase movieDatabase = XmlProcessor.Deserialize<MovieDatabase>(txtXml.text);
 			txtLog.text = logBuilder.ToString();
+		}
+
+		private void CopySerializedResultToClipboard()
+		{
+			GUIUtility.systemCopyBuffer = xmlBuilder.ToString();
 		}
 	}
 }

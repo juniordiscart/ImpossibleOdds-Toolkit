@@ -19,6 +19,9 @@ This document is auto-stitched together using multiple documentation files into 
 <<[Docs/Json.md]
 <!--BREAK-->
 
+<<[Docs/Xml.md]
+<!--BREAK-->
+
 <<[Docs/Http.md]
 <!--BREAK-->
 
@@ -32,9 +35,8 @@ The topics found below are scaffolding tools which are abstract and not directly
 <<[Docs/Weblink.md]
 <!--BREAK-->
 
-# ![Impossible Odds Logo][Logo] C# Toolkit - Changelog
-
 <<[CHANGELOG.md]
+<!--BREAK-->
 
 [GitHubLink]: https://github.com/juniordiscart/ImpossibleOdds-Toolkit
 [Logo]: ./Docs/Images/ImpossibleOddsLogo.png

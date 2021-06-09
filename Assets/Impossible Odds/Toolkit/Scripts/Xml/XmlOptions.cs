@@ -22,7 +22,7 @@ namespace ImpossibleOdds.Xml
 
 		/// <summary>
 		/// The reported encoding in the header of the XML document.
-		/// Note: the applied encoding might depend on the underlying text writer object, whether it will be applied or not.
+		/// Note: the applied encoding partially depends on the underlying text writer object whether it will be applied or not.
 		/// </summary>
 		public Encoding Encoding
 		{

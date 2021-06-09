@@ -3,6 +3,7 @@
 	using UnityEngine;
 	using ImpossibleOdds.Json;
 
+	[JsonObject]
 	public class Pidgeon : Animal
 	{
 		[JsonField(Key = "Coordinates")]

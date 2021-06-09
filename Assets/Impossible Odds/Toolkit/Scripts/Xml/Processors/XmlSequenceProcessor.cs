@@ -44,14 +44,14 @@
 			}
 
 			// Process each entry in the list to an xml element.
-			XElement listRoot = new XElement("ListElement"); // Create a default-named list-root element.
+			XElement listRoot = new XElement("List"); // Create a default-named list-root element.
 			IList sourceValues = objectToSerialize as IList;
 			foreach (object sourceValue in sourceValues)
 			{
 				object processedValue = Serializer.Serialize(sourceValue, definition);
 
 				// If the processed value is not yet an xml element already, then create one.
-				XElement xmlEntry = (processedValue is XElement) ? (processedValue as XElement) : new XElement("EntryElement", processedValue);
+				XElement xmlEntry = (processedValue is XElement) ? (processedValue as XElement) : new XElement(XmlListElementAttribute.DefaultListEntryName, processedValue);
 				listRoot.Add(xmlEntry);
 			}
 

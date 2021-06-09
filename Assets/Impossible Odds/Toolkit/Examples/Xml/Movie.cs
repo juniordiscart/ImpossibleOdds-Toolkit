@@ -3,7 +3,7 @@
 	using ImpossibleOdds.Xml;
 
 	[XmlObject]
-	public class Movie : AudioVisualProduction
+	public class Movie : Production
 	{
 		private int releaseYear = 0;
 

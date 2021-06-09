@@ -13,18 +13,18 @@
 			set;
 		}
 
-		[XmlListElement("Actors", ListEntryName = "Actor")]
+		[XmlListElement("Actors", EntryName = "Actor")]
 		private List<Actor> actors = new List<Actor>();
-		[XmlListElement("Directors", ListEntryName = "Director")]
-		private List<Director> directors = new List<Director>();
-		[XmlListElement("Productions", ListEntryName = "Production")]
-		private List<AudioVisualProduction> productions = new List<AudioVisualProduction>();
+		[XmlListElement("Producers", EntryName = "Producer")]
+		private List<Producer> producers = new List<Producer>();
+		[XmlListElement("Productions", EntryName = "Production")]
+		private List<Production> productions = new List<Production>();
 		[XmlCData("Logo")]
 		private byte[] logo = null;
 
 		public List<Actor> Actors { get => actors; set => actors = value; }
-		public List<Director> Directors { get => directors; set => directors = value; }
-		public List<AudioVisualProduction> Productions { get => productions; set => productions = value; }
+		public List<Producer> Producers { get => producers; set => producers = value; }
+		public List<Production> Productions { get => productions; set => productions = value; }
 		public byte[] Logo { get => logo; set => logo = value; }
 
 		[OnXmlSerializing]

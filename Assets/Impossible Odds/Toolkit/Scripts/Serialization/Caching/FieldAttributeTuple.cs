@@ -7,6 +7,7 @@
 	{
 		private readonly FieldInfo field;
 		private readonly Attribute attribute;
+		private readonly IRequiredParameter requiredParameter;
 
 		/// <summary>
 		/// The registered field.
@@ -40,13 +41,34 @@
 			get { return Member; }
 		}
 
-		public FieldAttributeTuple(FieldInfo field, Attribute attribute)
+		/// <inheritdoc />
+		public bool IsRequiredParameter
+		{
+			get { return requiredParameter != null; }
+		}
+
+		/// <inheritdoc />
+		public IRequiredParameter RequiredParameter
+		{
+			get { return requiredParameter; }
+		}
+
+		public FieldAttributeTuple(FieldInfo field, Attribute serializationAttribute, Type requiredAttributeType = null)
 		{
 			field.ThrowIfNull(nameof(field));
-			attribute.ThrowIfNull(nameof(attribute));
+			serializationAttribute.ThrowIfNull(nameof(serializationAttribute));
 
 			this.field = field;
-			this.attribute = attribute;
+			this.attribute = serializationAttribute;
+
+			if ((requiredAttributeType != null) && field.IsDefined(requiredAttributeType, true))
+			{
+				this.requiredParameter = field.GetCustomAttribute(requiredAttributeType, true) as IRequiredParameter;
+			}
+			else
+			{
+				this.requiredParameter = null;
+			}
 		}
 
 		/// <inheritdoc />

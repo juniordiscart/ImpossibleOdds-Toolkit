@@ -37,6 +37,17 @@
 		/// </summary>
 		/// <param name="obj">Object to serialize.</param>
 		/// <param name="resultStore">Write cache for the XML result.</param>
+		public static void Serialize(object obj, StringBuilder resultStore)
+		{
+			resultStore.ThrowIfNull(nameof(resultStore));
+			Serialize(obj, defaultOptions, new StringWriter(resultStore));
+		}
+
+		/// <summary>
+		/// Serialize the object to an XML string and store the result directly in the result store.
+		/// </summary>
+		/// <param name="obj">Object to serialize.</param>
+		/// <param name="resultStore">Write cache for the XML result.</param>
 		public static void Serialize(object obj, TextWriter resultStore)
 		{
 			resultStore.ThrowIfNull(nameof(resultStore));
@@ -56,6 +67,21 @@
 			StringWriter resultStore = new StringWriter();
 			Serialize(obj, options, resultStore);
 			return resultStore.ToString();
+		}
+
+		/// <summary>
+		/// Serializes the object to an XML string with custom formatting/processing settings
+		/// and store the result directly in the result store.
+		/// </summary>
+		/// <param name="obj">Object to serialize.</param>
+		/// <param name="options">Options to modify the string output behaviour.</param>
+		/// <param name="resultStore">Write cache for the XML result.</param>
+		public static void Serialize(object obj, XmlOptions options, StringBuilder resultStore)
+		{
+			options.ThrowIfNull(nameof(options));
+			resultStore.ThrowIfNull(nameof(resultStore));
+
+			Serialize(obj, options, new StringWriter(resultStore));
 		}
 
 		/// <summary>
@@ -127,7 +153,22 @@
 		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
 		public static TTarget Deserialize<TTarget>(TextReader reader)
 		{
+			reader.ThrowIfNull(nameof(reader));
+
 			return (TTarget)Deserialize(typeof(TTarget), reader);
+		}
+
+		/// <summary>
+		/// Deserialize the XML values to be read from the XML document to an instance of the target type.
+		/// </summary>
+		/// <param name="document">XML document from which to read the XML values.</param>
+		/// <typeparam name="TTarget">Target type of the instance.</typeparam>
+		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
+		public static TTarget Deserialize<TTarget>(XDocument document)
+		{
+			document.ThrowIfNull(nameof(document));
+
+			return (TTarget)Deserialize(typeof(TTarget), document);
 		}
 
 		/// <summary>
@@ -152,8 +193,22 @@
 			using (XmlReader xmlReader = XmlReader.Create(reader))
 			{
 				XDocument document = XDocument.Load(xmlReader);
-				return FromXml(targetType, document, defaultOptions.SerializationDefinition);
+				return Deserialize(targetType, document);
 			}
+		}
+
+		/// <summary>
+		/// Deserialize the XML values to be read from the XML document to an instance of the target type.
+		/// </summary>
+		/// <param name="targetType">Target type of the instance.</param>
+		/// <param name="document">XML document from which to read the XML values.</param>
+		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
+		public static object Deserialize(Type targetType, XDocument document)
+		{
+			targetType.ThrowIfNull(nameof(targetType));
+			document.ThrowIfNull(nameof(document));
+
+			return FromXml(targetType, document, defaultOptions.SerializationDefinition);
 		}
 
 		/// <summary>
@@ -173,11 +228,27 @@
 		/// <param name="reader">Text reader from which to read the XML values.</param>
 		public static void Deserialize(object target, TextReader reader)
 		{
+			target.ThrowIfNull(nameof(target));
+			reader.ThrowIfNull(nameof(reader));
+
 			using (XmlReader xmlReader = XmlReader.Create(reader))
 			{
 				XDocument document = XDocument.Load(xmlReader);
-				FromXml(target, document, defaultOptions.SerializationDefinition);
+				Deserialize(target, document);
 			}
+		}
+
+		/// <summary>
+		/// Deserialize the XML values to be read from the XML document to an existing target object.
+		/// </summary>
+		/// <param name="target">The target object onto which the XML values should be applied.</param>
+		/// <param name="document">XML document from which to read the XML values.</param>
+		public static void Deserialize(object target, XDocument document)
+		{
+			target.ThrowIfNull(nameof(target));
+			document.ThrowIfNull(nameof(document));
+
+			FromXml(target, document, defaultOptions.SerializationDefinition);
 		}
 
 		private static XDocument ToXml(object objectToSerialize, XmlSerializationDefinition definition)

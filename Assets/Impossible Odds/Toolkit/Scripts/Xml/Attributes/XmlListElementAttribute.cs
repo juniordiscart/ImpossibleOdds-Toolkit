@@ -5,12 +5,14 @@
 	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
 	public sealed class XmlListElementAttribute : AbstractXmlMemberAttribute
 	{
-		private string childElementName = "Entry";
+		public const string DefaultListEntryName = "Entry";
+
+		private string childElementName = DefaultListEntryName;
 
 		/// <summary>
 		/// The name each entry in the list should have.
 		/// </summary>
-		public string ListEntryName
+		public string EntryName
 		{
 			get { return childElementName; }
 			set { childElementName = value; }

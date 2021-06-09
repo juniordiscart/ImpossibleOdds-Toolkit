@@ -149,7 +149,7 @@
 
 		private IDictionary Serialize(Type sourceType, object source)
 		{
-			IReadOnlyList<IMemberAttributeTuple> sourceMembers = GetTypeCache(sourceType).GetMembersWithAttribute(definition.LookupBasedFieldAttribute);
+			IReadOnlyList<IMemberAttributeTuple> sourceMembers = GetTypeCache(sourceType).GetMembersWithAttribute(definition.LookupBasedFieldAttribute, SupportsRequiredValues ? requiredValueSupport.RequiredAttributeType : null);
 			IDictionary processedValues = definition.CreateLookupInstance(sourceMembers.Count + 1); // Include capacity for type information.
 			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
 
@@ -178,20 +178,20 @@
 
 		private void Deserialize(object target, IDictionary source)
 		{
-			// Get all of the fields that would like to get their value filled in
-			IReadOnlyList<IMemberAttributeTuple> targetMembers = GetTypeCache(target.GetType()).GetMembersWithAttribute(definition.LookupBasedFieldAttribute);
+			// Get all of the fields that would like to get their value filled in.
+			IReadOnlyList<IMemberAttributeTuple> targetMembers = GetTypeCache(target.GetType()).GetMembersWithAttribute(definition.LookupBasedFieldAttribute, SupportsRequiredValues ? requiredValueSupport.RequiredAttributeType : null);
 
 			foreach (IMemberAttributeTuple targetMember in targetMembers)
 			{
 				object key = GetKey(targetMember);
 
-				// See whether the source contains a value for this field
+				// See whether the source contains a value for this field.
 				if (!source.Contains(key))
 				{
-					// Check whether this field is marked as required
-					if (SupportsRequiredValues && targetMember.Member.IsDefined(requiredValueSupport.RequiredAttributeType, false))
+					// Check whether this field is marked as required.
+					if (SupportsRequiredValues && targetMember.IsRequiredParameter)
 					{
-						throw new SerializationException(string.Format("The field {0} is marked as required but is not present in the source.", targetMember.Member.Name));
+						throw new SerializationException("The member '{0}' is marked as required on type {1} but is not present in the source.", targetMember.Member.Name, targetMember.Member.DeclaringType.Name);
 					}
 					else
 					{
@@ -204,6 +204,12 @@
 
 				if (result == null)
 				{
+					// If the value is not allowed to be null, then quit.
+					if (SupportsRequiredValues && targetMember.IsRequiredParameter && targetMember.RequiredParameter.NullCheck)
+					{
+						throw new SerializationException("The member '{0}' is marked as required on type {1} but the value is null in the source.", targetMember.Member.Name, targetMember.Member.DeclaringType.Name);
+					}
+
 					Type memberType = targetMember.MemberType;
 					targetMember.SetValue(target, memberType.IsValueType ? Activator.CreateInstance(memberType, true) : null);
 				}
@@ -250,7 +256,7 @@
 					}
 					else
 					{
-						throw new SerializationException(string.Format("The attribute of type {0}, defined on type {1} or its super types, is matched but cannot be assigned from instance of type {2}.", typeResolveAttr.GetType().Name, targetType.Name, typeResolveAttr.Target.Name));
+						throw new SerializationException("The attribute of type {0}, defined on type {1} or its super types, is matched but cannot be assigned from instance of type {2}.", typeResolveAttr.GetType().Name, targetType.Name, typeResolveAttr.Target.Name);
 					}
 				}
 			}

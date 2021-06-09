@@ -37,7 +37,7 @@
 			set { weight = value; }
 		}
 
-		[JsonField]
+		[JsonField, JsonRequired(NullCheck = true)]
 		public string Name
 		{
 			get { return name; }
@@ -80,18 +80,6 @@
 		private void OnDeserialized()
 		{
 			SerializationLog.AppendLine(string.Format("Deserialized animal of type {0} with name {1}.", this.GetType().Name, Name));
-		}
-
-		[JsonEnumString]
-		public enum TaxonomyClass
-		{
-			NONE,
-			[JsonEnumAlias("Mammal")]
-			MAMMAL,
-			[JsonEnumAlias("Reptile")]
-			REPTILE,
-			[JsonEnumAlias("Birb")]
-			BIRD
 		}
 	}
 }

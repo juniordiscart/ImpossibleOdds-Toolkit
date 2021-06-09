@@ -173,14 +173,14 @@ All this may sound pretty abstract, and providing a simple example for the sake 
 * `StringProcessor`: deserializer-only processor to convert a string to a different type, e.g. a string value that represents a float value.
 * `DecimalProcessor`: provides support for the `decimal` type.
 * `DateTimeProcessor`: provides support for the `DateTime` type.
-* `Vector2LookupProcessor` and `Vector2SequnceProcessor`: provides support for the `Vector2` type.
-* `Vector2IntLookupProcessor` and `Vector2IntSequnceProcessor`: provides support for the `Vector2Int` type.
-* `Vector3LookupProcessor` and `Vector3SequnceProcessor`: provides support for the `Vector3` type.
-* `Vector3IntLookupProcessor` and `Vector3IntSequnceProcessor`: provides support for the `Vector3Int` type.
-* `Vector4LookupProcessor` and `Vector4SequnceProcessor`:  provides support for the `Vector4` type.
-* `QuaternionLookupProcessor` and `QuaternionSequnceProcessor`: provides support for the `Quaternion` type.
-* `ColorLookupProcessor` and `ColorSequnceProcessor`: provides support for the `Color` type.
-* `Color32LookupProcessor` and `Color32SequnceProcessor`: provides support for the `Color32` type.
+* `Vector2Processor`: provides support for the `Vector2` type. This processor can switch between processing modes, e.g. lookup-based versus sequence-based.
+* `Vector2IntProcessor`: provides support for the `Vector2Int` type. This processor can switch between processing modes, e.g. lookup-based versus sequence-based.
+* `Vector3Processor`: provides support for the `Vector3` type. This processor can switch between processing modes, e.g. lookup-based versus sequence-based.
+* `Vector3IntProcessor`: provides support for the `Vector3Int` type. This processor can switch between processing modes, e.g. lookup-based versus sequence-based.
+* `Vector4Processor`:  provides support for the `Vector4` type. This processor can switch between processing modes, e.g. lookup-based versus sequence-based.
+* `QuaternionProcessor`: provides support for the `Quaternion` type. This processor can switch between processing modes, e.g. lookup-based versus sequence-based.
+* `ColorProcessor`: provides support for the `Color` type. This processor can switch between processing modes, e.g. lookup-based versus sequence-based.
+* `Color32Processor`: provides support for the `Color32` type. This processor can switch between processing modes, e.g. lookup-based versus sequence-based.
 * `LookupProcessor`: processes actual dictionary-like data structures, e.g. objects of type `Dictionary<TKey, TValue>`.
 * `SequenceProcessor`: processes actual array-like data structures, e.g. objects of type `List<T>` or `T[]`.
 * `CustomObjectSequenceProcessor`: processes custom objects to/from an array-like data structure.

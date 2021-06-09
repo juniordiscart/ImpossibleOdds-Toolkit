@@ -111,7 +111,7 @@
 			CustomObjectTypeCache sourceTypeCache = GetTypeCache(sourceType);
 
 			// Process child elements.
-			IReadOnlyList<IMemberAttributeTuple> elementFields = sourceTypeCache.GetMembersWithAttribute(typeof(AbstractXmlMemberAttribute));
+			IReadOnlyList<IMemberAttributeTuple> elementFields = sourceTypeCache.GetMembersWithAttribute(typeof(AbstractXmlMemberAttribute), typeof(XmlRequiredAttribute));
 			foreach (IMemberAttributeTuple elementField in elementFields)
 			{
 				object value = elementField.GetValue(source);
@@ -185,7 +185,7 @@
 				xmlElement.Name = GetElementKey(listElementAttribute, memberInfo);
 				foreach (XElement childElement in xmlElement.Elements())
 				{
-					childElement.Name = listElementAttribute.ListEntryName;
+					childElement.Name = listElementAttribute.EntryName;
 				}
 
 				return xmlElement;
@@ -215,7 +215,7 @@
 			// Process child elements and attributes. Don't bother if it doesn't have any.
 			if (source.HasElements || source.HasAttributes)
 			{
-				IReadOnlyList<IMemberAttributeTuple> members = GetTypeCache(target.GetType()).GetMembersWithAttribute(typeof(AbstractXmlMemberAttribute));
+				IReadOnlyList<IMemberAttributeTuple> members = GetTypeCache(target.GetType()).GetMembersWithAttribute(typeof(AbstractXmlMemberAttribute), typeof(XmlRequiredAttribute));
 				foreach (IMemberAttributeTuple member in members)
 				{
 					object processedResult = null;
@@ -241,6 +241,11 @@
 						throw new XmlException("Unsupported XML deserialization attribute of type {0}.", member.Attribute.GetType().Name);
 					}
 
+					if ((processedResult == null) && member.IsRequiredParameter && member.RequiredParameter.NullCheck)
+					{
+						throw new XmlException("The member '{0}' is marked as required on type {1} but the value is null in the source.", member.Member.Name, member.Member.DeclaringType.Name);
+					}
+
 					member.SetValue(target, processedResult);
 				}
 			}
@@ -252,6 +257,10 @@
 			if (attribute != null)
 			{
 				return Serializer.Deserialize(memberInfo.MemberType, attribute.Value, XmlDefinition.AttributeSerializationDefinition);
+			}
+			else if (memberInfo.IsRequiredParameter)
+			{
+				throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType.Name);
 			}
 			else
 			{
@@ -265,6 +274,10 @@
 			if (childElement != null)
 			{
 				return Serializer.Deserialize(memberInfo.MemberType, (childElement.HasAttributes || childElement.HasElements) ? (object)childElement : (object)childElement.Value, Definition);
+			}
+			else if (memberInfo.IsRequiredParameter)
+			{
+				throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType.Name);
 			}
 			else
 			{
@@ -284,6 +297,10 @@
 			{
 				return Serializer.Deserialize(memberInfo.MemberType, childElement, Definition);
 			}
+			else if (memberInfo.IsRequiredParameter)
+			{
+				throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType.Name);
+			}
 			else
 			{
 				return SerializationUtilities.GetDefaultValue(memberInfo.MemberType);
@@ -296,6 +313,10 @@
 			if ((childElement != null) && (childElement.FirstNode is XCData cdata))
 			{
 				return Serializer.Deserialize(memberInfo.MemberType, cdata.Value, XmlDefinition.CDataSerializationDefinition);
+			}
+			else if (memberInfo.IsRequiredParameter)
+			{
+				throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType.Name);
 			}
 			else
 			{

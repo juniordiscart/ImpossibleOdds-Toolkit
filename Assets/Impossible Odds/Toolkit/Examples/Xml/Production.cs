@@ -5,7 +5,7 @@
 
 	[XmlType(typeof(Movie), Value = "Movie"),
 	XmlType(typeof(Series), Value = "Series")]
-	public abstract class AudioVisualProduction
+	public abstract class Production
 	{
 		public static StringBuilder SerializationLog
 		{
@@ -20,7 +20,7 @@
 		private string director = string.Empty;
 		private string[] actors = null;
 
-		[XmlAttribute]
+		[XmlAttribute, XmlRequired]
 		public string Name
 		{
 			get { return name; }
@@ -48,7 +48,7 @@
 			set { director = value; }
 		}
 
-		[XmlListElement(ListEntryName = "Actor")]
+		[XmlListElement(EntryName = "Actor")]
 		public string[] Actors
 		{
 			get { return actors; }

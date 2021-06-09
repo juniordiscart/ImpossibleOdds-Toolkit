@@ -33,6 +33,22 @@
 		}
 
 		/// <summary>
+		/// Is the value marked as required during deserialization?
+		/// </summary>
+		bool IsRequiredParameter
+		{
+			get;
+		}
+
+		/// <summary>
+		/// The required parameter data.
+		/// </summary>
+		IRequiredParameter RequiredParameter
+		{
+			get;
+		}
+
+		/// <summary>
 		/// Get the value of the member that is defined on the source object.
 		/// </summary>
 		/// <param name="source">The source object to retrieve the member value from.</param>

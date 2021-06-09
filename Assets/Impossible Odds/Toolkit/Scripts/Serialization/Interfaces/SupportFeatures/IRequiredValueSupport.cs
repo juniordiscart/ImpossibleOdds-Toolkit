@@ -19,8 +19,8 @@
 	/// <summary>
 	/// Generic variant with restrictions on the generic type parameter.
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="T">The type of the attribute.</typeparam>
 	public interface IRequiredValueSupport<T> : IRequiredValueSupport
-	where T : Attribute
+	where T : Attribute, IRequiredParameter
 	{ }
 }

@@ -104,13 +104,10 @@
 				return;
 			}
 
-			IEnumerable<MethodInfo> callbacks = GetTypeCache(target.GetType()).GetSerializationCallbacks(callbackAttributeType);
-			foreach (MethodInfo callback in callbacks)
+			IEnumerable<SerializationCallbackInfo> callbacks = GetTypeCache(target.GetType()).GetSerializationCallbacks(callbackAttributeType);
+			foreach (SerializationCallbackInfo callback in callbacks)
 			{
-				if (callback != null)
-				{
-					callback.Invoke(target, null);
-				}
+				callback.Invoke(target, this);
 			}
 		}
 
@@ -122,7 +119,7 @@
 			private readonly Type type = null;
 			private Dictionary<Type, List<IMemberAttributeTuple>> membersWithAttributes = new Dictionary<Type, List<IMemberAttributeTuple>>();
 			private Dictionary<Type, List<ITypeResolveParameter>> typeResolveParameters = new Dictionary<Type, List<ITypeResolveParameter>>();
-			private Dictionary<Type, List<MethodInfo>> serializationCallbacks = new Dictionary<Type, List<MethodInfo>>();
+			private Dictionary<Type, List<SerializationCallbackInfo>> serializationCallbacks = new Dictionary<Type, List<SerializationCallbackInfo>>();
 
 			public Type Type
 			{
@@ -139,8 +136,9 @@
 			/// Retrieve all members with a specific attribute defined.
 			/// </summary>
 			/// <param name="typeOfAttribute">Type of the attribute that will be looked for on members.</param>
+			/// <param name="typeOfRequiredAttribute">Type of the attribute that defines a member is required to be present during deserialization.</param>
 			/// <returns>A collection of members that have the attribute defined on them.</returns>
-			public IReadOnlyList<IMemberAttributeTuple> GetMembersWithAttribute(Type typeOfAttribute)
+			public IReadOnlyList<IMemberAttributeTuple> GetMembersWithAttribute(Type typeOfAttribute, Type typeOfRequiredAttribute = null)
 			{
 				typeOfAttribute.ThrowIfNull(nameof(typeOfAttribute));
 
@@ -172,11 +170,11 @@
 
 						if (member is FieldInfo field)
 						{
-							targetMembers.Add(new FieldAttributeTuple(field, attr));
+							targetMembers.Add(new FieldAttributeTuple(field, attr, typeOfRequiredAttribute));
 						}
 						else if (member is PropertyInfo property)
 						{
-							targetMembers.Add(new PropertyAttributeTuple(property, attr));
+							targetMembers.Add(new PropertyAttributeTuple(property, attr, typeOfRequiredAttribute));
 						}
 					}
 
@@ -229,7 +227,7 @@
 			/// </summary>
 			/// <param name="typeOfAttribute">Type of the callback attribute.</param>
 			/// <returns>A collection of all methods that are defined as a callback.</returns>
-			public IReadOnlyList<MethodInfo> GetSerializationCallbacks(Type typeOfAttribute)
+			public IReadOnlyList<SerializationCallbackInfo> GetSerializationCallbacks(Type typeOfAttribute)
 			{
 				typeOfAttribute.ThrowIfNull(nameof(typeOfAttribute));
 
@@ -238,13 +236,17 @@
 					return serializationCallbacks[typeOfAttribute];
 				}
 
-				List<MethodInfo> callbackMethods = new List<MethodInfo>();
+				List<SerializationCallbackInfo> callbackMethods = new List<SerializationCallbackInfo>();
 
 				Type currentType = Type;
 				BindingFlags methodFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
 				while ((currentType != null) && (currentType != typeof(object)))
 				{
-					callbackMethods.AddRange(currentType.GetMethods(methodFlags).Where(m => m.IsDefined(typeOfAttribute)));
+					foreach (MethodInfo callbackMethod in currentType.GetMethods(methodFlags).Where(m => m.IsDefined(typeOfAttribute)))
+					{
+						callbackMethods.Add(new SerializationCallbackInfo(callbackMethod));
+					}
+
 					currentType = currentType.BaseType;
 				}
 

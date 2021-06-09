@@ -15,7 +15,7 @@ This tool aims to provide simplicity along with extra control when necessary. So
 
 For your objects to be recognized and processed by the JSON tools here, you must mark them as such. There are two possible options for your objects to be picked up by the JSON processor:
 
-* The `JsonObject` attribute will mark your object as a JSON object. Members of this object will be serialized under a name. The members you want to have serialized can be marked with the `JsonField` attribute. By default, the field's name is used, but a custom one can be provided.
+* The `JsonObject` attribute will mark your object as a JSON object. Members of this object will be serialized under a name. The members you want to have serialized can be marked with the `JsonField` attribute. By default, the member's name is used, but a custom one can be provided.
 
 * The `JsonArray` attribute will mark your object as a JSON array. Members of this object will be serialized using an index value. They can be marked with the `JsonIndex` attribute along with their index location.
 
@@ -95,12 +95,12 @@ Support is provided to state that an enum should be serialized under its string 
 
 ```cs
 [JsonEnumString]
-public enum MyEnum
+public enum TaxonomyClass
 {
-	None,
-	First,
-	Second,
-	Last
+	NONE,
+	MAMMAL,
+	REPTILE,
+	BIRD
 }
 ```
 
@@ -108,14 +108,15 @@ Additionally, you can define an alias for a specific enum value using the `JsonE
 
 ```cs
 [JsonEnumString]
-public enum MyEnum
+public enum TaxonomyClass
 {
-	None,
-	[JsonEnumAlias("1st")]
-	First,
-	[JsonEnumAlias("2nd")]
-	Second,
-	Last
+	NONE,
+	[JsonEnumAlias("Mammal")]
+	MAMMAL,
+	[JsonEnumAlias("Reptile")]
+	REPTILE,
+	[JsonEnumAlias("Birb")]
+	BIRD
 }
 ```
 
@@ -125,22 +126,29 @@ public enum MyEnum
 
 At times, certain values are required to be present in order for data to be considered valid, and when absent, doesn't need further processing.
 
-This kind of (limited) control can be exerted by placing the `JsonRequired` attribute above a field in your object that should be present at all times when processing its data.
+This kind of (limited) control can be exerted by placing the `JsonRequired` attribute above a member in your object that should be present at all times when processing its data.
 
 ```cs
 [JsonObject]
-public class MyObject
+public abstract class Animal
 {
 	[JsonField, JsonRequired]
 	private string name;
 }
 ```
 
-When this data is not present, the serialization system will halt and throw an exception upwards to let you know the data is faulty.
+When this data is not present, the serialization system will halt and throw an exception upwards to let you know the data is faulty. By default, this makes the processor check whether a field is present in the JSON data, not whether this value is `null` or not. If the data is also required not to be `null`, then the `NullCheck` property can be enabled.
+
+```cs
+[JsonObject]
+public abstract class Animal
+{
+	[JsonField, JsonRequired(NullCheck = true)]
+	private string name;
+}
+```
 
 **Note**: only members on a JSON object can be marked as required. JSON arrays are not supported by this requirement feature.
-
-**Another note**: a field marked as required means that its key is expected to be present in the JSON object, not necessarily that its value can't be `null`. The reason for this is that data explicitly set to `null` can still be valid, while data not present might mean an error on the side where the data is generated.
 
 ## Serialization
 
@@ -189,7 +197,7 @@ If you don't know beforehand what the JSON data represents, you can deserialize 
 ```cs
 // When not knowing what will be deserialized, the returned result will be a
 // generic data structure (List, Dictionary) which can be used for further processing.
-string jsonData = File.ReadAllText("config.json");
+string jsonData = File.ReadAllText("animals.json");
 object result = JsonProcessor.Deserialize(jsonData);
 ```
 
@@ -197,8 +205,8 @@ If you do know, you can pass in a type for it to try and deserialize the JSON da
 
 ```cs
 // When the type of the data is known beforehand, but no instance is available.
-string jsonData = File.ReadAllText("config.json");
-MyClass myObject = JsonProcessor.Deserialize<MyClass>(jsonData);
+string jsonData = File.ReadAllText("animals.json");
+AnimalRegister animals = JsonProcessor.Deserialize<AnimalRegister>(jsonData);
 ```
 
 **Note**: the given target type is allowed to be a base class, or even an abstract class or interface, provided that it has the right type information available for it to be able to create an instance of the expected result. See the [Type Information](#type-information) section for more details.
@@ -208,9 +216,9 @@ Lastly, you can already pass an instance of the expected type and the processor 
 ```cs
 // When the type of the data to be deserialized is known beforehand,
 // instruct the processor to process to the target instance of the object.
-MyClass myObject;
-string jsonData = File.ReadAllText("config.json");
-JsonProcessor.Deserialize(myObject, jsonData);
+AnimalRegister animals;
+string jsonData = File.ReadAllText("animals.json");
+JsonProcessor.Deserialize(animals, jsonData);
 ```
 
 ## Callbacks
@@ -233,13 +241,13 @@ public class MyClass
 	}
 
 	[OnJsonSerialized]
-	private void Serialized()
+	private void Serialized(IProcessor currentProcessor)
 	{
 		Log.Info("Serialized instance of {0}.", this.GetType().Name);
 	}
 
 	[OnJsonDeserializing]
-	private void Deserializing()
+	private void Deserializing(IProcessor currentProcessor)
 	{
 		Log.Info("Deserializing instance of {0}.", this.GetType().Name);
 	}
@@ -252,7 +260,7 @@ public class MyClass
 }
 ```
 
-**Note**: methods decorated with one of these attributes shouldn't have any parameters.
+Each of these callbacks may accept a single parameter that is of type `IProcessor` (see the [Advanced Serialization][AdvancedSerialization] topic for more information). It basically functions as a serialization context object that is currently processing your data.
 
 ## Example
 

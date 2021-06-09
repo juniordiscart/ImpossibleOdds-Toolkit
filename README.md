@@ -106,7 +106,12 @@ Developed and tested on Unity 2019.4 LTS.
 
 This package is provided under the [MIT][License] license.
 
+## Changelog
+
+View the [update history][Changelog] of this package.
+
 [License]: ./LICENSE.md
+[Changelog]: CHANGELOG.md
 [EditorSettings]: ./Docs/Images/EditorSettings.png
 [CoreUtilities]: ./Docs/CoreUtilities.md
 [DependencyInjection]: ./Docs/DependencyInjection.md

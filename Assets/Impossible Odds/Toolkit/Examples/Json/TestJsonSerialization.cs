@@ -15,7 +15,7 @@
 		[SerializeField]
 		private Button btnDeserialize = null;
 		[SerializeField]
-		private TextMeshProUGUI txtJson = null;
+		private TMP_InputField txtJson = null;
 		[SerializeField]
 		private TextMeshProUGUI txtLog = null;
 
@@ -98,7 +98,7 @@
 
 		private void OnDeserialize()
 		{
-			AnimalRegister animalRegister = JsonProcessor.Deserialize<AnimalRegister>(jsonBuilder.ToString());
+			AnimalRegister animalRegister = JsonProcessor.Deserialize<AnimalRegister>(txtJson.text);
 			txtLog.text = logBuilder.ToString();
 		}
 	}

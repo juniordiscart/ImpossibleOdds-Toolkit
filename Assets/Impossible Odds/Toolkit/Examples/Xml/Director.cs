@@ -5,7 +5,7 @@
 	using ImpossibleOdds.Xml;
 
 	[XmlObject]
-	public class Director
+	public class Producer
 	{
 		public static StringBuilder SerializationLog
 		{

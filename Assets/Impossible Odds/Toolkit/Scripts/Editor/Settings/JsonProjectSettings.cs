@@ -27,7 +27,7 @@
 			EditorGUILayout.HelpBox(
 				IsSet ?
 				"Serialize Unity types by default as a JSON array:\n[0, 2, -10]" :
-				"Serialize Unity types by default as a JSON object:\n{\n\t\"x\": 0,\n\t\"y\": 2,\n\t\"z\": -10\n}",
+				"Serialize Unity types by default as a JSON object:\n{\n  \"x\": 0,\n  \"y\": 2,\n  \"z\": -10\n}",
 				MessageType.None
 			);
 		}
