@@ -4,7 +4,7 @@ The idea behind the tools found in the `ImpossibleOdds.Serialization` namespace 
 
 This is achieved using a _serialization definition_, which defines how objects should be (de)constructed and a set of data processing units that are specialised in handling specific kinds of data.
 
-The structure of the tools described here aim to provide a flexible framework to easily define or provide support for custom data formats. This is proven by the [JSON][Json] and [HTTP][Http] tools found in this toolkit as well as the [Photon Extensions][PhotonExtensions] package to help speed up multiplayer development in the Photon networking framework.
+The structure of the tools described here aim to provide a flexible framework to easily define or provide support for custom data formats. This is proven by the [JSON][Json], XML[Xml] and [HTTP][Http] tools found in this toolkit as well as the [Photon Extensions][PhotonExtensions] package to help speed up multiplayer development in the Photon networking framework.
 
 ## Serialization Definitions
 
@@ -200,6 +200,7 @@ It operates by taking the set of processors defined by the definition and going 
 
 [Logo]: ./Images/ImpossibleOddsLogo.png
 [Json]: ./Json.md
+[Xml]: ./Xml.md
 [Http]: ./Http.md
 [Serializer]: #serializer
 [XMLIncludeAttribute]: https://docs.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlincludeattribute

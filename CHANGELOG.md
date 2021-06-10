@@ -17,10 +17,10 @@ Changelist:
 * Improved: Serialization of Unity primitive values (`Vector3`, `Color`, etc.) can be modified with a preferred processing method, e.g. as a JSON object versus JSON array, or using XML elements versus XML attributes. This can be configured globally in the Impossible Odds project settings window, and per serialization definition.
 * Improved: Serialization and deserialization of custom objects have improved memory usage by skipping several intermediate steps.
 * Improved: HTTP and JSON serialization definitions now use instances of `ArrayList` instead of `List<object>` to skip the generic type checking steps.
-* Improved: Objects requesting a serialization callback can now have an optional parameter of type `IProcessor` to get some context of what is processing the it.
+* Improved: Objects requesting a serialization callback can now have an optional parameter of type `IProcessor` to get some context of what is processing the object.
 * Improved: The `SerializationUtilities` class now contains clearly defined functions and descriptions.
 * Improved: Exceptions thrown during serialization have a more clear description of what might have gone wrong.
-* Improved: JSON example to include more logging and made the JSON output interactable to experiment with the contents.
+* Improved: The JSON example scene includes more logging and made the JSON output interactable to experiment with the contents.
 * Fixed: Enum alias deserialization issue.
 * Removed: Several unused interfaces in the `ImpossibleOdds.Serialization` namespace.
 * Removed: Several abstract classes in the `ImpossibleOdds.Serialization` namespace that would 'glue' several unrelated classes together.
