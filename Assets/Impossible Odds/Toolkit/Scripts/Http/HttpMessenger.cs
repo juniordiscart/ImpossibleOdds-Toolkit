@@ -30,9 +30,10 @@
 		{
 			request.ThrowIfNull(nameof(request));
 
+			// If it's already pending, then just return the existing handle.
 			if (IsPending(request))
 			{
-				throw new HttpException("The request of type {0} is already pending a response.", request.GetType().Name);
+				return GetMessageHandle(request);
 			}
 
 			UnityWebRequest unityRequest = GenerateWebRequest(request);
