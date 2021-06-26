@@ -1,39 +1,87 @@
 ﻿namespace ImpossibleOdds.Http
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
-	using System.Linq;
+	using System.Globalization;
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Processors;
 
 	/// <summary>
 	/// Serialization definition for parameters in the URL of HTTP requests.
 	/// </summary>
-	public class HttpURLSerializationDefinition : LookupDefinition
-	<HttpBodyObjectAttribute, HttpURLFieldAttribute, Dictionary<string, string>>
+	public class HttpURLSerializationDefinition : ILookupSerializationDefinition
 	{
-		public override IEnumerable<ISerializationProcessor> SerializationProcessors
+		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
+		private List<IProcessor> processors = null;
+		private HashSet<Type> supportedTypes = null;
+
+		/// <inheritdoc />
+		public IEnumerable<ISerializationProcessor> SerializationProcessors
 		{
-			get { return serializationProcessors; }
+			get
+			{
+				foreach (IProcessor processor in processors)
+				{
+					if (processor is ISerializationProcessor serializationProcessor)
+					{
+						yield return serializationProcessor;
+					}
+				}
+			}
 		}
 
-		public override IEnumerable<IDeserializationProcessor> DeserializationProcessors
+		/// <inheritdoc />
+		public IEnumerable<IDeserializationProcessor> DeserializationProcessors
 		{
-			get { return deserializationProcessors; }
+			get
+			{
+				foreach (IProcessor processor in processors)
+				{
+					if (processor is IDeserializationProcessor deserializationProcessor)
+					{
+						yield return deserializationProcessor;
+					}
+				}
+			}
 		}
 
-		public override HashSet<Type> SupportedTypes
+		/// <inheritdoc />
+		public HashSet<Type> SupportedTypes
 		{
 			get { return supportedTypes; }
 		}
 
-		private IEnumerable<ISerializationProcessor> serializationProcessors;
-		private IEnumerable<IDeserializationProcessor> deserializationProcessors;
-		private HashSet<Type> supportedTypes;
+		/// <summary>
+		/// Not implemented because the URL definition does not requires objects to be marked for URL parameters.
+		/// </summary>
+		Type ILookupSerializationDefinition.LookupBasedClassMarkingAttribute
+		{
+			get { throw new NotImplementedException(); }
+		}
+
+		/// <inheritdoc />
+		public Type LookupBasedFieldAttribute
+		{
+			get { return typeof(HttpURLFieldAttribute); }
+		}
+
+		/// <inheritdoc />
+		public Type LookupBasedDataType
+		{
+			get { return typeof(Dictionary<string, string>); }
+		}
+
+		/// <inheritdoc />
+		public IFormatProvider FormatProvider
+		{
+			get { return formatProvider; }
+			set { formatProvider = value; }
+		}
 
 		public HttpURLSerializationDefinition()
 		{
-			List<IProcessor> processors = new List<IProcessor>()
+			processors = new List<IProcessor>()
 			{
 				new ExactMatchProcessor(this),
 				new EnumProcessor(this),
@@ -41,11 +89,8 @@
 				new DateTimeProcessor(this),
 				new StringProcessor(this),
 				new LookupProcessor(this),
-				new CustomObjectLookupProcessor(this)
+				new CustomObjectLookupProcessor(this, false)
 			};
-
-			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>();
-			deserializationProcessors = processors.Where(p => p is IDeserializationProcessor).Cast<IDeserializationProcessor>();
 
 			// Basic set of types
 			supportedTypes = new HashSet<Type>()
@@ -63,9 +108,15 @@
 			};
 		}
 
-		public override Dictionary<string, string> CreateLookupInstance(int capacity)
+		public Dictionary<string, string> CreateLookupInstance(int capacity)
 		{
 			return new Dictionary<string, string>(capacity);
+		}
+
+		/// <inheritdoc />
+		IDictionary ILookupSerializationDefinition.CreateLookupInstance(int capacity)
+		{
+			return CreateLookupInstance(capacity);
 		}
 	}
 }

@@ -12,27 +12,46 @@
 	/// </summary>
 	public class CustomObjectSequenceProcessor : AbstractCustomObjectProcessor, ISerializationProcessor, IDeserializationToTargetProcessor
 	{
+		private bool requiresMarking = false;
 		private IIndexSerializationDefinition definition = null;
 		private IIndexTypeResolveSupport typeResolveDefinition = null;
 
+		/// <summary>
+		/// Does the serialization definition have support for type resolve parameters?
+		/// </summary>
 		public bool SupportsTypeResolvement
 		{
 			get { return typeResolveDefinition != null; }
 		}
 
+		/// <summary>
+		/// The type resolve serialization definition.
+		/// </summary>
 		public IIndexTypeResolveSupport TypeResolveDefinition
 		{
 			get { return typeResolveDefinition; }
 		}
 
+		/// <summary>
+		/// The index-based serialization definition.
+		/// </summary>
 		public new IIndexSerializationDefinition Definition
 		{
 			get { return definition; }
 		}
 
-		public CustomObjectSequenceProcessor(IIndexSerializationDefinition definition)
+		/// <summary>
+		/// Are objects being processed required to be marked with a processing attribute?
+		/// </summary>
+		public bool RequiresMarking
+		{
+			get { return requiresMarking; }
+		}
+
+		public CustomObjectSequenceProcessor(IIndexSerializationDefinition definition, bool requiresMarking = true)
 		: base(definition)
 		{
+			this.requiresMarking = requiresMarking;
 			this.definition = definition;
 			this.typeResolveDefinition = (definition is IIndexTypeResolveSupport) ? (definition as IIndexTypeResolveSupport) : null;
 		}
@@ -52,7 +71,7 @@
 			}
 
 			Type sourceType = objectToSerialize.GetType();
-			if (!sourceType.GetTypeInfo().IsDefined(definition.IndexBasedClassMarkingAttribute, true))
+			if (RequiresMarking && !sourceType.GetTypeInfo().IsDefined(definition.IndexBasedClassMarkingAttribute, true))
 			{
 				serializedResult = null;
 				return false;
@@ -91,7 +110,7 @@
 
 			// Create instance
 			Type instanceType = ResolveTypeFromSequence(targetType, dataToDeserialize as IList);
-			if (!instanceType.IsDefined(Definition.IndexBasedClassMarkingAttribute, true))
+			if (RequiresMarking && !instanceType.IsDefined(Definition.IndexBasedClassMarkingAttribute, true))
 			{
 				deserializedResult = null;
 				return false;
@@ -126,7 +145,7 @@
 			{
 				return true;
 			}
-			else if (!deserializationTarget.GetType().IsDefined(definition.IndexBasedClassMarkingAttribute, true))
+			else if (RequiresMarking && !deserializationTarget.GetType().IsDefined(definition.IndexBasedClassMarkingAttribute, true))
 			{
 				return false;
 			}

@@ -21,11 +21,7 @@
 			stringBuilderCache = new StringBuilder();
 		}
 
-		/// <summary>
-		/// Process the request data and sends out a UnityWebRequest
-		/// </summary>
-		/// <param name="request">The request data to be sent.</param>
-		/// <returns>A handle to keep track of the </returns>
+		/// <inheritdoc />
 		public override HttpMessageHandle SendRequest(IHttpRequest request)
 		{
 			request.ThrowIfNull(nameof(request));
@@ -121,44 +117,7 @@
 				return request.URL;
 			}
 
-			Dictionary<string, string>.Enumerator it = urlParams.GetEnumerator();
-
-			int count = 0;
-			stringBuilderCache.Clear();
-			while (it.MoveNext())
-			{
-				if (!string.IsNullOrEmpty(it.Current.Value))
-				{
-					if (count > 0)
-					{
-						stringBuilderCache.Append('&');
-					}
-					++count;
-					stringBuilderCache.Append(it.Current.Key).Append('=').Append(it.Current.Value);
-				}
-			}
-
-			string url = request.URL;
-			string parameters = UnityWebRequest.EscapeURL(stringBuilderCache.ToString());
-
-			// If the URL already contains parameters, then the generated one are simply appended.
-			// Else, the full URL is generated.
-			if (url.Contains("?"))
-			{
-				if (url.EndsWith("&"))
-				{
-					return url + parameters;
-				}
-				else
-				{
-					return string.Format("{0}&{1}", url, parameters);
-				}
-			}
-			else
-			{
-				return string.Format("{0}?{1}", url, parameters);
-			}
-
+			return URLUtilities.BuildUrlQuery(request.URL, urlParams);
 		}
 
 		private void OnRequestCompleted(HttpMessageHandle handle)

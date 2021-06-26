@@ -5,6 +5,9 @@
 	/// </summary>
 	public interface IProcessor
 	{
+		/// <summary>
+		/// The serialization definition used by the processor to determine which and how it processes the data.
+		/// </summary>
 		ISerializationDefinition Definition
 		{
 			get;

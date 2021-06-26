@@ -3,6 +3,14 @@
 	using System;
 	using System.Collections.Generic;
 
+	/// <summary>
+	/// An abstract messenger framework for matching outgoing requests with a single incoming response.
+	/// </summary>
+	/// <typeparam name="TRequest"></typeparam>
+	/// <typeparam name="TResponse"></typeparam>
+	/// <typeparam name="THandle"></typeparam>
+	/// <typeparam name="TResponseAssoc"></typeparam>
+	/// <typeparam name="TResponseCallback"></typeparam>
 	public abstract class WeblinkMessenger<TRequest, TResponse, THandle, TResponseAssoc, TResponseCallback> : IWeblinkMessenger<TRequest, TResponse, THandle>
 	where TRequest : IWeblinkRequest
 	where TResponse : IWeblinkResponse
@@ -121,12 +129,10 @@
 		{
 			request.ThrowIfNull(nameof(request));
 
-			if (!IsPending(request))
+			if (IsPending(request))
 			{
-				throw new WeblinkException("The request could not be found.");
+				RemovePendingRequest(request);
 			}
-
-			pendingRequests.Remove(request);
 		}
 
 		/// <inheritdoc />
@@ -135,7 +141,10 @@
 			pendingRequests.Clear();
 		}
 
+		/// <summary>
 		/// Adds the handle to the set of requests still pending a response.
+		/// </summary>
+		/// <param name="handle">The handle to add to the set of pending requests.</param>
 		protected virtual void AddPendingRequest(THandle handle)
 		{
 			handle.ThrowIfNull(nameof(handle));
@@ -148,15 +157,30 @@
 			pendingRequests.Add(handle.Request, handle);
 		}
 
+		/// <summary>
 		/// Removes the handle from the set of pending requests.
+		/// </summary>
+		/// <param name="handle">The handle to remove from the pending requests.</param>
 		protected virtual void RemovePendingRequest(THandle handle)
 		{
 			handle.ThrowIfNull(nameof(handle));
-			handle.Request.ThrowIfNull(nameof(handle.Request));
-			pendingRequests.Remove(handle.Request);
+			RemovePendingRequest(handle.Request);
 		}
 
+		/// <summary>
+		/// Removes the pending handle associated with the given request.
+		/// </summary>
+		/// <param name="request">The request associated with the handle to be removed.</param>
+		protected virtual void RemovePendingRequest(TRequest request)
+		{
+			request.ThrowIfNull(nameof(request));
+			pendingRequests.Remove(request);
+		}
+
+		/// <summary>
 		/// Notifies interested parties the message is completed.
+		/// </summary>
+		/// <param name="handle">The handle that is completed.</param>
 		protected void HandleCompleted(THandle handle)
 		{
 			handle.ThrowIfNull(nameof(handle));
@@ -164,7 +188,10 @@
 			onMessageCompleted.InvokeIfNotNull(handle);
 		}
 
+		/// <summary>
 		/// Notifies interested parties the message had an error.
+		/// </summary>
+		/// <param name="handle">The handle that failed.</param>
 		protected virtual void HandleFailed(THandle handle)
 		{
 			handle.ThrowIfNull(nameof(handle));
@@ -172,7 +199,11 @@
 			onMessageFailed.InvokeIfNotNull(handle);
 		}
 
+		/// <summary>
 		/// Creates a response instance of type associated with the request.
+		/// </summary>
+		/// <param name="handle">The handle for which a response should be instantiated.</param>
+		/// <returns>A matching response object that can be used to apply the response values to.</returns>
 		protected virtual TResponse InstantiateResponse(THandle handle)
 		{
 			handle.ThrowIfNull(nameof(handle));
@@ -191,7 +222,10 @@
 			return (TResponse)Activator.CreateInstance(responseType, true);
 		}
 
+		/// <summary>
 		/// Invokes callback methods on registered callback objects.
+		/// </summary>
+		/// <param name="handle">The handle for which to invoke registered callbs.</param>
 		protected virtual void InvokeResponseCallbacks(THandle handle)
 		{
 			handle.ThrowIfNull(nameof(handle));
@@ -204,6 +238,7 @@
 			}
 		}
 
+		/// <inheritdoc />
 		IWeblinkMessageHandle IWeblinkMessenger.GetMessageHandle(IWeblinkRequest request)
 		{
 			request.ThrowIfNull(nameof(request));
@@ -215,6 +250,7 @@
 			throw new ArgumentException(nameof(request));
 		}
 
+		/// <inheritdoc />
 		bool IWeblinkMessenger.IsPending(IWeblinkRequest request)
 		{
 			request.ThrowIfNull(nameof(request));
@@ -226,6 +262,7 @@
 			throw new ArgumentException(nameof(request));
 		}
 
+		/// <inheritdoc />
 		IWeblinkMessageHandle IWeblinkMessenger.SendRequest(IWeblinkRequest request)
 		{
 			request.ThrowIfNull(nameof(request));
@@ -237,6 +274,7 @@
 			throw new ArgumentException(nameof(request));
 		}
 
+		/// <inheritdoc />
 		void IWeblinkMessenger.Stop(IWeblinkRequest request)
 		{
 			request.ThrowIfNull(nameof(request));

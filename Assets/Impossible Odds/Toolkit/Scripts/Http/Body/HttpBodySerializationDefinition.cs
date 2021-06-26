@@ -13,7 +13,7 @@
 	<HttpBodyArrayAttribute, HttpBodyIndexAttribute, ArrayList, HttpBodyObjectAttribute, HttpBodyFieldAttribute, Dictionary<string, object>>
 	{
 		private List<IProcessor> processors = null;
-		private HashSet<Type> supportedTypes;
+		private HashSet<Type> supportedTypes = null;
 
 		/// <inheritdoc />
 		public override IEnumerable<ISerializationProcessor> SerializationProcessors

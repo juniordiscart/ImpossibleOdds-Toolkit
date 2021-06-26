@@ -20,21 +20,25 @@
 	{
 		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
 
+		/// <inheritdoc />
 		public Type LookupBasedClassMarkingAttribute
 		{
 			get { return typeof(T); }
 		}
 
+		/// <inheritdoc />
 		public Type LookupBasedFieldAttribute
 		{
 			get { return typeof(U); }
 		}
 
+		/// <inheritdoc />
 		public Type LookupBasedDataType
 		{
 			get { return typeof(V); }
 		}
 
+		/// <inheritdoc />
 		public IFormatProvider FormatProvider
 		{
 			get { return formatProvider; }

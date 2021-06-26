@@ -11,38 +11,63 @@
 	/// </summary>
 	public class CustomObjectLookupProcessor : AbstractCustomObjectProcessor, IDeserializationToTargetProcessor
 	{
+		private bool requiresMarking = false;
 		private ILookupSerializationDefinition definition = null;
 		private ILookupTypeResolveSupport typeResolveSupport = null;
 		private IRequiredValueSupport requiredValueSupport = null;
 
+		/// <summary>
+		/// Does the serialization definition have support for type resolve parameters?
+		/// </summary>
 		public bool SupportsTypeResolvement
 		{
 			get { return typeResolveSupport != null; }
 		}
 
+		/// <summary>
+		/// Does the serialization definition have support for required values?
+		/// </summary>
 		public bool SupportsRequiredValues
 		{
 			get { return requiredValueSupport != null; }
 		}
 
+		/// <summary>
+		/// The lookup serialization definition.
+		/// </summary>
 		public new ILookupSerializationDefinition Definition
 		{
 			get { return definition; }
 		}
 
+		/// <summary>
+		/// The type resolve serialization definition.
+		/// </summary>
 		public ILookupTypeResolveSupport TypeResolveDefinition
 		{
 			get { return typeResolveSupport; }
 		}
 
+		/// <summary>
+		/// The required value serialization definition.
+		/// </summary>
 		public IRequiredValueSupport RequiredValueDefinition
 		{
 			get { return requiredValueSupport; }
 		}
 
-		public CustomObjectLookupProcessor(ILookupSerializationDefinition definition)
+		/// <summary>
+		/// Are objects being processed required to be marked with a processing attribute?
+		/// </summary>
+		public bool RequiresMarking
+		{
+			get { return requiresMarking; }
+		}
+
+		public CustomObjectLookupProcessor(ILookupSerializationDefinition definition, bool requiresObjectMarking = true)
 		: base(definition)
 		{
+			this.requiresMarking = requiresObjectMarking;
 			this.definition = definition;
 			this.typeResolveSupport = (definition is ILookupTypeResolveSupport) ? (definition as ILookupTypeResolveSupport) : null;
 			this.requiredValueSupport = (definition is IRequiredValueSupport) ? (definition as IRequiredValueSupport) : null;
@@ -63,7 +88,7 @@
 			}
 
 			Type sourceType = objectToSerialize.GetType();
-			if (!sourceType.IsDefined(definition.LookupBasedClassMarkingAttribute, true))
+			if (RequiresMarking && !sourceType.IsDefined(definition.LookupBasedClassMarkingAttribute, true))
 			{
 				serializedResult = null;
 				return false;
@@ -101,7 +126,7 @@
 			}
 
 			Type instanceType = ResolveTypeFromLookup(targetType, dataToDeserialize as IDictionary);
-			if (!instanceType.IsDefined(Definition.LookupBasedClassMarkingAttribute, true))
+			if (RequiresMarking && !instanceType.IsDefined(Definition.LookupBasedClassMarkingAttribute, true))
 			{
 				deserializedResult = null;
 				return false;
@@ -136,7 +161,7 @@
 			{
 				return true;
 			}
-			else if (!deserializationTarget.GetType().IsDefined(definition.LookupBasedClassMarkingAttribute, true))
+			else if (RequiresMarking && !deserializationTarget.GetType().IsDefined(definition.LookupBasedClassMarkingAttribute, true))
 			{
 				return false;
 			}

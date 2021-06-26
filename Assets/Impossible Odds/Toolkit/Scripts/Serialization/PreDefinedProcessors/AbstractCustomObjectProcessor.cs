@@ -11,23 +11,39 @@
 		private static Dictionary<Type, CustomObjectTypeCache> typeInfoCache = new Dictionary<Type, CustomObjectTypeCache>();
 
 		private ISerializationDefinition definition = null;
+		private ICallbacksSupport callbacksDefinition = null;
 
+		/// <inheritdoc />
 		public ISerializationDefinition Definition
 		{
 			get { return definition; }
 		}
 
+		/// <summary>
+		/// Does the serialization definition supports callbacks?
+		/// </summary>
 		public bool SupportsSerializationCallbacks
 		{
-			get { return definition is ICallbacksSupport; }
+			get { return callbacksDefinition != null; }
+		}
+
+		/// <summary>
+		/// The callbacks support feature of the current serialization definition.
+		/// </summary>
+		public ICallbacksSupport CallbacksSupport
+		{
+			get { return callbacksDefinition; }
 		}
 
 		public AbstractCustomObjectProcessor(ISerializationDefinition definition)
 		{
 			this.definition = definition;
+			this.callbacksDefinition = (definition is ICallbacksSupport) ? definition as ICallbacksSupport : null;
 		}
 
+		/// <inheritdoc />
 		public abstract bool Serialize(object objectToSerialize, out object serializedResult);
+		/// <inheritdoc />
 		public abstract bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult);
 
 		/// <summary>
@@ -36,9 +52,9 @@
 		/// <param name="target">Target object to notify.</param>
 		protected void InvokeOnSerializationCallback(object target)
 		{
-			if (definition is ICallbacksSupport callbacks)
+			if (SupportsSerializationCallbacks)
 			{
-				InvokeCallback(target, callbacks.OnSerializationCallbackType);
+				InvokeCallback(target, CallbacksSupport.OnSerializationCallbackType);
 			}
 		}
 
@@ -48,9 +64,9 @@
 		/// <param name="target">Target object to notify.</param>
 		protected void InvokeOnSerializedCallback(object target)
 		{
-			if (definition is ICallbacksSupport callbacks)
+			if (SupportsSerializationCallbacks)
 			{
-				InvokeCallback(target, callbacks.OnSerializedCallbackType);
+				InvokeCallback(target, CallbacksSupport.OnSerializedCallbackType);
 			}
 		}
 
@@ -60,9 +76,9 @@
 		/// <param name="target">Target object to notify.</param>
 		protected void InvokeOnDeserializationCallback(object target)
 		{
-			if (definition is ICallbacksSupport callbacks)
+			if (SupportsSerializationCallbacks)
 			{
-				InvokeCallback(target, callbacks.OnDeserializionCallbackType);
+				InvokeCallback(target, CallbacksSupport.OnDeserializionCallbackType);
 			}
 		}
 
@@ -72,9 +88,9 @@
 		/// <param name="target">Target object to notify.</param>
 		protected void InvokeOnDeserializedCallback(object target)
 		{
-			if (definition is ICallbacksSupport callbacks)
+			if (SupportsSerializationCallbacks)
 			{
-				InvokeCallback(target, callbacks.OnDeserializedCallbackType);
+				InvokeCallback(target, CallbacksSupport.OnDeserializedCallbackType);
 			}
 		}
 
