@@ -20,7 +20,7 @@
 			baseUrl.ThrowIfNullOrWhitespace(nameof(baseUrl));
 			parameters.ThrowIfNull(nameof(parameters));
 
-			List<string> paramsList = new List<string>(parameters.Count);
+			string result = baseUrl;
 			foreach (IDictionaryEnumerator it in parameters)
 			{
 				if ((it.Key == null) || (it.Value == null))
@@ -33,19 +33,47 @@
 
 				if (!string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value))
 				{
-					paramsList.Add(string.Format("{0}={1}", UnityWebRequest.EscapeURL(key), UnityWebRequest.EscapeURL(value)));
+					result = AppendUrlParam(result, key, value);
 				}
 			}
 
-			string queryParams = string.Join("&", paramsList);
+			return result;
+		}
+
+		/// <summary>
+		/// Appends a key-value pair to the URL.
+		/// Note: the key and value will be escaped.
+		/// </summary>
+		/// <param name="baseUrl">The base URL on to which to append the key-value pair.</param>
+		/// <param name="paramKey">The key to use for the URL parameter. The key will be properly URL-escaped.</param>
+		/// <param name="paramValue">The value to use for the URL parameter. The value will be properly URL-escaped.</param>
+		/// <returns>A concatenation of the key-value pair to the base URL in the form of baseURL?{key}={value}.</returns>
+		public static string AppendUrlParam(string baseUrl, string paramKey, string paramValue)
+		{
+			paramKey.ThrowIfNullOrWhitespace(nameof(paramKey));
+			paramValue.ThrowIfNullOrWhitespace(nameof(paramValue));
+			return AppendUrlParam(baseUrl, string.Format("{0}={1}", UnityWebRequest.EscapeURL(paramKey), UnityWebRequest.EscapeURL(paramValue)));
+		}
+
+		/// <summary>
+		/// Appends a key-value pair to the URL.
+		/// Note: the key-value pair is assumed already URL-escaped and in the form of {key}={value}.
+		/// </summary>
+		/// <param name="baseUrl">The base URL on to which to append the key-value pair.</param>
+		/// <param name="paramKeyValue">The key-value par to be appended the base URL.</param>
+		/// <returns>A concatenation of the key-value pair to the base URL in the form of baseURL?{key}={value}.</returns>
+		public static string AppendUrlParam(string baseUrl, string paramKeyValue)
+		{
+			baseUrl.ThrowIfNullOrWhitespace(nameof(baseUrl));
+			paramKeyValue.ThrowIfNullOrWhitespace(nameof(paramKeyValue));
 
 			if (baseUrl.Contains("?"))
 			{
-				return string.Format(baseUrl.EndsWith("&") ? "{0}{1}" : "{0}&{1}", baseUrl, queryParams);
+				return string.Format(baseUrl.EndsWith("&") ? "{0}{1}" : "{0}&{1}", baseUrl, paramKeyValue);
 			}
 			else
 			{
-				return string.Format("{0}?{1}", baseUrl, queryParams);
+				return string.Format("{0}?{1}", baseUrl, paramKeyValue);
 			}
 		}
 

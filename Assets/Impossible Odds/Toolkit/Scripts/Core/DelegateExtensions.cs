@@ -65,6 +65,7 @@
 		/// </summary>
 		/// <param name="del">The delegate to invoke, when not null.</param>
 		/// <param name="args">The parameters to pass during the delegate invokation.</param>
+		[Obsolete("Use a concrete implementation to invoke the delegate instead.")]
 		public static void InvokeIfNotNull(this Delegate del, params object[] args)
 		{
 			if (del != null)

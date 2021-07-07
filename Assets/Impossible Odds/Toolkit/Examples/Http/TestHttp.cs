@@ -1,12 +1,12 @@
 ﻿namespace ImpossibleOdds.Examples.Http
 {
+	using System.Text;
 	using UnityEngine;
 	using UnityEngine.UI;
 	using TMPro;
 
 	using ImpossibleOdds.Http;
 	using ImpossibleOdds.Json;
-	using System.Text;
 
 	public class TestHttp : MonoBehaviour
 	{
@@ -26,6 +26,7 @@
 			messenger = new HttpMessenger();
 			messenger.RegisterCallback(this);   // Allows to get direct access to request and response
 
+			// For printing the result to the log.
 			jsonPrintOptions = new JsonOptions();
 			jsonPrintOptions.CompactOutput = false;
 

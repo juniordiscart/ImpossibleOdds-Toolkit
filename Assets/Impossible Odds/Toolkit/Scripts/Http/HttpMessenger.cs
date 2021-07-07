@@ -122,10 +122,12 @@
 
 		private void OnRequestCompleted(HttpMessageHandle handle)
 		{
-			if (IsPending(handle.Request))
+			if (!IsPending(handle.Request))
 			{
-				RemovePendingRequest(handle);
+				return;
 			}
+
+			RemovePendingRequest(handle);
 
 			if (handle.WebRequest.isNetworkError || handle.WebRequest.isHttpError)
 			{
