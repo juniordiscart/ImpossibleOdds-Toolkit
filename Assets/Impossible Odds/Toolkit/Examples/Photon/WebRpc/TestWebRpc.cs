@@ -1,0 +1,128 @@
+﻿#if PHOTON_UNITY_NETWORKING
+#define PHOTON_AVAILABLE
+#endif
+
+namespace ImpossibleOdds.Examples.Photon.WebRpc
+{
+#if PHOTON_AVAILABLE
+	using System.Text;
+	using UnityEngine;
+	using UnityEngine.UI;
+	using TMPro;
+	using ImpossibleOdds.Photon.WebRpc;
+
+	public class TestWebRpc : MonoBehaviour
+	{
+		[SerializeField, HideInInspector]
+		private DemoNetwork network = null;
+		[SerializeField]
+		private Button btnSendRequest = null;
+		[SerializeField]
+		private TextMeshProUGUI txtLog = null;
+
+		private StringBuilder logBuilder = null;
+
+		private WebRpcMessenger messenger = null;
+
+		private void Awake()
+		{
+			network.onConnected += OnConnected;
+			network.onDisconnected += OnDisconnected;
+
+			logBuilder = new StringBuilder();
+
+			btnSendRequest.onClick.AddListener(SendRequest);
+		}
+
+		private void OnEnable()
+		{
+			logBuilder.Clear();
+			txtLog.text = string.Empty;
+		}
+
+		private void Start()
+		{
+			// For this demo, the WebRpcMessenger is using a custom networking client
+			// to connect to the demo server. It is not using the global PhotonServerSettings.
+			// Instead use: messenger = new WebRpcMessenger(PhotonNetwork.NetworkingClient);
+			messenger = new WebRpcMessenger(network.Client);
+			messenger.RegisterCallback(this);
+
+			btnSendRequest.interactable = network.IsConnected;
+		}
+
+		private void OnDestroy()
+		{
+			if (network != null)
+			{
+				network.PurgeDelegatesOf(this);
+			}
+		}
+
+		private void OnConnected()
+		{
+			btnSendRequest.interactable = network.IsConnected;
+			LogMessage("Connected to Photon. WebRPC is available for use.");
+		}
+
+		private void OnDisconnected()
+		{
+			btnSendRequest.interactable = network.IsConnected;
+			LogMessage("Disconnected from Photon.");
+		}
+
+		private void SendRequest()
+		{
+			LogMessage("Sending request to update a leaderboard:");
+			UpdateLeaderboardRequest request = new UpdateLeaderboardRequest(11, "best_race_times", UnityEngine.Random.Range(0, 9999));
+			request.ToString(logBuilder);
+			LogMessage(string.Empty);
+
+			messenger.SendRequest(request);
+		}
+
+		private void LogMessage(string msg)
+		{
+			logBuilder.AppendLine(msg);
+			txtLog.text = logBuilder.ToString();
+		}
+
+		[WebRpcResponseCallback(typeof(UpdateLeaderboardResponse))]
+		private void OnUpdateLeaderboardResponse(UpdateLeaderboardRequest request, UpdateLeaderboardResponse response, WebRpcMessageHandle handle)
+		{
+			LogMessage("Received update leaderboard respone:");
+			response.ToString(logBuilder);
+
+			if (!string.IsNullOrWhiteSpace(handle.DebugMessage))
+			{
+				LogMessage(string.Format("Debug message: {0}", handle.DebugMessage));
+			}
+
+			LogMessage(string.Empty);
+		}
+	}
+#else
+
+	using UnityEngine;
+	using UnityEngine.UI;
+	using TMPro;
+
+	// Stub, to keep store references and save serialized data.
+	public class TestWebRpc : MonoBehaviour
+	{
+		[SerializeField, HideInInspector]
+		private DemoNetwork network = null;
+		[SerializeField]
+		private Button btnSendRequest = null;
+		[SerializeField]
+		private TextMeshProUGUI txtLog = null;
+
+		private void Start()
+		{
+			network.enabled = false;
+			btnSendRequest.interactable = false;
+			txtLog.text = "Photon seems to be unavailable in the project. Make sure you have a valid PUN package installed in the project before running this demo.";
+		}
+	}
+#endif
+}

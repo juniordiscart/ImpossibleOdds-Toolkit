@@ -1,0 +1,21 @@
+{
+    "name": "ImpossibleOdds.Photon.WebRpc",
+    "references": [
+        "ImpossibleOdds.Core",
+        "ImpossibleOdds.Serialization",
+        "ImpossibleOdds.Weblink",
+        "ImpossibleOdds.Http",
+        "PhotonRealtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "PHOTON_UNITY_NETWORKING"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
