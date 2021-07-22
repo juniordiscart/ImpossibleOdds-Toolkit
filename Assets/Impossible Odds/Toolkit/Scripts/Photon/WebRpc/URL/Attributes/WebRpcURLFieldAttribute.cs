@@ -4,7 +4,7 @@
 	using ImpossibleOdds.Serialization;
 
 	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
-	public sealed class WebRpcURLFieldAttribute : Attribute, ILookupParameter<string>
+	public sealed class WebRpcUrlFieldAttribute : Attribute, ILookupParameter<string>
 	{
 		private string key = null;
 
@@ -19,10 +19,10 @@
 			set { key = value; }
 		}
 
-		public WebRpcURLFieldAttribute()
+		public WebRpcUrlFieldAttribute()
 		{ }
 
-		public WebRpcURLFieldAttribute(string key)
+		public WebRpcUrlFieldAttribute(string key)
 		{
 			this.key = key;
 		}

@@ -24,6 +24,7 @@
 		where TResponseAttr : WeblinkResponseAttribute
 		{
 			requestType.ThrowIfNull(nameof(requestType));
+
 			if (!requestResponseMapping.ContainsKey(requestType))
 			{
 				TResponseAttr attr = requestType.GetCustomAttribute<TResponseAttr>(false);
@@ -44,6 +45,18 @@
 		where TResponseAttr : WeblinkResponseAttribute
 		{
 			return GetResponseType<TResponseAttr>(typeof(TRequestType));
+		}
+
+		/// <summary>
+		/// Checks whether a response type is defined for the given request type.
+		/// </summary>
+		/// <param name="requestType">The type of request for which to check if a type of response is defined.</param>
+		/// <typeparam name="TResponseAttr"></typeparam>
+		/// <returns>True, if the request type has defined a response type.</returns>
+		public static bool IsResponseTypeDefined<TResponseAttr>(Type requestType)
+		where TResponseAttr : WeblinkResponseAttribute
+		{
+			return GetResponseType<TResponseAttr>(requestType) != null;
 		}
 
 		/// <summary>

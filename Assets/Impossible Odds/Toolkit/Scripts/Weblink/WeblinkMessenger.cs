@@ -207,15 +207,17 @@
 		protected virtual TResponse InstantiateResponse(THandle handle)
 		{
 			handle.ThrowIfNull(nameof(handle));
+
+			if (!WeblinkUtilities.IsResponseTypeDefined<TResponseAssoc>(handle.Request.GetType()))
+			{
+				throw new WeblinkException("The request of type {0} does not have a response type defined using {1}.", handle.Request.GetType().Name, typeof(TResponseAssoc).Name);
+			}
+
 			Type responseType = WeblinkUtilities.GetResponseType<TResponseAssoc>(handle.Request.GetType());
 
-			if (responseType == null)
+			if (responseType.IsAbstract || responseType.IsInterface)
 			{
-				throw new WeblinkException("Could not determine the expected type of response for requests of type '{0}'.", handle.Request.GetType().Name);
-			}
-			else if (responseType.IsAbstract || responseType.IsInterface)
-			{
-				throw new WeblinkException("Cannot create a response instance of type '{0}' because it is abstract or an interface.", responseType.Name);
+				throw new WeblinkException("Cannot create a response instance of type {0} because it is abstract or an interface.", responseType.Name);
 			}
 
 			// Instantiate a response

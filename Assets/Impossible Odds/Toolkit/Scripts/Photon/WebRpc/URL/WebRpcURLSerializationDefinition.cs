@@ -10,7 +10,7 @@
 	/// <summary>
 	/// Serialization definition for parameters in the URL of WebRPC requests.
 	/// </summary>
-	public class WebRpcURLSerializationDefinition : ILookupSerializationDefinition
+	public class WebRpcUrlSerializationDefinition : ILookupSerializationDefinition
 	{
 		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
 		private List<IProcessor> processors = null;
@@ -63,7 +63,7 @@
 		/// <inheritdoc />
 		public Type LookupBasedFieldAttribute
 		{
-			get { return typeof(WebRpcURLFieldAttribute); }
+			get { return typeof(WebRpcUrlFieldAttribute); }
 		}
 
 		/// <inheritdoc />
@@ -79,7 +79,7 @@
 			set { formatProvider = value; }
 		}
 
-		public WebRpcURLSerializationDefinition()
+		public WebRpcUrlSerializationDefinition()
 		{
 			processors = new List<IProcessor>()
 			{

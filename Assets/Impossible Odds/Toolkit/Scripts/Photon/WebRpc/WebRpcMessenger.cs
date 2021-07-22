@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Reflection;
 	using ImpossibleOdds.Http;
 	using ImpossibleOdds.Weblink;
 	using ImpossibleOdds.Serialization;
@@ -17,15 +18,16 @@
 		IWebRpcCallback,
 		IDisposable
 	{
+		public const ushort MinimumIDLength = 4;
 		public const ushort DefaultIDLength = 8;
 		public const string DefaultRequestIDKey = "RequestId";
 		public const string DefaultResponseIDKey = "ResponseId";
 		private const string IDGenerationPool = "ABCDEFGHIJKLMNPQRSTUVWXYabcdefghjklmnopqrstuvwxyz0123456789_-";
 
 		private readonly static WebRpcBodySerializationDefinition bodyDefinition = new WebRpcBodySerializationDefinition();
-		private readonly static WebRpcURLSerializationDefinition urlDefinition = new WebRpcURLSerializationDefinition();
-		private readonly LoadBalancingClient photonClient = null;
+		private readonly static WebRpcUrlSerializationDefinition urlDefinition = new WebRpcUrlSerializationDefinition();
 
+		private readonly LoadBalancingClient photonClient = null;
 		private ushort generatedIDLength = DefaultIDLength;
 		private string requestIDKey = DefaultRequestIDKey;
 		private string responseIDKey = DefaultResponseIDKey;
@@ -79,9 +81,9 @@
 			get { return generatedIDLength; }
 			set
 			{
-				if (value < DefaultIDLength)
+				if (value < MinimumIDLength)
 				{
-					throw new ArgumentOutOfRangeException(string.Format("The length of IDs should at least be {0} long as to prevent collision.", DefaultIDLength));
+					throw new ArgumentOutOfRangeException(string.Format("The length of IDs should at least be {0} long as to prevent collision.", MinimumIDLength));
 				}
 
 				generatedIDLength = value;
@@ -119,17 +121,7 @@
 				return GetMessageHandle(request);
 			}
 
-			string requestID = GenerateRequestID();
-			if (CustomOpWebRPC(request, requestID))
-			{
-				WebRpcMessageHandle messageHandle = new WebRpcMessageHandle(request, requestID);
-				AddPendingRequest(messageHandle);
-				return messageHandle;
-			}
-			else
-			{
-				throw new WebRpcException("Failed to send request of type {0} to {1}.", request.GetType().Name, request.UriPath);
-			}
+			return CustomOpWebRPC(request, GenerateRequestUriPath(request), GenerateRequestBody(request));
 		}
 
 		/// <inheritdoc />
@@ -188,36 +180,74 @@
 		}
 
 		/// <summary>
-		/// Send a WebRPC operation through Photon. Since not all features are exposed through the
-		/// Photon API, a custom send operation is created that applies missing features (e.g. encryption).
+		/// Generates the URI of the request.
 		/// </summary>
 		/// <param name="request">The request to be sent.</param>
-		/// <param name="requestID">The request ID assigned in this messenger.</param>
-		/// <returns>True if the request was enqueued for sending in Photon, false otherwise.</returns>
-		private bool CustomOpWebRPC(IWebRpcRequest request, string requestID)
+		/// <returns>The URI of the request, appended with any parameters as defined by the request, if any.</returns>
+		private string GenerateRequestUriPath(IWebRpcRequest request)
 		{
-			requestID.ThrowIfNullOrWhitespace(nameof(requestID));
+			request.ThrowIfNull(nameof(request));
 
 			string requestUri = request.UriPath;
-			requestUri.ThrowIfNullOrWhitespace(nameof(requestUri));
+			if (string.IsNullOrEmpty(requestUri))
+			{
+				throw new WebRpcException("The path of the request is null or empty.");
+			}
 
+			// Append parameters, if any.
 			Dictionary<string, string> urlParams = Serializer.Serialize<Dictionary<string, string>>(request, urlDefinition);
 			if (urlParams != null)
 			{
 				requestUri = URLUtilities.BuildUrlQuery(requestUri, urlParams);
 			}
 
+			return requestUri;
+		}
+
+		/// <summary>
+		/// Generates the POST-body data of the request.
+		/// </summary>
+		/// <param name="request">The request to be sent.</param>
+		/// <returns>The serialized parameters for the request.</returns>
+		private Dictionary<string, object> GenerateRequestBody(IWebRpcRequest request)
+		{
+			request.ThrowIfNull(nameof(request));
+
+			if (!request.GetType().IsDefined(typeof(WebRpcObjectAttribute)))
+			{
+				throw new WebRpcException("The request of type {0} is not marked with the required attribute of type {1}.", request.GetType().Name, typeof(WebRpcObjectAttribute).Name);
+			}
+
+			// Generate the WebRPC parameters, and if none were generated, create one.
 			Dictionary<string, object> webRpcParams = Serializer.Serialize<Dictionary<string, object>>(request, bodyDefinition);
 			if (webRpcParams == null)
 			{
-				throw new WebRpcException("The WebRPC parameters object is expected to be of type {0}. Have you tagged your request with the {1} attribute?", typeof(Dictionary<string, object>).Name, typeof(WebRpcObjectAttribute).Name);
+				webRpcParams = new Dictionary<string, object>(1);   // At least one, because the request ID will be appended still.
 			}
 
-			// Add the request ID to the parameters.
-			webRpcParams[RequestIDKey] = requestID;
+			return webRpcParams;
+		}
+
+		/// <summary>
+		/// Send a WebRPC operation through Photon. Since not all features are exposed through the
+		/// Photon API, a custom send operation is created that applies missing features (e.g. encryption).
+		/// </summary>
+		/// <param name="request">The request to be sent.</param>
+		/// <param name="uri">The request to be sent.</param>
+		/// <param name="webRpcParams">The request to be sent.</param>
+		/// <returns>A message handle when the request was delivered successfully to the Photon network.</returns>
+		private WebRpcMessageHandle CustomOpWebRPC(IWebRpcRequest request, string uri, Dictionary<string, object> webRpcParams)
+		{
+			request.ThrowIfNull(nameof(request));
+			webRpcParams.ThrowIfNull(nameof(webRpcParams));
+			uri.ThrowIfNullOrWhitespace(nameof(uri));
+
+			// Generate the request ID to identify the response.
+			string requestID = GenerateRequestID();
+			webRpcParams[requestID] = requestID;
 
 			Dictionary<byte, object> opParameters = new Dictionary<byte, object>();
-			opParameters.Add(ParameterCode.UriPath, requestUri);
+			opParameters.Add(ParameterCode.UriPath, uri);
 			opParameters.Add(ParameterCode.WebRpcParameters, webRpcParams);
 
 			if (request.UseAuthCookie)
@@ -227,7 +257,16 @@
 
 			SendOptions options = SendOptions.SendReliable;
 			options.Encrypt = request.UseEncryption;
-			return photonClient.LoadBalancingPeer.SendOperation(OperationCode.WebRpc, opParameters, options);
+			if (photonClient.LoadBalancingPeer.SendOperation(OperationCode.WebRpc, opParameters, options))
+			{
+				WebRpcMessageHandle messageHandle = new WebRpcMessageHandle(request, requestID);
+				AddPendingRequest(messageHandle);
+				return messageHandle;
+			}
+			else
+			{
+				throw new WebRpcException("Failed to send request of type {0} to {1}.", request.GetType().Name, request.UriPath);
+			}
 		}
 
 		/// <summary>

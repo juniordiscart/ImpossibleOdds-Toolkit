@@ -71,7 +71,7 @@ The above example would generate a URL to `example.com/myrequest?name=Impossible
 
 ### GET Requests
 
-GET requests mainly exist to ask the server to fetch resources, e.g. a leaderboard, an image or something else.
+GET-type requests mainly exist to ask the server to fetch resources, e.g. a leaderboard, an image or something else.
 
 To have your request class be picked up by the framework as a GET request, simply implement the `IHttpGetRequest`. It doesn't require you to actually implement anything extra. It simply denotes your class as such. Its parameters are defined through its URL though, so anything extra that defines the request should be added using the `HttpUrlField` attribute as seen in the [URL & Headers section](#url-&-headers)
 
@@ -99,7 +99,7 @@ However, there are several kinds of GET request templates available already to y
 
 ### POST Requests
 
-A POST request serves to send over some structured data to the server and do something with it, e.g. a registration form, or updating a score on a leaderboard. It's not designed to send over big chunks of data like images, video or other forms of binary data. Please check out the topic about [PUT requests](#put-requests) to upload bigger sets of data.
+A POST-type request serves to send over some structured data to the server and do something with it, e.g. a registration form, or updating a score on a leaderboard. It's not designed to send over big chunks of data like images, video or other forms of binary data. Please check out the topic about [PUT requests](#put-requests) to upload bigger sets of data.
 
 To have your object be recognised as a POST request by this framework, have it implement the `IHttpPostRequest` interface. This interface on its own does not force any additional properties or methods to be implemented but does allow you to define a complex set of parameters that will be set in the request's body.
 
@@ -175,7 +175,7 @@ An example output of this data placed in the body of the request could be:
 
 ### PUT Requests
 
-To upload larger pieces of data on a server you typically use PUT requests. They can be used to send over data 'as is', without additional processing, at least not from this framework.
+To upload larger pieces of data on a server you typically use PUT-type requests. They can be used to send over data 'as is', without additional processing, at least not from this framework.
 
 To setup a PUT request, either implement the `IHttpPutStringRequest` or `IHttpPutBinaryRequest` interface. These define the two supported types of data you want to transmit: string or binary data respectively. This defines how the server should interpret the received data.
 
@@ -215,23 +215,23 @@ public class MyBinaryPutRequest : IHttpPutBinaryRequest
 
 ## Responses
 
-When your server decides to send something back, this framework can immediately processes the incoming data to usable objects. Based on the type of request you sent out, you can also define what kind of response to expect back.
+When your server decides to send something back, this framework can immediately process the incoming data to usable objects. Based on the type of request you sent out, you can also define what kind of response to expect back.
 
-To associate a request with a particular response type, you must decorate your **request** class with an `HttpResponseType` attribute. A request can only be associated with a single type of response.
+To associate a request with a particular response type, you must decorate your **request** class with an `HttpResponseType` attribute. It takes as only parameter the type of the **response** it is associated with. Please note that this type of the response should not be an interface, abstract and should implement the `IHttpResponse` interface.
 
 ```cs
 // Associate the request type with a response type.
-[HttpResponseType(typeof(MyResponse))]
+[HttpBodyObject, HttpResponseType(typeof(MyResponse))]
 public class MyRequest : IHttpRequest
 {
-	public string URL
-	{
-		get;
-	}
+	...
 }
 
+[HttpBodyObject]
 public class MyResponse : IHttpResponse
-{ }
+{
+	...
+}
 ```
 
 To have the server's response be processed automatically, have your response object implement one of the following interfaces. If you don't define any, then it's entirely up to you to deal with the response data later.
@@ -265,7 +265,7 @@ public class LeaderboardEntry
 [HttpBodyObject]
 public class Leaderboard
 {
-	[HttpBodyField("ID")]
+	[HttpBodyField("Id")]
 	private string leaderboardID;
 	[HttpBodyField]
 	private DateTime lastUpdated;
@@ -285,7 +285,7 @@ This kind of response is perfect for processing responses from GET or POST reque
 
 ### Custom Response Handlers
 
-When your response implements the `IHttpCustomResponse` interface, it expects you to process the response further. This might be necessary in case you need to unpack or decrypt the returned data. The `ProcessResponse` method will get called on your response object along with the `UnityWebRequest` that is associated with it.
+When your response implements the `IHttpCustomResponse` interface, the framework expects you to process the response further. This might be necessary in case you need to unpack or decrypt the returned data. The `ProcessResponse` method will get called on your response object along with the `UnityWebRequest` that is associated with it.
 
 ```cs
 public class MyCustomResponse : IHttpCustomResponse
@@ -398,7 +398,7 @@ For these callbacks, the parameters can be in any order and every parameter is o
 
 ## Example
 
-Check out the HTTP sample scene for a hands-on example!
+Check out the HTTP sample scene for a hands-on example! It will make requests to the _Impossible Odds demo server_ to demonstrate its functionality.
 
 [Logo]: ./Images/ImpossibleOddsLogo.png
 [JSON]: ./Json.md

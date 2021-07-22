@@ -14,9 +14,11 @@
 
 		public WeblinkResponseCallbackAttribute(Type responseType)
 		{
+			responseType.ThrowIfNull(nameof(responseType));
+
 			if (!typeof(IWeblinkResponse).IsAssignableFrom(responseType))
 			{
-				throw new WeblinkException(string.Format("Type {0} does not implement interface {1}.", responseType.Name, typeof(IWeblinkResponse).Name));
+				throw new WeblinkException("Type {0} does not implement interface {1}.", responseType.Name, typeof(IWeblinkResponse).Name);
 			}
 
 			this.responseType = responseType;

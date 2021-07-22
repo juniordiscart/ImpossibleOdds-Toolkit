@@ -8,6 +8,11 @@
 	{
 		public WebRpcResponseTypeAttribute(Type responseType)
 		: base(responseType)
-		{ }
+		{
+			if (!typeof(IWebRpcResponse).IsAssignableFrom(responseType))
+			{
+				throw new WebRpcException(string.Format("Type {0} does not implement interface {1}.", responseType.Name, typeof(IWebRpcResponse).Name));
+			}
+		}
 	}
 }

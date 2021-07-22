@@ -8,7 +8,7 @@
 	public interface IWebRpcResponse : IWeblinkResponse
 	{
 		/// <summary>
-		/// State whether the request was completed successfully.
+		/// State whether the request was completed successfully on the server.
 		/// </summary>
 		bool IsSuccess
 		{

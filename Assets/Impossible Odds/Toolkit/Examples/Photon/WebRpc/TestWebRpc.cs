@@ -107,7 +107,7 @@ namespace ImpossibleOdds.Examples.Photon.WebRpc
 	using UnityEngine.UI;
 	using TMPro;
 
-	// Stub, to keep store references and save serialized data.
+	// Stub, to keep references and save serialized data stored.
 	public class TestWebRpc : MonoBehaviour
 	{
 		[SerializeField, HideInInspector]
