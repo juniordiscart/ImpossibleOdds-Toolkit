@@ -212,7 +212,7 @@
 
 				if (!typeof(ITypeResolveParameter).IsAssignableFrom(typeOfAttribute))
 				{
-					throw new Serialization.SerializationException(string.Format("The requested attribute type to look for does not implement the {0} interface.", typeof(ITypeResolveParameter).Name));
+					throw new Serialization.SerializationException("The requested attribute type to look for does not implement the {0} interface.", typeof(ITypeResolveParameter).Name);
 				}
 
 				if (typeResolveParameters.ContainsKey(typeOfAttribute))

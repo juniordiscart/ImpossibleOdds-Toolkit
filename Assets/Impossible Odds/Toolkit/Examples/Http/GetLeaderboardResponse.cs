@@ -6,10 +6,10 @@
 	[Flags]
 	public enum ResponseError
 	{
-		NONE = 0,
-		INVALID_ID = 1,
-		INVALID_ENTRIES = 1 << 1,
-		INVALID_OFFSET = 1 << 2
+		None = 0,
+		InvalidID = 1,
+		InvalidEntries = 1 << 1,
+		InvalidOffset = 1 << 2
 	}
 
 	[HttpBodyObject]
@@ -22,7 +22,7 @@
 
 		public bool IsSuccess
 		{
-			get { return (responseError == ResponseError.NONE) && (leaderboard != null); }
+			get { return (responseError == ResponseError.None) && (leaderboard != null); }
 		}
 
 		public ResponseError ResponseError

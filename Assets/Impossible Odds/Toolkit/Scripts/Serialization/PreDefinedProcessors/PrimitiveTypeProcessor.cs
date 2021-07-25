@@ -87,7 +87,7 @@
 				return true;
 			}
 
-			throw new SerializationException(string.Format("Cannot convert the primitive data type {0} to a data type that is supported by the serialization definition of type {1}.", sourceType.Name, definition.GetType().Name));
+			throw new SerializationException("Cannot convert the primitive data type {0} to a data type that is supported by the serialization definition of type {1}.", sourceType.Name, definition.GetType().Name);
 		}
 
 		/// <summary>

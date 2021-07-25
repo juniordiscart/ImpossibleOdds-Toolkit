@@ -10,7 +10,8 @@
 	/// <summary>
 	/// Serialization definition for the header of HTTP requests.
 	/// </summary>
-	public class HttpHeaderSerializationDefinition : ILookupSerializationDefinition
+	public class HttpHeaderSerializationDefinition : ILookupSerializationDefinition,
+	IEnumAliasSupport<HttpEnumStringAttribute, HttpEnumAliasAttribute>
 	{
 		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
 		private List<IProcessor> processors = null;
@@ -77,6 +78,18 @@
 		{
 			get { return formatProvider; }
 			set { formatProvider = value; }
+		}
+
+		/// <inheritdoc />
+		public Type EnumAsStringAttributeType
+		{
+			get { return typeof(HttpEnumStringAttribute); }
+		}
+
+		/// <inheritdoc />
+		public Type EnumAliasValueAttributeType
+		{
+			get { return typeof(HttpEnumAliasAttribute); }
 		}
 
 		public HttpHeaderSerializationDefinition()

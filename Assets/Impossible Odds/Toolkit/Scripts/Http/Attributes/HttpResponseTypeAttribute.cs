@@ -11,7 +11,7 @@
 		{
 			if (!typeof(IHttpResponse).IsAssignableFrom(responseType))
 			{
-				throw new HttpException(string.Format("Type {0} does not implement interface {1}.", responseType.Name, typeof(IHttpResponse).Name));
+				throw new HttpException("Type {0} does not implement interface {1}.", responseType.Name, typeof(IHttpResponse).Name);
 			}
 		}
 	}

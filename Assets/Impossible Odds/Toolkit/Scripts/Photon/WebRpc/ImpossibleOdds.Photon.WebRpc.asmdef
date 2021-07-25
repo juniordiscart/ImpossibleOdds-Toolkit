@@ -4,6 +4,7 @@
         "ImpossibleOdds.Core",
         "ImpossibleOdds.Serialization",
         "ImpossibleOdds.Weblink",
+        "ImpossibleOdds.Json",
         "ImpossibleOdds.Http",
         "PhotonRealtime"
     ],

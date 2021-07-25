@@ -17,7 +17,7 @@
 
 		private readonly static Regex numericalRegex = new Regex(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$");
 		private readonly static char[] numericalSymbols = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '+', 'e', 'E', '.' };
-		private static JsonDefaultSerializationDefinition defaultSerializationDefinition = new JsonDefaultSerializationDefinition();
+		private static JsonSerializationDefinition defaultSerializationDefinition = new JsonSerializationDefinition();
 
 		/// <summary>
 		/// Serialize the object to a JSON-string.
@@ -126,22 +126,6 @@
 			return FromJson<TJsonObject, TJsonArray>(jsonStr, ref index);
 		}
 
-		/// <summary>
-		/// Process a JSON string value and attempts to deserialize it to the given target object using the provided data structures and serialization defintion.
-		/// </summary>
-		/// <param name="target">Object to which the JSON data is applied to.</param>
-		/// <param name="jsonStr">JSON representation of an object.</param>
-		/// <param name="serializationDefinition">Custom serialization definition.</param>
-		/// <typeparam name="TJsonObject">Custom JSON object type.</typeparam>
-		/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
-		public static void Deserialize<TJsonObject, TJsonArray>(object target, string jsonStr, JsonSerializationDefinition<TJsonObject, TJsonArray> serializationDefinition)
-		where TJsonObject : IDictionary, new()
-		where TJsonArray : IList, new()
-		{
-			object result = Deserialize<TJsonObject, TJsonArray>(jsonStr);
-			Serializer.Deserialize(target, result, serializationDefinition);
-		}
-
 		#region To Json
 
 		private static void ToJson(object obj, RuntimeOptions options)
@@ -189,7 +173,7 @@
 				catch (System.Exception e)
 				{
 					Log.Exception(e);
-					throw new JsonException(string.Format("Unexpected JSON building scenario. Failed to serialize object of type {0}.\n{1} message:\n{2}", obj.GetType().Name, e.GetType().Name, e.Message));
+					throw new JsonException("Unexpected JSON building scenario. Failed to serialize object of type {0}.\n{1} message:\n{2}", obj.GetType().Name, e.GetType().Name, e.Message);
 				}
 			}
 		}
@@ -407,7 +391,7 @@
 					}
 					else
 					{
-						throw new JsonException(string.Format("Unexpected symbol '{0}'.", firstChar));
+						throw new JsonException("Unexpected symbol '{0}'.", firstChar);
 					}
 			}
 		}
@@ -475,7 +459,7 @@
 			index = i;
 			if (!numericalRegex.IsMatch(numberStr))
 			{
-				throw new JsonException(string.Format("The string value '{0}' does not match the JSON-defined numerical pattern.", numberStr));
+				throw new JsonException("The string value '{0}' does not match the JSON-defined numerical pattern.", numberStr);
 			}
 
 			// Depending on whether a '.' character is present in the numerical string value,
@@ -522,7 +506,7 @@
 				}
 				else if (!str[index].Equals('"'))
 				{
-					throw new JsonException(string.Format("Unexpected '{0}' character. Expected a 'string'-token.", str[index]));
+					throw new JsonException("Unexpected '{0}' character. Expected a 'string'-token.", str[index]);
 				}
 
 				string key = FromJsonToString(str, ref index);
@@ -534,7 +518,7 @@
 
 				if (lookup.Contains(key))
 				{
-					throw new JsonException(string.Format("The key {0} has already been processed once before.", key));
+					throw new JsonException("The key {0} has already been processed once before.", key);
 				}
 
 				lookup.Add(key, value);
@@ -620,7 +604,7 @@
 				++index;
 			}
 
-			throw new JsonException(string.Format("Failed to find required '{0}' character.", c));
+			throw new JsonException("Failed to find required '{0}' character.", c);
 		}
 
 		private static void AdvanceUntil(string str, ref int index, char[] cs)

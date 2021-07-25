@@ -10,7 +10,9 @@
 	/// <summary>
 	/// Serialization definition for parameters in the URL of HTTP requests.
 	/// </summary>
-	public class HttpURLSerializationDefinition : ILookupSerializationDefinition
+	public class HttpURLSerializationDefinition :
+	ILookupSerializationDefinition,
+	IEnumAliasSupport<HttpEnumStringAttribute, HttpEnumAliasAttribute>
 	{
 		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
 		private List<IProcessor> processors = null;
@@ -77,6 +79,18 @@
 		{
 			get { return formatProvider; }
 			set { formatProvider = value; }
+		}
+
+		/// <inheritdoc />
+		public Type EnumAsStringAttributeType
+		{
+			get { return typeof(HttpEnumStringAttribute); }
+		}
+
+		/// <inheritdoc />
+		public Type EnumAliasValueAttributeType
+		{
+			get { return typeof(HttpEnumAliasAttribute); }
 		}
 
 		public HttpURLSerializationDefinition()

@@ -1,6 +1,7 @@
 ﻿namespace ImpossibleOdds.Photon.WebRpc
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 	using System.Reflection;
 	using ImpossibleOdds.Http;
@@ -24,14 +25,13 @@
 		public const string DefaultResponseIDKey = "ResponseId";
 		private const string IDGenerationPool = "ABCDEFGHIJKLMNPQRSTUVWXYabcdefghjklmnopqrstuvwxyz0123456789_-";
 
-		private readonly static WebRpcBodySerializationDefinition bodyDefinition = new WebRpcBodySerializationDefinition();
-		private readonly static WebRpcUrlSerializationDefinition urlDefinition = new WebRpcUrlSerializationDefinition();
-
 		private readonly LoadBalancingClient photonClient = null;
 		private ushort generatedIDLength = DefaultIDLength;
 		private string requestIDKey = DefaultRequestIDKey;
 		private string responseIDKey = DefaultResponseIDKey;
 		private Dictionary<string, WebRpcMessageHandle> pendingCalls = new Dictionary<string, WebRpcMessageHandle>();
+		private ILookupSerializationDefinition bodyDefinition = new WebRpcBodySerializationDefinition();
+		private ISerializationDefinition urlDefinition = new WebRpcUrlSerializationDefinition();
 
 		/// <summary>
 		/// The key of the Request ID that gets added to each outgoing WebRPC call to match incoming responses.
@@ -87,6 +87,32 @@
 				}
 
 				generatedIDLength = value;
+			}
+		}
+
+		/// <summary>
+		/// The serialization definition used for processing the body of requests and responses.
+		/// </summary>
+		public ILookupSerializationDefinition BodySerializationDefinition
+		{
+			get { return bodyDefinition; }
+			set
+			{
+				value.ThrowIfNull(nameof(value));
+				bodyDefinition = value;
+			}
+		}
+
+		/// <summary>
+		/// The serialization definition used for processing the URL of requests.
+		/// </summary>
+		public ISerializationDefinition UrlSerializationDefinition
+		{
+			get { return urlDefinition; }
+			set
+			{
+				value.ThrowIfNull(nameof(value));
+				urlDefinition = value;
 			}
 		}
 
@@ -209,17 +235,17 @@
 		/// </summary>
 		/// <param name="request">The request to be sent.</param>
 		/// <returns>The serialized parameters for the request.</returns>
-		private Dictionary<string, object> GenerateRequestBody(IWebRpcRequest request)
+		private IDictionary GenerateRequestBody(IWebRpcRequest request)
 		{
 			request.ThrowIfNull(nameof(request));
 
-			if (!request.GetType().IsDefined(typeof(WebRpcObjectAttribute)))
+			if (!request.GetType().IsDefined(bodyDefinition.LookupBasedClassMarkingAttribute))
 			{
-				throw new WebRpcException("The request of type {0} is not marked with the required attribute of type {1}.", request.GetType().Name, typeof(WebRpcObjectAttribute).Name);
+				throw new WebRpcException("The request of type {0} is not marked with the required attribute of type {1}.", request.GetType().Name, bodyDefinition.LookupBasedClassMarkingAttribute.Name);
 			}
 
 			// Generate the WebRPC parameters, and if none were generated, create one.
-			Dictionary<string, object> webRpcParams = Serializer.Serialize<Dictionary<string, object>>(request, bodyDefinition);
+			IDictionary webRpcParams = Serializer.Serialize<IDictionary>(request, bodyDefinition);
 			if (webRpcParams == null)
 			{
 				webRpcParams = new Dictionary<string, object>(1);   // At least one, because the request ID will be appended still.
@@ -236,7 +262,7 @@
 		/// <param name="uri">The request to be sent.</param>
 		/// <param name="webRpcParams">The request to be sent.</param>
 		/// <returns>A message handle when the request was delivered successfully to the Photon network.</returns>
-		private WebRpcMessageHandle CustomOpWebRPC(IWebRpcRequest request, string uri, Dictionary<string, object> webRpcParams)
+		private WebRpcMessageHandle CustomOpWebRPC(IWebRpcRequest request, string uri, IDictionary webRpcParams)
 		{
 			request.ThrowIfNull(nameof(request));
 			webRpcParams.ThrowIfNull(nameof(webRpcParams));
@@ -244,7 +270,7 @@
 
 			// Generate the request ID to identify the response.
 			string requestID = GenerateRequestID();
-			webRpcParams[requestID] = requestID;
+			webRpcParams[RequestIDKey] = requestID;
 
 			Dictionary<byte, object> opParameters = new Dictionary<byte, object>();
 			opParameters.Add(ParameterCode.UriPath, uri);

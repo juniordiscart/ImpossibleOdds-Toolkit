@@ -61,15 +61,15 @@ namespace ImpossibleOdds.Examples.Photon.WebRpc
 	public class UpdateLeaderboardResponse : IWebRpcResponse
 	{
 		[WebRpcField("ErrorCode")]
-		private ResultCode resultCode = ResultCode.NONE;
+		private ResultCode resultCode = ResultCode.None;
 		[WebRpcField("UpdateCode")]
-		private UpdateCode updateCode = UpdateCode.NONE;
+		private UpdateCode updateCode = UpdateCode.None;
 		[WebRpcField("CurrentScore")]
 		private int currentScore;
 
 		public bool IsSuccess
 		{
-			get { return (resultCode == ResultCode.NONE) && (updateCode != UpdateCode.NONE); }
+			get { return (resultCode == ResultCode.None) && (updateCode != UpdateCode.None); }
 		}
 
 		public ResultCode ResultCode
@@ -99,17 +99,17 @@ namespace ImpossibleOdds.Examples.Photon.WebRpc
 	public enum ResultCode
 	{
 		[DisplayName(Name = "No error")]
-		NONE = 0,
+		None = 0,
 		[DisplayName(Name = "Invalid leaderboard ID")]
-		INVALID_LEADERBOARD_ID = 1,
+		InvalidLeaderboardID = 1,
 		[DisplayName(Name = "Invalid score")]
-		INVALID_SCORE = 2
+		InvalidScore = 2
 	}
 
 	public enum UpdateCode
 	{
-		[DisplayName(Name = "None")]
-		NONE = 0,
+		[DisplayName]
+		None = 0,
 		[DisplayName(Name = "Score updated")]
 		ScoreUpdated = 1,
 		[DisplayName(Name = "Score unchanged")]

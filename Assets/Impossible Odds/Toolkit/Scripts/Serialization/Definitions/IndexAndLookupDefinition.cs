@@ -10,52 +10,51 @@
 	/// <summary>
 	/// Abstract generic serialization definiton that implements both index-based and lookup-based (de)serialization.
 	/// </summary>
-	/// <typeparam name="T">Attribute type that defines if an object should be (de)serialized as an index-based data structure.</typeparam>
-	/// <typeparam name="U">Attribute type for the index-based attributes.</typeparam>
-	/// <typeparam name="V">Type of the index-based container that should get used.</typeparam>
-	/// <typeparam name="X">Attribute type that defines if an object should be (de)serialized as a lookup-based data structure.</typeparam>
-	/// <typeparam name="Y">Attribute type for the lookup-based attributes.</typeparam>
-	/// <typeparam name="Z">Type of the lookup-based container that should get used.</typeparam>
-	public abstract class IndexAndLookupDefinition<T, U, V, X, Y, Z> :
-	IIndexSerializationDefinition<T, U, V>,
-	ILookupSerializationDefinition<X, Y, Z>
-	where T : Attribute
-	where U : Attribute, IIndexParameter
-	where V : IList
-	where X : Attribute
-	where Y : Attribute, ILookupParameter
-	where Z : IDictionary
+	/// <typeparam name="TListObject">Attribute type that defines if an object should be (de)serialized as an index-based data structure.</typeparam>
+	/// <typeparam name="TListField">Attribute type for the index-based attributes.</typeparam>
+	/// <typeparam name="TListType">Type of the index-based container that should get used.</typeparam>
+	/// <typeparam name="TLookupObject">Attribute type that defines if an object should be (de)serialized as a lookup-based data structure.</typeparam>
+	/// <typeparam name="TLookupField">Attribute type for the lookup-based attributes.</typeparam>
+	/// <typeparam name="TLookupType">Type of the lookup-based container that should get used.</typeparam>
+	public abstract class IndexAndLookupDefinition<TListObject, TListField, TListType, TLookupObject, TLookupField, TLookupType> :
+	IIndexAndLookupSerializationDefinition<TListObject, TListField, TListType, TLookupObject, TLookupField, TLookupType>
+	where TListObject : Attribute
+	where TListField : Attribute, IIndexParameter
+	where TListType : IList
+	where TLookupObject : Attribute
+	where TLookupField : Attribute, ILookupParameter
+	where TLookupType : IDictionary
 	{
 		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
 
 		public Type IndexBasedClassMarkingAttribute
 		{
-			get { return typeof(T); }
+			get { return typeof(TListObject); }
 		}
 
 		public Type IndexBasedFieldAttribute
 		{
-			get { return typeof(U); }
+			get { return typeof(TListField); }
 		}
 
 		public Type IndexBasedDataType
 		{
-			get { return typeof(V); }
+			get { return typeof(TListType); }
 		}
 
 		public Type LookupBasedClassMarkingAttribute
 		{
-			get { return typeof(X); }
+			get { return typeof(TLookupObject); }
 		}
 
 		public Type LookupBasedFieldAttribute
 		{
-			get { return typeof(Y); }
+			get { return typeof(TLookupField); }
 		}
 
 		public Type LookupBasedDataType
 		{
-			get { return typeof(Z); }
+			get { return typeof(TLookupType); }
 		}
 
 		public IFormatProvider FormatProvider
@@ -68,17 +67,17 @@
 		public abstract IEnumerable<IDeserializationProcessor> DeserializationProcessors { get; }
 		public abstract HashSet<Type> SupportedTypes { get; }
 
-		public abstract V CreateSequenceInstance(int capacity);
-		public abstract Z CreateLookupInstance(int capacity);
+		public abstract TListType CreateSequenceInstance(int capacity);
+		public abstract TLookupType CreateLookupInstance(int capacity);
 
 		IList IIndexSerializationDefinition.CreateSequenceInstance(int capacity)
 		{
-			return (this as IIndexSerializationDefinition<T, U, V>).CreateSequenceInstance(capacity);
+			return CreateSequenceInstance(capacity);
 		}
 
 		IDictionary ILookupSerializationDefinition.CreateLookupInstance(int capacity)
 		{
-			return (this as ILookupSerializationDefinition<X, Y, Z>).CreateLookupInstance(capacity);
+			return CreateLookupInstance(capacity);
 		}
 	}
 }

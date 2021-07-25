@@ -119,8 +119,20 @@
 		/// <summary>
 		/// Explicitly converts a value to a certain type. A value may have been processed by a processor, but may still need a final conversion to the final type.
 		/// </summary>
-		/// <param name="value"></param>
-		/// <param name="targetType"></param>
+		/// <param name="value">The value to be converted to the target type.</param>
+		/// <typeparam name="TTarget">The target type to which the object should be converted.</typeparam>
+		/// <returns>An instance of the objected in the target type.</returns>
+		public static TTarget PostProcessValue<TTarget>(object value)
+		{
+			return (TTarget)PostProcessValue(value, typeof(TTarget));
+		}
+
+		/// <summary>
+		/// Explicitly converts a value to a certain type. A value may have been processed by a processor, but may still need a final conversion to the final type.
+		/// </summary>
+		/// <param name="value">The value to be converted to the target type.</param>
+		/// <param name="targetType">The target type to which the object should be converted.</param>
+		/// <returns>An instance of the objected in the target type.</returns>
 		public static object PostProcessValue(object value, Type targetType)
 		{
 			targetType.ThrowIfNull(nameof(targetType));

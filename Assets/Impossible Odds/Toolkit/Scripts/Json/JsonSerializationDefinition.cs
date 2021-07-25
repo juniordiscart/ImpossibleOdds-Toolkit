@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Processors;
 
@@ -12,30 +11,29 @@
 	/// </summary>
 	/// <typeparam name="TJsonObject">Custom JSON object type.</typeparam>
 	/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
-	public abstract class JsonSerializationDefinition<TJsonObject, TJsonArray> :
-	IndexAndLookupDefinition<JsonArrayAttribute, JsonIndexAttribute, TJsonArray, JsonObjectAttribute, JsonFieldAttribute, TJsonObject>,
+	public class JsonSerializationDefinition :
+	IndexAndLookupDefinition<JsonArrayAttribute, JsonIndexAttribute, ArrayList, JsonObjectAttribute, JsonFieldAttribute, Dictionary<string, object>>,
 	ICallbacksSupport<OnJsonSerializingAttribute, OnJsonSerializedAttribute, OnJsonDeserializingAttribute, OnJsonDeserializedAttribute>,
 	ILookupTypeResolveSupport<JsonTypeAttribute>,
 	IRequiredValueSupport<JsonRequiredAttribute>,
 	IEnumAliasSupport<JsonEnumStringAttribute, JsonEnumAliasAttribute>
-	where TJsonObject : IDictionary
-	where TJsonArray : IList
 	{
 		public const string JsonTypeKey = "jsi:type";
 
 		private List<IProcessor> processors = null;
 		private HashSet<Type> supportedTypes = null;
+		private string typeResolveKey = JsonTypeKey;
 
 		/// <inheritdoc />
 		public Type JsonObjectType
 		{
-			get { return typeof(TJsonObject); }
+			get { return typeof(Dictionary<string, object>); }
 		}
 
 		/// <inheritdoc />
 		public Type JsonArrayType
 		{
-			get { return typeof(TJsonArray); }
+			get { return typeof(ArrayList); }
 		}
 
 		/// <inheritdoc />
@@ -107,13 +105,18 @@
 		/// <inheritdoc />
 		object ILookupTypeResolveSupport.TypeResolveKey
 		{
-			get { return TypeResolveKey; }
+			get { return typeResolveKey; }
 		}
 
-
-		public virtual string TypeResolveKey
+		/// <inheritdoc />
+		public string TypeResolveKey
 		{
-			get { return JsonTypeKey; }
+			get { return typeResolveKey; }
+			set
+			{
+				value.ThrowIfNullOrEmpty(nameof(value));
+				typeResolveKey = value;
+			}
 		}
 
 		/// <inheritdoc />
@@ -192,26 +195,17 @@
 				}
 			}
 		}
-	}
 
-	/// <summary>
-	/// A serialization definition with native JSON object and array type parameters.
-	/// </summary>
-	public sealed class JsonDefaultSerializationDefinition :
-	JsonSerializationDefinition<Dictionary<string, object>, ArrayList>
-	{
-		public JsonDefaultSerializationDefinition()
-		: base()
-		{ }
-
-		public override Dictionary<string, object> CreateLookupInstance(int capacity)
-		{
-			return new Dictionary<string, object>(capacity);
-		}
-
+		/// <inheritdoc />
 		public override ArrayList CreateSequenceInstance(int capacity)
 		{
 			return new ArrayList(capacity);
+		}
+
+		/// <inheritdoc />
+		public override Dictionary<string, object> CreateLookupInstance(int capacity)
+		{
+			return new Dictionary<string, object>(capacity);
 		}
 	}
 }

@@ -17,7 +17,7 @@
 
 			if (serializationDefinition.SerializationProcessors == null)
 			{
-				throw new SerializationException(string.Format("No serialization processors defined in the definition of type {0}.", serializationDefinition.GetType().Name));
+				throw new SerializationException("No serialization processors defined in the definition of type {0}.", serializationDefinition.GetType().Name);
 			}
 
 			object result = null;
@@ -35,7 +35,7 @@
 			}
 			else
 			{
-				throw new SerializationException(string.Format("Failed to process value of type {0}.", objectToSerialize.GetType().Name));
+				throw new SerializationException("Failed to process value of type {0}.", objectToSerialize.GetType().Name);
 			}
 		}
 
@@ -98,7 +98,7 @@
 				}
 			}
 
-			throw new SerializationException(string.Format("Failed to deserialize a source value to target type {0}.", targetType.Name));
+			throw new SerializationException("Failed to deserialize a source value to target type {0}.", targetType.Name);
 		}
 
 		/// <summary>
@@ -126,7 +126,7 @@
 				}
 			}
 
-			throw new SerializationException(string.Format("Failed to deserialize a source value to a target instance of type {0}.", deserializationTarget.GetType().Name));
+			throw new SerializationException("Failed to deserialize a source value to a target instance of type {0}.", deserializationTarget.GetType().Name);
 		}
 	}
 }

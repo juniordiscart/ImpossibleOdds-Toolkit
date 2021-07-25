@@ -1,0 +1,70 @@
+{
+	"AnimalRegister": [
+		{
+			"furColor": {
+				"r": 0,
+				"g": 0,
+				"b": 0,
+				"a": 0
+			},
+			"chipped": false,
+			"Weight": 4.09999990463257,
+			"Name": "Minoes",
+			"DateOfBirth": "01\/01\/0001 00:00:00",
+			"Classification": "Mammal",
+			"NrOfLegs": 4,
+			"jsi:type": "Cat"
+		},
+		{
+			"furColor": {
+				"r": 255,
+				"g": 255,
+				"b": 255,
+				"a": 255
+			},
+			"chipped": true,
+			"Weight": 3.59999990463257,
+			"Name": "Pickles",
+			"DateOfBirth": "01\/01\/0001 00:00:00",
+			"Classification": "Mammal",
+			"NrOfLegs": 4,
+			"jsi:type": "Cat"
+		},
+		{
+			"furColor": {
+				"r": 1,
+				"g": 0.921568632125854,
+				"b": 0.0156862754374743,
+				"a": 1
+			},
+			"neutered": false,
+			"Weight": 28.5,
+			"Name": "Waffles",
+			"DateOfBirth": "06\/25\/1990 00:00:00",
+			"Classification": "Mammal",
+			"NrOfLegs": 4,
+			"jsi:type": "Dog"
+		},
+		{
+			"Coordinates": {
+				"x": 39.0457992553711,
+				"y": 76.6412963867188
+			},
+			"ChippedByNSA": true,
+			"Weight": 0,
+			"Name": "Mark",
+			"DateOfBirth": "01\/01\/0001 00:00:00",
+			"Classification": "Birb",
+			"NrOfLegs": 2,
+			"jsi:type": "Dove"
+		},
+		{
+			"Weight": 0,
+			"Name": "Dundee",
+			"DateOfBirth": "01\/01\/0001 00:00:00",
+			"Classification": "Reptile",
+			"NrOfLegs": 4,
+			"jsi:type": "Kroko"
+		}
+	]
+}

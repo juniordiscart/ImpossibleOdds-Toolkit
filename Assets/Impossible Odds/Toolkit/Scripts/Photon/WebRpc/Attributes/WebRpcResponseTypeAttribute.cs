@@ -11,7 +11,7 @@
 		{
 			if (!typeof(IWebRpcResponse).IsAssignableFrom(responseType))
 			{
-				throw new WebRpcException(string.Format("Type {0} does not implement interface {1}.", responseType.Name, typeof(IWebRpcResponse).Name));
+				throw new WebRpcException("Type {0} does not implement interface {1}.", responseType.Name, typeof(IWebRpcResponse).Name);
 			}
 		}
 	}

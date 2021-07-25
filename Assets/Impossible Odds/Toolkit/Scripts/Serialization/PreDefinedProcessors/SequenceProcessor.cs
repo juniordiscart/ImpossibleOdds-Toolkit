@@ -88,7 +88,7 @@
 
 			if (!(dataToDeserialize is IList))
 			{
-				throw new SerializationException(string.Format("The source value is expected to implement the {0} interface to process to target type {1}.", typeof(IList).Name, targetType.Name));
+				throw new SerializationException("The source value is expected to implement the {0} interface to process to target type {1}.", typeof(IList).Name, targetType.Name);
 			}
 
 			// Arrays are treated differently.
@@ -99,7 +99,7 @@
 
 			if (!Deserialize(targetCollection, dataToDeserialize))
 			{
-				throw new SerializationException(string.Format("Unexpected failure to process source value of type {0} to target collection of type {1}.", dataToDeserialize.GetType().Name, targetType.Name));
+				throw new SerializationException("Unexpected failure to process source value of type {0} to target collection of type {1}.", dataToDeserialize.GetType().Name, targetType.Name);
 			}
 
 			deserializedResult = targetCollection;
@@ -127,7 +127,7 @@
 
 			if (!(dataToDeserialize is IList))
 			{
-				throw new SerializationException(string.Format("The source value is expected to implement the {0} interface to process to target instance of type {1}.", typeof(IList).Name, deserializationTarget.GetType().Name));
+				throw new SerializationException("The source value is expected to implement the {0} interface to process to target instance of type {1}.", typeof(IList).Name, deserializationTarget.GetType().Name);
 			}
 
 			IList sourceValues = dataToDeserialize as IList;

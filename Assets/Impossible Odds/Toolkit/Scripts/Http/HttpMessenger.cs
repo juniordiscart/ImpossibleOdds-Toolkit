@@ -2,7 +2,7 @@
 {
 	using System;
 	using System.Text;
-	using System.Collections.Generic;
+	using System.Collections;
 	using UnityEngine.Networking;
 	using ImpossibleOdds.Weblink;
 	using ImpossibleOdds.Serialization;
@@ -10,11 +10,49 @@
 
 	public class HttpMessenger : WeblinkMessenger<IHttpRequest, IHttpResponse, HttpMessageHandle, HttpResponseTypeAttribute, HttpResponseCallbackAttribute>
 	{
-		private readonly static HttpURLSerializationDefinition urlDefinition = new HttpURLSerializationDefinition();
-		private readonly static HttpHeaderSerializationDefinition headerDefinition = new HttpHeaderSerializationDefinition();
-		private readonly static HttpBodySerializationDefinition bodyDefinition = new HttpBodySerializationDefinition();
-
+		private ISerializationDefinition urlDefinition = new HttpURLSerializationDefinition();
+		private ISerializationDefinition headerDefinition = new HttpHeaderSerializationDefinition();
+		private ISerializationDefinition bodyDefinition = new HttpBodySerializationDefinition();
 		private StringBuilder stringBuilderCache = null;
+
+		/// <summary>
+		/// Serialization definition used for processing the body of requests and responses.
+		/// </summary>
+		public ISerializationDefinition BodySerializationDefinition
+		{
+			get { return bodyDefinition; }
+			set
+			{
+				value.ThrowIfNull(nameof(value));
+				bodyDefinition = value;
+			}
+		}
+
+		/// <summary>
+		/// Serialization definition used for processing the URL of requests.
+		/// </summary>
+		public ISerializationDefinition UrlSerializationDefinition
+		{
+			get { return urlDefinition; }
+			set
+			{
+				value.ThrowIfNull(nameof(value));
+				urlDefinition = value;
+			}
+		}
+
+		/// <summary>
+		/// Serialization definition used for processing the headers of requests and responses.
+		/// </summary>
+		public ISerializationDefinition HeaderSerializationDefinition
+		{
+			get { return headerDefinition; }
+			set
+			{
+				value.ThrowIfNull(nameof(value));
+				headerDefinition = value;
+			}
+		}
 
 		public HttpMessenger()
 		{
@@ -96,12 +134,14 @@
 				throw new HttpException("Request of type {0} could not be mapped to a supported type of {1}.", request.GetType().Name, typeof(UnityWebRequest).Name);
 			}
 
-			Dictionary<string, string> headerData = Serializer.Serialize(request, headerDefinition) as Dictionary<string, string>;
+			IDictionary headerData = Serializer.Serialize<IDictionary>(request, headerDefinition);
 			if (headerData != null)
 			{
-				foreach (KeyValuePair<string, string> header in headerData)
+				foreach (DictionaryEntry header in headerData)
 				{
-					unityWebRequest.SetRequestHeader(header.Key, header.Value);
+					unityWebRequest.SetRequestHeader(
+						SerializationUtilities.PostProcessValue<string>(header.Key),
+						SerializationUtilities.PostProcessValue<string>(header.Value));
 				}
 			}
 
@@ -110,7 +150,7 @@
 
 		private string GenerateURL(IHttpRequest request)
 		{
-			Dictionary<string, string> urlParams = Serializer.Serialize(request, urlDefinition) as Dictionary<string, string>;
+			IDictionary urlParams = Serializer.Serialize<IDictionary>(request, urlDefinition);
 
 			if ((urlParams == null) || (urlParams.Count == 0))
 			{

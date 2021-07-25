@@ -3,6 +3,7 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using UnityEngine.Networking;
+	using ImpossibleOdds.Serialization;
 
 	public static class URLUtilities
 	{
@@ -21,15 +22,15 @@
 			parameters.ThrowIfNull(nameof(parameters));
 
 			string result = baseUrl;
-			foreach (IDictionaryEnumerator it in parameters)
+			foreach (DictionaryEntry it in parameters)
 			{
 				if ((it.Key == null) || (it.Value == null))
 				{
 					continue;
 				}
 
-				string key = (it.Key is string) ? it.Key as string : it.Key.ToString();
-				string value = (it.Value is string) ? it.Value as string : it.Value.ToString();
+				string key = SerializationUtilities.PostProcessValue<string>(it.Key);
+				string value = SerializationUtilities.PostProcessValue<string>(it.Value);
 
 				if (!string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value))
 				{

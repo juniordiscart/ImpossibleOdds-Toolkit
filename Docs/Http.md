@@ -1,10 +1,8 @@
 # ![Impossible Odds Logo][Logo] C# Toolkit - HTTP
 
-The HTTP tools described below are accessed by including the `ImpossibleOdds.Http` namespace in your scripts.
+When you want to communicate with a web server you can use Unity's built-in `UnityWebRequest` class. This can be pretty convenient to host leaderboards, record player progression, download content or other resources, or communicate with external web APIs. The `UnityWebRequest` class allows you to setup custom HTTP calls of any kind. One drawback is their setup, which can be cumbersome depending on the amount and complexity of parameters involved.
 
-When you want to communicate with a server you can use Unity's built-in `UnityWebRequest` class. This can be pretty convenient to host leaderboards, record player progression, or download content or other resources. The `UnityWebRequest` class allows you to setup custom HTTP calls of any kind. One drawback is their setup, which can be cumbersome depending on the amount and complexity of parameters involved.
-
-To relieve you from the manual labour of setting up these requests, the tools in this framework can do much of the heavy lifting. Next to that, there's a messenger system that takes care of sending your request, processing incoming responses and notifying you when something was received.
+To relieve you from the manual labour of setting up these requests, the tools in this framework can do much of the heavy lifting. Next to that, there's a messenger system that takes care of sending your requests, processing incoming responses and notifying you when something was received.
 
 Here's a quick overview of what you can expect of this HTTP framework:
 
@@ -12,139 +10,145 @@ Here's a quick overview of what you can expect of this HTTP framework:
 * Process incoming responses automatically based on the requests that were sent out.
 * A variety of ways on getting notified when a response is received.
 
-**Note**: A prerequisite for using this tool is, of course, that you have an actual server running that you can send requests to, and that will return you some valid data.
+The HTTP tools described below are accessed by including the `ImpossibleOdds.Http` namespace in your scripts. For each topic, you'll find small code examples. All example tidbits can be examined in full at the [bottom of this page](#example).
+
+## Prerequisites
+
+The obvious requirement for using this tool is, of course, that you have an actual server running that you can send requests to, and that will return you some valid data. However, you can also use this tool to setup objects for communicating with external web APIs.
 
 ## Requests
 
-A request, in this context, is the message you send to your server. It contains the data or parameters about what you want the server to do, be it updating a leaderboard, downloading an image, or something else.
+A request, in this context, is the message you send to the web server. It contains the data or parameters about what you want the server to do, be it updating a leaderboard, downloading an image, or something else.
 
-There are several types of HTTP requests that you can make. Each type has a different meaning to the server as well how you define the parameters for what you want to do with it. The following types of HTTP requests are supported in helping you pack your objects into custom requests:
+There are several types of HTTP requests that you can create. Each type has a different meaning to the server as well how you define the parameters. The following types of HTTP requests are supported in helping you pack your objects into custom requests:
 
-* GET requests to retrieve information or download larger pieces of data.
-* POST requests to send structured data such as a filled in form by the user.
-* PUT requests to upload larger packs of data such as images or other files.
+* `GET`: a request type to retrieve information or download larger pieces of data.
+* `POST`: a request type to send structured/complex data such as a filled in form by the user.
+* `PUT`: a request type to upload larger packs of data such as images or other files.
 
-So before you start creating your custom request, try to define which type of request they should be. Each type of request should implement the `IHttpRequest` interface though. It's the base interface that is required by each request being process by this framework. There are several variants of this interface defined for each of the type of requests described above.
+**Note**: there are more request-types supported by the `UnityWebRequest` class, but these are currently unsupported by this tool.
+
+However, before moving on what makes each of these requests unique, let's discuss what they all have in common.
 
 ### URL & Headers
 
-All types of requests share some common properties: they require a URL (the address to send the request to) with optionally some URL parameters and headers. The URL of your request is a required property that needs to be implemented through the `URL` property.
+All types of requests share some common properties: they require a URL (the address to send the request to) with optionally some URL parameters, and headers. Each HTTP request object should at least implement the `IHttpRequest` interface.
+
+The URL of your request is a required property that needs to be implemented through the `URL` property:
 
 ```cs
-public class MyRequest : IHttpRequest
+// A request object that attempts to get a leaderboard from the server.
+[HttpResponseType(typeof(GetLeaderboardResponse))]
+public class GetLeaderboardRequest : IHttpRequest
 {
 	public string URL
 	{
-		get { return "example.com/myrequest"; }
+		get { return "https://my.domain.com/getleaderboard.php"; }
 	}
 }
 ```
 
-Typically, a URL can also contain parameters. To add a parameter to the URL, use the `HttpUrlField` attribute on the fields of your request class. You can provide an optional name to be used as the parameter name. When left empty, the name of the field is used.
+Typically, a URL can also contain parameters. To add a parameter to the URL, use the `HttpURLField` attribute on the members of your request class. You can provide an optional name to be used as the parameter name. When left empty, the name of the member is used instead.
 
-In the `URL` property you are expected to return the base address for the request, which will get appended with the generated parameters. However, you can safely define parameters already in this URL address string if you like. The framework will take care of properly appending the generated parameters, if any.
-
-Less common is to define extra headers, but is sometimes necessary nonetheless. This can be done by using the `HttpHeaderField` attribute in much the same way as you would do for URL parameters. They are limited to primitive or basic types. You can define an optional parameter name for the field. For more information about HTTP headers, please read up at [this documentation page](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
+In the `URL` property it's expected to get the base address for the request, which will get appended with the generated parameters. However, you can safely define parameters already in this URL address string if you like. The framework will take care of properly appending any additional parameters, if any.
 
 ```cs
-public class MyRequest : IHttpRequest
+// A request object that attempts to get a leaderboard from the server.
+[HttpResponseType(typeof(GetLeaderboardResponse))]
+public class GetLeaderboardRequest : IHttpPostRequest
 {
-	// Returns the base URL.
+	[HttpURLField("debug")]
+	private bool includeDebugInfo = false;
+	[HttpURLField]
+	private string platform = "steam";
+
 	public string URL
 	{
-		get { return "example.com/myrequest"; }
+		get { return "https://my.domain.com/getleaderboard.php"; }
 	}
-
-	// Parameters to be added to the URL.
-	[HttpUrlField]
-	private string name = "ImpossibleOdds";
-	[HttpUrlField]
-	private int age = 30;
-
-	// Parameters to be added to the headers of the request.
-	[HttpHeaderField("gameservice")]
-	private string platform = "Steam";
 }
 ```
 
-The above example would generate a URL to `example.com/myrequest?name=ImpossibleOdds&age=30` with a custom header in there called `gameservice` and a value `Steam`. The URL parameters generated by defining them with the `HttpUrlField` attribute are properly escaped before appending them.
+Less common is to define additional headers, but is sometimes necessary nonetheless. This can be done by using the `HttpHeaderField` attribute in much the same way as you would do for URL parameters. They are limited to primitive or basic types. You can define an optional parameter name for the field. For more information about HTTP headers, please read up at [this documentations page](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
+
+```cs
+// A request object that attempts to get a leaderboard from the server.
+[HttpResponseType(typeof(GetLeaderboardResponse))]
+public class GetLeaderboardRequest : IHttpPostRequest
+{
+	[HttpURLField("debug")]
+	private bool includeDebugInfo = false;
+	[HttpURLField]
+	private string platform = "steam";
+
+	[HttpHeaderField]
+	private string gameVersion = "v1.0";
+
+	public string URL
+	{
+		get { return "https://my.domain.com/getleaderboard.php"; }
+	}
+}
+```
+
+The above example would generate a URL to `https://my.domain.com/getleaderboard.php?debug=false&platform=steam` with a custom header in there called `gameVersion` with value `v1.0`.
 
 ### GET Requests
 
-GET-type requests mainly exist to ask the server to fetch resources, e.g. a leaderboard, an image or something else.
+`GET`-type requests mainly exist to ask the server to fetch resources, e.g. a leaderboard, an image or something else.
 
-To have your request class be picked up by the framework as a GET request, simply implement the `IHttpGetRequest`. It doesn't require you to actually implement anything extra. It simply denotes your class as such. Its parameters are defined through its URL though, so anything extra that defines the request should be added using the `HttpUrlField` attribute as seen in the [URL & Headers section](#url-&-headers)
+To have your request object be picked up by the framework as a `GET` request, simply implement the `IHttpGetRequest`. It doesn't require you to actually implement anything extra. Its parameters are defined through its URL though, so anything extra that defines the request should be added using the `HttpURLField` attribute as seen in the [URL & Headers section](#url-&-headers)
 
 ```cs
-public class MyRequest : IHttpGetRequest
+// A request object that attempts to get a leaderboard from the server.
+[HttpResponseType(typeof(GetLeaderboardResponse))]
+public class GetLeaderboardRequest : IHttpPostRequest
 {
+	[HttpURLField("debug")]
+	private bool includeDebugInfo = false;
+	[HttpURLField]
+	private string platform = "steam";
+
+	[HttpHeaderField]
+	private string gameVersion = "v1.0";
+
 	public string URL
 	{
-		get { return "example.com/myrequest"; }
+		get { return "https://my.domain.com/getleaderboard.php"; }
 	}
-
-	// Parameters to be added to the URL.
-	[HttpUrlField]
-	private string name = "ImpossibleOdds";
-	[HttpUrlField]
-	private int age = 30;
 }
 ```
 
-However, there are several kinds of GET request templates available already to you, primarily based on what Unity's framework already supports out of the box:
+However, this tool offers several other predefined and more specific kinds of `GET`-type requests already, primarily based on what Unity's framework already supports out of the box:
 
-* The `IHttpGetAudioClipRequest` interface to set up a request to download an audio clip. Additionally, you must provide what kind of audio clip it will by implementing the mandatory `AudioType` property.
-* The `IHttpGetTextureRequest` interface to download a texture.
-* The `IHttpGetAssetBundleRequest` interface can be used to download an asset bundle.
+* Use the `IHttpGetAudioClipRequest` interface to set up a request for downloading an audio clip. Additionally, you must provide what kind of audio clip it will be by implementing the additional `AudioType` property.
+* Use the `IHttpGetTextureRequest` interface for downloading textures and images.
+* Use the `IHttpGetAssetBundleRequest` interface for downloading asset bundles.
 
 ### POST Requests
 
-A POST-type request serves to send over some structured data to the server and do something with it, e.g. a registration form, or updating a score on a leaderboard. It's not designed to send over big chunks of data like images, video or other forms of binary data. Please check out the topic about [PUT requests](#put-requests) to upload bigger sets of data.
+A `POST`-type request serves to send over some structured/complex data to the server and do something with it, e.g. a registration form, or updating a score on a leaderboard. It's not designed to send over big chunks of data like images, video or other forms of binary data, though. Please check out the topic about [`PUT` requests](#put-requests) to upload bigger sets of data.
 
-To have your object be recognised as a POST request by this framework, have it implement the `IHttpPostRequest` interface. This interface on its own does not force any additional properties or methods to be implemented but does allow you to define a complex set of parameters that will be set in the request's body.
+To have your object be recognised as a `POST`-type request by this framework, have it implement the `IHttpPostRequest` interface. This interface on its own does not force any additional properties or methods to be implemented but does allow you to define a complex set of parameters that will be set in the request's body. This body data will be written out in a JSON form, and that's also why it takes a very similar approach as the [JSON tool][JSON] in this toolkit. There are two attributes that allow you to define that your object should be processed as a JSON object, or a JSON array:
 
-In essence it tries to deconstruct the inner datastructures to something that is easily processable. Two datastructures come to mind:
+* Use the `HttpBodyObject` attribute to process your object to a JSON object. It's assisted by the `HttpBodyField` attribute, which can define an optional, alternative name for the member.
+* The `HttpBodyArray` attribute to process your object a JSON array. It's assisted by the `HttpBodyIndex` attribute to define the index of a member in this list.
 
-* A lookup table where a variable is identified by a name, e.g. a dictionary, and
-* A list where variables are inserted based on an index value.
-
-This way, your object can contain nested parameters which in turn can be a complex set of data again. To define which kind of data structure is preferred for a class that can be processed by the framework, you can rely on these attributes:
-
-* The `HttpBodyObject` attribute to process your object as a lookup table and is assisted by the `HttpBodyField` attribute, which can define an optional alternative name for the field.
-* The `HttpBodyArray` attributes to process your object as an array and is assisted by the `HttpBodyIndex` attribute to define the index of a field in this list.
-
-**Note**: your POST request class itself should also be marked with either a `HttpBodyObject` or `HttpBodyArray` attribute as this object functions as the root for the parameters.
+**Note**: your `POST` request class itself should also be marked with either a `HttpBodyObject` or `HttpBodyArray` attribute as this object functions as the root for the parameters.
 
 ```cs
-// Object that should get processed as an array.
-[HttpBodyArray]
-public class CheckpointData
+// A request object that attempts to get a leaderboard from the server.
+[HttpBodyObject, HttpResponseType(typeof(GetLeaderboardResponse))]
+public class GetLeaderboardRequest : IHttpPostRequest
 {
-	[HttpBodyIndex(0)]
-	private string checkpointID;
-	[HttpBodyIndex(1)]
-	private float time;
-}
+	[HttpBodyField("LeaderboardId")]
+	private readonly string leaderboardID;
+	[HttpBodyField("NrOfEntries")]
+	private readonly int nrOfEntries;
+	[HttpBodyField("Offset")]
+	private readonly int offset;
 
-// Process the request's data as an object.
-[HttpBodyObject]
-public class MyRequest : IHttpPostRequest
-{
-	public string URL
-	{
-		get;
-	}
-
-	[HttpBodyField]
-	private string leaderboardID;
-	[HttpBodyField]
-	private int userID;
-	[HttpBodyField]
-	private float raceTime;
-	[HttpBodyField]
-	private float[] lapTimes;
-	[HttpBodyField("checkpoints")]
-	private List<CheckpointData> checkpointData;
+	// Other details omitted...
 }
 ```
 
@@ -153,139 +157,135 @@ An example output of this data placed in the body of the request could be:
 ```json
 {
 	"leaderboardID": "f6675658-6a60-4fc2-9b49-412a6fd88165",
-	"userID": 101,
-	"raceTime": 420.69,
-	"laptimes": [
-		143.23,
-		140.23
-		137.23,
-	],
-	"checkpoints": [
-		[
-			"06747de7",
-			64.47
-		],
-		[
-			"63ac",
-			88.51
-		]
-	]
+	"nrOfEntries": 3,
+	"offset": 0
 }
 ```
 
+Just like with `GET`-type requests, you can still add any additional URL and header parameters.
+
 ### PUT Requests
 
-To upload larger pieces of data on a server you typically use PUT-type requests. They can be used to send over data 'as is', without additional processing, at least not from this framework.
+To upload larger pieces of data on a server you typically use `PUT`-type requests. They can be used to send over data 'as is', without additional processing, at least, not by this framework.
 
-To setup a PUT request, either implement the `IHttpPutStringRequest` or `IHttpPutBinaryRequest` interface. These define the two supported types of data you want to transmit: string or binary data respectively. This defines how the server should interpret the received data.
+To setup a `PUT`-type request, either implement the `IHttpPutStringRequest` or `IHttpPutBinaryRequest` interface. These define the two supported types of data you can transmit: string or binary data respectively. This defines how the server should interpret the received data.
 
-Both of these interfaces require to implement the `PutData` property. Depending on which PUT interface variant you implement, it either requires it to return a `string` value or a `byte[]` value.
+Both of these interfaces require you to implement the `PutData` property. Depending on which `PUT`-type interface variant you implement, it either requires it to return a `string` value or a `byte[]` value.
 
 ```cs
 // Set up a request to send over text data from a file.
+[HttpResponseType(typeof(MyStringPutResponse))]
 public class MyStringPutRequest : IHttpPutStringRequest
 {
-	public string URL
-	{
-		get;
-	}
-
 	public string PutData
 	{
 		get { return File.ReadAllText("configuration.xml"); }
 	}
-}
 
-// Set up a request to send over binary data from a file.
-public class MyBinaryPutRequest : IHttpPutBinaryRequest
-{
-	public string URL
-	{
-		get;
-	}
-
-	public byte[] PutData
-	{
-		get { return File.ReadAllBytes("banner.png");}
-	}
+	// Other details omitted...
 }
 ```
 
-**Note**: not all HTTP servers allow PUT requests to come through by default and may require additional action to enable it.
+```cs
+// Set up a request to send over binary data from a file.
+[HttpResponseType(typeof(MyBinaryPutResponse))]
+public class MyBinaryPutRequest : IHttpPutBinaryRequest
+{
+	public byte[] PutData
+	{
+		get { return File.ReadAllBytes("banner.png"); }
+	}
+
+	// Other details omitted...
+}
+```
+
+Here too, you can also define any additional URL parameters and custom headers if needed.
 
 ## Responses
 
-When your server decides to send something back, this framework can immediately process the incoming data to usable objects. Based on the type of request you sent out, you can also define what kind of response to expect back.
+When the server decides to send something back, this framework can immediately process the incoming data to usable objects. Based on the type of request you sent out, you can also define what kind of response to expect back.
 
-To associate a request with a particular response type, you must decorate your **request** class with an `HttpResponseType` attribute. It takes as only parameter the type of the **response** it is associated with. Please note that this type of the response should not be an interface, abstract and should implement the `IHttpResponse` interface.
+To assist the tool with what kind of response it should process the data to, you decorate your **request** object with a `HttpResponseType` attribute, and it takes the type of the corresponding response as its parameter.
 
 ```cs
-// Associate the request type with a response type.
-[HttpBodyObject, HttpResponseType(typeof(MyResponse))]
-public class MyRequest : IHttpRequest
+// A request object that attempts to get a leaderboard from the server.
+[HttpBodyObject, HttpResponseType(typeof(GetLeaderboardResponse))]
+public class GetLeaderboardRequest : IHttpPostRequest
 {
-	...
-}
-
-[HttpBodyObject]
-public class MyResponse : IHttpResponse
-{
-	...
+	// Implementation details omitted...
 }
 ```
 
-To have the server's response be processed automatically, have your response object implement one of the following interfaces. If you don't define any, then it's entirely up to you to deal with the response data later.
+At the very least, your response objects should implement the `IHttpResponse` interface.
 
-* The `IHttpJsonResponse` interface defines that the expected response data is JSON formatted data.
-* The `IHttpCustomResponse` interface for other kinds of data that might need your attention, such as compressed/zipped data that needs decompression, decoded, etc.
-* The `IHttpAudioClipResponse` interface expects the response to be an audio clip. This works in combination with `IHttpAudioClipRequest`. See the [GET Requests section](#get-requests).
-* The `IHttpTextureResponse` interface expects the response to be a texture. This works in combination with `IHttpTextureRequest`. See the [GET Requests section](#get-requests).
-* The `IHttpAssetBundleResponse` interface expects the response to be an asset bundle. This works in combination with `IHttpAssetBundleRequest`. See the [GET Requests section](#get-requests).
+```cs
+public class GetLeaderboardRequest : IHttpResponse
+{
+	// Implementation details omitted...
+}
+```
 
-Whichever of the above your response implements, the result is only processed when the request didn't encounter a network or server error.
+The `IHttpResponse` interface is pretty bland though, and doesn't really define what the expected data in the response is. There are some more specific flavors available, and greatly help in getting the result to you quicker:
+
+* Use the `IHttpJsonResponse` interface to define that the expected response data is JSON-formatted data. See the [JSON Responses section](#json-responses) for more details.
+* Use the `IHttpCustomResponse` interface for other kinds of data that might need your attention, such as compressed/zipped data that needs decompression, decoding, etc. See the [Custom Response Handlers section](#custom-response-handlers) for more information.
+* Use the `IHttpAudioClipResponse` interface when the response is an audio clip. This works in combination with `IHttpAudioClipRequest`. See the earlier [`GET` Requests section](#get-requests).
+* Use the `IHttpTextureResponse` interface when the response is a texture. This works in combination with `IHttpTextureRequest`. See the [`GET` Requests section](#get-requests).
+* Use the `IHttpAssetBundleResponse` interface when the response is an asset bundle. This works in combination with `IHttpAssetBundleRequest`. See the [`GET` Requests section](#get-requests).
+
+**Note**: whichever of the above your response object implements, the result is only processed when the request didn't encounter a network or server error.
 
 ### JSON Responses
 
-If you expect the server to return data in the form of a JSON string, you can have your response object implement the `IHttpJsonResponse` interface. This works in exactly the same way as the [POST request](#post-requests) setup.
+If you expect the server to return data in the form of a JSON string, you can have your response object implement the `IHttpJsonResponse` interface. This works in exactly the same way as described in the [POST request](#post-requests) setup:
 
-By using the `HttpBodyObject` and `HttpBodyArray` attributes on the objects that could be included by the response and defining their fields with the `HttpBodyField` and `HttpBodyIndex` attributes respectively, the response data is unwrapped and processed directly for use.
+* The `HttpBodyObject` attribute will treat the response data as JSON object and will search for the `HttpBodyField` attributes placed over the members to deserialize them under their matched names.
+* The `HttpBodyArray` attribute will treat the response data as a JSON array and will search for the `HttpBodyIndex` attributes placed at its members to extract them from the array and insert them in your object.
 
 **Note**: the response object itself should also be marked with either a `HttpBodyObject` or `HttpBodyArray` attribute as it serves as the root for the unwrapping of the response.
 
 ```cs
+// Leaderboard entry representation, with a preferred list layout rather than an object layout.
 [HttpBodyArray]
 public class LeaderboardEntry
 {
 	[HttpBodyIndex(0)]
-	private int userID;
+	private int rank = 0;
 	[HttpBodyIndex(1)]
-	private float score;
-}
-
-[HttpBodyObject]
-public class Leaderboard
-{
-	[HttpBodyField("Id")]
-	private string leaderboardID;
-	[HttpBodyField]
-	private DateTime lastUpdated;
-	[HttpBodyField]
-	private List<LeaderboardEntry> entries;
-}
-
-[HttpBodyObject]
-public class MyJsonResponse : IHttpJsonResponse
-{
-	[HttpBodyField]
-	private Leaderboard leaderboard;
+	private int playerID = 0;
+	[HttpBodyIndex(2)]
+	private int score = 0;
 }
 ```
 
-This kind of response is perfect for processing responses from GET or POST requests which return structured data.
+```cs
+// Simple representation of a leaderboard.
+[HttpBodyObject]
+public class Leaderboard
+{
+	[HttpBodyField("Name")]
+	private string name = string.Empty;
+	[HttpBodyField("Entries")]
+	private List<LeaderboardEntry> entries = null;
+}
+```
+
+```cs
+// A response object which contains the leaderboard, or the error codes.
+[HttpBodyObject]
+public class GetLeaderboardResponse : IHttpJsonResponse
+{
+	[HttpBodyField("ErrorCode")]
+	private ResponseError responseError = 0;
+	[HttpBodyField("Leaderboard")]
+	private Leaderboard leaderboard = null;
+}
+```
 
 ### Custom Response Handlers
 
-When your response implements the `IHttpCustomResponse` interface, the framework expects you to process the response further. This might be necessary in case you need to unpack or decrypt the returned data. The `ProcessResponse` method will get called on your response object along with the `UnityWebRequest` that is associated with it.
+When your response implements the `IHttpCustomResponse` interface, the framework expects you to process the response further. This might be necessary in case you need to unpack or decrypt the returned data. The `ProcessResponse` method will get called on the response object along with the `UnityWebRequest` that is associated with it. This allows you to take the raw data of the response and let it do its thing.
 
 ```cs
 public class MyCustomResponse : IHttpCustomResponse
@@ -297,108 +297,334 @@ public class MyCustomResponse : IHttpCustomResponse
 }
 ```
 
-## Messenger
+## Type Information & Inheritance
 
-Up until now you've seen what needs to be done on your request and response objects for them to be processed automatically. However, that doesn't happen on its own though. The `HttpMessenger` class takes care of that.
+When dealing with JSON data of a request's `POST`-body or its response, it's possible it may contain data with a chain of ancestor types. By default, no type information about the data being process is saved and inserted in there. This means data returned in a response may not be fully reconstructable when received.
 
-Whenever you want to send a request, provide your custom request object by using its `SendRequest` method and it will take care of everything. All that remains is to sit back and wait for a reply to come back.
-
-```cs
-MyRequest request;	// Implements one of the IHttpRequest interfaces.
-HttpMessenger messenger = new HttpMessenger();	// Can be re-used for multiple requests at a time.
-messenger.SendRequest(request);
-```
-
-The messenger also allows you to subscribe to events that will trigger the moment a request completes or fails. This way you can get notified when a request completes (or fails).
+This is where the `HttpType` attribute comes into play. You can place these at any of a base class in the hierarchy or interfaces. This attribute defines which child classes are eligible for including its type information in the serialized result. By default, the type's name will be used as a value for identification. However, you can provide a custom alias for the type by setting the `Value` property on the attribute. This also makes it resistant to refactoring or name changes of the type.
 
 ```cs
-MyRequest request;
-HttpMessenger messenger = new HttpMessenger();
-messenger.onMessageCompleted += OnMessageCompleted;
-messenger.onMessageFailed += OnMessageFailed;
-messenger.SendRequest(request);
-
-private void OnMessageCompleted(HttpMessageHandle messageHandle)
+[HttpType(typeof(RaceLeaderboard), Value="Race"),
+HttpType(typeof(FreestyleLeaderboard), Value="Freestyle")]
+public abstract class BaseLeaderboard
 {
-	// Check the response.
-	IHttpResponse response = messageHandle.Response;
+	// Implementation details omitted...
 }
 
-private void OnMessageFailed(HttpMessageHandle messageHandle)
+public class RaceLeaderboard
 {
-	// Check why the message failed.
-	if (messageHandle.WebRequest.isNetworkError)
+	// Treat score as a time value, with lower values being better.
+}
+
+public class FreestyleLeaderboard
+{
+	// Treat score as an accumulated score of tricks, with higher values being better.
+}
+```
+
+## HTTP Messenger
+
+Now that you know how to create and set up your request and response objects, it's time to send them over to the server. This is done by using an instance of the `HttpMessenger` class. It takes care of transforming requests and responses back & forth to instances of `UnityWebRequest` as well as offering tons of possibilities to receive a callback when it's done.
+
+Whenever you want to send a request, offer your custom request object by using its `SendRequest` method and it will take care of everything. All that remains is to sit back and wait for a reply to come back. You can subscribe to a few events to get notified when a message got completed, or encountered an error:
+
+```cs
+// A demonstrative object for all Http related features.
+public class HttpTest : MonoBehaviour
+{
+	private HttpMessenger messenger = null;
+
+	private void Awake()
 	{
-		// A network error occurred.
+		messenger = new HttpMessenger();
+		messenger.onMessageCompleted += OnMessageCompleted;
+		messenger.onMessageFailed += OnMessageFailed;
 	}
-	else if (messageHandle.WebRequest.isHttpError)
+
+	public void SendRequest(IHttpRequest request)
 	{
-		// An HTTP error occurred.
+		request.ThrowIfNull(nameof(request));
+		messenger.SendRequest(requestd);
+	}
+
+	private void OnMessageCompleted(HttpMessageHandle message)
+	{
+		Log.Info("Message completed.");
+	}
+
+	private void OnMessageFailed(HttpMessageHandle message)
+	{
+		Log.Error("Message failed.");
 	}
 }
 ```
 
 ### Message Handles
 
-Whenever you send a request through an `HttpMessenger`, it will return you a _message handle_. This handle allows you to check up on the progress of your request, including whether it encountered an error. This handle is also yieldable, so you can wait for it to complete in a coroutine.
+Whenever you send a request through an `HttpMessenger`, it will return you a _message handle_. This handle allows you to check up on the progress of your request, including whether it encountered an error. It's also yieldable, so you can wait for it to complete in a coroutine.
 
 ```cs
-private HttpMessenger messenger = new HttpMessenger();
-
-private IEnumerator RoutineHandleMessage(IHttpRequest request)
+// A demonstrative object for all Http related features.
+public class HttpTest : MonoBehaviour
 {
-	HttpMessageHandle messageHandle = messenger.SendRequest(request);
+	private HttpMessenger messenger = null;
 
-	// Wait for it to complete.
-	yield return messageHandle;
-
-	if (messageHandle.IsError)
+	private void Awake()
 	{
-		// Handle error.
-		yield break;
+		messenger = new HttpMessenger();
 	}
-	else if (messageHandle.IsDone)
+
+	public void SendRequest(IHttpRequest request)
 	{
-		// Get the response and process it.
-		IHttpResponse response = messageHandle.Response;
+		request.ThrowIfNull(nameof(request));
+		StartCoroutine(RoutineHandleMessage(request));
+	}
+
+	private IEnumerator RoutineHandleMessage(IHttpRequest request)
+	{
+		HttpMessageHandle messageHandle = messenger.SendRequest(request);
+
+		// Wait for it to complete.
+		yield return messageHandle;
+
+		if (messageHandle.IsError)
+		{
+			// Handle error.
+			yield break;
+		}
+		else if (messageHandle.IsDone)
+		{
+			// Use response.
+			IHttpResponse response = messageHandle.Response;
+		}
 	}
 }
 ```
 
 The handle also allows you to work with the actual instance of the `UnityWebRequest` as well through its `WebRequest` property. This way you can check up on any download progress of resources, or see what kind of error happened exactly.
 
-### Callbacks
+### Targeted Callbacks
 
-Another way to get notified is by registering your object to the messenger's callback mechanism. The advantage of using one of these callbacks over subscribing to events or using the message handle is that you can define methods that are interested when a particular type of response is received, as well as getting access directly to the fully qualified type-casted request and received response. This saves you time of trying to figure out what exactly came in.
+Another way to get notified is by registering your object to the messenger's callback mechanism. The advantage of using one of these callbacks over subscribing to events or using the message handle is that you can define methods that are interested when a particular type of response is received, as well as getting access directly to the full type-casted request and received response. This saves you time of trying to figure out what exactly came in.
 
 A method is marked as a callback by placing the `HttpResponseCallback` attribute over the method. It takes the type of a _response_, which defines for which responses it will be called.
 
-Finally, this object should still get registered with the messenger that it is interested in receiving callbacks.
+Finally, use the `RegisterCallback` method on the messenger to register your object for being interested in targeted callbacks.
 
 ```cs
-// Object that is capable of handling response of type MyResponse.
-public class MyMessageHandler
+// A demonstrative object for all Http related features.
+public class HttpTest : MonoBehaviour
 {
-	[HttpResponseCallback(typeof(MyResponse))]
-	private void OnMyResponseReceived(HttpMessageHandle handle, MyRequest request, MyResponse response)
+	private HttpMessenger messenger = null;
+
+	private void Awake()
 	{
-		// Check the state of the handle and the response.
+		// Create a HTTP messenger and register this object for targeted callbacks.
+		messenger = new HttpMessenger();
+		messenger.RegisterCallback(this);
+	}
+
+	[HttpResponseCallback(typeof(GetLeaderboardResponse))]
+	private void OnGetLeaderboardResponseReceived(HttpMessageHandle handle, GetLeaderboardRequest request, GetLeaderboardResponse response)
+	{
+		if (handle.IsError)
+		{
+			Log.Error("Something went wrong while fetching the leaderboard: {0}.", handle.WebRequest.error);
+		}
+		else
+		{
+			Log.Info("Successfully got the leaderboard.");
+		}
 	}
 }
-
-// Create a custom message handler and register it with the messenger.
-MyRequest request;
-MyMessageHandler messageHandler = new MyMessageHandler();
-HttpMessenger messenger = new HttpMessenger();
-messenger.RegisterCallback(messageHandler);
-messenger.SendRequest(request);
 ```
 
 For these callbacks, the parameters can be in any order and every parameter is optional. So feel free to leave out any that you don't need from the parameter list. There are also no special restrictions imposed on the callback object in terms of interfaces or derived types. It can be just any kind of object.
 
+### Advanced - Custom Serialization Definitions
+
+If you've examined the other tools in this toolkit, like the [JSON][JsonTool] and [Photon WebRPC extension][WebRPCTool] tools, you might have noticed a great similarity between them and this HTTP tool in terms of structure, features and how they deal with objects. This is because they all use the same [_Serialization_][SerializationTool] framework for transforming data, but each with different sets of attributes that are specific to the tool.
+
+However, it would be a waste of time to define the same kinds of attributes on your objects multiple times when they serve the same purpose, just for a different tool. That's why the `HttpMessenger` allows you to switch out its serialization definitions for others in this toolkit that share the same _signature_. For example, if you've already prepared your objects to be used with the JSON processor, you can provide the messenger with an instance of `JsonSerializationDefinition` for the `POST`-type HTTP requests:
+
+* The `BodySerializationDefinition` property allows you to set a different serialization definition to process the body of the HTTP requests and responses.
+* The `UrlSerializationDefinition` property allows you to set a different serialization definition to process the URL parameters of the HTTP requests.
+* The `HeaderSerializationDefinition` property allows you to set a different serialization definition to process the headers of the HTTP requests and responses.
+
+```cs
+// A demonstrative object for all Http related features.
+public class HttpTest : MonoBehaviour
+{
+	private HttpMessenger messenger = null;
+
+	private void Awake()
+	{
+		// Create a HTTP messenger and register this object for targeted callbacks.
+		messenger = new HttpMessenger();
+		messenger.RegisterCallback(this);
+
+		// Switch out the POST body processing definition for the JSON processing definition to use JSON-related attributes on object instead.
+		messenger.BodySerializationDefinition = new JsonSerializationDefinition();
+	}
+}
+```
+
+**Note**: tread carefully when assigning custom serialization definitions as not every serialization definition's output is compatible in terms of supported datatypes, even when they share the same interfaces. For example, the `XmlSerializationDefinition` from the [XML][XmlTool] tool cannot be used as it does not output supported data structures for the `UnityWebRequest` class to deal with, e.g. it stores data in `XElement` structures, rather than dictionaries and lists.
+
+**Another note**: make sure you also assign a type of serialization definition only once to each of the data streams (URL, headers, body), as using the same serialization definition will pick up the exact same data from the request objects each time, resulting in duplicating data in different streams.
+
 ## Example
+
+Most of the small tidbits of example code discussed in the topics above can be found in a more complete example here. The example shows a request-response setup for retrieving a simple leaderboard from the web server. It is assumed that the web server, of course, accepts and returns compatible data structures.
+
+```cs
+// Leaderboard entry representation, with a preferred list layout rather than an object layout.
+[HttpBodyArray]
+public class LeaderboardEntry
+{
+	[HttpBodyIndex(0)]
+	private int rank = 0;
+	[HttpBodyIndex(1)]
+	private int playerID = 0;
+	[HttpBodyIndex(2)]
+	private int score = 0;
+}
+```
+
+```cs
+// Simple representation of a leaderboard.
+[HttpBodyObject]
+public class Leaderboard
+{
+	[HttpBodyField("Name")]
+	private string name = string.Empty;
+	[HttpBodyField("Entries")]
+	private List<LeaderboardEntry> entries = null;
+}
+```
+
+```cs
+// Result code for getting a leaderboard.
+[Flags]
+public enum ResponseError
+{
+	None = 0,
+	InvalidID = 1,
+	InvalidEntries = 1 << 1,
+	InvalidOffset = 1 << 2
+}
+```
+
+```cs
+// A request object that attempts to get a leaderboard from the server.
+[HttpBodyObject, HttpResponseType(typeof(GetLeaderboardResponse))]
+public class GetLeaderboardRequest : IHttpPostRequest
+{
+	[HttpURLField("debug")]
+	private bool includeDebugInfo = false;
+	[HttpURLField]
+	private string platform = "steam";
+
+	[HttpHeaderField]
+	private string gameVersion = "v1.0";
+
+	[HttpBodyField("LeaderboardId")]
+	private readonly string leaderboardID;
+	[HttpBodyField("NrOfEntries")]
+	private readonly int nrOfEntries;
+	[HttpBodyField("Offset")]
+	private readonly int offset;
+
+	public string URL
+	{
+		get { return "https://my.domain.com/getleaderboard.php"; }
+	}
+}
+```
+
+```cs
+// A response object which contains the leaderboard, or the error codes.
+[HttpBodyObject]
+public class GetLeaderboardResponse : IHttpJsonResponse
+{
+	[HttpBodyField("ErrorCode")]
+	private ResponseError responseError = 0;
+	[HttpBodyField("Leaderboard")]
+	private Leaderboard leaderboard = null;
+}
+```
+
+```cs
+// A demonstrative object for all Http related features.
+public class HttpTest : MonoBehaviour
+{
+	private HttpMessenger messenger = null;
+
+	private void Awake()
+	{
+		// Create a HTTP messenger and register this object for regular and targeted callbacks.
+		messenger = new HttpMessenger();
+		messenger.RegisterCallback(this);
+
+		messenger.onMessageCompleted += OnMessageCompleted;
+		messenger.onMessageFailed += OnMessageFailed;
+	}
+
+	public void SendRequest(IHttpRequest request)
+	{
+		request.ThrowIfNull(nameof(request));
+		StartCoroutine(RoutineHandleMessage(request));
+	}
+
+	[HttpResponseCallback(typeof(GetLeaderboardResponse))]
+	private void OnGetLeaderboardResponseReceived(HttpMessageHandle handle, GetLeaderboardRequest request, GetLeaderboardResponse response)
+	{
+		if (handle.IsError)
+		{
+			Log.Error("Something went wrong while fetching the leaderboard: {0}.", handle.WebRequest.error);
+		}
+		else
+		{
+			Log.Info("Successfully got the leaderboard.");
+		}
+	}
+
+	private void OnMessageCompleted(HttpMessageHandle message)
+	{
+		Log.Info("Message completed.");
+	}
+
+	private void OnMessageFailed(HttpMessageHandle message)
+	{
+		Log.Error("Message failed.");
+	}
+
+	private IEnumerator RoutineHandleMessage(IHttpRequest request)
+	{
+		HttpMessageHandle messageHandle = messenger.SendRequest(request);
+
+		// Wait for it to complete.
+		yield return messageHandle;
+
+		if (messageHandle.IsError)
+		{
+			// Handle error.
+			yield break;
+		}
+		else if (messageHandle.IsDone)
+		{
+			// Use response.
+			IHttpResponse response = messageHandle.Response;
+		}
+	}
+}
+```
 
 Check out the HTTP sample scene for a hands-on example! It will make requests to the _Impossible Odds demo server_ to demonstrate its functionality.
 
 [Logo]: ./Images/ImpossibleOddsLogo.png
 [JSON]: ./Json.md
+[JsonTool]: ./Json.md
+[XmlTool]: ./Xml.md
+[WebRPCTool]: ./PhotonWebRPC.md
+[SerializationTool]: ./Serialization.md

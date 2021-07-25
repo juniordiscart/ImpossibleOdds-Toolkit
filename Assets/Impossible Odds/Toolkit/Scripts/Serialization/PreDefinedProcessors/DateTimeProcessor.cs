@@ -52,7 +52,7 @@
 
 			if (!definition.SupportedTypes.Contains(strValue.GetType()))
 			{
-				throw new SerializationException(string.Format("The converted type of a {0} type is not supported.", typeof(DateTime).Name));
+				throw new SerializationException("The converted type of a {0} type is not supported.", typeof(DateTime).Name);
 			}
 
 			serializedResult = strValue;
@@ -83,7 +83,7 @@
 			// At this point, a conversion is needed, but all types other than string will throw an exception.
 			if (!(dataToDeserialize is string))
 			{
-				throw new SerializationException(string.Format("Only values of type {0} can be used to convert to a {1} value.", typeof(string).Name, typeof(DateTime).Name));
+				throw new SerializationException("Only values of type {0} can be used to convert to a {1} value.", typeof(string).Name, typeof(DateTime).Name);
 			}
 
 			deserializedResult = string.IsNullOrWhiteSpace(dateTimeFormat) ? DateTime.Parse(dataToDeserialize as string, definition.FormatProvider) : DateTime.ParseExact(dataToDeserialize as string, dateTimeFormat, CultureInfo.InvariantCulture);

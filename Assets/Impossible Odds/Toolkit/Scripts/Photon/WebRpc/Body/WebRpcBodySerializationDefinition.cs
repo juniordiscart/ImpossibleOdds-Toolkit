@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using ImpossibleOdds.Json;
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Processors;
 
@@ -15,10 +16,9 @@
 	IEnumAliasSupport<WebRpcEnumStringAttribute, WebRpcEnumAliasAttribute>,
 	IRequiredValueSupport<WebRpcRequiredAttribute>
 	{
-		public const string JsonTypeKey = "jsi:type";
-
 		private List<IProcessor> processors = null;
 		private HashSet<Type> supportedTypes = null;
+		private string typeResolveKey = JsonSerializationDefinition.JsonTypeKey;
 
 		/// <inheritdoc />
 		public override IEnumerable<ISerializationProcessor> SerializationProcessors
@@ -87,9 +87,20 @@
 		}
 
 		/// <inheritdoc />
-		public object TypeResolveKey
+		object ILookupTypeResolveSupport.TypeResolveKey
 		{
-			get { return JsonTypeKey; }
+			get { return typeResolveKey; }
+		}
+
+		/// <inheritdoc />
+		public string TypeResolveKey
+		{
+			get { return typeResolveKey; }
+			set
+			{
+				value.ThrowIfNullOrEmpty(nameof(value));
+				typeResolveKey = value;
+			}
 		}
 
 		/// <inheritdoc />
@@ -138,6 +149,7 @@
 				new ExactMatchProcessor(this),
 				new EnumProcessor(this),
 				new PrimitiveTypeProcessor(this),
+				new DecimalProcessor(this),
 				new DateTimeProcessor(this),
 				new StringProcessor(this),
 				new Vector2Processor(this, this, defaultProcessingMethod),
