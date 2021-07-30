@@ -265,7 +265,6 @@ public class Veterinary
 
 If you do know, you can pass in a type for it to try and deserialize the JSON data into an instance of that type:
 
-
 ```cs
 // A demonstrative object for showcasing serializing and deserializing data.
 public class Veterinary
@@ -280,24 +279,6 @@ public class Veterinary
 ```
 
 **Note**: the given target type is allowed to be a base class, or even an abstract class or interface, provided that it has the right type information available for it to be able to create an instance of the expected result. See the [Type Information](#type-information) section for more details.
-
-Lastly, you can already pass an existing instance of the expected type and the processor will try to map the data onto it:
-
-```cs
-// A demonstrative object for showcasing serializing and deserializing data.
-public class Veterinary
-{
-	private AnimalRegister animals = null;
-
-	public void LoadAnimalRegister(string path)
-	{
-		if (animals != null)
-		{
-			JsonProcessor.Deserialize(animals, File.ReadAllText(path));
-		}
-	}
-}
-```
 
 ## Callbacks
 

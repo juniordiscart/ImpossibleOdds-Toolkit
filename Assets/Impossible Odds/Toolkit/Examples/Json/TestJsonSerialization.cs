@@ -22,6 +22,8 @@
 		private TMP_InputField txtJson = null;
 		[SerializeField]
 		private TextMeshProUGUI txtLog = null;
+		[SerializeField]
+		private ScrollRect scrollViewLog = null;
 
 		private AnimalRegister animalRegister = null;
 		private JsonOptions jsonOptions = null;
@@ -62,14 +64,14 @@
 			JsonProcessor.Serialize(animalRegister, jsonOptions, jsonBuilder);
 			btnDeserialize.interactable = (jsonBuilder.Length > 0);
 
-			txtLog.text = logBuilder.ToString();
+			UpdateLog();
 			txtJson.text = jsonBuilder.ToString();
 		}
 
 		private void OnDeserialize()
 		{
 			animalRegister = JsonProcessor.Deserialize<AnimalRegister>(txtJson.text);
-			txtLog.text = logBuilder.ToString();
+			UpdateLog();
 
 			btnSerialize.interactable = animalRegister != null;
 		}
@@ -77,11 +79,18 @@
 		private void OnLoadAsset()
 		{
 			animalRegister = JsonProcessor.Deserialize<AnimalRegister>(jsonAsset.text);
-			txtLog.text = logBuilder.ToString();
+			UpdateLog();
 			txtJson.text = jsonAsset.text;
 
 			btnSerialize.interactable = animalRegister != null;
 			btnDeserialize.interactable = !string.IsNullOrWhiteSpace(txtJson.text);
+		}
+
+		private void UpdateLog()
+		{
+			txtLog.text = logBuilder.ToString();
+			Canvas.ForceUpdateCanvases();
+			scrollViewLog.verticalNormalizedPosition = 0f;
 		}
 
 		private void OnClearLog()
