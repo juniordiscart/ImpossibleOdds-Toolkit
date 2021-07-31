@@ -310,18 +310,21 @@
 		private object Deserialize(XElement source, IMemberAttributeTuple memberInfo, XmlCDataAttribute cdataInfo)
 		{
 			XElement childElement = source.Element(GetElementKey(cdataInfo, memberInfo.Member));
-			if ((childElement != null) && (childElement.FirstNode is XCData cdata))
+			if (childElement == null)
 			{
-				return Serializer.Deserialize(memberInfo.MemberType, cdata.Value, XmlDefinition.CDataSerializationDefinition);
+				if (memberInfo.IsRequiredParameter)
+				{
+					throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType.Name);
+				}
+				else
+				{
+					return SerializationUtilities.GetDefaultValue(memberInfo.MemberType);
+				}
 			}
-			else if (memberInfo.IsRequiredParameter)
-			{
-				throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType.Name);
-			}
-			else
-			{
-				return SerializationUtilities.GetDefaultValue(memberInfo.MemberType);
-			}
+
+			// Find the first CDATA node in the child elements. Formatted XML documents may contain whitespace elements before the CDATA section is actually reached.
+			XCData cdata = childElement.Nodes().FirstOrDefault(e => e is XCData) as XCData;
+			return (cdata != null) ? Serializer.Deserialize(memberInfo.MemberType, cdata.Value, XmlDefinition.CDataSerializationDefinition) : SerializationUtilities.GetDefaultValue(memberInfo.MemberType);
 		}
 
 		private string GetElementKey(AbstractXmlMemberAttribute xmlAttribute, MemberInfo member)

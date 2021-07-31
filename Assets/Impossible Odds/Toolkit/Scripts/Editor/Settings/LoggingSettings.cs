@@ -1,31 +1,27 @@
 ﻿namespace ImpossibleOdds.Settings
 {
 	using System.Collections.Generic;
+	using System.Linq;
 	using UnityEditor;
 	using UnityEngine;
 
 	public class LoggingSettings : IProjectSetting
 	{
-		private HashSet<string> loadedSymbols = null;
-
-		private int currentBuildLogLevel = 0;
-		private int currentEditorLogLevel = 0;
-
-		private readonly string[] EditorLoggingLevelSymbols = new string[]
+		private static readonly string[] EditorLoggingLevelSymbols = new string[]
 		{
 			"IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO",
 			"IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING",
 			"IMPOSSIBLE_ODDS_LOGGING_EDITOR_ERROR"
 		};
 
-		private readonly string[] BuildLoggingLevelSymbols = new string[]
+		private static readonly string[] PlayerLoggingLevelSymbols = new string[]
 		{
 			"IMPOSSIBLE_ODDS_LOGGING_INFO",
 			"IMPOSSIBLE_ODDS_LOGGING_WARNING",
 			"IMPOSSIBLE_ODDS_LOGGING_ERROR"
 		};
 
-		private readonly string[] LoggingLevelNames = new string[]
+		private static readonly string[] LoggingLevelNames = new string[]
 		{
 			"Information",
 			"Warnings",
@@ -33,7 +29,7 @@
 			"Exceptions"
 		};
 
-		private readonly string[] EditorLoggingLevelDescriptions = new string[]
+		private static readonly string[] EditorLoggingLevelDescriptions = new string[]
 		{
 			"Info, warning, error and exception messages are logged in the editor's console.",
 			"Warning, error and exception messages are logged in the editor's console. Info messages are suppressed.",
@@ -41,13 +37,45 @@
 			"Exception messages are logged in the editor console. Info, warning and error messages are suppressed."
 		};
 
-		private readonly string[] BuildLoggingLevelDescriptions = new string[]
+		private static readonly string[] BuildLoggingLevelDescriptions = new string[]
 		{
 			"Info, warning, error and exception messages are logged in the player's log file.",
 			"Warning, error and exception messages are logged in the player's log file. Info messages are suppressed.",
 			"Error and exception messages are logged in the player's log file. Info and warning messages are suppressed.",
 			"Exception messages are logged in the player's log file. Info, warning and error messages are suppressed."
 		};
+
+
+		[InitializeOnLoadMethod]
+		private static void ApplyDefaultLogLevel()
+		{
+			if (EditorApplication.isPlayingOrWillChangePlaymode)
+			{
+				return;
+			}
+
+			BuildTargetGroup currentTargetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
+			List<string> currentSymbols = new List<string>(PlayerSettings.GetScriptingDefineSymbolsForGroup(currentTargetGroup).Split(';'));
+
+			// Check the editor logging level
+			if (EditorLoggingLevelSymbols.Join(currentSymbols, key1 => key1, key2 => key2, (key1, key2) => key1).Count() == 0)
+			{
+				currentSymbols.Add(EditorLoggingLevelSymbols[0]);
+			}
+
+			// Check the player logging level
+			if (PlayerLoggingLevelSymbols.Join(currentSymbols, key1 => key1, key2 => key2, (key1, key2) => key1).Count() == 0)
+			{
+				currentSymbols.Add(PlayerLoggingLevelSymbols[0]);
+			}
+
+			PlayerSettings.SetScriptingDefineSymbolsForGroup(currentTargetGroup, string.Join(";", currentSymbols));
+		}
+
+		private HashSet<string> loadedSymbols = null;
+
+		private int currentBuildLogLevel = 0;
+		private int currentEditorLogLevel = 0;
 
 		public bool IsChanged
 		{
@@ -81,13 +109,13 @@
 		{
 			get
 			{
-				if (currentBuildLogLevel < BuildLoggingLevelSymbols.Length)
+				if (currentBuildLogLevel < PlayerLoggingLevelSymbols.Length)
 				{
-					return !loadedSymbols.Contains(BuildLoggingLevelSymbols[currentBuildLogLevel]);
+					return !loadedSymbols.Contains(PlayerLoggingLevelSymbols[currentBuildLogLevel]);
 				}
 				else
 				{
-					foreach (string buildLoggingSymbol in BuildLoggingLevelSymbols)
+					foreach (string buildLoggingSymbol in PlayerLoggingLevelSymbols)
 					{
 						if (loadedSymbols.Contains(buildLoggingSymbol))
 						{
@@ -119,9 +147,9 @@
 			}
 
 			// Check current build logging level
-			for (; currentBuildLogLevel < BuildLoggingLevelSymbols.Length; ++currentBuildLogLevel)
+			for (; currentBuildLogLevel < PlayerLoggingLevelSymbols.Length; ++currentBuildLogLevel)
 			{
-				if (loadedSymbols.Contains(BuildLoggingLevelSymbols[currentBuildLogLevel]))
+				if (loadedSymbols.Contains(PlayerLoggingLevelSymbols[currentBuildLogLevel]))
 				{
 					break;
 				}
@@ -136,7 +164,7 @@
 				loadedSymbols.Remove(editorLoggingSymbol);
 			}
 
-			foreach (string buildLoggingSymbol in BuildLoggingLevelSymbols)
+			foreach (string buildLoggingSymbol in PlayerLoggingLevelSymbols)
 			{
 				loadedSymbols.Remove(buildLoggingSymbol);
 			}
@@ -147,9 +175,9 @@
 				loadedSymbols.Add(EditorLoggingLevelSymbols[currentEditorLogLevel]);
 			}
 
-			if (currentBuildLogLevel < BuildLoggingLevelSymbols.Length)
+			if (currentBuildLogLevel < PlayerLoggingLevelSymbols.Length)
 			{
-				loadedSymbols.Add(BuildLoggingLevelSymbols[currentBuildLogLevel]);
+				loadedSymbols.Add(PlayerLoggingLevelSymbols[currentBuildLogLevel]);
 			}
 		}
 

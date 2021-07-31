@@ -51,7 +51,6 @@ One of the more unique features of this JSON tool is the ability to save type in
 By adding the `JsonType` attribute to your base classes, you can define what child classes exist. The attribute takes in a single type, assuming that it is a child class of the type it is defined on. When an instance of that type is saved, its typename will be used as a default value. However, you can define a custom value for the type yourself using its `Value` property.
 
 ```cs
-// Base class for animals being registered.
 [JsonObject,
 JsonType(typeof(Cat)),
 JsonType(typeof(Dog)),
@@ -168,7 +167,6 @@ public abstract class Animal
 When your objects are decorated with the proper attributes, they are ready to be serialized to the JSON data format. Simply use the static `JsonProcessor` class:
 
 ```cs
-// A demonstrative object for showcasing serializing and deserializing data.
 public class Veterinary
 {
 	private AnimalRegister animals = null;
@@ -190,7 +188,6 @@ This produces a JSON-formatted string respresentation of your data. There's also
 The above JSON processor methods both have another variant where you can provide them with a `JsonOptions` object that allows to exert a small bit control over the way the JSON output is formatted.
 
 ```cs
-// A demonstrative object for showcasing serializing and deserializing data.
 public class Veterinary
 {
 	private AnimalRegister animals = null;
@@ -216,7 +213,6 @@ public class Veterinary
 The `JsonOptions` also has a `SerializationDefinition` property to provide a custom serialization definition object which defines which processors and data structures should be used during the data transformation process. When left `null`, the default one will be used.
 
 ```cs
-// A demonstrative object for showcasing serializing and deserializing data.
 public class Veterinary
 {
 	private AnimalRegister animals = null;
@@ -253,7 +249,6 @@ Deserializing your data is (almost) as easy as serializing it. However, dependin
 If you don't know beforehand what the JSON data represents, you can deserialize it, and it will return you a generic data structure (most likely a `List` or `Dictionary`, depending on the JSON data) for you to search through, or further process in a way you see fit.
 
 ```cs
-// A demonstrative object for showcasing serializing and deserializing data.
 public class Veterinary
 {
 	public void LoadAnimalRegister(string path)
@@ -266,7 +261,6 @@ public class Veterinary
 If you do know, you can pass in a type for it to try and deserialize the JSON data into an instance of that type:
 
 ```cs
-// A demonstrative object for showcasing serializing and deserializing data.
 public class Veterinary
 {
 	private AnimalRegister animals = null;
@@ -326,8 +320,6 @@ Each of these callbacks may accept a single parameter that is of type `IProcesso
 In the topics discussed above, you'll have read small tidbits of example code. Most of these can be read in full below.
 
 ```cs
-// Small class for saving appointments.
-// Structured in a sequential way.
 [JsonArray]
 public class VeterinaryAppointment
 {
@@ -353,7 +345,6 @@ public enum TaxonomyClass
 ```
 
 ```cs
-// Base class for animals being registered.
 [JsonObject,
 JsonType(typeof(Cat)),
 JsonType(typeof(Dog)),
@@ -399,7 +390,6 @@ public abstract class Animal
 ```
 
 ```cs
-// Derived class with additional values.
 [JsonObject]
 public class Cat : Animal
 {
@@ -411,7 +401,6 @@ public class Cat : Animal
 ```
 
 ```cs
-// Derived class with additional values.
 [JsonObject]
 public class Dog : Animal
 {
@@ -423,7 +412,6 @@ public class Dog : Animal
 ```
 
 ```cs
-// A list for keeping track all registered animals.
 [JsonObject]
 public class AnimalRegister
 {
@@ -433,7 +421,6 @@ public class AnimalRegister
 ```
 
 ```cs
-// A demonstrative object for showcasing serializing and deserializing data.
 public class Veterinary
 {
 	private AnimalRegister animals = null;
