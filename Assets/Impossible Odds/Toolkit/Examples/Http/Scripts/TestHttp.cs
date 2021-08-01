@@ -13,6 +13,9 @@
 		[SerializeField]
 		private Button btnSendRequest = null;
 		[SerializeField]
+		private Button btnClearLog = null;
+
+		[SerializeField]
 		private TextMeshProUGUI txtLog = null;
 
 		private HttpMessenger messenger = null;
@@ -33,29 +36,31 @@
 			logBuilder = new StringBuilder();
 
 			btnSendRequest.onClick.AddListener(SendRequest);
+			btnClearLog.onClick.AddListener(ClearLog);
 		}
 
 		private void OnEnable()
 		{
-			logBuilder.Clear();
-			txtLog.text = string.Empty;
+			ClearLog();
 		}
 
 		private void SendRequest()
 		{
-			logBuilder.Clear();
+			LogMessage("Sending request to get the leaderboard:");
 			GetLeaderboardRequest request = new GetLeaderboardRequest("test_01", 3, 0);
+			request.ToString(logBuilder);
+			LogMessage(string.Empty);
+
 			messenger.SendRequest(request);
-			LogMessage(string.Format("Sending request of type {0}.", request.GetType().Name));
 		}
 
 		[HttpResponseCallback(typeof(GetLeaderboardResponse))]
 		private void OnGetLeaderboardResponseReceived(HttpMessageHandle handle, GetLeaderboardRequest request, GetLeaderboardResponse response)
 		{
-			if ((response != null) && response.IsSuccess)
+			if (response != null)
 			{
-				logBuilder.AppendLine("Successfully retrieved leaderboard:");
-				JsonProcessor.Serialize(response.Leaderboard, jsonPrintOptions, logBuilder);
+				logBuilder.AppendLine("Received get leaderboard response:");
+				response.ToString(logBuilder);
 				txtLog.text = logBuilder.ToString();
 			}
 			else if (handle.WebRequest.isNetworkError)
@@ -70,6 +75,12 @@
 			{
 				LogMessage("The request did not complete successfully.");
 			}
+		}
+
+		private void ClearLog()
+		{
+			logBuilder.Clear();
+			txtLog.text = string.Empty;
 		}
 
 		private void LogMessage(string msg)

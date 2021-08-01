@@ -10,6 +10,7 @@ You can expect to find the following features in this tookit:
 * [JSON](#json): serialize your data to and from the JSON data format, with support for saving type information.
 * [XML](#xml): serialize your data to and from the XML data format using an easier alternative compared to C#'s built-in XML tools.
 * [HTTP](#http): easily transform your objects for sending data to your server using Unity’s web requests.
+* [Photon - WebRPC Extensions](#photon---webrpc-extensions): a convenience framework when sending requests over Photon's multiplayer network to your custom web server.
 
 ## Core Utilities
 
@@ -63,6 +64,16 @@ The `ImpossibleOdds.Http` namespace contains allows you to process your objects 
 To start communicating with your server, check the documentations page [here][Http].
 
 For more details about the data (de)serialization process, check the [Serialization][Serialization] section.
+
+## Photon - WebRPC Extensions
+
+In the `ImpossibleOdds.Photon.WebRpc` namespace, you'll find an extension framework on Photon's multiplayer package, specifically for sending requests and receiving responses from your web server over the WebRPC feature.
+
+For more information about this tool and how to get started, read on [here][PhotonWebRPC].
+
+For more details about the data (de)serialization process, check the [Serialization][Serialization] section.
+
+**Note**: this tool is only available when a valid Photon package is installed in your project. It is disabled otherwise.
 
 ## Editor Settings
 
@@ -119,6 +130,7 @@ View the [update history][Changelog] of this package.
 [Json]: ./Docs/Json.md
 [Xml]: ./Docs/Xml.md
 [Http]: ./Docs/Http.md
+[PhotonWebRPC]: ./Docs/PhotonWebRPC.md
 [Weblink]: ./Docs/Weblink.md
 [Serialization]: ./Docs/Serialization.md
 [Contact]: https://www.impossible-odds.net/support-request/

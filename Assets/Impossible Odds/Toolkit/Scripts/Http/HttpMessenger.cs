@@ -157,7 +157,7 @@
 				return request.URL;
 			}
 
-			return URLUtilities.BuildUrlQuery(request.URL, urlParams);
+			return UrlUtilities.BuildUrlQuery(request.URL, urlParams);
 		}
 
 		private void OnRequestCompleted(HttpMessageHandle handle)

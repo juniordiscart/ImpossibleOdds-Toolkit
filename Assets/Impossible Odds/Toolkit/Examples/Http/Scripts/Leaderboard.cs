@@ -2,14 +2,13 @@
 {
 	using System.Collections.Generic;
 	using ImpossibleOdds.Http;
-	using ImpossibleOdds.Json;
 
-	[HttpBodyObject, JsonObject]
+	[HttpBodyObject]
 	public class Leaderboard
 	{
-		[HttpBodyField("Name"), JsonField]
+		[HttpBodyField("Name")]
 		private string name = string.Empty;
-		[HttpBodyField("Entries"), JsonField]
+		[HttpBodyField("Entries")]
 		private List<LeaderboardEntry> entries = null;
 
 		public string Name

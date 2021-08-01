@@ -1,14 +1,19 @@
 ﻿namespace ImpossibleOdds.Examples.Http
 {
 	using System;
+	using System.Text;
 	using ImpossibleOdds.Http;
 
 	[Flags]
 	public enum ResponseError
 	{
+		[DisplayName(Name = "No error")]
 		None = 0,
+		[DisplayName(Name = "Invalid Leaderboard ID")]
 		InvalidID = 1,
+		[DisplayName(Name = "Invalid range of entries")]
 		InvalidEntries = 1 << 1,
+		[DisplayName(Name = "Invalid offset")]
 		InvalidOffset = 1 << 2
 	}
 
@@ -33,6 +38,23 @@
 		public Leaderboard Leaderboard
 		{
 			get { return leaderboard; }
+		}
+
+		public void ToString(StringBuilder builder)
+		{
+			builder.AppendFormat("Success: {0}\n", IsSuccess);
+			builder.AppendFormat("Error: {0}\n", responseError.DisplayName());
+
+			if (leaderboard != null)
+			{
+				builder.AppendFormat("Leaderboard: {0}\n", leaderboard.Name);
+				builder.AppendFormat("Entries: {0}\n", leaderboard.Entries.Count);
+
+				foreach (LeaderboardEntry entry in leaderboard.Entries)
+				{
+					builder.AppendFormat("\t{0}. - User ID: {1} - Score: {2}\n", (entry.Rank + 1), entry.PlayerID, entry.Score);
+				}
+			}
 		}
 	}
 }

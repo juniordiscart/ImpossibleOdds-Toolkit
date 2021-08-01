@@ -5,7 +5,7 @@
 	using UnityEngine.Networking;
 	using ImpossibleOdds.Serialization;
 
-	public static class URLUtilities
+	public static class UrlUtilities
 	{
 		private readonly static char[] QueryParamSplit = new char[] { '&' };
 

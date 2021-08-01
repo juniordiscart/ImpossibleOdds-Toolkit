@@ -224,7 +224,7 @@
 			Dictionary<string, string> urlParams = Serializer.Serialize<Dictionary<string, string>>(request, urlDefinition);
 			if (urlParams != null)
 			{
-				requestUri = URLUtilities.BuildUrlQuery(requestUri, urlParams);
+				requestUri = UrlUtilities.BuildUrlQuery(requestUri, urlParams);
 			}
 
 			return requestUri;

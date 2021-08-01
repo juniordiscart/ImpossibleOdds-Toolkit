@@ -36,13 +36,7 @@ namespace ImpossibleOdds.Examples.Photon.WebRpc
 			get { return client; }
 		}
 
-		private void Awake()
-		{
-			client = new LoadBalancingClient();
-			client.AddCallbackTarget(this);
-		}
-
-		private void Start()
+		public void Connect()
 		{
 			AppSettings appSettings = new AppSettings()
 			{
@@ -53,6 +47,12 @@ namespace ImpossibleOdds.Examples.Photon.WebRpc
 			{
 				Log.Error("Failed to initialize the connection to Photon.");
 			}
+		}
+
+		private void Awake()
+		{
+			client = new LoadBalancingClient();
+			client.AddCallbackTarget(this);
 		}
 
 		private void OnDestroy()

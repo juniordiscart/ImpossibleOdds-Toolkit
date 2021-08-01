@@ -678,8 +678,8 @@ MonoBehaviour:
 
 
     You
-    can change the settings for the logger by checking your project''s settings under
-    the ''<b>Impossible Odds<b>'' tab.'
+    can change the settings for the logger by opening the <b>Impossible Odds<b> tab
+    in your project''s settings.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
