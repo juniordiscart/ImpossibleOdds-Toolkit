@@ -18,13 +18,13 @@
 	where TResponseAssoc : WeblinkResponseAttribute
 	where TResponseCallback : WeblinkResponseCallbackAttribute
 	{
-		private Dictionary<TRequest, THandle> pendingRequests = new Dictionary<TRequest, THandle>();
-		private List<object> responseCallbacks = new List<object>();
-
 		/// <inheritdoc />
 		public event Action<THandle> onMessageCompleted;
 		/// <inheritdoc />
 		public event Action<THandle> onMessageFailed;
+
+		private Dictionary<TRequest, THandle> pendingRequests = new Dictionary<TRequest, THandle>();
+		private List<object> responseCallbacks = new List<object>();
 
 		/// <inheritdoc />
 		event Action<IWeblinkMessageHandle> IWeblinkMessenger.onMessageCompleted
@@ -82,6 +82,14 @@
 					throw new ArgumentException(nameof(value));
 				}
 			}
+		}
+
+		/// <summary>
+		/// The amount of pending registered requests.
+		/// </summary>
+		public int Count
+		{
+			get { return pendingRequests.Count; }
 		}
 
 		/// <inheritdoc />

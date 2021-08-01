@@ -4,7 +4,7 @@
 
 	public class WebRpcMessageHandle : IWeblinkMessageHandle<IWebRpcRequest, IWebRpcResponse>
 	{
-		private readonly string requestID = null;
+		private readonly object requestId = null;
 		private readonly IWebRpcRequest request = null;
 		private IWebRpcResponse response = null;
 		private string debugMessage = null;
@@ -12,9 +12,9 @@
 		/// <summary>
 		/// The ID given by the WebRpcMessenger to uniquely identify a returned response by the server.
 		/// </summary>
-		public string RequestID
+		public object RequestId
 		{
-			get { return requestID; }
+			get { return requestId; }
 		}
 
 		/// <inheritdoc />
@@ -61,12 +61,12 @@
 			get { return Response; }
 		}
 
-		public WebRpcMessageHandle(IWebRpcRequest request, string requestID)
+		public WebRpcMessageHandle(IWebRpcRequest request, object requestId)
 		{
 			request.ThrowIfNull(nameof(request));
-			requestID.ThrowIfNullOrWhitespace(nameof(requestID));
+			requestId.ThrowIfNull(nameof(requestId));
 			this.request = request;
-			this.requestID = requestID;
+			this.requestId = requestId;
 		}
 
 		/// <inheritdoc />

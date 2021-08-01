@@ -2,10 +2,8 @@
 {
 	using System;
 	using System.Collections;
-	using System.Collections.Generic;
 	using System.Text;
 	using System.Text.RegularExpressions;
-
 	using ImpossibleOdds.Serialization;
 
 	public static class JsonProcessor
@@ -23,12 +21,18 @@
 		/// Serialize the object to a JSON-string.
 		/// </summary>
 		/// <param name="obj">Object to serialize.</param>
+		/// <param name="options">Options to modify the string output behaviour.</param>
 		/// <returns>A JSON representation of the given object.</returns>
-		public static string Serialize(object obj)
+		public static string Serialize(object obj, JsonOptions options = null)
 		{
-			RuntimeOptions runtimeOptions = new RuntimeOptions();
-			ToJson(obj, runtimeOptions);
-			return runtimeOptions.resultStore.ToString();
+			SerializationSettings serializationSettings = new SerializationSettings();
+			if (options != null)
+			{
+				serializationSettings.ApplyOptions(options);
+			}
+
+			ToJson(obj, serializationSettings);
+			return serializationSettings.resultStore.ToString();
 		}
 
 		/// <summary>
@@ -36,25 +40,18 @@
 		/// </summary>
 		/// <param name="obj">Object to serialize.</param>
 		/// <param name="resultStore">Write cache for the JSON result.</param>
-		public static void Serialize(object obj, StringBuilder resultStore)
+		/// <param name="options">Options to modify the string output behaviour.</param>
+		public static void Serialize(object obj, StringBuilder resultStore, JsonOptions options = null)
 		{
 			resultStore.ThrowIfNull(nameof(resultStore));
-			RuntimeOptions runtimeOptions = new RuntimeOptions(null, resultStore);
-			ToJson(obj, runtimeOptions);
-		}
 
-		/// <summary>
-		/// Serialize the object to a JSON string with custom formatting/processing settings.
-		/// </summary>
-		/// <param name="obj">Object to serialize.</param>
-		/// <param name="options">Options to modify the string output behaviour.</param>
-		/// <returns>A JSON representation of the given object.</returns>
-		public static string Serialize(object obj, JsonOptions options)
-		{
-			options.ThrowIfNull(nameof(options));
-			RuntimeOptions runtimeOptions = new RuntimeOptions(options);
-			ToJson(obj, runtimeOptions);
-			return runtimeOptions.resultStore.ToString();
+			SerializationSettings serializationSettings = new SerializationSettings(resultStore);
+			if (options != null)
+			{
+				serializationSettings.ApplyOptions(options);
+			}
+
+			ToJson(obj, serializationSettings);
 		}
 
 		/// <summary>
@@ -64,31 +61,38 @@
 		/// <param name="obj">Object to serialize.</param>
 		/// <param name="options">Options to modify the string output behaviour.</param>
 		/// <param name="resultStore">Write cache for the JSON result.</param>
+		[Obsolete("Use JsonProcessor.Serialize(object obj, StringBuilder resultStore, JsonOptions options = null) instead")]
 		public static void Serialize(object obj, JsonOptions options, StringBuilder resultStore)
 		{
 			options.ThrowIfNull(nameof(options));
 			resultStore.ThrowIfNull(nameof(resultStore));
-			RuntimeOptions runtimeOptions = new RuntimeOptions(options, resultStore);
-			ToJson(obj, runtimeOptions);
+			SerializationSettings serializationSettings = new SerializationSettings(resultStore);
+			serializationSettings.ApplyOptions(options);
+
+			ToJson(obj, serializationSettings);
 		}
 
 		/// <summary>
 		/// Process a JSON string to a data structure.
 		/// </summary>
 		/// <param name="jsonStr">JSON representation of an object.</param>
-		public static object Deserialize(string jsonStr)
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		public static object Deserialize(string jsonStr, JsonOptions options = null)
 		{
-			return Deserialize<Dictionary<string, object>, List<object>>(jsonStr);
+			ISerializationDefinition sd = (options?.SerializationDefinition != null) ? options.SerializationDefinition : defaultSerializationDefinition;
+			int index = 0;
+			return FromJson(sd, jsonStr, ref index);
 		}
 
 		/// <summary>
 		/// Process a JSON string value and attempt to deserialize it to an instance of the target type.
 		/// </summary>
 		/// <param name="jsonStr">JSON representation of an object.</param>
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
 		/// <typeparam name="TTarget">Target type.</typeparam>
-		public static TTarget Deserialize<TTarget>(string jsonStr)
+		public static TTarget Deserialize<TTarget>(string jsonStr, JsonOptions options = null)
 		{
-			return (TTarget)Deserialize(typeof(TTarget), jsonStr);
+			return (TTarget)Deserialize(typeof(TTarget), jsonStr, options);
 		}
 
 		/// <summary>
@@ -96,9 +100,11 @@
 		/// </summary>
 		/// <param name="targetType">Target type.</param>
 		/// <param name="jsonStr">JSON representation of an object.</param>
-		public static object Deserialize(Type targetType, string jsonStr)
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		public static object Deserialize(Type targetType, string jsonStr, JsonOptions options = null)
 		{
-			return Serializer.Deserialize(targetType, Deserialize(jsonStr), defaultSerializationDefinition);
+			ISerializationDefinition sd = (options?.SerializationDefinition != null) ? options.SerializationDefinition : defaultSerializationDefinition;
+			return Serializer.Deserialize(targetType, Deserialize(jsonStr, options), sd);
 		}
 
 		/// <summary>
@@ -106,29 +112,17 @@
 		/// </summary>
 		/// <param name="target">Object to which the JSON data is applied to.</param>
 		/// <param name="jsonStr">JSON representation of an object.</param>
-		public static void Deserialize(object target, string jsonStr)
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		public static void Deserialize(object target, string jsonStr, JsonOptions options = null)
 		{
-			object result = Deserialize(jsonStr);
-			Serializer.Deserialize(target, result, defaultSerializationDefinition);
-		}
-
-		/// <summary>
-		/// Process a JSON string value to the provided custom data structures.
-		/// </summary>
-		/// <param name="jsonStr">JSON representation of an object.</param>
-		/// <typeparam name="TJsonObject">Custom JSON object type.</typeparam>
-		/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
-		public static object Deserialize<TJsonObject, TJsonArray>(string jsonStr)
-		where TJsonObject : IDictionary, new()
-		where TJsonArray : IList, new()
-		{
-			int index = 0;
-			return FromJson<TJsonObject, TJsonArray>(jsonStr, ref index);
+			ISerializationDefinition sd = (options?.SerializationDefinition != null) ? options.SerializationDefinition : defaultSerializationDefinition;
+			object result = Deserialize(jsonStr, options);
+			Serializer.Deserialize(target, result, sd);
 		}
 
 		#region To Json
 
-		private static void ToJson(object obj, RuntimeOptions options)
+		private static void ToJson(object obj, SerializationSettings options)
 		{
 			if (obj == null)
 			{
@@ -178,7 +172,7 @@
 			}
 		}
 
-		private static void FromLookupToJson(IDictionary obj, RuntimeOptions options)
+		private static void FromLookupToJson(IDictionary obj, SerializationSettings options)
 		{
 			options.resultStore.Append('{');
 			if (!options.compactOutput)
@@ -225,7 +219,7 @@
 			options.resultStore.Append('}');
 		}
 
-		private static void FromSequenceToJson(IList obj, RuntimeOptions options)
+		private static void FromSequenceToJson(IList obj, SerializationSettings options)
 		{
 			options.resultStore.Append('[');
 			if (!options.compactOutput)
@@ -261,7 +255,7 @@
 			options.resultStore.Append(']');
 		}
 
-		private static void CleanStringToJson(string str, RuntimeOptions options)
+		private static void CleanStringToJson(string str, SerializationSettings options)
 		{
 			// Regex.Escape is too agressive in removing characters.
 			// builder.Append(Regex.Escape(str));
@@ -273,7 +267,7 @@
 		}
 
 		// Based on: https://stackoverflow.com/a/17691629
-		private static void CleanCharToJson(char c, RuntimeOptions options)
+		private static void CleanCharToJson(char c, SerializationSettings options)
 		{
 			switch (c)
 			{
@@ -317,18 +311,18 @@
 			}
 		}
 
-		private static void NewLine(RuntimeOptions options)
+		private static void NewLine(SerializationSettings options)
 		{
 			options.resultStore.Append('\n').Append(options.IndentString);
 		}
 
-		private static void AdvanceLine(RuntimeOptions options)
+		private static void AdvanceLine(SerializationSettings options)
 		{
 			options.IndentationLevel += 1;
 			NewLine(options);
 		}
 
-		private static void ReturnLine(RuntimeOptions options)
+		private static void ReturnLine(SerializationSettings options)
 		{
 			options.IndentationLevel -= 1;
 			NewLine(options);
@@ -338,9 +332,7 @@
 
 		#region From Json
 
-		private static object FromJson<TJsonObject, TJsonArray>(string str, ref int index)
-		where TJsonObject : IDictionary, new()
-		where TJsonArray : IList, new()
+		private static object FromJson(ISerializationDefinition serializationDefinition, string str, ref int index)
 		{
 			if (string.IsNullOrEmpty(str))
 			{
@@ -379,15 +371,33 @@
 					index += FalseStr.Length;
 					return false;
 				case '"':
-					return FromJsonToString(str, ref index);
+					return FromJsonToString(serializationDefinition, str, ref index);
 				case '{':
-					return FromJsonToLookup<TJsonObject, TJsonArray>(str, ref index);
+					{
+						if (serializationDefinition is ILookupSerializationDefinition lookupDefinition)
+						{
+							return FromJsonToLookup(lookupDefinition, str, ref index);
+						}
+						else
+						{
+							throw new JsonException("The serialization definition does not implement the {0} interface, but the value contains JSON-object data.", typeof(ILookupSerializationDefinition).Name);
+						}
+					}
 				case '[':
-					return FromJsonToSequence<TJsonObject, TJsonArray>(str, ref index);
+					{
+						if (serializationDefinition is IIndexSerializationDefinition indexDefinition)
+						{
+							return FromJsonToSequence(indexDefinition, str, ref index);
+						}
+						else
+						{
+							throw new JsonException("The serialization definition does not implement the {0} interface, but the value contains JSON-array data.", typeof(IIndexSerializationDefinition).Name);
+						}
+					}
 				default:
 					if (char.IsDigit(firstChar) || firstChar.Equals('-'))
 					{
-						return FromJsonToNumerical(str, ref index);
+						return FromJsonToNumerical(serializationDefinition, str, ref index);
 					}
 					else
 					{
@@ -396,7 +406,7 @@
 			}
 		}
 
-		private static string FromJsonToString(string str, ref int index)
+		private static string FromJsonToString(ISerializationDefinition serializationDefinition, string str, ref int index)
 		{
 			// Find the first unescaped '"' character
 			int nextIndex = index + 1;
@@ -431,7 +441,7 @@
 			return Regex.Unescape(value);
 		}
 
-		private static object FromJsonToNumerical(string str, ref int index)
+		private static object FromJsonToNumerical(ISerializationDefinition serializationDefinition, string str, ref int index)
 		{
 			AdvanceUntil(str, ref index, numericalSymbols);
 
@@ -490,12 +500,10 @@
 			}
 		}
 
-		private static TJsonObject FromJsonToLookup<TJsonObject, TJsonArray>(string str, ref int index)
-		where TJsonObject : IDictionary, new()
-		where TJsonArray : IList, new()
+		private static IDictionary FromJsonToLookup(ILookupSerializationDefinition serializationDefinition, string str, ref int index)
 		{
 			AdvanceUntil(str, ref index, '{');
-			TJsonObject lookup = new TJsonObject();
+			IDictionary lookup = serializationDefinition.CreateLookupInstance(0);
 
 			while (index < str.Length)
 			{
@@ -509,12 +517,12 @@
 					throw new JsonException("Unexpected '{0}' character. Expected a 'string'-token.", str[index]);
 				}
 
-				string key = FromJsonToString(str, ref index);
+				string key = FromJsonToString(serializationDefinition, str, ref index);
 
 				AdvanceUntil(str, ref index, ':');
 				index++;    // Step over the ':' character.
 
-				object value = FromJson<TJsonObject, TJsonArray>(str, ref index);
+				object value = FromJson(serializationDefinition, str, ref index);
 
 				if (lookup.Contains(key))
 				{
@@ -542,12 +550,10 @@
 			return lookup;
 		}
 
-		private static TJsonArray FromJsonToSequence<TJsonObject, TJsonArray>(string str, ref int index)
-		where TJsonObject : IDictionary, new()
-		where TJsonArray : IList, new()
+		private static IList FromJsonToSequence(IIndexSerializationDefinition serializationDefinition, string str, ref int index)
 		{
 			AdvanceUntil(str, ref index, '[');
-			TJsonArray sequence = new TJsonArray();
+			IList sequence = serializationDefinition.CreateSequenceInstance(0);
 
 			++index;    // Skip over the '[' character
 
@@ -563,7 +569,7 @@
 					throw new JsonException("Unexpected ',' character.");
 				}
 
-				object value = FromJson<TJsonObject, TJsonArray>(str, ref index);
+				object value = FromJson(serializationDefinition, str, ref index);
 				sequence.Add(value);
 
 				AdvanceUntil(str, ref index, new char[] { ',', ']' });
@@ -666,7 +672,7 @@
 
 		#endregion // From Json
 
-		private class RuntimeOptions
+		private class SerializationSettings
 		{
 			public bool escapeSlashChar = true;
 			public bool compactOutput = true;
@@ -691,20 +697,22 @@
 				get { return indentStr; }
 			}
 
-			public RuntimeOptions(JsonOptions options = null, StringBuilder resultStore = null)
+			public SerializationSettings(StringBuilder resultStore = null)
 			{
-				if (options != null)
-				{
-					escapeSlashChar = options.EscapeSlashCharacter;
-					compactOutput = options.CompactOutput;
-					serializationDefinition = (options.SerializationDefinition != null) ? options.SerializationDefinition : defaultSerializationDefinition;
-				}
-				else
-				{
-					serializationDefinition = defaultSerializationDefinition;
-				}
-
 				this.resultStore = (resultStore != null) ? resultStore : new StringBuilder(DefaultResultsCacheCapacity);
+				this.serializationDefinition = defaultSerializationDefinition;
+			}
+
+			public void ApplyOptions(JsonOptions options)
+			{
+				options.ThrowIfNull(nameof(options));
+				escapeSlashChar = options.EscapeSlashCharacter;
+				compactOutput = options.CompactOutput;
+
+				if (options.SerializationDefinition != null)
+				{
+					serializationDefinition = options.SerializationDefinition;
+				}
 			}
 		}
 	}

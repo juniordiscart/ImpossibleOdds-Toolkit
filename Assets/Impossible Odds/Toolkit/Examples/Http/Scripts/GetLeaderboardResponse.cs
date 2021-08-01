@@ -18,7 +18,7 @@
 	}
 
 	[HttpBodyObject]
-	public class GetLeaderboardResponse : IHttpJsonResponse
+	public class GetLeaderboardResponse : IHttpPostResponse
 	{
 		[HttpBodyField("ErrorCode")]
 		private ResponseError responseError = 0;

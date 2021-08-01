@@ -10,53 +10,35 @@
 
 	public class HttpMessenger : WeblinkMessenger<IHttpRequest, IHttpResponse, HttpMessageHandle, HttpResponseTypeAttribute, HttpResponseCallbackAttribute>
 	{
-		private ISerializationDefinition urlDefinition = new HttpURLSerializationDefinition();
-		private ISerializationDefinition headerDefinition = new HttpHeaderSerializationDefinition();
-		private ISerializationDefinition bodyDefinition = new HttpBodySerializationDefinition();
-		private StringBuilder stringBuilderCache = null;
+		private IHttpMessageConfigurator messageConfigurator = null;
 
 		/// <summary>
-		/// Serialization definition used for processing the body of requests and responses.
+		/// The configurator being used for handling the URL, header and POST-body data.
+		/// Note: before switching the configurator, make sure all pending requests receive a response, or stop them.
 		/// </summary>
-		public ISerializationDefinition BodySerializationDefinition
+		public IHttpMessageConfigurator MessageConfigurator
 		{
-			get { return bodyDefinition; }
+			get { return messageConfigurator; }
 			set
 			{
 				value.ThrowIfNull(nameof(value));
-				bodyDefinition = value;
-			}
-		}
+				if ((value != messageConfigurator) && (Count > 0))
+				{
+					throw new HttpException("Switching configurators while requests are still pending a response may cause requests to never complete. Stop all requests first before assigning a new configurator.");
+				}
 
-		/// <summary>
-		/// Serialization definition used for processing the URL of requests.
-		/// </summary>
-		public ISerializationDefinition UrlSerializationDefinition
-		{
-			get { return urlDefinition; }
-			set
-			{
-				value.ThrowIfNull(nameof(value));
-				urlDefinition = value;
-			}
-		}
-
-		/// <summary>
-		/// Serialization definition used for processing the headers of requests and responses.
-		/// </summary>
-		public ISerializationDefinition HeaderSerializationDefinition
-		{
-			get { return headerDefinition; }
-			set
-			{
-				value.ThrowIfNull(nameof(value));
-				headerDefinition = value;
+				messageConfigurator = value;
 			}
 		}
 
 		public HttpMessenger()
+		: this(new DefaultConfigurator())
+		{ }
+
+		public HttpMessenger(IHttpMessageConfigurator configurator)
 		{
-			stringBuilderCache = new StringBuilder();
+			configurator.ThrowIfNull(nameof(configurator));
+			this.messageConfigurator = configurator;
 		}
 
 		/// <inheritdoc />
@@ -75,7 +57,6 @@
 			AddPendingRequest(messageHandle);
 
 			UnityWebRequestAsyncOperation webOP = unityRequest.SendWebRequest();
-			// Log.Info("Sending request of type {0}.", request.GetType());
 
 			if (!webOP.isDone)
 			{
@@ -92,7 +73,7 @@
 
 		private UnityWebRequest GenerateWebRequest(IHttpRequest request)
 		{
-			string url = GenerateURL(request);
+			string url = messageConfigurator.GenerateRequestUrl(request);
 			UnityWebRequest unityWebRequest = null;
 
 			if (request is IHttpGetRequest getRequest)
@@ -117,9 +98,7 @@
 			}
 			else if (request is IHttpPostRequest postRequest)
 			{
-				stringBuilderCache.Clear();
-				JsonProcessor.Serialize(Serializer.Serialize(request, bodyDefinition), stringBuilderCache);
-				unityWebRequest = UnityWebRequest.Post(url, stringBuilderCache.ToString());
+				unityWebRequest = UnityWebRequest.Post(url, messageConfigurator.GenerateRequestPostBody(postRequest));
 			}
 			else if (request is IHttpPutStringRequest putStringRequest)
 			{
@@ -134,7 +113,7 @@
 				throw new HttpException("Request of type {0} could not be mapped to a supported type of {1}.", request.GetType().Name, typeof(UnityWebRequest).Name);
 			}
 
-			IDictionary headerData = Serializer.Serialize<IDictionary>(request, headerDefinition);
+			IDictionary headerData = messageConfigurator.GenerateRequestHeaders(request);
 			if (headerData != null)
 			{
 				foreach (DictionaryEntry header in headerData)
@@ -146,18 +125,6 @@
 			}
 
 			return unityWebRequest;
-		}
-
-		private string GenerateURL(IHttpRequest request)
-		{
-			IDictionary urlParams = Serializer.Serialize<IDictionary>(request, urlDefinition);
-
-			if ((urlParams == null) || (urlParams.Count == 0))
-			{
-				return request.URL;
-			}
-
-			return UrlUtilities.BuildUrlQuery(request.URL, urlParams);
 		}
 
 		private void OnRequestCompleted(HttpMessageHandle handle)
@@ -179,13 +146,12 @@
 
 			// Create the response and process the returned headers
 			IHttpResponse response = InstantiateResponse(handle);
-			Serializer.Deserialize(response, webOP.GetResponseHeaders(), headerDefinition);
+			messageConfigurator.ProcessResponseHeaders(response, webOP.GetResponseHeaders());
 
 			// If the response expects JSON data to be returned,
-			if ((response is IHttpJsonResponse) && !string.IsNullOrWhiteSpace(webOP.downloadHandler.text))
+			if ((response is IHttpPostResponse postResponse) && !string.IsNullOrWhiteSpace(webOP.downloadHandler.text))
 			{
-				object jsonData = JsonProcessor.Deserialize(handle.WebRequest.downloadHandler.text);
-				Serializer.Deserialize(response, jsonData, bodyDefinition);
+				messageConfigurator.ProcessResponsePostBody(postResponse, webOP.downloadHandler.text);
 			}
 			else if (response is IHttpAudioClipResponse audioClipResponse)
 			{
@@ -213,6 +179,101 @@
 
 			handle.Response = response;
 			HandleCompleted(handle);
+		}
+
+		/// <summary>
+		/// Default configurator for preparing and configuring Http requests and responses.
+		/// This configurator will use the JsonProcessor to transform the data for POST-type requests and responses.
+		/// </summary>
+		public class DefaultConfigurator : IHttpMessageConfigurator
+		{
+			private readonly ISerializationDefinition urlDefinition = null;
+			private readonly ISerializationDefinition headerDefinition = null;
+			private readonly ISerializationDefinition bodyDefinition = null;
+			private readonly StringBuilder processingCache = new StringBuilder();
+			private readonly JsonOptions jsonOptions = null;
+
+			/// <summary>
+			/// Configurator with default serialization definitions for the URL, headers and body of the requests and responses.
+			/// </summary>
+			public DefaultConfigurator()
+			: this(new HttpBodySerializationDefinition(), new HttpURLSerializationDefinition(), new HttpHeaderSerializationDefinition())
+			{ }
+
+			/// <summary>
+			/// Configurator with customized serialization definitions for the URL, headers and body of the requests and responses.
+			/// </summary>
+			/// <param name="bodyDefinition"></param>
+			/// <param name="urlDefinition"></param>
+			/// <param name="headerDefinition"></param>
+			public DefaultConfigurator(ISerializationDefinition bodyDefinition, ISerializationDefinition urlDefinition, ISerializationDefinition headerDefinition)
+			{
+				bodyDefinition.ThrowIfNull(nameof(bodyDefinition));
+				urlDefinition.ThrowIfNull(nameof(urlDefinition));
+				headerDefinition.ThrowIfNull(nameof(headerDefinition));
+
+				this.bodyDefinition = bodyDefinition;
+				this.urlDefinition = urlDefinition;
+				this.headerDefinition = headerDefinition;
+
+				// Configure the JSON processing to use the Http Body serialization definition
+				// instead of the default JSON serialization definition.
+				jsonOptions = new JsonOptions();
+				jsonOptions.CompactOutput = true;
+				jsonOptions.SerializationDefinition = bodyDefinition;
+			}
+
+			/// <inheritdoc />
+			public string GenerateRequestUrl(IHttpRequest request)
+			{
+				request.ThrowIfNull(nameof(request));
+				IDictionary urlParams = Serializer.Serialize<IDictionary>(request, urlDefinition);
+
+				if ((urlParams == null) || (urlParams.Count == 0))
+				{
+					return request.URL;
+				}
+
+				return UrlUtilities.BuildUrlQuery(request.URL, urlParams);
+			}
+
+			/// <inheritdoc />
+			public IDictionary GenerateRequestHeaders(IHttpRequest request)
+			{
+				request.ThrowIfNull(nameof(request));
+				return Serializer.Serialize<IDictionary>(request, headerDefinition);
+			}
+
+			/// <inheritdoc />
+			public string GenerateRequestPostBody(IHttpPostRequest request)
+			{
+				request.ThrowIfNull(nameof(request));
+
+				JsonProcessor.Serialize(request, processingCache, jsonOptions);
+				string result = processingCache.ToString();
+				processingCache.Clear();
+
+				return result;
+			}
+
+			/// <inheritdoc />
+			public void ProcessResponseHeaders(IHttpResponse response, IDictionary headers)
+			{
+				response.ThrowIfNull(nameof(response));
+
+				if ((headers != null) && (headers.Count > 0))
+				{
+					Serializer.Deserialize(response, headers, headerDefinition);
+				}
+			}
+
+			/// <inheritdoc />
+			public void ProcessResponsePostBody(IHttpPostResponse response, string postBodyData)
+			{
+				response.ThrowIfNull(nameof(response));
+				postBodyData.ThrowIfNullOrWhitespace(nameof(postBodyData));
+				JsonProcessor.Deserialize(response, postBodyData, jsonOptions);
+			}
 		}
 	}
 }

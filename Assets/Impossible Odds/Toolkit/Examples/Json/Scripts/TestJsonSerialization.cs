@@ -61,7 +61,7 @@
 		{
 			jsonBuilder.Clear();
 
-			JsonProcessor.Serialize(animalRegister, jsonOptions, jsonBuilder);
+			JsonProcessor.Serialize(animalRegister, jsonBuilder, jsonOptions);
 			btnDeserialize.interactable = (jsonBuilder.Length > 0);
 
 			UpdateLog();
