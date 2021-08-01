@@ -427,15 +427,13 @@ public class HttpTest : MonoBehaviour
 
 For these callbacks, the parameters can be in any order and every parameter is optional. So feel free to leave out any that you don't need from the parameter list. There are also no special restrictions imposed on the callback object in terms of interfaces or derived types. It can be just any kind of object.
 
-### Advanced - Custom Serialization Definitions
+### Advanced - Customized Serialization
 
 If you've examined the other tools in this toolkit, like the [JSON][JsonTool] and [Photon WebRPC extension][WebRPCTool] tools, you might have noticed a great similarity between them and this HTTP tool in terms of structure, features and how they deal with objects. This is because they all use the same [_Serialization_][SerializationTool] framework for transforming data, but each with different sets of attributes that are specific to the tool.
 
-However, it would be a waste of time to define the same kinds of attributes on your objects multiple times when they serve the same purpose, just for a different tool. That's why the `HttpMessenger` allows you to switch out its serialization definitions for others in this toolkit that share the same _signature_. For example, if you've already prepared your objects to be used with the JSON processor, you can provide the messenger with an instance of `JsonSerializationDefinition` for the `POST`-type HTTP requests:
+However, it would be a waste of time and resources to define different kinds of attributes on your objects when they serve the same purpose, just for a different tool. That's why the `HttpMessenger` allows you to switch out its serialization behaviour for a different one that fits the purpose.
 
-* The `BodySerializationDefinition` property allows you to set a different serialization definition to process the body of the HTTP requests and responses.
-* The `UrlSerializationDefinition` property allows you to set a different serialization definition to process the URL parameters of the HTTP requests.
-* The `HeaderSerializationDefinition` property allows you to set a different serialization definition to process the headers of the HTTP requests and responses.
+This serialization behaviour of the messenger is defined by a _message configurator_ object, which you can provide during construction, or set later. The message configurator of the `HttpMessenger` class allows you to customize the serialization definitions used for transforming request and response data.
 
 ```cs
 public class HttpTest : MonoBehaviour
@@ -444,15 +442,22 @@ public class HttpTest : MonoBehaviour
 
 	private void Awake()
 	{
-		// Create a HTTP messenger and register this object for targeted callbacks.
+		// Create a HTTP messenger.
 		messenger = new HttpMessenger();
-		messenger.RegisterCallback(this);
 
-		// Switch out the POST body processing definition for the JSON processing definition to use JSON-related attributes on object instead.
-		messenger.BodySerializationDefinition = new JsonSerializationDefinition();
+		// Create and set a custom message configurator that uses the JSON serialization attributes
+		// for the body of the POSt-type requests, and keep everything else the same.
+		HttpMessenger.DefaultMessageConfigurator customMessageConfigurator = new HttpMessenger.DefaultMessageConfigurator(
+			new JsonSerializationDefinition(),	// Use a JSON definition.
+			new HttpURLSerializationDefinition(),	// Standard URL definition.
+			new HttpHeaderSerializationDefinition());	// Standard header definition.
+
+		messenger.MessageConfigurator = customMessageConfigurator;
 	}
 }
 ```
+
+The `HttpMessenger`'s default implementation can also be switched out for a completely custom message configurator, by implementing the `IHttpMessageConfigurator` interface, which requires the implementation of setting up the serialization of your request and responses. For inspiration, you can always check out the `DefaultMessageConfigurator` implementation in the messenger class.
 
 **Note**: tread carefully when assigning custom serialization definitions as not every serialization definition's output is compatible in terms of supported datatypes, even when they share the same interfaces. For example, the `XmlSerializationDefinition` from the [XML][XmlTool] tool cannot be used as it does not output supported data structures for the `UnityWebRequest` class to deal with, e.g. it stores data in `XElement` structures, rather than dictionaries and lists.
 

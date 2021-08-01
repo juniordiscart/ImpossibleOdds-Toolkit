@@ -10,7 +10,8 @@
 	/// <summary>
 	/// Serialization definition for the header of HTTP requests.
 	/// </summary>
-	public class HttpHeaderSerializationDefinition : ILookupSerializationDefinition,
+	public class HttpHeaderSerializationDefinition :
+	ILookupSerializationDefinition,
 	IEnumAliasSupport<HttpEnumStringAttribute, HttpEnumAliasAttribute>
 	{
 		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;

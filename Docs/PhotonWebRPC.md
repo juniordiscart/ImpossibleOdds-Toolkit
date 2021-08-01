@@ -347,14 +347,16 @@ public class WebRpcTest : MonoBehaviour
 
 **Note**: the callback methods with the `WebRpcResponseCallback` attribute can take their parameters in any order, and each of them is optional. So feel free to leave out any that you don't need.
 
-### Advanced - Custom Serialization Definitions
+### Advanced - Customized Serialization
 
 If you've examined the other tools in this toolkit, like the [JSON][JsonTool] and [HTTP][HttpTool] tools, you might have noticed a great similarity between them and this WebRPC tool in terms of structure, features and how they deal with objects. This is because they all use the same [_Serialization_][SerializationTool] framework for transforming data, but each with different sets of attributes that are specific to the tool.
 
-However, it would be a waste of time to define the same kinds of attributes on your objects when they serve the same purpose, just for a different tool. That's why the `WebRpcMessenger` allows you to switch out its serialization definitions for others in this toolkit that share the same _signature_. For example, if you've already prepared your objects to be used with the JSON processor, you can provide the messenger with an instance of `JsonSerializationDefinition` for the WebRPC body, and an instance of `HttpURLSerializationDefinition` for composing URLs:
+However, it would be a waste of time and resources to define different kinds of attributes on your objects when they serve the same purpose, just for a different tool. That's why the `WebRpcMessenger` allows you to switch out its serialization behaviour for a different one that fits the purpose.
 
-* The `BodySerializationDefinition` property allows you to set a different serialization definition to process the body of the WebRPC requests and responses.
-* The `UrlSerializationDefinition` property allows you to set a different serialization definition to process the URL parameters of the WebRPC request.
+This serialization behaviour of the messenger is defined by a _message configurator_ object, which you can provide during construction, or set later. The message configurator of the `WebRpcMessenger` class allows you to customize the following aspects:
+
+* The serialization behaviour, by setting which serialization definitions should be used for the URL and body of the requests.
+* The request and response key identifiers for matching requests to responses, as well as the length of the generated identifiers.
 
 ```cs
 public class WebRpcTest: MonoBehaviour
@@ -366,14 +368,21 @@ public class WebRpcTest: MonoBehaviour
 		// Provide Photon's default networking client as a gateway for the messenger to send its requests through.
 		messenger = new WebRpcMessenger(PhotonNetwork.NetworkingClient);
 
-		// Switch out the WebRPC body processing for the JSON processing to use JSON attributes on objects.
-		messenger.BodySerializationDefinition = new JsonSerializationDefinition();
+		// Create and set a custom message configurator that uses the JSON serialization attributes,
+		// and the HttpMessenger's URL serialization for the URL parameters.
+		WebRpcMessenger.DefaultMessageConfigurator customMessageConfigurator = new WebRpcMessenger.DefaultMessageConfigurator(
+			new JsonSerializationDefinition(),	// Use a JSON definition.
+			new HttpURLSerializationDefinition());	// HTTP URL definition.
+
+		messenger.MessageConfigurator = customMessageConfigurator;
 	}
 ```
 
+The `WebRpcMessenger`'s default implementation can also be switched out for a completely custom message configurator, by implementing the `IWebRpcMessageConfigurator` interface, which requires the implementation of setting up the serialization of your request and responses as well as generating adequate identifiers. For inspiration, you can always check out the `DefaultMessageConfigurator` implementation in the messenger.
+
 **Note**: tread carefully when assigning custom serialization definitions as not every serialization definition's output is compatible in terms of supported datatypes, even when they share the same interfaces. For example, the `XmlSerializationDefinition` from the [XML][XmlTool] tool cannot be used as it does not output supported data structures for Photon to deal with.
 
-**Another note**: make sure you also assign a type of serialization definition only once to each of the data streams (URL and body), as using the same serialization definition will pick up the exact same data from the request objects each time, resulting in duplicating data in different streams.
+**Another note**: make sure you also assign a type of serialization definition only once to each of the data streams (URL versus body), as using the same serialization definition will pick up the exact same data from the request each time, resulting in duplicating data in different streams.
 
 ## Example
 

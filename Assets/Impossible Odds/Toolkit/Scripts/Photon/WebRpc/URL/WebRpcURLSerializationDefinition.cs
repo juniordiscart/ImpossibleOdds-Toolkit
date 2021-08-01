@@ -10,7 +10,9 @@
 	/// <summary>
 	/// Serialization definition for parameters in the URL of WebRPC requests.
 	/// </summary>
-	public class WebRpcUrlSerializationDefinition : ILookupSerializationDefinition
+	public class WebRpcUrlSerializationDefinition :
+	ILookupSerializationDefinition,
+	IEnumAliasSupport<WebRpcEnumStringAttribute, WebRpcEnumAliasAttribute>
 	{
 		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
 		private List<IProcessor> processors = null;
@@ -77,6 +79,18 @@
 		{
 			get { return formatProvider; }
 			set { formatProvider = value; }
+		}
+
+		/// <inheritdoc />
+		public Type EnumAsStringAttributeType
+		{
+			get { return typeof(WebRpcEnumStringAttribute); }
+		}
+
+		/// <inheritdoc />
+		public Type EnumAliasValueAttributeType
+		{
+			get { return typeof(WebRpcEnumAliasAttribute); }
 		}
 
 		public WebRpcUrlSerializationDefinition()

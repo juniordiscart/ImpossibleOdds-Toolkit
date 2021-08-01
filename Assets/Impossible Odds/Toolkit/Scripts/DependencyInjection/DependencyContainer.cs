@@ -52,7 +52,7 @@
 
 			if (bindings.ContainsKey(typeKey))
 			{
-				Log.Warning("A binding for type {0} already exists. Override=ing with new binding.", typeKey.Name);
+				Log.Warning("A binding for type {0} already exists. Overriding with new binding.", typeKey.Name);
 			}
 
 			bindings[typeKey] = binding;

@@ -32,7 +32,7 @@
 		}
 
 		public HttpMessenger()
-		: this(new DefaultConfigurator())
+		: this(new DefaultMessageConfigurator())
 		{ }
 
 		public HttpMessenger(IHttpMessageConfigurator configurator)
@@ -185,7 +185,7 @@
 		/// Default configurator for preparing and configuring Http requests and responses.
 		/// This configurator will use the JsonProcessor to transform the data for POST-type requests and responses.
 		/// </summary>
-		public class DefaultConfigurator : IHttpMessageConfigurator
+		public class DefaultMessageConfigurator : IHttpMessageConfigurator
 		{
 			private readonly ISerializationDefinition urlDefinition = null;
 			private readonly ISerializationDefinition headerDefinition = null;
@@ -196,7 +196,7 @@
 			/// <summary>
 			/// Configurator with default serialization definitions for the URL, headers and body of the requests and responses.
 			/// </summary>
-			public DefaultConfigurator()
+			public DefaultMessageConfigurator()
 			: this(new HttpBodySerializationDefinition(), new HttpURLSerializationDefinition(), new HttpHeaderSerializationDefinition())
 			{ }
 
@@ -206,7 +206,7 @@
 			/// <param name="bodyDefinition"></param>
 			/// <param name="urlDefinition"></param>
 			/// <param name="headerDefinition"></param>
-			public DefaultConfigurator(ISerializationDefinition bodyDefinition, ISerializationDefinition urlDefinition, ISerializationDefinition headerDefinition)
+			public DefaultMessageConfigurator(ISerializationDefinition bodyDefinition, ISerializationDefinition urlDefinition, ISerializationDefinition headerDefinition)
 			{
 				bodyDefinition.ThrowIfNull(nameof(bodyDefinition));
 				urlDefinition.ThrowIfNull(nameof(urlDefinition));

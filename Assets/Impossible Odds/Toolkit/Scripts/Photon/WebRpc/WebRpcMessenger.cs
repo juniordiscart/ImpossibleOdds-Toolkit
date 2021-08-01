@@ -41,7 +41,7 @@
 		}
 
 		public WebRpcMessenger(LoadBalancingClient photonClient)
-		: this(photonClient, new DefaultConfigurator())
+		: this(photonClient, new DefaultMessageConfigurator())
 		{ }
 
 		public WebRpcMessenger(LoadBalancingClient photonClient, IWebRpcMessageConfigurator configurator)
@@ -207,7 +207,7 @@
 		/// <summary>
 		/// Default configurator for preparing and configuring WebRPC requests and responses.
 		/// </summary>
-		public class DefaultConfigurator : IWebRpcMessageConfigurator
+		public class DefaultMessageConfigurator : IWebRpcMessageConfigurator
 		{
 			public const ushort MinimumIdLength = 4;
 			public const ushort DefaultIdLength = 8;
@@ -242,7 +242,7 @@
 			/// <summary>
 			/// Configurator with default options for serialization definitions used and the request and response identifier keys.
 			/// </summary>
-			public DefaultConfigurator()
+			public DefaultMessageConfigurator()
 			: this(new WebRpcBodySerializationDefinition(), new WebRpcUrlSerializationDefinition(), DefaultRequestIdKey, DefaultResponseIdKey)
 			{ }
 
@@ -251,7 +251,7 @@
 			/// </summary>
 			/// <param name="bodyDefinition">The serialization definition used for processing the body of the requests and responses.</param>
 			/// <param name="urlDefinition">The serialization definition used for processing the URI parameters of the request.</param>
-			public DefaultConfigurator(ISerializationDefinition bodyDefinition, ISerializationDefinition urlDefinition)
+			public DefaultMessageConfigurator(ISerializationDefinition bodyDefinition, ISerializationDefinition urlDefinition)
 			: this(bodyDefinition, urlDefinition, DefaultRequestIdKey, DefaultResponseIdKey)
 			{ }
 
@@ -260,7 +260,7 @@
 			/// </summary>
 			/// <param name="requestIdKey">The identifier key used for setting the identifier in outgoing requests.</param>
 			/// <param name="responseIdKey">The identifier key used for searching in incoming response data.</param>
-			public DefaultConfigurator(string requestIdKey, string responseIdKey)
+			public DefaultMessageConfigurator(string requestIdKey, string responseIdKey)
 			: this(new WebRpcBodySerializationDefinition(), new WebRpcUrlSerializationDefinition(), requestIdKey, responseIdKey)
 			{ }
 
@@ -271,7 +271,7 @@
 			/// <param name="urlDefinition">The serialization definition used for processing the URI parameters of the request.</param>
 			/// <param name="requestIdKey">The identifier key used for setting the identifier in outgoing requests.</param>
 			/// <param name="responseIdKey">The identifier key used for searching in incoming response data.</param>
-			public DefaultConfigurator(ISerializationDefinition bodyDefinition, ISerializationDefinition urlDefinition, string requestIdKey, string responseIdKey)
+			public DefaultMessageConfigurator(ISerializationDefinition bodyDefinition, ISerializationDefinition urlDefinition, string requestIdKey, string responseIdKey)
 			{
 				bodyDefinition.ThrowIfNull(nameof(bodyDefinition));
 				urlDefinition.ThrowIfNull(nameof(urlDefinition));
