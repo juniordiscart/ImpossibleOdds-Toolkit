@@ -29,7 +29,6 @@ The first essential part of your WebRPC request is the URL and its potential par
 This tool will extract and append URL parameters when you define members on your request object with the `WebRpcUrlField` attribute:
 
 ```cs
-// A simple request that attempts to update a score on the leaderboard.
 [WebRpcObject, WebRpcResponseType(typeof(UpdateLeaderboardResponse))]
 public class UpdateLeaderboardRequest : IWebRpcRequest
 {
@@ -63,7 +62,6 @@ To start off, objects that must be included in the request result should be mark
 **Note**: your request object itself is required to be decorated with the `WebRpcObject` attribute as well because, as you'll come to know [later](#webrpc-messenger), additional fields need to be appended to the request's body for it to be able to match incoming responses.
 
 ```cs
-// To keep the data compact, treat this as an array as it's function is well understood in the context of the program.
 [WebRpcArray]
 public class LeaderboardUpdateEntry
 {
@@ -75,7 +73,6 @@ public class LeaderboardUpdateEntry
 ```
 
 ```cs
-// A simple request that attempts to update a score on the leaderboard.
 [WebRpcObject, WebRpcResponseType(typeof(UpdateLeaderboardResponse))]
 public class UpdateLeaderboardRequest : IWebRpcRequest
 {
@@ -150,7 +147,6 @@ Your response objects themselves are required to implement the `IWebRpcResponse`
 * `IsSuccess` defines whether the request was processed successfully on the server and the response contains valid data.
 
 ```cs
-// A response object that will contain the status code of the update operation.
 [WebRpcObject]
 public class UpdateLeaderboardResponse : IWebRpcResponse
 {
@@ -211,7 +207,6 @@ Any instance of the `WebRpcMessenger` requires the use of a Photon `LoadBalancin
 When you're done, you can call `Dispose` on the messenger, which will remove itself from that load balancing client.
 
 ```cs
-// A test class that has a messenger for sending out requests.
 public class WebRpcTest : MonoBehaviour
 {
 	private WebRpcMessenger messenger = null;
@@ -231,7 +226,7 @@ public class WebRpcTest : MonoBehaviour
 
 ### Request & Response Identifiers
 
-When a WebRPC call is sent out, the messenger will append a custom field to the POST-data. The name of this field is set to be `RequestId` by default. It is expected though, that the server sends back a response with the same value back under the `ResponseId` name. These are default names and you can customise them by changing the `RequestIDKey` and `ResponseIDKey` on the messenger. These values are needed for the messenger to match requests with incoming responses, as Photon itself does not provide a handle to track or check on pending calls.
+When a WebRPC call is sent out, the messenger will append a custom field to the POST-data. The name of this field is set to be `RequestId` by default. It is expected though, that the server sends back a response with the same value back under the `ResponseId` name. These are default names and you can customise them by setting the `RequestIDKey` and `ResponseIDKey` properties on the messenger. These values are needed for the messenger to match requests with incoming responses, as Photon itself does not provide a handle to track or check on pending calls.
 
 For example, in the request data example from earlier, the final result may look something like this:
 
@@ -260,7 +255,6 @@ For each request sent through a `WebRpcMessenger`, it will return you a messange
 Additionally, the handle is yieldable. So you can use it in a coroutine to wait for it to complete and continue.
 
 ```cs
-// A demonstrative class for all Photon WebRPC related features.
 public class WebRpcTest: MonoBehaviour
 {
 	private WebRpcMessenger messenger = null;
@@ -312,8 +306,6 @@ A targeted callback method allows you to directly receive the fully type qualifi
 When placing the `WebRpcResponseCallback` attribute above a method, it expects the type of the response to be set as its only parameter. When a response of that type is received, it will use this type as a guide for invoking the callback method.
 
 ```cs
-// A test class that has a messenger for sending out requests,
-// and is interested in received targeted callbacks for specific types of responses.
 public class WebRpcTest : MonoBehaviour
 {
 	private WebRpcMessenger messenger = null;
@@ -365,7 +357,6 @@ However, it would be a waste of time to define the same kinds of attributes on y
 * The `UrlSerializationDefinition` property allows you to set a different serialization definition to process the URL parameters of the WebRPC request.
 
 ```cs
-// A demonstrative class for all Photon WebRPC related features.
 public class WebRpcTest: MonoBehaviour
 {
 	private WebRpcMessenger messenger = null;
@@ -389,7 +380,6 @@ public class WebRpcTest: MonoBehaviour
 Below you'll find the complete code example to illustrate the use of the Photon WebRPC feature in combination with the WebRPC extension tools discussed above. It shows a simple request-response setup for updating a leaderboard on a server. It is assumed that the web server accepts and responds with compatible data structures.
 
 ```cs
-// To keep the data compact, treat this as an array as it's function is well understood in the context of the program.
 [WebRpcArray]
 public class LeaderboardUpdateEntry
 {
@@ -401,7 +391,6 @@ public class LeaderboardUpdateEntry
 ```
 
 ```cs
-// Status indication of the update operation.
 public enum UpdateLeaderboardResultCode
 {
 	None = 0,
@@ -413,7 +402,6 @@ public enum UpdateLeaderboardResultCode
 ```
 
 ```cs
-// A simple request that attempts to update a score on the leaderboard.
 [WebRpcObject, WebRpcResponseType(typeof(UpdateLeaderboardResponse))]
 public class UpdateLeaderboardRequest : IWebRpcRequest
 {
@@ -451,7 +439,6 @@ public class UpdateLeaderboardRequest : IWebRpcRequest
 ```
 
 ```cs
-// A response object that will contain the status code of the update operation.
 [WebRpcObject]
 public class UpdateLeaderboardResponse : IWebRpcResponse
 {
@@ -472,7 +459,6 @@ public class UpdateLeaderboardResponse : IWebRpcResponse
 ```
 
 ```cs
-// A demonstrative class for all Photon WebRPC related features.
 public class WebRpcTest: MonoBehaviour
 {
 	private WebRpcMessenger messenger = null;

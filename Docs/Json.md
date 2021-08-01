@@ -164,7 +164,7 @@ public abstract class Animal
 
 ## Serialization
 
-When your objects are decorated with the proper attributes, they are ready to be serialized to the JSON data format. Simply use the static `JsonProcessor` class:
+When your objects are decorated with the proper attributes, they are ready to be serialized to the JSON data format. Simply use the `Serialize` method (or one of its many overloads) on the static `JsonProcessor` class:
 
 ```cs
 public class Veterinary
@@ -178,10 +178,6 @@ public class Veterinary
 	}
 }
 ```
-
-This produces a JSON-formatted string respresentation of your data. There's also an overload available that will take a `StringBuilder`. This can be useful in case you want to append or generate the result in a more memory-efficient way.
-
-**Note**: the `StringBuilder` will not be cleared by the processor before use. The result is simply appended.
 
 ### Formatting
 
@@ -335,9 +331,8 @@ public class VeterinaryAppointment
 public enum TaxonomyClass
 {
 	None,
-	[JsonEnumAlias("Mammal")]
 	Mammal,
-	[JsonEnumAlias("Reptile")]
+	[JsonEnumAlias("Scaly-boy")]
 	Reptile,
 	[JsonEnumAlias("Birb")]
 	Bird

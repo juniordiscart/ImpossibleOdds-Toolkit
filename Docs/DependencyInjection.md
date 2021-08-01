@@ -2,7 +2,7 @@
 
 The dependency injection tools are accessed by including the `ImpossibleOdds.DependencyInjection` namespace in your scripts.
 
-Depenendency injection's intention is to facilitate separation of concerns and responsibilities, which helps in code reusability and readability. The essence is that it removes the need for your objects to go and fetch their resources they need, but rather they state that they depend on them and expect them to be delivered/injected. Sounds too abstract? Let's illustrate with an example. Let's say that, in order for a character to move through a world, it needs an input manager to determine where it's going next. One way is to create an input manager class and assign it through Unity's inspector view, or have it be a singleton and access it whenever needed. However, what if a different kind of input method is required, such as touch controls, or simulated input for an A.I. agent to be trained to interact with the world? The dependency injection framework allows the character to state that it needs _a_ input manager, and it will try its best to deliver it.
+Depenendency injection's intention is to facilitate separation of concerns and responsibilities, which helps in code reusability and readability. The essence is that it removes the need for your objects to go and fetch the resources they need, but rather they state that they depend on them and expect them to be delivered/injected. Sounds too abstract? Let's illustrate with an example. Let's say that, in order for a character to move through a world, it needs an input manager to determine where it's going next. One way is to create an input manager class and assign it through Unity's inspector view, or have it be a singleton and access it whenever needed. However, what if a different kind of input method is required, such as touch controls, or simulated input for an A.I. agent to be trained to interact with the world? The dependency injection framework allows the character to state that it needs _a_ input manager, and it will try its best to deliver it.
 
 ```cs
 [Injectable]
@@ -190,7 +190,7 @@ The `SceneDependencyScope` is, as the name implies, a scope bound to a scene. Co
 To install your bindings to the scene scope's container, create an installer script that implements the `IDependencyScopeInstaller` interface and add it to (a child of) the scene scope's game object.
 
 ```cs
-public class MySceneInstaller : MonoBheaviour, IDependencyScopeInstaller
+public class MySceneInstaller : MonoBehaviour, IDependencyScopeInstaller
 {
 	void IDependencyScopeInstaller.Install(IDependencyContainer container)
 	{
@@ -199,7 +199,7 @@ public class MySceneInstaller : MonoBheaviour, IDependencyScopeInstaller
 }
 ```
 
-When the `Inject` method is called of this scope, either in `Start` or manually, it will scan the scene for any injectable components and inject them with the resources bound to its container.
+When the `Inject` method is called on this scope, either in `Start` or manually, it will scan the scene for any injectable components and inject them with the resources bound to its container.
 
 #### Advanced
 

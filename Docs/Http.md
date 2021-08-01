@@ -37,7 +37,6 @@ All types of requests share some common properties: they require a URL (the addr
 The URL of your request is a required property that needs to be implemented through the `URL` property:
 
 ```cs
-// A request object that attempts to get a leaderboard from the server.
 [HttpResponseType(typeof(GetLeaderboardResponse))]
 public class GetLeaderboardRequest : IHttpRequest
 {
@@ -53,7 +52,6 @@ Typically, a URL can also contain parameters. To add a parameter to the URL, use
 In the `URL` property it's expected to get the base address for the request, which will get appended with the generated parameters. However, you can safely define parameters already in this URL address string if you like. The framework will take care of properly appending any additional parameters, if any.
 
 ```cs
-// A request object that attempts to get a leaderboard from the server.
 [HttpResponseType(typeof(GetLeaderboardResponse))]
 public class GetLeaderboardRequest : IHttpPostRequest
 {
@@ -72,7 +70,6 @@ public class GetLeaderboardRequest : IHttpPostRequest
 Less common is to define additional headers, but is sometimes necessary nonetheless. This can be done by using the `HttpHeaderField` attribute in much the same way as you would do for URL parameters. They are limited to primitive or basic types. You can define an optional parameter name for the field. For more information about HTTP headers, please read up at [this documentations page](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
 
 ```cs
-// A request object that attempts to get a leaderboard from the server.
 [HttpResponseType(typeof(GetLeaderboardResponse))]
 public class GetLeaderboardRequest : IHttpPostRequest
 {
@@ -100,7 +97,6 @@ The above example would generate a URL to `https://my.domain.com/getleaderboard.
 To have your request object be picked up by the framework as a `GET` request, simply implement the `IHttpGetRequest`. It doesn't require you to actually implement anything extra. Its parameters are defined through its URL though, so anything extra that defines the request should be added using the `HttpURLField` attribute as seen in the [URL & Headers section](#url-&-headers)
 
 ```cs
-// A request object that attempts to get a leaderboard from the server.
 [HttpResponseType(typeof(GetLeaderboardResponse))]
 public class GetLeaderboardRequest : IHttpPostRequest
 {
@@ -137,7 +133,6 @@ To have your object be recognised as a `POST`-type request by this framework, ha
 **Note**: your `POST` request class itself should also be marked with either a `HttpBodyObject` or `HttpBodyArray` attribute as this object functions as the root for the parameters.
 
 ```cs
-// A request object that attempts to get a leaderboard from the server.
 [HttpBodyObject, HttpResponseType(typeof(GetLeaderboardResponse))]
 public class GetLeaderboardRequest : IHttpPostRequest
 {
@@ -173,7 +168,6 @@ To setup a `PUT`-type request, either implement the `IHttpPutStringRequest` or `
 Both of these interfaces require you to implement the `PutData` property. Depending on which `PUT`-type interface variant you implement, it either requires it to return a `string` value or a `byte[]` value.
 
 ```cs
-// Set up a request to send over text data from a file.
 [HttpResponseType(typeof(MyStringPutResponse))]
 public class MyStringPutRequest : IHttpPutStringRequest
 {
@@ -187,7 +181,6 @@ public class MyStringPutRequest : IHttpPutStringRequest
 ```
 
 ```cs
-// Set up a request to send over binary data from a file.
 [HttpResponseType(typeof(MyBinaryPutResponse))]
 public class MyBinaryPutRequest : IHttpPutBinaryRequest
 {
@@ -209,7 +202,6 @@ When the server decides to send something back, this framework can immediately p
 To assist the tool with what kind of response it should process the data to, you decorate your **request** object with a `HttpResponseType` attribute, and it takes the type of the corresponding response as its parameter.
 
 ```cs
-// A request object that attempts to get a leaderboard from the server.
 [HttpBodyObject, HttpResponseType(typeof(GetLeaderboardResponse))]
 public class GetLeaderboardRequest : IHttpPostRequest
 {
@@ -246,7 +238,6 @@ If you expect the server to return data in the form of a JSON string, you can ha
 **Note**: the response object itself should also be marked with either a `HttpBodyObject` or `HttpBodyArray` attribute as it serves as the root for the unwrapping of the response.
 
 ```cs
-// Leaderboard entry representation, with a preferred list layout rather than an object layout.
 [HttpBodyArray]
 public class LeaderboardEntry
 {
@@ -260,7 +251,6 @@ public class LeaderboardEntry
 ```
 
 ```cs
-// Simple representation of a leaderboard.
 [HttpBodyObject]
 public class Leaderboard
 {
@@ -272,7 +262,6 @@ public class Leaderboard
 ```
 
 ```cs
-// A response object which contains the leaderboard, or the error codes.
 [HttpBodyObject]
 public class GetLeaderboardResponse : IHttpJsonResponse
 {
@@ -329,7 +318,6 @@ Now that you know how to create and set up your request and response objects, it
 Whenever you want to send a request, offer your custom request object by using its `SendRequest` method and it will take care of everything. All that remains is to sit back and wait for a reply to come back. You can subscribe to a few events to get notified when a message got completed, or encountered an error:
 
 ```cs
-// A demonstrative object for all Http related features.
 public class HttpTest : MonoBehaviour
 {
 	private HttpMessenger messenger = null;
@@ -364,7 +352,6 @@ public class HttpTest : MonoBehaviour
 Whenever you send a request through an `HttpMessenger`, it will return you a _message handle_. This handle allows you to check up on the progress of your request, including whether it encountered an error. It's also yieldable, so you can wait for it to complete in a coroutine.
 
 ```cs
-// A demonstrative object for all Http related features.
 public class HttpTest : MonoBehaviour
 {
 	private HttpMessenger messenger = null;
@@ -412,7 +399,6 @@ A method is marked as a callback by placing the `HttpResponseCallback` attribute
 Finally, use the `RegisterCallback` method on the messenger to register your object for being interested in targeted callbacks.
 
 ```cs
-// A demonstrative object for all Http related features.
 public class HttpTest : MonoBehaviour
 {
 	private HttpMessenger messenger = null;
@@ -452,7 +438,6 @@ However, it would be a waste of time to define the same kinds of attributes on y
 * The `HeaderSerializationDefinition` property allows you to set a different serialization definition to process the headers of the HTTP requests and responses.
 
 ```cs
-// A demonstrative object for all Http related features.
 public class HttpTest : MonoBehaviour
 {
 	private HttpMessenger messenger = null;
@@ -478,7 +463,6 @@ public class HttpTest : MonoBehaviour
 Most of the small tidbits of example code discussed in the topics above can be found in a more complete example here. The example shows a request-response setup for retrieving a simple leaderboard from the web server. It is assumed that the web server, of course, accepts and returns compatible data structures.
 
 ```cs
-// Leaderboard entry representation, with a preferred list layout rather than an object layout.
 [HttpBodyArray]
 public class LeaderboardEntry
 {
@@ -492,7 +476,6 @@ public class LeaderboardEntry
 ```
 
 ```cs
-// Simple representation of a leaderboard.
 [HttpBodyObject]
 public class Leaderboard
 {
@@ -504,7 +487,6 @@ public class Leaderboard
 ```
 
 ```cs
-// Result code for getting a leaderboard.
 [Flags]
 public enum ResponseError
 {
@@ -516,7 +498,6 @@ public enum ResponseError
 ```
 
 ```cs
-// A request object that attempts to get a leaderboard from the server.
 [HttpBodyObject, HttpResponseType(typeof(GetLeaderboardResponse))]
 public class GetLeaderboardRequest : IHttpPostRequest
 {
@@ -543,7 +524,6 @@ public class GetLeaderboardRequest : IHttpPostRequest
 ```
 
 ```cs
-// A response object which contains the leaderboard, or the error codes.
 [HttpBodyObject]
 public class GetLeaderboardResponse : IHttpJsonResponse
 {
@@ -555,7 +535,6 @@ public class GetLeaderboardResponse : IHttpJsonResponse
 ```
 
 ```cs
-// A demonstrative object for all Http related features.
 public class HttpTest : MonoBehaviour
 {
 	private HttpMessenger messenger = null;
