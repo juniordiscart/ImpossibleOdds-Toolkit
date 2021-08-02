@@ -2,7 +2,7 @@
 
 You'll find the full update history of this toolkit below. This might be useful for checking breaking changes.
 
-**General note about installing updates**: it is recommended to remove the current installed package first before updating to a newer one. Some files may have been deleted or moved, which may cause conflicts or compilation errors. The default location for this package in your project is at `Assets/Impossible Odds/Toolkit`.
+**General note about installing updates**: it is recommended that you remove the current installed package first before updating to a newer one. Some files may have been deleted or moved, which may cause conflicts or compilation errors. The default location for this package in your Unity project is at `Assets/Impossible Odds/Toolkit`.
 
 ## v1.2 - Photon WebRPC Support & Tool Interoperability
 
@@ -23,16 +23,16 @@ Changelist:
 ### Improved
 
 * Request and response messengers no longer throw an exception when attempting to send an already pending request again. Now, the current handle is returned instead.
-* Tightened the type parameter restriction for the `ResponseCallback`, `ResponseType` attributes. An excplicit exception is now thrown when an incompatible type is provided.
+* Tightened the type parameter restriction for the `ResponseCallback`, `ResponseType` attributes. An explicit exception is now thrown when an incompatible type is provided.
 
 ### Updated
 
 * The `InvokeIfNotNull` extension method with flexible parameter list has been marked obsolete because of its unintentional fallback for otherwise invalid delegate invokations.
-* The `IHttpJsonResponse` interface is marked obsolete as the name does not fully cover the extends of where the interface should be applied. Implement the `IHttpStructuredResponse` instead.
-* The `JsonProcessor` now accepts an optional instance of `JsonOptions` for all of its serialize and deserialize methods. If a custom serialization definition is defined, it will use those data structures instead of the predefined types by the processor itself.
+* The `IHttpJsonResponse` interface is marked obsolete as the name does not fully cover the extends of where the interface should be applied. Implement the `IHttpStructuredResponse` interface instead.
+* The `JsonProcessor` now accepts an optional instance of `JsonOptions` for all of its serialization and deserialization methods. If a custom serialization definition is defined, it will use those data structures instead of the predefined types by the processor itself.
 * The default logging level of the `Log` utility is now set to the 'info'-level when the toolkit detects no logging level has been set before.
-* The `Json` and `Xml` example scenes now have their data loaded from a text asset instead of being hardcoded in the example code.
-* The documentation of the `Http`, `Json` and `Xml` topics have been updated to contain more concrete examples as well as a complete code example at the end.
+* The example scenes for the JSON and XML tools now have their data loaded from a text asset instead of being hardcoded in the example code.
+* The documentation of the HTTP, JSON and XML topics have been updated to contain more concrete examples as well as a complete code example at the end.
 * Additional documentation for updated tools and features.
 
 ### Fixed
