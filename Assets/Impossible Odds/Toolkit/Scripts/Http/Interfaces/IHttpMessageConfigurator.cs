@@ -41,6 +41,6 @@
 		/// </summary>
 		/// <param name="response">The response onto which the POST-body data should be applied.</param>
 		/// <param name="postBodyData">The POST-body data found in the response.</param>
-		void ProcessResponsePostBody(IHttpPostResponse response, string postBodyData);
+		void ProcessResponsePostBody(IHttpStructuredResponse response, string postBodyData);
 	}
 }

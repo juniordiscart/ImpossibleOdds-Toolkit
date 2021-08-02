@@ -17,7 +17,8 @@
 	/// <typeparam name="TLookupField">Attribute type for the lookup-based attributes.</typeparam>
 	/// <typeparam name="TLookupType">Type of the lookup-based container that should get used.</typeparam>
 	public abstract class IndexAndLookupDefinition<TListObject, TListField, TListType, TLookupObject, TLookupField, TLookupType> :
-	IIndexAndLookupSerializationDefinition<TListObject, TListField, TListType, TLookupObject, TLookupField, TLookupType>
+	IIndexSerializationDefinition<TListObject, TListField, TListType>,
+	ILookupSerializationDefinition<TLookupObject, TLookupField, TLookupType>
 	where TListObject : Attribute
 	where TListField : Attribute, IIndexParameter
 	where TListType : IList

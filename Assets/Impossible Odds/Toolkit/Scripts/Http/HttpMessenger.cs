@@ -148,10 +148,10 @@
 			IHttpResponse response = InstantiateResponse(handle);
 			messageConfigurator.ProcessResponseHeaders(response, webOP.GetResponseHeaders());
 
-			// If the response expects JSON data to be returned,
-			if ((response is IHttpPostResponse postResponse) && !string.IsNullOrWhiteSpace(webOP.downloadHandler.text))
+			// If the response expects structured data to be returned,
+			if ((response is IHttpStructuredResponse structuredResponse) && !string.IsNullOrWhiteSpace(webOP.downloadHandler.text))
 			{
-				messageConfigurator.ProcessResponsePostBody(postResponse, webOP.downloadHandler.text);
+				messageConfigurator.ProcessResponsePostBody(structuredResponse, webOP.downloadHandler.text);
 			}
 			else if (response is IHttpAudioClipResponse audioClipResponse)
 			{
@@ -268,7 +268,7 @@
 			}
 
 			/// <inheritdoc />
-			public void ProcessResponsePostBody(IHttpPostResponse response, string postBodyData)
+			public void ProcessResponsePostBody(IHttpStructuredResponse response, string postBodyData)
 			{
 				response.ThrowIfNull(nameof(response));
 				postBodyData.ThrowIfNullOrWhitespace(nameof(postBodyData));

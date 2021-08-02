@@ -4,7 +4,7 @@ You'll find the full update history of this toolkit below. This might be useful 
 
 **General note about installing updates**: it is recommended to remove the current installed package first before updating to a newer one. Some files may have been deleted or moved, which may cause conflicts or compilation errors. The default location for this package in your project is at `Assets/Impossible Odds/Toolkit`.
 
-## v1.2 - Photon WebRPC Support
+## v1.2 - Photon WebRPC Support & Tool Interoperability
 
 **Note: this release contains minor breaking changes regarding the JSON tool. Please check the 'Renamed' and 'Removed' entries in the changelist below.**
 
@@ -13,31 +13,31 @@ Changelist:
 ### Added
 
 * Photon WebRPC support. Check the Photon - WebRPC Extensions section in the documentation to read all the details.
-* `UrlUtilities` static class for generating/appending parameters to an URL. This can be found in the `ImpossibleOdds.Http` namespace.
-* The `HttpBodySerializationDefinition` now has support for enum aliases and type information.
-* The `HttpMessenger` can now switch out it's serialization definitions for others, which may help in reusing attributes already placed using other tools in this toolkit.
-* The `HttpBodySerializationDefinition` and `JsonSerializationDefinition` can now update the type resolve key being used by setting the `TypeResolveKey` property.
-* The abstract `WeblinkMessenger` (used by the `HttpMessenger`) now allows to stop or remove a pending request based on the request object too.
-* The `IIndexAndLookupSerializationDefinition` interface and its generic variant.
+* A utility for creating and appending URL parameters. This can be found in the new static `UrlUtilities` class in the `ImpossibleOdds.Http` namespace.
+* The `HttpBodySerializationDefinition` now supports enum aliases and saving type information and brings it on par with the supported features by the JSON tool.
+* The `HttpMessenger` and `WebRpcMessenger` can switch their internal message processing. This allows for reusing other serialization tools found in this toolkit. More information can be found in the HTTP and WebRPC documentation pages.
+* Request and response messengers can now check how many pending requests are left by checking the `Count` property.
+* Several serialization definitions can set a different type resolve key by setting the `TypeResolveKey` property.
+* Introduced the `IHttpStructuredResponse` interface as a replacement for the `IHttpJsonResponse` interface.
 
 ### Improved
 
-* The `HttpMessenger` now returns the handle of a request that was already pending instead of throwing an exception when attempting to send a request twice.
-* Tightened the type parameter restriction for the `HttpResponseCallback`, `HttpResponseType` attributes. An excplicit exception is now thrown when an incompatible type is provided.
+* Request and response messengers no longer throw an exception when attempting to send an already pending request again. Now, the current handle is returned instead.
+* Tightened the type parameter restriction for the `ResponseCallback`, `ResponseType` attributes. An excplicit exception is now thrown when an incompatible type is provided.
 
 ### Updated
 
-* The `CustomObjectLookupProcessor` and `CustomObjectSequenceProcessor` now may receive an options parameter to skip checking for a class marking attribute.
-* The `HttpURLSerializationDefinition` and `HttpHeaderSerializationDefinition` stepped down from implementing the abstract `LookupDefinition` class and instead implement the `ILookupSerializationDefinition` interface. Additionally, they skip the checking for a class marking attribute for their custom object processors.
-* The `InvokeIfNotNull` with flexible parameter list has been marked obsolete as it functions as an non-intentional fallback when not using the intended generic overloads.
-* The default logging level of the `Log` utility is now set to the 'information' level when the Toolkit is added to the project.
+* The `InvokeIfNotNull` extension method with flexible parameter list has been marked obsolete because of its unintentional fallback for otherwise invalid delegate invokations.
+* The `IHttpJsonResponse` interface is marked obsolete as the name does not fully cover the extends of where the interface should be applied. Implement the `IHttpStructuredResponse` instead.
+* The `JsonProcessor` now accepts an optional instance of `JsonOptions` for all of its serialize and deserialize methods. If a custom serialization definition is defined, it will use those data structures instead of the predefined types by the processor itself.
+* The default logging level of the `Log` utility is now set to the 'info'-level when the toolkit detects no logging level has been set before.
 * The `Json` and `Xml` example scenes now have their data loaded from a text asset instead of being hardcoded in the example code.
 * The documentation of the `Http`, `Json` and `Xml` topics have been updated to contain more concrete examples as well as a complete code example at the end.
-* Additional documentation for several updated topics.
+* Additional documentation for updated tools and features.
 
 ### Fixed
 
-* Deserializing a CData section in a neatly formatted XML document.
+* Deserializing a CData section in a pretty-printed XML document would fail as the preceding whitespace characters were seen as a first node in the internal XML document representation.
 
 ### Renamed
 
