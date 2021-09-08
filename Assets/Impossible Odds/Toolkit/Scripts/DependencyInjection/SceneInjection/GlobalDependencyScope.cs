@@ -31,8 +31,11 @@
 
 		public void InjectScene(Scene scene)
 		{
-			Log.Info("Injecting scene '{0}' with the global dependency scope.", scene.name);
-			scene.GetRootGameObjects().Inject(DependencyContainer, true);
+			if (scene.isLoaded)
+			{
+				Log.Info("Injecting scene '{0}' with the global dependency scope.", scene.name);
+				scene.GetRootGameObjects().Inject(DependencyContainer, true);
+			}
 		}
 
 		private GlobalDependencyScope()

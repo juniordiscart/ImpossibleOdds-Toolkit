@@ -167,6 +167,8 @@ You can create multiple such methods spread across your project if your resource
 
 Now that global resources have been installed, each time a scene is loaded, it will scan that scene and inject any component that requires its resources.
 
+**Important note**: the global dependency scope will, by default, inject each newly loaded scene. This may have an impact on loading times or be a cause of frame drops when a scene is streamed in. You can disable the automatic injection process in the Impossible Odds project settings panel. You can use the `InjectScene` method of the global scope to apply it to any loaded scene afterwards.
+
 #### Advanced
 
 If you have a custom container implementation, you can provide an instance of this container for the global scope to use by decorating a static method with the `GlobalContainerProvider` attribute.
