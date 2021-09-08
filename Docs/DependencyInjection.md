@@ -288,6 +288,8 @@ MyInjectableObject myTarget = new MyInjectableObject();
 DependencyInjector.Inject(myContainer, "security", myTarget);
 ```
 
+**Note**: if a member should be injectable from multiple different sources or scopes, you can set multiple `Inject` attributes on a single member.
+
 ### Extension Methods
 
 Several injection extension methods are defined for the `GameObject` and `Component` classes as well as enumerables of these, so that your components can be injected quickly and hassle-free.

@@ -101,7 +101,7 @@ All details can be found [here][Serialization].
 
 ### Weblink
 
-The `ImpossibleOdds.Weblink` tool provides a request-response mechanism along with automated processing of the data coming through it as well as providing a plethora of ways on getting notified when a message has completed. This removes the worry to manually keep track of request objects and waiting for their responses, as well as processing their data to the right format. The [HTTP][Http] tool is a practical implementation of the Weblink tool.
+The `ImpossibleOdds.Weblink` tool provides a request-response mechanism along with automated processing of the data coming through it as well as providing a plethora of ways on getting notified when a message has completed. This removes the worry to manually keep track of request objects and waiting for their responses, as well as processing their data to the right format. The [HTTP][Http] and [Photon WebRPC][PhotonWebRPC] extension tools are practical implementations of the Weblink framework.
 
 For more details, check its documentations page [here][Weblink].
 
@@ -122,7 +122,7 @@ This package is provided under the [MIT][License] license.
 View the [update history][Changelog] of this package.
 
 [License]: ./LICENSE.md
-[Changelog]: CHANGELOG.md
+[Changelog]: ./CHANGELOG.md
 [EditorSettings]: ./Docs/Images/EditorSettings.png
 [CoreUtilities]: ./Docs/CoreUtilities.md
 [DependencyInjection]: ./Docs/DependencyInjection.md
