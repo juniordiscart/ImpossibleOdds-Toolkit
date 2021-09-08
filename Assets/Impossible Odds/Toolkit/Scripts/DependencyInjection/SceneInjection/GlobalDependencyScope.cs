@@ -29,6 +29,12 @@
 			get { return globalContainer; }
 		}
 
+		public void InjectScene(Scene scene)
+		{
+			Log.Info("Injecting scene '{0}' with the global dependency scope.", scene.name);
+			scene.GetRootGameObjects().Inject(DependencyContainer, true);
+		}
+
 		private GlobalDependencyScope()
 		{
 			InitializeGlobalContainer();
@@ -106,8 +112,9 @@
 
 		private void OnSceneLoaded(Scene scene, LoadSceneMode sceneLoadMode)
 		{
-			Log.Info("Injecting scene '{0}' with the global dependency scope.", scene.name);
-			scene.GetRootGameObjects().Inject(DependencyContainer, true);
+#if !IMPOSSIBLE_ODDS_DEPENDENCY_INJECTION_DISABLE_GLOBAL_AUTO_INJECT
+			InjectScene(scene);
+#endif
 		}
 	}
 }

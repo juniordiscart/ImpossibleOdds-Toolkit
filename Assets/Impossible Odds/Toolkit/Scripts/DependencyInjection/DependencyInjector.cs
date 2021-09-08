@@ -139,29 +139,29 @@
 			TypeInjectionInfo injectionInfo = GetTypeInjectionInfo(currentType);
 
 			// Fields
-			foreach (Pair<FieldInfo> field in injectionInfo.injectableFields)
+			foreach (InjectableMemberInfo<FieldInfo> field in injectionInfo.injectableFields)
 			{
 				Type fieldType = field.member.FieldType;
-				if (InjectionIDsMatch(field.attribute, injectionID) && container.BindingExists(fieldType))
+				if (field.IsInjectionScopeDefined(injectionID) && container.BindingExists(fieldType))
 				{
 					field.member.SetValue(objToInject, container.GetBinding(fieldType).GetInstance());
 				}
 			}
 
 			// Properties
-			foreach (Pair<PropertyInfo> property in injectionInfo.injectableProperties)
+			foreach (InjectableMemberInfo<PropertyInfo> property in injectionInfo.injectableProperties)
 			{
 				Type propertyType = property.member.PropertyType;
-				if (InjectionIDsMatch(property.attribute, injectionID) && container.BindingExists(propertyType))
+				if (property.IsInjectionScopeDefined(injectionID) && container.BindingExists(propertyType))
 				{
 					property.member.SetValue(objToInject, container.GetBinding(propertyType).GetInstance());
 				}
 			}
 
 			// Methods
-			foreach (Pair<MethodInfo> method in injectionInfo.injectableMethods)
+			foreach (InjectableMemberInfo<MethodInfo> method in injectionInfo.injectableMethods)
 			{
-				if (!InjectionIDsMatch(method.attribute, injectionID))
+				if (!method.IsInjectionScopeDefined(injectionID))
 				{
 					continue;
 				}
@@ -209,12 +209,6 @@
 			return typeInjectionCache[type];
 		}
 
-		private static bool InjectionIDsMatch(InjectAttribute attr, string injectionID)
-		{
-			bool hasInjectionIDSet = !string.IsNullOrEmpty(injectionID);
-			return (!hasInjectionIDSet && !attr.HasInjectionIDSet) || hasInjectionIDSet && attr.HasInjectionIDSet && string.Equals(injectionID, attr.InjectID);
-		}
-
 		private static bool IsInjectable(Type type)
 		{
 			if (rejectedTypes.Contains(type))
@@ -247,7 +241,6 @@
 				GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).
 				Where(f => f.IsDefined(typeof(InjectAttribute), false) && !f.IsLiteral);    // Exclude constants.
 
-
 			IEnumerable<PropertyInfo> injectableProperties = type.
 				GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).
 				Where(f => f.IsDefined(typeof(InjectAttribute), false) && f.CanWrite);  // Exclude properties we can't write to.
@@ -256,9 +249,9 @@
 				GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).
 				Where(f => f.IsDefined(typeof(InjectAttribute), false));
 
-			IEnumerable<Pair<FieldInfo>> fieldPairs = injectableFields.Select(f => new Pair<FieldInfo>(f.GetCustomAttribute<InjectAttribute>(false), f));
-			IEnumerable<Pair<PropertyInfo>> propertyPairs = injectableProperties.Select(p => new Pair<PropertyInfo>(p.GetCustomAttribute<InjectAttribute>(false), p));
-			IEnumerable<Pair<MethodInfo>> methodPairs = injectableMethods.Select(m => new Pair<MethodInfo>(m.GetCustomAttribute<InjectAttribute>(false), m));
+			IEnumerable<InjectableMemberInfo<FieldInfo>> fieldPairs = injectableFields.Select(f => new InjectableMemberInfo<FieldInfo>(f, f.GetCustomAttributes<InjectAttribute>(false)));
+			IEnumerable<InjectableMemberInfo<PropertyInfo>> propertyPairs = injectableProperties.Select(p => new InjectableMemberInfo<PropertyInfo>(p, p.GetCustomAttributes<InjectAttribute>(false)));
+			IEnumerable<InjectableMemberInfo<MethodInfo>> methodPairs = injectableMethods.Select(m => new InjectableMemberInfo<MethodInfo>(m, m.GetCustomAttributes<InjectAttribute>(false)));
 
 			TypeInjectionInfo typeCache = new TypeInjectionInfo(type, fieldPairs, propertyPairs, methodPairs);
 			return typeCache;
@@ -267,11 +260,11 @@
 		private class TypeInjectionInfo
 		{
 			public readonly Type type;
-			public readonly IEnumerable<Pair<FieldInfo>> injectableFields;
-			public readonly IEnumerable<Pair<PropertyInfo>> injectableProperties;
-			public readonly IEnumerable<Pair<MethodInfo>> injectableMethods;
+			public readonly IEnumerable<InjectableMemberInfo<FieldInfo>> injectableFields;
+			public readonly IEnumerable<InjectableMemberInfo<PropertyInfo>> injectableProperties;
+			public readonly IEnumerable<InjectableMemberInfo<MethodInfo>> injectableMethods;
 
-			public TypeInjectionInfo(Type type, IEnumerable<Pair<FieldInfo>> injectableFields, IEnumerable<Pair<PropertyInfo>> injectableProperties, IEnumerable<Pair<MethodInfo>> injectableMethods)
+			public TypeInjectionInfo(Type type, IEnumerable<InjectableMemberInfo<FieldInfo>> injectableFields, IEnumerable<InjectableMemberInfo<PropertyInfo>> injectableProperties, IEnumerable<InjectableMemberInfo<MethodInfo>> injectableMethods)
 			{
 				this.type = type;
 				this.injectableFields = injectableFields;
@@ -280,16 +273,36 @@
 			}
 		}
 
-		private struct Pair<T>
+		private struct InjectableMemberInfo<T>
 		where T : MemberInfo
 		{
-			public readonly InjectAttribute attribute;
 			public readonly T member;
+			public readonly HashSet<string> definedScopes;
 
-			public Pair(InjectAttribute attribute, T member)
+			public InjectableMemberInfo(T member, IEnumerable<InjectAttribute> attributes)
 			{
-				this.attribute = attribute;
+				member.ThrowIfNull(nameof(member));
+				attributes.ThrowIfNull(nameof(attributes));
+
 				this.member = member;
+				this.definedScopes = new HashSet<string>();
+				foreach (InjectAttribute injectAttr in attributes)
+				{
+					if (injectAttr != null)
+					{
+						this.definedScopes.Add((injectAttr.InjectID != null) ? injectAttr.InjectID : string.Empty);
+					}
+				}
+			}
+
+			public bool IsInjectionScopeDefined(string scopeName)
+			{
+				if (scopeName == null)
+				{
+					scopeName = string.Empty;
+				}
+
+				return definedScopes.Contains(scopeName);
 			}
 		}
 	}

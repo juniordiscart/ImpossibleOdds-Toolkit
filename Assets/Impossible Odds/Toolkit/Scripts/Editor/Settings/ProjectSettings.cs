@@ -75,7 +75,7 @@
 				}
 			}
 
-			EditorGUILayout.Space();
+			EditorGUILayout.Space(50f);
 
 			if (GUILayout.Button("Apply", GUILayout.Width(150)))
 			{
@@ -91,6 +91,7 @@
 			settings = new List<IProjectSetting>()
 			{
 				new LoggingSettings(currentSymbols),
+				new DependencyInjectionSettings(currentSymbols),
 				new JsonProjectSettings(currentSymbols),
 				new XmlProjectSettings(currentSymbols),
 				new EditorExtensionSettings(currentSymbols),
