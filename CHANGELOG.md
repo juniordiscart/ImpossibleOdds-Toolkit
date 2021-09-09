@@ -4,6 +4,22 @@ You'll find the full update history of this toolkit below. This might be useful 
 
 **General note about installing updates**: it is recommended that you remove the current installed package first before updating to a newer one. Some files may have been deleted or moved, which may cause conflicts or compilation errors. The default location for this package in your Unity project is at `Assets/Impossible Odds/Toolkit`.
 
+## v1.3 - Multi-Named Injections & Small Optimizations
+
+Changelist:
+
+### Added
+
+* The global dependency injection scope can now be disabled to inject loaded scenes automatically. This prevents the scene from being scraped for injectable components when activated, and can help in reducing loading times of larger scenes. This can be toggled in the Impossible Odds section of the project's preferences panel.
+
+### Updated
+
+* The `Inject` attribute can now be placed multiple times on a member, allowing for different named context to inject the same member.
+
+### Improved
+
+* The `Log` class has now multiple overloads for each log function that can take up to three parameters, similar to the `String.Format` overloads, to minimise the amount of memory allocationss that would otherwise occur from creating the list of parameters.
+
 ## v1.2 - Photon WebRPC Support & Tool Interoperability
 
 **Note: this release contains minor breaking changes regarding the JSON tool. Please check the 'Renamed' and 'Removed' entries in the changelist below.**
