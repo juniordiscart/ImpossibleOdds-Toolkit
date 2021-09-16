@@ -2,7 +2,7 @@
 {
 	using System;
 
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false)]
 	public sealed class WebRpcObjectAttribute : Attribute
 	{ }
 }

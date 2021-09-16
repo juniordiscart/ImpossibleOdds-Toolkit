@@ -192,8 +192,10 @@
 				ITypeResolveParameter typeResolveAttr = ResolveTypeToLookup(sourceType);
 				if (typeResolveAttr != null)
 				{
-					object processedTypeKey = Serializer.Serialize(typeResolveSupport.TypeResolveKey, definition);
-					object processedTypeValue = Serializer.Serialize(typeResolveAttr.Value, definition);
+					object typeKey = ((typeResolveAttr is ILookupTypeResolveParameter lookupTypeResolveAttr) && (lookupTypeResolveAttr.KeyOverride != null)) ? lookupTypeResolveAttr.KeyOverride : typeResolveSupport.TypeResolveKey;
+					object typeValue = (typeResolveAttr.Value != null) ? typeResolveAttr.Value : typeResolveAttr.Target.Name;
+					object processedTypeKey = Serializer.Serialize(typeKey, definition);
+					object processedTypeValue = Serializer.Serialize(typeValue, definition);
 					SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedTypeKey, processedTypeValue);
 				}
 			}
@@ -265,17 +267,51 @@
 
 		private Type ResolveTypeFromLookup(Type targetType, IDictionary source)
 		{
-			if (!SupportsTypeResolvement || !source.Contains(typeResolveSupport.TypeResolveKey))
+			if (!SupportsTypeResolvement)
 			{
 				return targetType;
 			}
 
+			LookupCollectionTypeInfo sourceCollectionInfo = SerializationUtilities.GetCollectionTypeInfo(source);
 			IReadOnlyList<ITypeResolveParameter> typeResolveAttrs = GetTypeCache(targetType).GetTypeResolveParameters(typeResolveSupport.TypeResolveAttribute);
 			foreach (ITypeResolveParameter typeResolveAttr in typeResolveAttrs)
 			{
-				if (source[typeResolveSupport.TypeResolveKey].Equals(typeResolveAttr.Value))
+				Type resolvedTargetType = null;
+
+				// Check if an override key type resolve parameter exists, and use it if a match could be made in the source data.
+				if ((typeResolveAttr is ILookupTypeResolveParameter lookupTypeResolveAttr) && (lookupTypeResolveAttr.KeyOverride != null))
 				{
-					if (targetType.IsAssignableFrom(typeResolveAttr.Target))
+					object processedKey = sourceCollectionInfo.PostProcessKey(lookupTypeResolveAttr.KeyOverride);
+					if (source.Contains(processedKey) && (source[processedKey] != null))
+					{
+						// Attempt to process the override value to the type of the value in the source data.
+						object processedValue = (lookupTypeResolveAttr.Value != null) ? lookupTypeResolveAttr.Value : lookupTypeResolveAttr.Target.Name;
+						processedValue = SerializationUtilities.PostProcessValue(processedValue, source[processedKey].GetType());
+						if (source[processedKey].Equals(processedValue))
+						{
+							resolvedTargetType = lookupTypeResolveAttr.Target;
+						}
+					}
+				}
+
+				// If no resolve type was found yet, attempt to find it using the regular attributes.
+				if (resolvedTargetType == null)
+				{
+					object processedKey = sourceCollectionInfo.PostProcessKey(typeResolveSupport.TypeResolveKey);
+					if (source.Contains(processedKey) && (source[processedKey] != null))
+					{
+						object processedValue = (typeResolveAttr.Value != null) ? typeResolveAttr.Value : typeResolveAttr.Target.Name;
+						processedValue = SerializationUtilities.PostProcessValue(processedValue, source[processedKey].GetType());
+						if (source[processedKey].Equals(processedValue))
+						{
+							resolvedTargetType = typeResolveAttr.Target;
+						}
+					}
+				}
+
+				if (resolvedTargetType != null)
+				{
+					if (targetType.IsAssignableFrom(resolvedTargetType))
 					{
 						return typeResolveAttr.Target;
 					}

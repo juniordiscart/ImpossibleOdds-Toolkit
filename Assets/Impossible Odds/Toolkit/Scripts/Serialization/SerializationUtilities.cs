@@ -164,7 +164,7 @@
 		{
 			return
 				((value == null) && IsNullableType(elementType)) ||
-				((value != null) && !elementType.IsAssignableFrom(value.GetType()));
+				((value != null) && elementType.IsAssignableFrom(value.GetType()));
 		}
 
 		/// <summary>

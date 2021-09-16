@@ -4,25 +4,36 @@
 	using ImpossibleOdds.Serialization;
 
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Struct, AllowMultiple = true)]
-	public class HttpTypeAttribute : Attribute, ITypeResolveParameter
+	public class HttpTypeAttribute : Attribute, ILookupTypeResolveParameter
 	{
 		private Type target = null;
-		private string value = null;
+		private object value = null;
+		private string keyOverride = null;
 
+		/// <inheritdoc />
 		public Type Target
 		{
 			get { return target; }
 		}
 
-		object ITypeResolveParameter.Value
+		/// <inheritdoc />
+		public object Value
 		{
-			get { return Value; }
+			get { return value; }
+			set { this.value = value; }
 		}
 
-		public string Value
+		/// <inheritdoc />
+		object ILookupTypeResolveParameter.KeyOverride
 		{
-			get { return string.IsNullOrEmpty(value) ? target.Name : value; }
-			set { this.value = value; }
+			get { return KeyOverride; }
+		}
+
+		/// <inheritdoc />
+		public string KeyOverride
+		{
+			get { return keyOverride; }
+			set { keyOverride = value; }
 		}
 
 		public HttpTypeAttribute(Type target)

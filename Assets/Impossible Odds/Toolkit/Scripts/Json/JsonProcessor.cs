@@ -15,7 +15,7 @@
 
 		private readonly static Regex numericalRegex = new Regex(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$");
 		private readonly static char[] numericalSymbols = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '+', 'e', 'E', '.' };
-		private static JsonSerializationDefinition defaultSerializationDefinition = new JsonSerializationDefinition();
+		private readonly static JsonSerializationDefinition defaultSerializationDefinition = new JsonSerializationDefinition();
 
 		/// <summary>
 		/// Serialize the object to a JSON-string.

@@ -133,9 +133,9 @@
 		protected class CustomObjectTypeCache
 		{
 			private readonly Type type = null;
-			private Dictionary<Type, List<IMemberAttributeTuple>> membersWithAttributes = new Dictionary<Type, List<IMemberAttributeTuple>>();
-			private Dictionary<Type, List<ITypeResolveParameter>> typeResolveParameters = new Dictionary<Type, List<ITypeResolveParameter>>();
-			private Dictionary<Type, List<SerializationCallbackInfo>> serializationCallbacks = new Dictionary<Type, List<SerializationCallbackInfo>>();
+			private Dictionary<Type, IReadOnlyList<IMemberAttributeTuple>> membersWithAttributes = new Dictionary<Type, IReadOnlyList<IMemberAttributeTuple>>();
+			private Dictionary<Type, IReadOnlyList<ITypeResolveParameter>> typeResolveParameters = new Dictionary<Type, IReadOnlyList<ITypeResolveParameter>>();
+			private Dictionary<Type, IReadOnlyList<SerializationCallbackInfo>> serializationCallbacks = new Dictionary<Type, IReadOnlyList<SerializationCallbackInfo>>();
 
 			public Type Type
 			{

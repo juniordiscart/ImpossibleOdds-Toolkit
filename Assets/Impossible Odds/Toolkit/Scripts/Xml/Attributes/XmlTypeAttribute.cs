@@ -9,16 +9,19 @@
 		private Type target = null;
 		private string value = null;
 
+		/// <inheritdoc />
 		public Type Target
 		{
 			get { return target; }
 		}
 
+		/// <inheritdoc />
 		object ITypeResolveParameter.Value
 		{
 			get { return Value; }
 		}
 
+		/// <inheritdoc />
 		public string Value
 		{
 			get { return string.IsNullOrEmpty(value) ? target.Name : value; }

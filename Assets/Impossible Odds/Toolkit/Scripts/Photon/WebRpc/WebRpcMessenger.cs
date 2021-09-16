@@ -213,19 +213,19 @@
 			public const ushort DefaultIdLength = 8;
 			public const string DefaultRequestIdKey = "RequestId";
 			public const string DefaultResponseIdKey = "ResponseId";
-			private const string IdGenerationPool = "ABCDEFGHIJKLMNPQRSTUVWXYabcdefghjklmnopqrstuvwxyz0123456789_-";
+			protected const string IdGenerationPool = "ABCDEFGHIJKLMNPQRSTUVWXYabcdefghjklmnopqrstuvwxyz0123456789_-";
 
-			private readonly ISerializationDefinition bodyDefinition = null;
-			private readonly ISerializationDefinition urlDefinition = null;
-			private readonly string requestIdKey = DefaultRequestIdKey;
-			private readonly string responseIdKey = DefaultResponseIdKey;
+			protected readonly ISerializationDefinition bodyDefinition = null;
+			protected readonly ISerializationDefinition urlDefinition = null;
+			protected readonly string requestIdKey = DefaultRequestIdKey;
+			protected readonly string responseIdKey = DefaultResponseIdKey;
 			private int generatedIdLength = DefaultIdLength;
 
 			/// <summary>
 			/// The length of generated identifiers.
 			/// Must be at least 4 characters, or more.
 			/// </summary>
-			public int GeneratedIdLength
+			public virtual int GeneratedIdLength
 			{
 				get { return generatedIdLength; }
 				set
@@ -285,7 +285,7 @@
 			}
 
 			/// <inheritdoc />
-			public string GenerateRequestUri(IWebRpcRequest request)
+			public virtual string GenerateRequestUri(IWebRpcRequest request)
 			{
 				request.ThrowIfNull(nameof(request));
 
@@ -306,7 +306,7 @@
 			}
 
 			/// <inheritdoc />
-			public IDictionary GenerateRequestBody(IWebRpcRequest request)
+			public virtual IDictionary GenerateRequestBody(IWebRpcRequest request)
 			{
 				request.ThrowIfNull(nameof(request));
 
@@ -321,7 +321,7 @@
 			}
 
 			/// <inheritdoc />
-			public object GenerateAndApplyId(IDictionary requestBodyData)
+			public virtual object GenerateAndApplyId(IDictionary requestBodyData)
 			{
 				requestBodyData.ThrowIfNull(nameof(requestBodyData));
 
@@ -331,14 +331,14 @@
 			}
 
 			/// <inheritdoc />
-			public object GetResponseId(IDictionary responseData)
+			public virtual object GetResponseId(IDictionary responseData)
 			{
 				responseData.ThrowIfNull(nameof(responseData));
 				return responseData.Contains(responseIdKey) ? responseData[responseIdKey] : null;
 			}
 
 			/// <inheritdoc />
-			public void ProcessResponseBody(IWebRpcResponse response, IDictionary responseData)
+			public virtual void ProcessResponseBody(IWebRpcResponse response, IDictionary responseData)
 			{
 				response.ThrowIfNull(nameof(response));
 				responseData.ThrowIfNull(nameof(responseData));

@@ -73,6 +73,7 @@
 			handle.ThrowIfNull(nameof(handle));
 
 			Type targetType = target.GetType();
+			Type responseType = handle.Response.GetType();
 			BindingFlags methodFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
 			while (targetType != ObjectType)
@@ -80,6 +81,12 @@
 				IEnumerable<MethodInfo> methods = targetType.GetMethods(methodFlags).Where(m => m.IsDefined(typeof(TCallbackAttr), true));
 				foreach (MethodInfo callBack in methods)
 				{
+					TCallbackAttr callbackAttr = callBack.GetCustomAttribute<TCallbackAttr>(false);
+					if (!callbackAttr.ResponseType.IsAssignableFrom(responseType))
+					{
+						continue;
+					}
+
 					ParameterInfo[] parametersInfo = callBack.GetParameters();
 					object[] parameters = (parametersInfo.Length > 0) ? new object[parametersInfo.Length] : null;
 					for (int i = 0; i < parameters.Length; ++i)

@@ -187,11 +187,11 @@
 		/// </summary>
 		public class DefaultMessageConfigurator : IHttpMessageConfigurator
 		{
-			private readonly ISerializationDefinition urlDefinition = null;
-			private readonly ISerializationDefinition headerDefinition = null;
-			private readonly ISerializationDefinition bodyDefinition = null;
-			private readonly StringBuilder processingCache = new StringBuilder();
-			private readonly JsonOptions jsonOptions = null;
+			protected readonly ISerializationDefinition urlDefinition = null;
+			protected readonly ISerializationDefinition headerDefinition = null;
+			protected readonly ISerializationDefinition bodyDefinition = null;
+			protected readonly StringBuilder processingCache = new StringBuilder();
+			protected readonly JsonOptions jsonOptions = null;
 
 			/// <summary>
 			/// Configurator with default serialization definitions for the URL, headers and body of the requests and responses.
@@ -224,7 +224,7 @@
 			}
 
 			/// <inheritdoc />
-			public string GenerateRequestUrl(IHttpRequest request)
+			public virtual string GenerateRequestUrl(IHttpRequest request)
 			{
 				request.ThrowIfNull(nameof(request));
 				IDictionary urlParams = Serializer.Serialize<IDictionary>(request, urlDefinition);
@@ -238,14 +238,14 @@
 			}
 
 			/// <inheritdoc />
-			public IDictionary GenerateRequestHeaders(IHttpRequest request)
+			public virtual IDictionary GenerateRequestHeaders(IHttpRequest request)
 			{
 				request.ThrowIfNull(nameof(request));
 				return Serializer.Serialize<IDictionary>(request, headerDefinition);
 			}
 
 			/// <inheritdoc />
-			public string GenerateRequestPostBody(IHttpPostRequest request)
+			public virtual string GenerateRequestPostBody(IHttpPostRequest request)
 			{
 				request.ThrowIfNull(nameof(request));
 
@@ -257,7 +257,7 @@
 			}
 
 			/// <inheritdoc />
-			public void ProcessResponseHeaders(IHttpResponse response, IDictionary headers)
+			public virtual void ProcessResponseHeaders(IHttpResponse response, IDictionary headers)
 			{
 				response.ThrowIfNull(nameof(response));
 
@@ -268,7 +268,7 @@
 			}
 
 			/// <inheritdoc />
-			public void ProcessResponsePostBody(IHttpStructuredResponse response, string postBodyData)
+			public virtual void ProcessResponsePostBody(IHttpStructuredResponse response, string postBodyData)
 			{
 				response.ThrowIfNull(nameof(response));
 				postBodyData.ThrowIfNullOrWhitespace(nameof(postBodyData));
