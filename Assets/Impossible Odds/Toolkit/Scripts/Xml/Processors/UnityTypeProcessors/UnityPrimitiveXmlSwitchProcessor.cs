@@ -70,6 +70,8 @@
 
 		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
+			targetType.ThrowIfNull(nameof(targetType));
+
 			if (!(dataToDeserialize is XElement))
 			{
 				deserializedResult = null;

@@ -41,8 +41,14 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
 		public bool Serialize(object objectToSerialize, out object serializedResult)
 		{
+			if (objectToSerialize == null)
+			{
+				serializedResult = null;
+				return false;
+			}
+
 			Type sourceType = objectToSerialize.GetType();
-			if ((objectToSerialize == null) || !sourceType.IsEnum)
+			if (!sourceType.IsEnum)
 			{
 				serializedResult = null;
 				return false;
@@ -108,6 +114,8 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
 		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
+			targetType.ThrowIfNull(nameof(targetType));
+
 			// If we're not dealing with an enum target, then don't bother.
 			if (!targetType.IsEnum || (dataToDeserialize == null))
 			{

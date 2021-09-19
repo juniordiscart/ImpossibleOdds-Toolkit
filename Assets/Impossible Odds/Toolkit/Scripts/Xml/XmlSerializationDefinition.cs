@@ -176,6 +176,7 @@
 
 			processors = new List<IProcessor>()
 			{
+				new NullValueProcessor(this),
 				new ExactMatchProcessor(this),
 				new EnumProcessor(this),
 				new PrimitiveTypeProcessor(this),

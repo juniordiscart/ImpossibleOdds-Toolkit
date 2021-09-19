@@ -46,20 +46,11 @@
 		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
 		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
-			if (targetType == null)
-			{
-				deserializedResult = null;
-				return false;
-			}
+			targetType.ThrowIfNull(nameof(targetType));
 
-			// If the target type is nullable and we're dealing with a null value, then lets just call it quits.
-			if ((dataToDeserialize == null) && !targetType.IsValueType)
-			{
-				deserializedResult = dataToDeserialize;
-				return true;
-			}
-
-			if (!targetType.IsAssignableFrom(dataToDeserialize.GetType()))
+			// If the data is null and the type can't accept nullable types, or the target type is not assignable from, then quit.
+			if (((dataToDeserialize == null) && !SerializationUtilities.IsNullableType(targetType)) ||
+				!targetType.IsAssignableFrom(dataToDeserialize.GetType()))
 			{
 				deserializedResult = null;
 				return false;

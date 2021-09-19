@@ -43,6 +43,7 @@
 
 		/// <inheritdoc />
 		public abstract bool Serialize(object objectToSerialize, out object serializedResult);
+
 		/// <inheritdoc />
 		public abstract bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult);
 

@@ -49,7 +49,9 @@
 		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
 		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
-			if ((targetType == null) || (typeof(T) != targetType) || !(dataToDeserialize is IList sequenceData))
+			targetType.ThrowIfNull(nameof(targetType));
+
+			if ((typeof(T) != targetType) || !(dataToDeserialize is IList sequenceData))
 			{
 				deserializedResult = null;
 				return false;

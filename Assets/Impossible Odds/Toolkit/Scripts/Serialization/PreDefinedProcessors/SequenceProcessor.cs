@@ -72,8 +72,10 @@
 		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
 		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
+			targetType.ThrowIfNull(nameof(targetType));
+
 			// Check if the target implements the general IList interface, if not, we can just skip it altogether.
-			if ((targetType == null) || !typeof(IList).IsAssignableFrom(targetType))
+			if (!typeof(IList).IsAssignableFrom(targetType))
 			{
 				deserializedResult = null;
 				return false;

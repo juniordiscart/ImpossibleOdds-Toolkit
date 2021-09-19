@@ -56,6 +56,8 @@
 
 		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
+			targetType.ThrowIfNull(nameof(targetType));
+
 			// When the data is null and it can accept null-values, then don't bother.
 			if ((dataToDeserialize == null) && SerializationUtilities.IsNullableType(targetType))
 			{

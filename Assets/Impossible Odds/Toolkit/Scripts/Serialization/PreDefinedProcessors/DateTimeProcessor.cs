@@ -68,7 +68,9 @@
 		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
 		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
-			if ((targetType == null) || (dataToDeserialize == null) || !typeof(DateTime).IsAssignableFrom(targetType))
+			targetType.ThrowIfNull(nameof(targetType));
+
+			if ((dataToDeserialize == null) || !typeof(DateTime).IsAssignableFrom(targetType))
 			{
 				deserializedResult = null;
 				return false;

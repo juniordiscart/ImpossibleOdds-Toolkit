@@ -48,12 +48,9 @@
 
 		public override bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
-			if (targetType == null)
-			{
-				deserializedResult = null;
-				return false;
-			}
-			else if (dataToDeserialize == null)
+			targetType.ThrowIfNull(nameof(targetType));
+
+			if (dataToDeserialize == null)
 			{
 				deserializedResult = null;
 				return SerializationUtilities.IsNullableType(targetType);

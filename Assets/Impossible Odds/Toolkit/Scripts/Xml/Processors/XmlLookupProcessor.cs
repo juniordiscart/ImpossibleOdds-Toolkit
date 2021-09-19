@@ -78,8 +78,10 @@
 
 		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
+			targetType.ThrowIfNull(nameof(targetType));
+
 			// Check if the target implements the general IDictionary interface, if not, we can just skip altogether.
-			if ((targetType == null) || !typeof(IDictionary).IsAssignableFrom(targetType))
+			if (!typeof(IDictionary).IsAssignableFrom(targetType))
 			{
 				deserializedResult = null;
 				return false;

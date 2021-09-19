@@ -28,6 +28,8 @@
 		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
 		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
 		{
+			targetType.ThrowIfNull(nameof(targetType));
+
 			if (!typeof(string).IsAssignableFrom(targetType))
 			{
 				deserializedResult = null;
