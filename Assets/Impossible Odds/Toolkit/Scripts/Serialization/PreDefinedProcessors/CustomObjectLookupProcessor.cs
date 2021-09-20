@@ -270,7 +270,7 @@
 			}
 
 			LookupCollectionTypeInfo sourceCollectionInfo = SerializationUtilities.GetCollectionTypeInfo(source);
-			IReadOnlyList<ITypeResolveParameter> typeResolveAttrs = GetTypeCache(targetType).GetTypeResolveParameters(typeResolveSupport.TypeResolveAttribute);
+			IEnumerable<ITypeResolveParameter> typeResolveAttrs = GetTypeCache(targetType).GetTypeResolveParameters(typeResolveSupport.TypeResolveAttribute).Where(tra => tra.Target != targetType);
 			foreach (ITypeResolveParameter typeResolveAttr in typeResolveAttrs)
 			{
 				Type resolvedTargetType = null;
@@ -310,7 +310,7 @@
 				{
 					if (targetType.IsAssignableFrom(resolvedTargetType))
 					{
-						return typeResolveAttr.Target;
+						return ResolveTypeFromLookup(resolvedTargetType, source);
 					}
 					else
 					{
