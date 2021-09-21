@@ -129,19 +129,19 @@
 				return false;
 			}
 
-			object targetInstance = SerializationUtilities.CreateInstance(instanceType);
+				object targetInstance = SerializationUtilities.CreateInstance(instanceType);
 
-			if (Deserialize(targetInstance, dataToDeserialize))
-			{
-				deserializedResult = targetInstance;
-				return true;
+				if (Deserialize(targetInstance, dataToDeserialize))
+				{
+					deserializedResult = targetInstance;
+					return true;
+				}
+				else
+				{
+					deserializedResult = null;
+					return false;
+				}
 			}
-			else
-			{
-				deserializedResult = null;
-				return false;
-			}
-		}
 
 		/// <summary>
 		/// Attempts to deserialize the list-like data to the given target.
@@ -283,7 +283,7 @@
 					{
 						// Attempt to process the override value to the type of the value in the source data.
 						object processedValue = (lookupTypeResolveAttr.Value != null) ? lookupTypeResolveAttr.Value : lookupTypeResolveAttr.Target.Name;
-						processedValue = SerializationUtilities.PostProcessValue(processedValue, source[processedKey].GetType());
+						processedValue = SerializationUtilities.PostProcessValue(Serializer.Serialize(processedValue, Definition), source[processedKey].GetType());
 						if (source[processedKey].Equals(processedValue))
 						{
 							resolvedTargetType = lookupTypeResolveAttr.Target;
@@ -298,7 +298,7 @@
 					if (source.Contains(processedKey) && (source[processedKey] != null))
 					{
 						object processedValue = (typeResolveAttr.Value != null) ? typeResolveAttr.Value : typeResolveAttr.Target.Name;
-						processedValue = SerializationUtilities.PostProcessValue(processedValue, source[processedKey].GetType());
+						processedValue = SerializationUtilities.PostProcessValue(Serializer.Serialize(processedValue, Definition), source[processedKey].GetType());
 						if (source[processedKey].Equals(processedValue))
 						{
 							resolvedTargetType = typeResolveAttr.Target;
