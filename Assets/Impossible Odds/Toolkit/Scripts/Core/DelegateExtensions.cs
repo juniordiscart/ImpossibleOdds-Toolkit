@@ -59,22 +59,6 @@
 		}
 
 		/// <summary>
-		/// Invokes a delegate if it is not null. The given parameters are resolved and passed to the delegate for invokation.
-		///
-		/// CAUTION: parameter type resolvement uses reflection and can have a memory and performance impact!
-		/// </summary>
-		/// <param name="del">The delegate to invoke, when not null.</param>
-		/// <param name="args">The parameters to pass during the delegate invokation.</param>
-		[Obsolete("Use a concrete implementation to invoke the delegate instead.")]
-		public static void InvokeIfNotNull(this Delegate del, params object[] args)
-		{
-			if (del != null)
-			{
-				del.DynamicInvoke(args);
-			}
-		}
-
-		/// <summary>
 		/// Invokes the action if it is not null.
 		/// </summary>
 		public static void InvokeIfNotNull(this Action del)
