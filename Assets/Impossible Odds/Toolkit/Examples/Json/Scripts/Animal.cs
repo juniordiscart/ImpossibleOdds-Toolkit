@@ -5,8 +5,8 @@
 	using ImpossibleOdds.Json;
 
 	[JsonObject,
-	JsonType(typeof(Cat)),
-	JsonType(typeof(Dog)),
+	JsonType(typeof(Cat), KeyOverride = "AnimalType", Value = AnimalType.CAT),
+	JsonType(typeof(Dog), KeyOverride = "AnimalType", Value = AnimalType.DOG),
 	JsonType(typeof(Crocodile), Value = "Kroko"),
 	JsonType(typeof(Pidgeon), Value = "Dove")]
 	public abstract class Animal

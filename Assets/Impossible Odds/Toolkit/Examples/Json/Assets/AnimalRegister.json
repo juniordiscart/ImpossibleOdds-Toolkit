@@ -13,7 +13,7 @@
 			"DateOfBirth": "01\/01\/0001 00:00:00",
 			"Classification": "Mammal",
 			"NrOfLegs": 4,
-			"jsi:type": "Cat"
+			"AnimalType": "CAT"
 		},
 		{
 			"furColor": {
@@ -28,7 +28,7 @@
 			"DateOfBirth": "01\/01\/0001 00:00:00",
 			"Classification": "Mammal",
 			"NrOfLegs": 4,
-			"jsi:type": "Cat"
+			"AnimalType": "CAT"
 		},
 		{
 			"furColor": {
@@ -43,7 +43,7 @@
 			"DateOfBirth": "06\/25\/1990 00:00:00",
 			"Classification": "Mammal",
 			"NrOfLegs": 4,
-			"jsi:type": "Dog"
+			"AnimalType": "DOG"
 		},
 		{
 			"Coordinates": {
@@ -56,6 +56,7 @@
 			"DateOfBirth": "01\/01\/0001 00:00:00",
 			"Classification": "Birb",
 			"NrOfLegs": 2,
+			"AnimalType": "PIDGEON",
 			"jsi:type": "Dove"
 		},
 		{
@@ -64,6 +65,7 @@
 			"DateOfBirth": "01\/01\/0001 00:00:00",
 			"Classification": "Reptile",
 			"NrOfLegs": 4,
+			"AnimalType": "CROCODILE",
 			"jsi:type": "Kroko"
 		}
 	]

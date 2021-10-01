@@ -198,6 +198,8 @@ public class FreestyleLeaderboard
 }
 ```
 
+The default implementation will treat the WebRPC requests and responses as JSON-formatted data. There are some additional features regarding how type information is presented and processed when dealing with such data, as described in the [JSON's tool type information description][JsonTypeInfo]. Summarized, you can set the `KeyOverride` property to override the default key being used to either save the type information under a different name, or have the key refer to an existing field from which it should infer the type. In the latter case, make sure the `Value` property is also set with the value that links type and value together.
+
 ## WebRPC Messenger
 
 To send a WebRPC request over the Photon network, you don't address it directly anymore. Instead, your request is prepared by a `WebRpcMessenger`. The messenger takes care of transforming your object into a Photon-compatible datastructure, tracking its progress and processing the response.
@@ -544,6 +546,7 @@ Check out the WebRPC sample scene for a hands-on example! Please note that you n
 [PhotonAuthCookie]: https://doc.photonengine.com/en-us/pun/v2/gameplay/web-extensions/webrpc#request
 [PhotonUnityAssetStore]: https://assetstore.unity.com/publishers/298
 [HttpToolPostRequests]: ./Http.md#post-requests
+[JsonTypeInfo]: ./Json.md#type-information
 [JsonTool]: ./Json.md
 [HttpTool]: ./Http.md
 [XmlTool]: ./Xml.md

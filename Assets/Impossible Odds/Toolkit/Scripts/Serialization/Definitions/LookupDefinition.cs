@@ -14,7 +14,7 @@
 	/// <typeparam name="U">Attribute type for the lookup-based fields and properties.</typeparam>
 	/// <typeparam name="V">Type of the lookup-based container that should get used.</typeparam>
 	public abstract class LookupDefinition<T, U, V> : ILookupSerializationDefinition<T, U, V>
-	where T : Attribute
+	where T : Attribute, ILookupTypeObject
 	where U : Attribute, ILookupParameter
 	where V : IDictionary
 	{

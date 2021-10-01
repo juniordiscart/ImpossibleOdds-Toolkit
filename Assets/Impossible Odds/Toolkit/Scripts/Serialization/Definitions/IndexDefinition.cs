@@ -14,7 +14,7 @@
 	/// <typeparam name="U">Attribute type for the index-based attributes.</typeparam>
 	/// <typeparam name="V">Type of the index-based container that should get used.</typeparam>
 	public abstract class IndexDefinition<T, U, V> : IIndexSerializationDefinition<T, U, V>
-	where T : Attribute
+	where T : Attribute, IIndexTypeObject
 	where U : Attribute, IIndexParameter
 	where V : IList
 	{

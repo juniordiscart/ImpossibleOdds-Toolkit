@@ -129,11 +129,11 @@ However, it is important to know what the gotcha's are for using this:
 
 When working with complex structured data, it's important to keep track of which types you're dealing with. Including type information in the document is vital, and also easy. This ensures that, when transforming the XMl document back to data to work with in your project, you'll know you have the properly constructed instance.
 
-On your base class or interface, apply one or multiple `XmlType` attributes, and state which types can inherit from it, or implement it. Optionally, you can define a value that is used to identify this class, which might help in maintaining readability of the document. When this value is left empty, the name of the class itself is used instead.
+On your base class or interface, apply one or multiple `XmlType` attributes, and state which types can inherit from it, or implement it.
 
 ```cs
-[XmlType(typeof(Movie), Value = "Movie"),
-XmlType(typeof(Series), Value = "Series")]
+[XmlType(typeof(Movie)),
+XmlType(typeof(Series))]
 public abstract class Production
 {
 	// Details omitted...
@@ -164,6 +164,44 @@ When adding these to the movie database example from earlier, the output looks s
   <Productions>
     <Production Name="Better Call Saul" xsi:type="Series" />
     <Production Name="The Dark Knight" xsi:type="Movie" />
+  </Productions>
+</IMDB>
+```
+
+Adding type information to the XML document can also be fully customized. The following properties are available to override on the `XmlType` attribute:
+
+* The `Value` property defines a custom value that associates a value with a type. For example, you can fill in a string value to provide an alias for the type, or provide an enum value from which you cna infer the type.
+* By default, the type information is set as an attribute of the XML element. However, by setting the `SetAsElement` property to `true`, you can have it be set as a child element instead.
+* The `KeyOverride` property allows you to override the key under which the type data is saved. By default this is put under the default XML `xsi:type` name.
+
+With the previous example adapted, it could look something like this:
+
+```cs
+[XmlEnumString]
+public enum ProductionType
+{
+	MOVIE,
+	SERIES
+}
+```
+
+```cs
+[XmlType(typeof(Movie), KeyOverride = "ProductionType", Value = ProductionType.MOVIE, SetAsElement = true),
+XmlType(typeof(Series))]
+public abstract class Production
+{
+	// Details omitted...
+}
+```
+
+```xml
+<?xml version="1.0" encoding="utf-16"?>
+<IMDB xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Productions>
+    <Production Name="Better Call Saul" xsi:type="Series" />
+    <Production Name="The Dark Knight">
+        <ProductionType>MOVIE</ProductionType>
+    </Production>
   </Productions>
 </IMDB>
 ```

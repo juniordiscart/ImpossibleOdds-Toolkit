@@ -19,10 +19,10 @@
 	public abstract class IndexAndLookupDefinition<TListObject, TListField, TListType, TLookupObject, TLookupField, TLookupType> :
 	IIndexSerializationDefinition<TListObject, TListField, TListType>,
 	ILookupSerializationDefinition<TLookupObject, TLookupField, TLookupType>
-	where TListObject : Attribute
+	where TListObject : Attribute, IIndexTypeObject
 	where TListField : Attribute, IIndexParameter
 	where TListType : IList
-	where TLookupObject : Attribute
+	where TLookupObject : Attribute, ILookupTypeObject
 	where TLookupField : Attribute, ILookupParameter
 	where TLookupType : IDictionary
 	{

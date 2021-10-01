@@ -60,8 +60,6 @@ public abstract class Animal
 {
 	[JsonField, JsonRequired]
 	private string name;
-	[JsonField]
-	private float weight;
 
 	// Other details omitted...
 }
@@ -91,6 +89,65 @@ A possible output for a list of animals:
 **Note**: specifying a custom value for a type requires it to be unique in the context of this inheritance chain (this includes interfaces on which this attribute is defined).
 
 **Another note**: serializing type information is only supported for objects that are serialized as JSON objects. It's currently not supported in this tool to save type information in JSON array objects.
+
+As shown in the example above, the key for the type information is set to be `jsi:type`. This default key is defined by the _serialization definition_ which you will come to know more about below. However, sometimes, you may want to alter this key, perhaps because the type information can be infered from a value already present in the data itself! You can provide a `KeyOverride` and set a custom key value, optionally paired with a custom value.
+
+```cs
+[JsonEnumString]
+public enum AnimalType
+{
+	CAT,
+	DOG,
+	CROCODILE,
+	PIDGEON
+}
+```
+
+```cs
+[JsonObject,
+JsonType(typeof(Cat), KeyOverride = "animalType", Value = AnimalType.CAT),
+JsonType(typeof(Dog), KeyOverride = "animalType", Value = AnimalType.DOG),
+JsonType(typeof(Crocodile), Value = "Kroko"),
+JsonType(typeof(Pidgeon), Value = "Dove")]
+public abstract class Animal
+{
+	[JsonField, JsonRequired]
+	private string name;
+	[JsonField, JsonRequired]
+	private AnimalType animalType;
+
+	public Animal(AnimalType animalType)
+	{
+		this.animalType = animalType;
+	}
+
+	// Other details omitted...
+}
+```
+
+A potential serialized result could be:
+
+```json
+{
+	"animals": [
+		{
+			"name": "Bobby",
+			"animalType": "DOG"
+		},
+		{
+			"name": "Salem",
+			"animalType": "CAT"
+		},
+		{
+			"name": "Dundee",
+			"animalType": "CROCODILE",
+			"jsi:type": "Kroko"
+		}
+	]
+}
+```
+
+The `Cat` and `Dog` types have a key override defined that refers to a field that contains an enum value which uniquely defines their type. During deserialization, it will use this enum value to determine the actual type of the object.
 
 ### Enum String Values & Aliases
 
@@ -341,8 +398,8 @@ public enum TaxonomyClass
 
 ```cs
 [JsonObject,
-JsonType(typeof(Cat)),
-JsonType(typeof(Dog)),
+JsonType(typeof(Cat), KeyOverride = "animalType", Value = AnimalType.CAT),
+JsonType(typeof(Dog), KeyOverride = "animalType", Value = AnimalType.DOG),
 JsonType(typeof(Crocodile), Value = "Kroko"),
 JsonType(typeof(Pidgeon), Value = "Dove")]
 public abstract class Animal
@@ -357,6 +414,13 @@ public abstract class Animal
 	private TaxonomyClass classification;
 	[JsonField]
 	private VeterinaryAppointment nextAppointment;
+	[JsonField, JsonRequired]
+	private AnimalType animalType;
+
+	public Animal(AnimalType animalType)
+	{
+		this.animalType = animalType;
+	}
 
 	[OnJsonSerializing]
 	private void OnSerializing()
@@ -392,6 +456,10 @@ public class Cat : Animal
 	private Color32 furColor;
 	[JsonField]
 	private bool chipped;
+
+	public Cat()
+	: base(AnimalType.CAT)
+	{ }
 }
 ```
 
@@ -403,6 +471,10 @@ public class Dog : Animal
 	private Color furColor;
 	[JsonField]
 	private bool neutered;
+
+	public Dog()
+	: base(AnimalType.DOG)
+	{ }
 }
 ```
 

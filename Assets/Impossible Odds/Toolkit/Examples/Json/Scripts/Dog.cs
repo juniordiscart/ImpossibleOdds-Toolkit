@@ -1,6 +1,5 @@
 ﻿namespace ImpossibleOdds.Examples.Json
 {
-	using System;
 	using UnityEngine;
 	using ImpossibleOdds.Json;
 

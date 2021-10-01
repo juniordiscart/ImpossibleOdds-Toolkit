@@ -104,7 +104,7 @@
 
 		private XElement Serialize(Type sourceType, object source)
 		{
-			XElement element = new XElement("Element");  // At this stage, we don't know the name.
+			XElement element = new XElement("Element");  // At this stage, we don't know the name yet.
 			CustomObjectTypeCache sourceTypeCache = GetTypeCache(sourceType);
 
 			// Process child elements.
@@ -139,10 +139,25 @@
 			}
 
 			// Add the type information, if any.
-			ITypeResolveParameter typeResolveParameter = ResolveTypeForSerialization(sourceType);
+			XmlTypeAttribute typeResolveParameter = ResolveTypeForSerialization(sourceType);
 			if (typeResolveParameter != null)
 			{
-				element.SetAttributeValue(XmlDefinition.TypeResolveKey, Serializer.Serialize(typeResolveParameter.Value, Definition) as string);
+				XName typeKey = (typeResolveParameter.KeyOverride != null) ? typeResolveParameter.KeyOverride : xmlDefinition.TypeResolveKey;
+				if ((element.Element(typeKey) == null) && (element.Attribute(typeKey) == null))
+				{
+					object typeValue = (typeResolveParameter.Value != null) ? typeResolveParameter.Value : typeResolveParameter.Target.Name;
+					if (typeResolveParameter.SetAsElement)
+					{
+						typeValue = Serializer.Serialize(typeValue, Definition);
+						element.Add(new XElement(typeKey, typeValue));
+					}
+					else
+					{
+						typeValue = Serializer.Serialize(typeValue, XmlDefinition.AttributeSerializationDefinition);
+						typeValue = SerializationUtilities.PostProcessValue<string>(typeValue);
+						element.SetAttributeValue(typeKey, typeValue);
+					}
+				}
 			}
 
 			return element;
@@ -329,29 +344,42 @@
 			return !string.IsNullOrWhiteSpace(xmlAttribute.Key) ? xmlAttribute.Key : member.Name;
 		}
 
-		private ITypeResolveParameter ResolveTypeForSerialization(Type sourceType)
+		private XmlTypeAttribute ResolveTypeForSerialization(Type sourceType)
 		{
 			CustomObjectTypeCache sourceTypeCache = GetTypeCache(sourceType);
 			IReadOnlyList<ITypeResolveParameter> typeResolveAttributes = sourceTypeCache.GetTypeResolveParameters(typeof(XmlTypeAttribute));
-			return typeResolveAttributes.FirstOrDefault(tr => tr.Target == sourceType);
+			return typeResolveAttributes.FirstOrDefault(tr => tr.Target == sourceType) as XmlTypeAttribute;
 		}
 
 		private Type ResolveTypeForDeserialization(Type targetType, XElement element)
 		{
-			XAttribute typeAttribute = element.Attribute(XmlDefinition.TypeResolveKey);
-			if (typeAttribute == null)
-			{
-				return targetType;
-			}
+			IEnumerable<XmlTypeAttribute> typeResolveAttrs =
+				GetTypeCache(targetType).
+				GetTypeResolveParameters(typeof(XmlTypeAttribute)).
+				Cast<XmlTypeAttribute>().
+				Where(tra => tra.Target != targetType); // Perform this filter as well as a way to stop the recursion.
 
-			IReadOnlyList<ITypeResolveParameter> typeResolveAttrs = GetTypeCache(targetType).GetTypeResolveParameters(XmlDefinition.TypeResolveAttribute);
-			foreach (ITypeResolveParameter typeResolveAttr in typeResolveAttrs)
+			foreach (XmlTypeAttribute typeResolveAttr in typeResolveAttrs)
 			{
-				if (typeAttribute.Value.Equals(typeResolveAttr.Value))
+				Type resolvedTargetType = null;
+
+				// Check if an override key type resolve parameter exists, and use it if a match could be made in the source data.
+				if (typeResolveAttr.KeyOverride != null)
+				{
+					string processedKey = SerializationUtilities.PostProcessValue<string>(Serializer.Serialize(typeResolveAttr.KeyOverride, Definition));
+					resolvedTargetType = ResolveTypeForDeserialization(element, typeResolveAttr, processedKey);
+				}
+				else
+				{
+					resolvedTargetType = ResolveTypeForDeserialization(element, typeResolveAttr, xmlDefinition.TypeResolveKey);
+				}
+
+				// Recursively find a more concrete type, if any.
+				if (resolvedTargetType != null)
 				{
 					if (targetType.IsAssignableFrom(typeResolveAttr.Target))
 					{
-						return typeResolveAttr.Target;
+						return ResolveTypeForDeserialization(resolvedTargetType, element);
 					}
 					else
 					{
@@ -361,6 +389,43 @@
 			}
 
 			return targetType;
+		}
+
+		private Type ResolveTypeForDeserialization(XElement element, XmlTypeAttribute typeResolveParam, XName processedKey)
+		{
+			if (processedKey == null)
+			{
+				return null;
+			}
+
+			if (typeResolveParam.SetAsElement && element.HasElements)
+			{
+				XElement xmlTypeElement = element.Element(processedKey);
+				if (xmlTypeElement != null)
+				{
+					object value = (typeResolveParam.Value != null) ? typeResolveParam.Value : typeResolveParam.Target.Name;
+					string processedValue = SerializationUtilities.PostProcessValue<string>(Serializer.Serialize(value, Definition));
+					if (xmlTypeElement.Value.Equals(processedValue))
+					{
+						return typeResolveParam.Target;
+					}
+				}
+			}
+			else if (element.HasAttributes)
+			{
+				XAttribute xmlTypeAttr = element.Attribute(processedKey);
+				if (xmlTypeAttr != null)
+				{
+					object value = (typeResolveParam.Value != null) ? typeResolveParam.Value : typeResolveParam.Target.Name;
+					string processedValue = SerializationUtilities.PostProcessValue<string>(Serializer.Serialize(value, Definition));
+					if (xmlTypeAttr.Value.Equals(processedValue))
+					{
+						return typeResolveParam.Target;
+					}
+				}
+			}
+
+			return null;
 		}
 	}
 }

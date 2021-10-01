@@ -4,8 +4,8 @@
 	using UnityEngine;
 	using ImpossibleOdds.Xml;
 
-	[XmlType(typeof(Movie), Value = "Movie"),
-	XmlType(typeof(Series), Value = "Series")]
+	[XmlType(typeof(Movie), KeyOverride = "ProductionType", Value = ProductionType.MOVIE, SetAsElement = true),
+	XmlType(typeof(Series))]
 	public abstract class Production
 	{
 		public static StringBuilder SerializationLog

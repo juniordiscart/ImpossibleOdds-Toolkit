@@ -313,6 +313,8 @@ public class FreestyleLeaderboard
 }
 ```
 
+The default implementation will treat the request's `POST`-body and structured responses as JSON-formatted data. There are some additional features regarding how type information is presented and processed when dealing with such data, as described in the [JSON's tool type information description][JsonTypeInfo]. Summarized, you can set the `KeyOverride` property to override the default key being used to either save the type information under a different name, or have the key refer to an existing field from which it should infer the type. In the latter case, make sure the `Value` property is also set with the value that links type and value together.
+
 ## HTTP Messenger
 
 Now that you know how to create and set up your request and response objects, it's time to send them over to the server. This is done by using the `HttpMessenger` class. It takes care of transforming requests and responses back & forth to instances of `UnityWebRequest` as well as offering tons of possibilities to receive callbacks when a message completes.
@@ -611,8 +613,8 @@ public class HttpTest : MonoBehaviour
 Check out the HTTP sample scene for a hands-on example! It will make requests to the _Impossible Odds demo server_ to demonstrate its functionality.
 
 [Logo]: ./Images/ImpossibleOddsLogo.png
-[JSON]: ./Json.md
 [JsonTool]: ./Json.md
 [XmlTool]: ./Xml.md
 [WebRPCTool]: ./PhotonWebRPC.md
 [SerializationTool]: ./Serialization.md
+[JsonTypeInfo]: ./Json.md#type-information

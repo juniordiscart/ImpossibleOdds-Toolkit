@@ -1,9 +1,10 @@
 ﻿namespace ImpossibleOdds.Xml
 {
 	using System;
+	using ImpossibleOdds.Serialization;
 
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false)]
-	public sealed class XmlObjectAttribute : Attribute
+	public sealed class XmlObjectAttribute : Attribute, ILookupTypeObject
 	{
 		private string rootName = string.Empty;
 

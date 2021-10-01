@@ -1,8 +1,9 @@
 ﻿namespace ImpossibleOdds.Json
 {
 	using System;
+	using ImpossibleOdds.Serialization;
 
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false)]
-	public sealed class JsonObjectAttribute : Attribute
+	public sealed class JsonObjectAttribute : Attribute, ILookupTypeObject
 	{ }
 }
