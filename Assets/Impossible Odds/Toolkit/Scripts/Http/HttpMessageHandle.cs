@@ -40,7 +40,11 @@
 		/// </summary>
 		public bool IsDone
 		{
+#if UNITY_2020_2_OR_NEWER
+			get { return (response != null) || IsError; }
+#else
 			get { return ((webRequest != null) && (webRequest.isNetworkError || webRequest.isHttpError)) || (response != null); }
+#endif
 		}
 
 		/// <summary>
@@ -48,7 +52,23 @@
 		/// </summary>
 		public bool IsError
 		{
+#if UNITY_2020_2_OR_NEWER
+			get
+			{
+				switch (webRequest.result)
+				{
+					case UnityWebRequest.Result.ConnectionError:
+					case UnityWebRequest.Result.ProtocolError:
+					case UnityWebRequest.Result.DataProcessingError:
+						return true;
+					default:
+						return false;
+				}
+			}
+#else
+
 			get { return (webRequest != null) && (webRequest.isNetworkError || webRequest.isHttpError); }
+#endif
 		}
 
 		/// <summary>

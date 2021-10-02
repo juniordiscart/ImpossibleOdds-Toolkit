@@ -63,13 +63,9 @@
 				response.ToString(logBuilder);
 				txtLog.text = logBuilder.ToString();
 			}
-			else if (handle.WebRequest.isNetworkError)
+			else if (handle.IsError)
 			{
-				LogMessage("Network error: " + handle.WebRequest.error);
-			}
-			else if (handle.WebRequest.isHttpError)
-			{
-				LogMessage("HTTP error: " + handle.WebRequest.error);
+				LogMessage("An error occurred: " + handle.WebRequest.error);
 			}
 			else
 			{

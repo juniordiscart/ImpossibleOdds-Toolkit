@@ -136,7 +136,7 @@
 
 			RemovePendingRequest(handle);
 
-			if (handle.WebRequest.isNetworkError || handle.WebRequest.isHttpError)
+			if (handle.IsError)
 			{
 				HandleFailed(handle);
 				return;
