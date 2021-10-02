@@ -18,16 +18,16 @@
 		/// Retrieve the associated response type for the given request type.
 		/// </summary>
 		/// <param name="requestType">The type of the request for which to find the type of response.</param>
-		/// <typeparam name="TResponseAttr">Type of attribute to look for on the request type.</typeparam>
+		/// <typeparam name="TResponseAssocAttr">Type of attribute to look for on the request type.</typeparam>
 		/// <returns>The type of the associated response for the type of request.</returns>
-		public static Type GetResponseType<TResponseAttr>(Type requestType)
-		where TResponseAttr : WeblinkResponseAttribute
+		public static Type GetResponseType<TResponseAssocAttr>(Type requestType)
+		where TResponseAssocAttr : WeblinkResponseAttribute
 		{
 			requestType.ThrowIfNull(nameof(requestType));
 
 			if (!requestResponseMapping.ContainsKey(requestType))
 			{
-				TResponseAttr attr = requestType.GetCustomAttribute<TResponseAttr>(false);
+				TResponseAssocAttr attr = requestType.GetCustomAttribute<TResponseAssocAttr>(false);
 				requestResponseMapping.Add(requestType, attr?.ResponseType);
 			}
 
@@ -38,42 +38,53 @@
 		/// Retrieve the associated response type for the given request type.
 		/// </summary>
 		/// <typeparam name="TRequestType">The type of the request for which to find the type of response.</typeparam>
-		/// <typeparam name="TResponseAttr">Type of attribute to look for on the request type.</typeparam>
+		/// <typeparam name="TResponseAssocAttr">Type of attribute to look for on the request type.</typeparam>
 		/// <returns>The type of the associated response for the type of request.</returns>
-		public static Type GetResponseType<TRequestType, TResponseAttr>()
+		public static Type GetResponseType<TRequestType, TResponseAssocAttr>()
 		where TRequestType : IWeblinkRequest
-		where TResponseAttr : WeblinkResponseAttribute
+		where TResponseAssocAttr : WeblinkResponseAttribute
 		{
-			return GetResponseType<TResponseAttr>(typeof(TRequestType));
+			return GetResponseType<TResponseAssocAttr>(typeof(TRequestType));
 		}
 
 		/// <summary>
 		/// Checks whether a response type is defined for the given request type.
 		/// </summary>
 		/// <param name="requestType">The type of request for which to check if a type of response is defined.</param>
-		/// <typeparam name="TResponseAttr"></typeparam>
+		/// <typeparam name="TResponseAssocAttr"></typeparam>
 		/// <returns>True, if the request type has defined a response type.</returns>
-		public static bool IsResponseTypeDefined<TResponseAttr>(Type requestType)
-		where TResponseAttr : WeblinkResponseAttribute
+		public static bool IsResponseTypeDefined<TResponseAssocAttr>(Type requestType)
+		where TResponseAssocAttr : WeblinkResponseAttribute
 		{
-			return GetResponseType<TResponseAttr>(requestType) != null;
+			return GetResponseType<TResponseAssocAttr>(requestType) != null;
 		}
 
 		/// <summary>
 		/// Invoke any methods found on the target object that have been marked as being response callbacks.
 		/// The method can define parameters in any order refering to the handle, request and/or response.
+		/// The message handle's request is required to assigned. The response may be null.
 		/// </summary>
 		/// <param name="target">The object on which to invoke response callback methods</param>
 		/// <param name="handle">The handle which contains the request and response values.</param>
 		/// <typeparam name="TCallbackAttr">The attribute to look on any of the target's methods.</typeparam>
-		public static void InvokeResponseCallback<TCallbackAttr>(object target, IWeblinkMessageHandle handle)
+		/// <typeparam name="TResponseAssocAttr">The attribute that's used to associate a request type with a response type.</typeparam>
+		public static void InvokeResponseCallback<TCallbackAttr, TResponseAssocAttr>(object target, IWeblinkMessageHandle handle)
 		where TCallbackAttr : WeblinkResponseCallbackAttribute
+		where TResponseAssocAttr : WeblinkResponseAttribute
 		{
 			target.ThrowIfNull(nameof(target));
 			handle.ThrowIfNull(nameof(handle));
+			handle.ThrowIfNull(nameof(handle.Request));
 
+			Type requestType = handle.Request.GetType();
+			if (!IsResponseTypeDefined<TResponseAssocAttr>(requestType))
+			{
+				return;
+			}
+
+			Type handleType = handle.GetType();
 			Type targetType = target.GetType();
-			Type responseType = handle.Response.GetType();
+			Type responseType = GetResponseType<TResponseAssocAttr>(requestType);
 			BindingFlags methodFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
 			while (targetType != ObjectType)
@@ -92,15 +103,15 @@
 					for (int i = 0; i < parameters.Length; ++i)
 					{
 						Type parameterType = parametersInfo[i].ParameterType;
-						if (HandleType.IsAssignableFrom(parameterType))
+						if (parameterType.IsAssignableFrom(handleType))
 						{
 							parameters[i] = handle;
 						}
-						else if (RequestType.IsAssignableFrom(parameterType))
+						else if (parameterType.IsAssignableFrom(requestType))
 						{
 							parameters[i] = handle.Request;
 						}
-						else if (ResponseType.IsAssignableFrom(parameterType))
+						else if (parameterType.IsAssignableFrom(responseType))
 						{
 							parameters[i] = handle.Response;
 						}

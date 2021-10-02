@@ -6,11 +6,11 @@
 	/// <summary>
 	/// An abstract messenger framework for matching outgoing requests with a single incoming response.
 	/// </summary>
-	/// <typeparam name="TRequest"></typeparam>
-	/// <typeparam name="TResponse"></typeparam>
-	/// <typeparam name="THandle"></typeparam>
-	/// <typeparam name="TResponseAssoc"></typeparam>
-	/// <typeparam name="TResponseCallback"></typeparam>
+	/// <typeparam name="TRequest">Type of requests.</typeparam>
+	/// <typeparam name="TResponse">Type of responeses.</typeparam>
+	/// <typeparam name="THandle">Type of handles.</typeparam>
+	/// <typeparam name="TResponseAssoc">Type of the attribute that associates a request type with a response type.</typeparam>
+	/// <typeparam name="TResponseCallback">Type of the attribute for invoking targeted callbacks.</typeparam>
 	public abstract class WeblinkMessenger<TRequest, TResponse, THandle, TResponseAssoc, TResponseCallback> : IWeblinkMessenger<TRequest, TResponse, THandle>
 	where TRequest : IWeblinkRequest
 	where TResponse : IWeblinkResponse
@@ -203,7 +203,7 @@
 		protected virtual void HandleFailed(THandle handle)
 		{
 			handle.ThrowIfNull(nameof(handle));
-			// InvokeResponseCallbacks(handle);
+			InvokeResponseCallbacks(handle);
 			onMessageFailed.InvokeIfNotNull(handle);
 		}
 
@@ -243,7 +243,7 @@
 			{
 				if (callback != null)
 				{
-					WeblinkUtilities.InvokeResponseCallback<TResponseCallback>(callback, handle);
+					WeblinkUtilities.InvokeResponseCallback<TResponseCallback, TResponseAssoc>(callback, handle);
 				}
 			}
 		}

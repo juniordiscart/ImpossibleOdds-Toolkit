@@ -10,22 +10,22 @@ Changelist:
 
 ### Added
 
-* All serialization frameworks can now define a serialization type key override. This allows to set or infer a type based on a different or already present value in the data. The XML serialization can also define whether the type information should be saved as XML element rather than an XML attribute.
-* JSON, HTTP body and Photon WebRPC serialization frameworks now also have support for structs (as opposed to only classes) when defining whether they want to be (de)serialized as arrays or objects.
-* The `NullValueProcessor` for dealing with `null` data during deserialization. This processor will assign null or a default value of the type in case the value to deserialize is null.
-* The `ILookupTypeObject` and `IIndexTypeObject` attribute interfaces. These serve the purpose of identifying serialization attributes related to marking a type as an index-based or lookup-based datastructure.
+* All serialization frameworks can now define a serialization type key override through the `KeyOverride` property on the attribute. This allows to set or infer a type based on a different or already present value in the data. The XML serialization can also define whether the type information should be saved as a child element rather than an attribute using the `SetAsElement` property on the `XmlType` attribute.
+* JSON, HTTP body and Photon WebRPC serialization frameworks now also have support for (de)serializing structs.
+* A `NullValueProcessor` class for dealing with `null` data during deserialization. This processor will assign a default or null when the value to deserialize is null. This processor is added to every pre-defined serialization definition in the toolkit. This also fixes issue [#6](https://github.com/juniordiscart/ImpossibleOdds-Toolkit/issues/6).
 
 ### Updated
 
-* The default nested message configurator classes in the `HttpMessenger` and `WebRpcMessenger` classes have most of their methods and fields defined as virtual and/or protected, allowing to add simple override behaviour.
-* Loosened the type restriction for Type defining attributes in several serialization frameworks. This was previously set to be instances of type `string`, but is not set to be `object`. This allows for other kinds of data to serve as type identifiers, e.g. enums.
-* The targeted callbacks invoked by the `HttpMessenger` and `WebRpcMessenger` classes are not called anymore when a message fails since the callback mechanism is based on responses, rather than requests.
-* All serialization processors now require their `targetType` parameter of the `Deserialize` method to be non-null.
+* The `HttpMessageHandle` is updated to cope with the deprecated properties of the `UnityWebRequest` class set in Unity 2020.2. This gets rid of the warning messages in newer versions of Unity.
+* The default nested message configurator classes in `HttpMessenger` and `WebRpcMessenger` have most of their methods and fields defined as virtual and/or protected, allowing for simple override behaviour without a full custom implementation.
+* Loosened the type restriction for Type-defining attributes in several serialization frameworks. Instead of just instances of type `string`, instances of `object` are now accepted. This allows for other kinds of values to serve as type identifiers, e.g. enums.
+* All pre-defined serialization processors now require the `targetType` parameter of their `Deserialize` method to be non-null.
+* The `InvokeResponseCallback` method in the Weblink utilities framework now takes an additional generic parameter to reliably retrieve the callback method. This also fixes issue [#7](https://github.com/juniordiscart/ImpossibleOdds-Toolkit/issues/7).
 
 ### Fixed
 
-* The type verification check of a value against generic type arguments of a list of dictionary would fail for vaules that were not null.
-* All registered targeted callback methods were called when a message completed instead of only the matching ones to the response.
+* The type verification check of a value against generic type arguments of a list or dictionary would fail for vaules that were not null. See issue [#4](https://github.com/juniordiscart/ImpossibleOdds-Toolkit/issues/4).
+* All registered targeted callback methods were called when a message completed instead of only the matching ones to the response. See issue [#5](https://github.com/juniordiscart/ImpossibleOdds-Toolkit/issues/5).
 * The `ExactMatchProcessor` would have an unhandled scenario where it would attempt to set the wrong kind of data during deserialization.
 
 ### Removed
