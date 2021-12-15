@@ -67,14 +67,32 @@ namespace ImpossibleOdds
 		}
 
 		/// <summary>
+		/// Inserts a collection of values in the list, assuming it is already sorted, preserving the order of elements.
+		/// </summary>
+		/// <param name="list">The list in which to insert the elements.</param>
+		/// <param name="values">The elements to be added to the list.</param>
+		/// <typeparam name="T">The element type of the list.</typeparam>
+		public static void SortedInsert<T>(this IList<T> list, IEnumerable<T> values)
+		where T : IComparable<T>
+		{
+			values.ThrowIfNull(nameof(values));
+			foreach (T value in values)
+			{
+				list.SortedInsert(value);
+			}
+		}
+
+		/// <summary>
 		/// Inserts a value in the list, assuming it is already sorted, preserving the order of elements.
 		/// </summary>
-		/// <param name="list">The list in which to insert the element.</param>
+		/// <param name="list">The list in which to insert the value.</param>
 		/// <param name="value">Value to insert.</param>
 		/// <param name="comparison">Comparison operator to determine the order of elements.</param>
 		/// <typeparam name="T">The element type of the list.</typeparam>
 		public static void SortedInsert<T>(this IList<T> list, T value, Comparison<T> comparison)
 		{
+			comparison.ThrowIfNull(nameof(comparison));
+
 			int startIndex = 0;
 			int endIndex = list.Count;
 			while (endIndex > startIndex)
@@ -97,13 +115,32 @@ namespace ImpossibleOdds
 					endIndex = middleIndex;
 				}
 			}
+
 			list.Insert(startIndex, value);
+		}
+
+		/// <summary>
+		/// Inserts a set of values in the list, assuming it is already sorted, preserving the order of elements.
+		/// </summary>
+		/// <param name="list">The list in which to insert the values.</param>
+		/// <param name="values">Values to insert.</param>
+		/// <param name="comparison">Comparison operator to determine the order of elements.</param>
+		/// <typeparam name="T">The element type of the list.</typeparam>
+		public static void SortedInsert<T>(this IList<T> list, IEnumerable<T> values, Comparison<T> comparison)
+		{
+			values.ThrowIfNull(nameof(values));
+			comparison.ThrowIfNull(nameof(comparison));
+
+			foreach (T value in values)
+			{
+				list.SortedInsert(value, comparison);
+			}
 		}
 
 		/// <summary>
 		/// Inserts a value in the list, assuming it is already sorted, preserving the order of elements.
 		/// </summary>
-		/// <param name="list">The list in which to insert the element.</param>
+		/// <param name="list">The list in which to insert the value.</param>
 		/// <param name="value">Value to insert.</param>
 		public static void SortedInsert(this IList list, IComparable value)
 		{
@@ -111,13 +148,29 @@ namespace ImpossibleOdds
 		}
 
 		/// <summary>
+		/// Inserts a set of values in the list, assuming it is already sorted, preserving the order of elements.
+		/// </summary>
+		/// <param name="list">The list in which to insert the values.</param>
+		/// <param name="values">Values to insert.</param>
+		public static void SortedInsert(this IList list, IEnumerable<IComparable> values)
+		{
+			values.ThrowIfNull(nameof(values));
+			foreach (IComparable value in values)
+			{
+				list.SortedInsert(value);
+			}
+		}
+
+		/// <summary>
 		/// Inserts a value in the list, assuming it is already sorted, preserving the order of elements.
 		/// </summary>
-		/// <param name="list">The list in which to insert the element.</param>
+		/// <param name="list">The list in which to insert the values.</param>
 		/// <param name="value">Value to insert.</param>
 		/// <param name="comparison">Comparison operator to determine the order of elements.</param>
 		public static void SortedInsert(this IList list, IComparable value, Comparison<IComparable> comparison)
 		{
+			comparison.ThrowIfNull(nameof(comparison));
+
 			int startIndex = 0;
 			int endIndex = list.Count;
 			while (endIndex > startIndex)
@@ -140,7 +193,25 @@ namespace ImpossibleOdds
 					endIndex = middleIndex;
 				}
 			}
+
 			list.Insert(startIndex, value);
+		}
+
+		/// <summary>
+		/// Inserts a set of values in the list, assuming it is already sorted, preserving the order of elements.
+		/// </summary>
+		/// <param name="list">The list in which to insert the values.</param>
+		/// <param name="values">Values to insert.</param>
+		/// <param name="comparison">Comparison operator to determine the order of elements.</param>
+		public static void SortedInsert(this IList list, IEnumerable<IComparable> values, Comparison<IComparable> comparison)
+		{
+			values.ThrowIfNull(nameof(values));
+			comparison.ThrowIfNull(nameof(comparison));
+
+			foreach (IComparable value in values)
+			{
+				list.SortedInsert(value, comparison);
+			}
 		}
 	}
 }
