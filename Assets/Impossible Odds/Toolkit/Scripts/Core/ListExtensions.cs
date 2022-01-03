@@ -213,5 +213,15 @@ namespace ImpossibleOdds
 				list.SortedInsert(value, comparison);
 			}
 		}
+
+		/// <summary>
+		/// Checks whether the collection is null or empty.
+		/// </summary>
+		/// <param name="c">The collection to test.</param>
+		/// <returns>True if the collection is either null, or has 0 elements in it. False otherwise.</returns>
+		public static bool IsNullOrEmpty(this ICollection c)
+		{
+			return (c == null) || (c.Count == 0);
+		}
 	}
 }
