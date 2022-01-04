@@ -1,0 +1,36 @@
+{
+	"name": "com.impossibleodds.toolkit",
+	"version": "1.4.0",
+	"displayName": "Impossible Odds - C# Toolkit",
+	"unity": "2019.4",
+	"documentationUrl": "https://github.com/juniordiscart/ImpossibleOdds-Toolkit",
+	"changelogUrl": "https://github.com/juniordiscart/ImpossibleOdds-Toolkit/blob/master/CHANGELOG.md",
+	"licensesUrl": "https://github.com/juniordiscart/ImpossibleOdds-Toolkit/blob/master/LICENSE.md",
+	"description": "The Impossible Odds C# Toolkit for Unity is a set of carefully crafted tools to help you kickstart your project's codebase. It's designed with ease-of-use in mind, provide tools to keep your codebase clean and efficient. It combines several utilities and frameworks to help you think more about your game and gameplay design rather than code design.",
+	"keywords": [
+		"http",
+		"serialization",
+		"json",
+		"tools",
+		"csharp",
+		"unity",
+		"toolkit",
+		"serializer",
+		"xml",
+		"dependency-injection",
+		"game-development",
+		"unity3d",
+		"xml-parsing",
+		"json-parser",
+		"xml-serialization",
+		"xml-parser",
+		"photon",
+		"photon-pun",
+		"webrpc"
+	],
+	"author": {
+		"name": "Jan Discart",
+		"email": "jan.discart@impossible-odds.net",
+		"url": "https://www.impossible-odds.net"
+	}
+}
