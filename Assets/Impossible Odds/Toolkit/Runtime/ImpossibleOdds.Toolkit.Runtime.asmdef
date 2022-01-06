@@ -1,0 +1,24 @@
+{
+    "name": "ImpossibleOdds.Toolkit.Runtime",
+    "rootNamespace": "",
+    "references": [
+        "ImpossibleOdds.Core",
+        "ImpossibleOdds.DependencyInjection",
+        "ImpossibleOdds.Http",
+        "ImpossibleOdds.Json",
+        "ImpossibleOdds.Photon.WebRpc",
+        "ImpossibleOdds.Runnables",
+        "ImpossibleOdds.Serialization",
+        "ImpossibleOdds.Weblink",
+        "ImpossibleOdds.Xml"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,24 @@
+{
+    "name": "ImpossibleOdds.Examples",
+    "rootNamespace": "",
+    "references": [
+        "ImpossibleOdds.Core",
+        "ImpossibleOdds.DependencyInjection",
+        "ImpossibleOdds.Runnables",
+        "ImpossibleOdds.Json",
+        "ImpossibleOdds.Serialization",
+        "ImpossibleOdds.Weblink",
+        "ImpossibleOdds.Http",
+        "ImpossibleOdds.Xml",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
