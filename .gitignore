@@ -39,3 +39,4 @@ Assets/Photon/*
 Assets/Photon.meta
 ProjectSettings/ProjectSettings.asset
 Logs/*
+*.DS_Store
