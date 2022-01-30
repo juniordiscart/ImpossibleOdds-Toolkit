@@ -1,6 +1,5 @@
 {
     "name": "ImpossibleOdds.Examples",
-    "rootNamespace": "",
     "references": [
         "ImpossibleOdds.Core",
         "ImpossibleOdds.DependencyInjection",
@@ -10,6 +9,7 @@
         "ImpossibleOdds.Weblink",
         "ImpossibleOdds.Http",
         "ImpossibleOdds.Xml",
+        "ImpossibleOdds.StateMachines",
         "Unity.TextMeshPro"
     ],
     "includePlatforms": [],

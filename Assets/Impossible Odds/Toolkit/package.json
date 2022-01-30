@@ -26,7 +26,8 @@
 		"xml-parser",
 		"photon",
 		"photon-pun",
-		"webrpc"
+		"webrpc",
+		"state-machine"
 	],
 	"author": {
 		"name": "Jan Discart",
