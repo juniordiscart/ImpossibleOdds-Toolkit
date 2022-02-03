@@ -75,6 +75,12 @@ For more details about the data (de)serialization process, check the [Serializat
 
 **Note**: this tool is only available when a valid Photon package is installed in your project. It is disabled otherwise.
 
+## State Machines
+
+A state machine is a commonly used pattern in game development and comes in a wide variety of shapes, sizes and complexity. The `ImpossilbleOdds.StateMachines` namespace contains a generic framework to get you started on setting up custom state machines quick and easy.
+
+To learn all about it's ins and outs, please read its documentation page [here][StateMachines].
+
 ## Editor Settings
 
 This toolkit has a custom entry in your project settings panel. It currently allows you to adjust the following settings:
@@ -131,6 +137,7 @@ View the [update history][Changelog] of this package.
 [Xml]: ./Docs/Xml.md
 [Http]: ./Docs/Http.md
 [PhotonWebRPC]: ./Docs/PhotonWebRPC.md
+[StateMachines]: ./Docs/StateMachines.md
 [Weblink]: ./Docs/Weblink.md
 [Serialization]: ./Docs/Serialization.md
 [Contact]: https://www.impossible-odds.net/support-request/

@@ -5,6 +5,9 @@
 	using ImpossibleOdds.StateMachines;
 	using ImpossibleOdds.Runnables;
 
+	/// <summary>
+	/// A turnstile implementation based on a state machine.
+	/// </summary>
 	public class Turnstile : MonoBehaviour
 	{
 		[SerializeField]
