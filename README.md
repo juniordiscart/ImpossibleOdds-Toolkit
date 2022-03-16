@@ -81,6 +81,10 @@ A state machine is a commonly used pattern in game development and comes in a wi
 
 To learn all about it's ins and outs, please read its documentation page [here][StateMachines].
 
+## Addressables Extensions
+
+
+
 ## Editor Settings
 
 This toolkit has a custom entry in your project settings panel. It currently allows you to adjust the following settings:
