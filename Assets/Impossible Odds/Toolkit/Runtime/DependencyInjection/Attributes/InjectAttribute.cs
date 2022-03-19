@@ -6,7 +6,7 @@
 	/// Defines that a field, property or method should be injected.
 	/// Can optionally be set with an ID to restrict injections for certain sources.
 	/// </summary>
-	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
+	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method | AttributeTargets.Constructor)]
 	public sealed class InjectAttribute : Attribute
 	{
 		private readonly string injectID = null;

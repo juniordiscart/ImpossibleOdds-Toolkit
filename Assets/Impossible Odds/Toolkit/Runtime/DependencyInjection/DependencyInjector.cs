@@ -16,6 +16,62 @@
 		private readonly static Dictionary<int, object[]> parameterCacheList = new Dictionary<int, object[]>();
 
 		/// <summary>
+		/// Creates an instance of the target type and injects the newly create object.
+		/// Note: a suitable constructor is necessary to create the instance. Either a constructor marked
+		/// with the 'Inject' attribute, or an accessable default constructor.
+		/// </summary>
+		/// <param name="container">Container with dependency bindings.</param>
+		/// <typeparam name="T">The type of object to create an instance of.</typeparam>
+		/// <returns>An instance of the target type, injected with resources found in the container.</returns>
+		public static T CreateAndInject<T>(IDependencyContainer container)
+		{
+			return CreateAndInject<T>(container, string.Empty);
+		}
+
+		/// <summary>
+		/// Creates an instance of the target type and injects the newly create object.
+		/// Note: a suitable constructor is necessary to create the instance. Either a constructor marked
+		/// with the 'Inject' attribute (with matching injection identifier), or an accessable default constructor.
+		/// </summary>
+		/// <param name="container">Container with dependency bindings.</param>
+		/// <param name="injectionID">Only injects members with the injection ID.</param>
+		/// <typeparam name="T">The type of object to create an instance of.</typeparam>
+		/// <returns>An instance of the target type, injected with resources found in the container.</returns>
+		public static T CreateAndInject<T>(IDependencyContainer container, string injectionId)
+		{
+			container.ThrowIfNull(nameof(container));
+
+			Type targetType = typeof(T);
+			if (targetType.IsInterface || targetType.IsAbstract)
+			{
+				throw new DependencyInjectionException("Cannot create an instance of type {0} because it is either an interface or declared abstract.", targetType.Name);
+			}
+
+			TypeInjectionInfo typeInfo = GetTypeInjectionInfo(targetType);
+
+			object instance = null;
+			if (typeInfo.injectableConstructors.Any(c => c.IsInjectionScopeDefined(string.Empty)))
+			{
+				ConstructorInfo constructor = typeInfo.injectableConstructors.First(c => c.IsInjectionScopeDefined(string.Empty)).member;
+				ParameterInfo[] parameterInfo = constructor.GetParameters();
+				object[] parameters = GetParameterInjectionList(parameterInfo.Length);
+				FillPamaterInjectionList(parameterInfo, parameters, container);
+
+				instance = (T)constructor.Invoke(parameters);
+			}
+			else
+			{
+				instance = Activator.CreateInstance(targetType, false);
+			}
+
+			// Inject the instance as well for fields, properties and other methods.
+			Inject(container, instance);
+
+			// Return the typed instance here so that any unboxing can be done.
+			return (T)instance;
+		}
+
+		/// <summary>
 		/// Inject the target object using the bindings found in the container.
 		/// </summary>
 		/// <param name="container">Container with dependency bindings.</param>
@@ -127,10 +183,10 @@
 				return;
 			}
 
-			// Inject the base types first, like we do with constructors
+			// Inject the base types first, like we do with constructors.
 			ResolveDependenciesForObject(objToInject, currentType.BaseType, container, injectionID);
 
-			// Don't bother if the type is not injectable
+			// Don't bother if the type is not injectable.
 			if (!IsInjectable(currentType))
 			{
 				return;
@@ -168,22 +224,7 @@
 
 				ParameterInfo[] parameterInfo = method.member.GetParameters();
 				object[] parameters = GetParameterInjectionList(parameterInfo.Length);
-
-				// Resolve the dependencies for the method parameters
-				for (int i = 0; i < parameterInfo.Length; ++i)
-				{
-					ParameterInfo p = parameterInfo[i];
-					Type parameterType = p.ParameterType;
-					if (container.BindingExists(parameterType))
-					{
-						parameters[i] = container.GetBinding(parameterType).GetInstance();
-					}
-					else
-					{
-						parameters[i] = parameterType.GetTypeInfo().IsValueType ? Activator.CreateInstance(parameterType, true) : null;
-					}
-				}
-
+				FillPamaterInjectionList(parameterInfo, parameters, container);
 				method.member.Invoke(objToInject, parameters);
 			}
 		}
@@ -198,12 +239,25 @@
 			return parameterCacheList[nrOfParams];
 		}
 
+		private static void FillPamaterInjectionList(ParameterInfo[] parameterInfo, object[] parameters, IDependencyContainer container)
+		{
+			// Resolve the dependencies for the method parameters
+			for (int i = 0; i < parameterInfo.Length; ++i)
+			{
+				ParameterInfo p = parameterInfo[i];
+				Type parameterType = p.ParameterType;
+				parameters[i] =
+					container.BindingExists(parameterType) ?
+					container.GetBinding(parameterType).GetInstance() :
+					(parameterType.GetTypeInfo().IsValueType ? Activator.CreateInstance(parameterType, true) : null);
+			}
+		}
+
 		private static TypeInjectionInfo GetTypeInjectionInfo(Type type)
 		{
 			if (!typeInjectionCache.ContainsKey(type))
 			{
-				TypeInjectionInfo injectionCache = ConstructTypeInjectables(type);
-				typeInjectionCache.Add(type, injectionCache);
+				typeInjectionCache.Add(type, new TypeInjectionInfo(type));
 			}
 
 			return typeInjectionCache[type];
@@ -232,44 +286,37 @@
 			}
 		}
 
-		/// <summary>
-		/// Retrieve all fields, properties and methods that have been marked as injectable.
-		/// </summary>
-		private static TypeInjectionInfo ConstructTypeInjectables(Type type)
-		{
-			IEnumerable<FieldInfo> injectableFields = type.
-				GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).
-				Where(f => f.IsDefined(typeof(InjectAttribute), false) && !f.IsLiteral);    // Exclude constants.
-
-			IEnumerable<PropertyInfo> injectableProperties = type.
-				GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).
-				Where(f => f.IsDefined(typeof(InjectAttribute), false) && f.CanWrite);  // Exclude properties we can't write to.
-
-			IEnumerable<MethodInfo> injectableMethods = type.
-				GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).
-				Where(f => f.IsDefined(typeof(InjectAttribute), false));
-
-			IEnumerable<InjectableMemberInfo<FieldInfo>> fieldPairs = injectableFields.Select(f => new InjectableMemberInfo<FieldInfo>(f, f.GetCustomAttributes<InjectAttribute>(false)));
-			IEnumerable<InjectableMemberInfo<PropertyInfo>> propertyPairs = injectableProperties.Select(p => new InjectableMemberInfo<PropertyInfo>(p, p.GetCustomAttributes<InjectAttribute>(false)));
-			IEnumerable<InjectableMemberInfo<MethodInfo>> methodPairs = injectableMethods.Select(m => new InjectableMemberInfo<MethodInfo>(m, m.GetCustomAttributes<InjectAttribute>(false)));
-
-			TypeInjectionInfo typeCache = new TypeInjectionInfo(type, fieldPairs, propertyPairs, methodPairs);
-			return typeCache;
-		}
-
 		private class TypeInjectionInfo
 		{
 			public readonly Type type;
+			public readonly IEnumerable<InjectableMemberInfo<ConstructorInfo>> injectableConstructors;
 			public readonly IEnumerable<InjectableMemberInfo<FieldInfo>> injectableFields;
 			public readonly IEnumerable<InjectableMemberInfo<PropertyInfo>> injectableProperties;
 			public readonly IEnumerable<InjectableMemberInfo<MethodInfo>> injectableMethods;
 
-			public TypeInjectionInfo(Type type, IEnumerable<InjectableMemberInfo<FieldInfo>> injectableFields, IEnumerable<InjectableMemberInfo<PropertyInfo>> injectableProperties, IEnumerable<InjectableMemberInfo<MethodInfo>> injectableMethods)
+			public TypeInjectionInfo(Type type)
 			{
 				this.type = type;
-				this.injectableFields = injectableFields;
-				this.injectableProperties = injectableProperties;
-				this.injectableMethods = injectableMethods;
+
+				this.injectableConstructors = type.
+					GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).
+					Where(c => c.IsDefined(typeof(InjectAttribute), false)).
+					Select(m => new InjectableMemberInfo<ConstructorInfo>(m, m.GetCustomAttributes<InjectAttribute>(false)));
+
+				this.injectableFields = type.
+					GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).
+					Where(f => f.IsDefined(typeof(InjectAttribute), false) && !f.IsLiteral).    // Exclude constants.
+					Select(f => new InjectableMemberInfo<FieldInfo>(f, f.GetCustomAttributes<InjectAttribute>(false)));
+
+				this.injectableProperties = type.
+					GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).
+					Where(f => f.IsDefined(typeof(InjectAttribute), false) && f.CanWrite).  // Exclude properties we can't write to.;
+					Select(p => new InjectableMemberInfo<PropertyInfo>(p, p.GetCustomAttributes<InjectAttribute>(false)));
+
+				this.injectableMethods = type.
+					GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).
+					Where(f => f.IsDefined(typeof(InjectAttribute), false)).
+					Select(m => new InjectableMemberInfo<MethodInfo>(m, m.GetCustomAttributes<InjectAttribute>(false)));
 			}
 		}
 
