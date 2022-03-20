@@ -28,6 +28,9 @@ This document is auto-stitched together using multiple documentation files into 
 <<[Docs/PhotonWebRPC.md]
 <!--BREAK-->
 
+<<[Docs/StateMachines.md]
+<!--BREAK-->
+
 # ![Impossible Odds Logo][Logo] C# Toolkit - Advanced Tools
 
 The topics found below are scaffolding tools which are abstract and not directly usable. They provide a foundation for the tools described earlier. Nonetheless, documentation for these is provided in case they can be of help in creating custom tools for you.
