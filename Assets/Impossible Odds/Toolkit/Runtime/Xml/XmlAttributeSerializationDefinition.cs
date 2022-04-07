@@ -92,6 +92,7 @@
 				new PrimitiveTypeProcessor(this),
 				new DecimalProcessor(this),
 				new DateTimeProcessor(this),
+				new VersionProcessor(this),
 				new StringProcessor(this),
 			};
 		}

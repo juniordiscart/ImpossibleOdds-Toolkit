@@ -113,6 +113,7 @@
 				new EnumProcessor(this),
 				new PrimitiveTypeProcessor(this),
 				new DateTimeProcessor(this),
+				new VersionProcessor(this),
 				new StringProcessor(this),
 				new Vector2Processor(this, this, defaultProcessingMethod),
 				new Vector2IntProcessor(this, this, defaultProcessingMethod),
