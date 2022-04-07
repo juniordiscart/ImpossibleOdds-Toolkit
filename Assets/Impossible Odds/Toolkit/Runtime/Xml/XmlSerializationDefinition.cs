@@ -183,6 +183,7 @@
 				new DecimalProcessor(this),
 				new DateTimeProcessor(this),
 				new VersionProcessor(this),
+				new GuidProcessor(this),
 				new StringProcessor(this),
 				new XmlVector2Processor(this, defaultProcessingMethod),
 				new XmlVector2IntProcessor(this, defaultProcessingMethod),

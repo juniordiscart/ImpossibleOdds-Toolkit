@@ -17,10 +17,8 @@
 		}
 
 		public DateTimeProcessor(ISerializationDefinition definition)
-		{
-			definition.ThrowIfNull(nameof(definition));
-			Definition = definition;
-		}
+		: this(definition, string.Empty)
+		{ }
 
 		public DateTimeProcessor(ISerializationDefinition definition, string dateTimeFormat)
 		{
