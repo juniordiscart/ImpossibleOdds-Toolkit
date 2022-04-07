@@ -9,21 +9,21 @@
 	public class DateTimeProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
 		private string dateTimeFormat = string.Empty;
-		private ISerializationDefinition definition = null;
 
 		public ISerializationDefinition Definition
 		{
-			get { return definition; }
+			get;
+			private set;
 		}
 
 		public DateTimeProcessor(ISerializationDefinition definition)
-		{
-			this.definition = definition;
-		}
+		: this(definition, string.Empty)
+		{ }
 
 		public DateTimeProcessor(ISerializationDefinition definition, string dateTimeFormat)
 		{
-			this.definition = definition;
+			definition.ThrowIfNull(nameof(definition));
+			Definition = definition;
 			this.dateTimeFormat = dateTimeFormat;
 		}
 
@@ -41,19 +41,19 @@
 				return false;
 			}
 
-			if (definition.SupportedTypes.Contains(typeof(DateTime)))
+			if (Definition.SupportedTypes.Contains(typeof(DateTime)))
 			{
 				serializedResult = objectToSerialize;
 				return true;
 			}
 
-			DateTime dtValue = (DateTime)objectToSerialize;
-			string strValue = string.IsNullOrWhiteSpace(dateTimeFormat) ? dtValue.ToString(definition.FormatProvider) : dtValue.ToString(dateTimeFormat);
-
-			if (!definition.SupportedTypes.Contains(strValue.GetType()))
+			if (!Definition.SupportedTypes.Contains(typeof(string)))
 			{
 				throw new SerializationException("The converted type of a {0} type is not supported.", typeof(DateTime).Name);
 			}
+
+			DateTime dtValue = (DateTime)objectToSerialize;
+			string strValue = string.IsNullOrWhiteSpace(dateTimeFormat) ? dtValue.ToString(Definition.FormatProvider) : dtValue.ToString(dateTimeFormat);
 
 			serializedResult = strValue;
 			return true;
@@ -88,7 +88,7 @@
 				throw new SerializationException("Only values of type {0} can be used to convert to a {1} value.", typeof(string).Name, typeof(DateTime).Name);
 			}
 
-			deserializedResult = string.IsNullOrWhiteSpace(dateTimeFormat) ? DateTime.Parse(dataToDeserialize as string, definition.FormatProvider) : DateTime.ParseExact(dataToDeserialize as string, dateTimeFormat, CultureInfo.InvariantCulture);
+			deserializedResult = string.IsNullOrWhiteSpace(dateTimeFormat) ? DateTime.Parse(dataToDeserialize as string, Definition.FormatProvider) : DateTime.ParseExact(dataToDeserialize as string, dateTimeFormat, CultureInfo.InvariantCulture);
 			return true;
 		}
 	}
