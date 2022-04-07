@@ -16,7 +16,7 @@
 		}
 
 		/// <summary>
-		/// Optional alias for the target type. This must be unique withing the context of types it is defined for.
+		/// Optional alias for the target type. This must be unique within the scope of types it is defined for.
 		/// </summary>
 		object Value
 		{

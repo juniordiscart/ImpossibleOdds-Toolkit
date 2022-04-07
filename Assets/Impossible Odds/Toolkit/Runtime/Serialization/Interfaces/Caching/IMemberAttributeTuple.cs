@@ -33,22 +33,6 @@
 		}
 
 		/// <summary>
-		/// Is the value marked as required during deserialization?
-		/// </summary>
-		bool IsRequiredParameter
-		{
-			get;
-		}
-
-		/// <summary>
-		/// The required parameter data.
-		/// </summary>
-		IRequiredParameter RequiredParameter
-		{
-			get;
-		}
-
-		/// <summary>
 		/// Get the value of the member that is defined on the source object.
 		/// </summary>
 		/// <param name="source">The source object to retrieve the member value from.</param>
@@ -66,10 +50,13 @@
 	/// <summary>
 	/// Interface for caching commonly accessed members of objects along with the defined attribute.
 	/// </summary>
-	public interface IMemberAttributeTuple<T> : IMemberAttributeTuple
-	where T : MemberInfo
+	public interface IMemberAttributeTuple<TMember> : IMemberAttributeTuple
+	where TMember : MemberInfo
 	{
-		new T Member
+		/// <summary>
+		/// The attribute coupled to the member.
+		/// </summary>
+		new TMember Member
 		{
 			get;
 		}

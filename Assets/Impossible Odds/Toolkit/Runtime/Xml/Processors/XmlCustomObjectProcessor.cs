@@ -1,4 +1,4 @@
-﻿namespace ImpossibleOdds.Xml.Processors
+namespace ImpossibleOdds.Xml.Processors
 {
 	using System;
 	using System.Collections;
@@ -105,10 +105,10 @@
 		private XElement Serialize(Type sourceType, object source)
 		{
 			XElement element = new XElement("Element");  // At this stage, we don't know the name yet.
-			CustomObjectTypeCache sourceTypeCache = GetTypeCache(sourceType);
+			SerializationTypeMap sourceTypeCache = SerializationUtilities.GetTypeMap(sourceType);
 
 			// Process child elements.
-			IReadOnlyList<IMemberAttributeTuple> elementFields = sourceTypeCache.GetMembersWithAttribute(typeof(AbstractXmlMemberAttribute), typeof(XmlRequiredAttribute));
+			IReadOnlyList<IMemberAttributeTuple> elementFields = sourceTypeCache.GetMembersWithAttribute(typeof(AbstractXmlMemberAttribute));
 			foreach (IMemberAttributeTuple elementField in elementFields)
 			{
 				object value = elementField.GetValue(source);
@@ -222,38 +222,37 @@
 
 		private void Deserialize(object target, XElement source)
 		{
-			CustomObjectTypeCache targetTypeCache = GetTypeCache(target.GetType());
-
 			// Process child elements and attributes. Don't bother if it doesn't have any.
 			if (source.HasElements || source.HasAttributes)
 			{
-				IReadOnlyList<IMemberAttributeTuple> members = GetTypeCache(target.GetType()).GetMembersWithAttribute(typeof(AbstractXmlMemberAttribute), typeof(XmlRequiredAttribute));
+				SerializationTypeMap typeMap = SerializationUtilities.GetTypeMap(target.GetType());
+				IReadOnlyList<IMemberAttributeTuple> members = typeMap.GetMembersWithAttribute(typeof(AbstractXmlMemberAttribute));
 				foreach (IMemberAttributeTuple member in members)
 				{
 					object processedResult = null;
 
 					if (member.Attribute is XmlAttributeAttribute attributeAttribute)
 					{
-						processedResult = Deserialize(source, member, attributeAttribute);
+						processedResult = Deserialize(source, member, attributeAttribute, typeMap);
 					}
 					else if (member.Attribute is XmlElementAttribute elementAttribute)
 					{
-						processedResult = Deserialize(source, member, elementAttribute);
+						processedResult = Deserialize(source, member, elementAttribute, typeMap);
 					}
 					else if (member.Attribute is XmlListElementAttribute listElementAttribute)
 					{
-						processedResult = Deserialize(source, member, listElementAttribute);
+						processedResult = Deserialize(source, member, listElementAttribute, typeMap);
 					}
 					else if (member.Attribute is XmlCDataAttribute cdataElementAttribute)
 					{
-						processedResult = Deserialize(source, member, cdataElementAttribute);
+						processedResult = Deserialize(source, member, cdataElementAttribute, typeMap);
 					}
 					else
 					{
 						throw new XmlException("Unsupported XML deserialization attribute of type {0}.", member.Attribute.GetType().Name);
 					}
 
-					if ((processedResult == null) && member.IsRequiredParameter && member.RequiredParameter.NullCheck)
+					if ((processedResult == null) && typeMap.IsMemberRequired(member.Member, xmlDefinition, out IRequiredMemberAttributeTuple requiredAttr) && requiredAttr.RequiredParameterAttribute.NullCheck)
 					{
 						throw new XmlException("The member '{0}' is marked as required on type {1} but the value is null in the source.", member.Member.Name, member.Member.DeclaringType.Name);
 					}
@@ -263,14 +262,14 @@
 			}
 		}
 
-		private object Deserialize(XElement source, IMemberAttributeTuple memberInfo, XmlAttributeAttribute attributeInfo)
+		private object Deserialize(XElement source, IMemberAttributeTuple memberInfo, XmlAttributeAttribute attributeInfo, SerializationTypeMap typeMap)
 		{
 			XAttribute attribute = source.Attribute(GetElementKey(attributeInfo, memberInfo.Member));
 			if (attribute != null)
 			{
 				return Serializer.Deserialize(memberInfo.MemberType, attribute.Value, XmlDefinition.AttributeSerializationDefinition);
 			}
-			else if (memberInfo.IsRequiredParameter)
+			else if (typeMap.IsMemberRequired(memberInfo.Member, xmlDefinition))
 			{
 				throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType.Name);
 			}
@@ -280,14 +279,14 @@
 			}
 		}
 
-		private object Deserialize(XElement source, IMemberAttributeTuple memberInfo, XmlElementAttribute elementInfo)
+		private object Deserialize(XElement source, IMemberAttributeTuple memberInfo, XmlElementAttribute elementInfo, SerializationTypeMap typeMap)
 		{
 			XElement childElement = source.Element(GetElementKey(elementInfo, memberInfo.Member));
 			if (childElement != null)
 			{
 				return Serializer.Deserialize(memberInfo.MemberType, (childElement.HasAttributes || childElement.HasElements) ? (object)childElement : (object)childElement.Value, Definition);
 			}
-			else if (memberInfo.IsRequiredParameter)
+			else if (typeMap.IsMemberRequired(memberInfo.Member, xmlDefinition))
 			{
 				throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType.Name);
 			}
@@ -297,7 +296,7 @@
 			}
 		}
 
-		private object Deserialize(XElement source, IMemberAttributeTuple memberInfo, XmlListElementAttribute listElementInfo)
+		private object Deserialize(XElement source, IMemberAttributeTuple memberInfo, XmlListElementAttribute listElementInfo, SerializationTypeMap typeMap)
 		{
 			if (!typeof(IList).IsAssignableFrom(memberInfo.MemberType))
 			{
@@ -309,7 +308,7 @@
 			{
 				return Serializer.Deserialize(memberInfo.MemberType, childElement, Definition);
 			}
-			else if (memberInfo.IsRequiredParameter)
+			else if (typeMap.IsMemberRequired(memberInfo.Member, xmlDefinition))
 			{
 				throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType.Name);
 			}
@@ -319,12 +318,12 @@
 			}
 		}
 
-		private object Deserialize(XElement source, IMemberAttributeTuple memberInfo, XmlCDataAttribute cdataInfo)
+		private object Deserialize(XElement source, IMemberAttributeTuple memberInfo, XmlCDataAttribute cdataInfo, SerializationTypeMap typeMap)
 		{
 			XElement childElement = source.Element(GetElementKey(cdataInfo, memberInfo.Member));
 			if (childElement == null)
 			{
-				if (memberInfo.IsRequiredParameter)
+				if (typeMap.IsMemberRequired(memberInfo.Member, xmlDefinition))
 				{
 					throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType.Name);
 				}
@@ -346,15 +345,14 @@
 
 		private XmlTypeAttribute ResolveTypeForSerialization(Type sourceType)
 		{
-			CustomObjectTypeCache sourceTypeCache = GetTypeCache(sourceType);
-			IReadOnlyList<ITypeResolveParameter> typeResolveAttributes = sourceTypeCache.GetTypeResolveParameters(typeof(XmlTypeAttribute));
+			IReadOnlyList<ITypeResolveParameter> typeResolveAttributes = SerializationUtilities.GetTypeMap(sourceType).GetTypeResolveParameters(typeof(XmlTypeAttribute));
 			return typeResolveAttributes.FirstOrDefault(tr => tr.Target == sourceType) as XmlTypeAttribute;
 		}
 
 		private Type ResolveTypeForDeserialization(Type targetType, XElement element)
 		{
 			IEnumerable<XmlTypeAttribute> typeResolveAttrs =
-				GetTypeCache(targetType).
+				SerializationUtilities.GetTypeMap(targetType).
 				GetTypeResolveParameters(typeof(XmlTypeAttribute)).
 				Cast<XmlTypeAttribute>().
 				Where(tra => tra.Target != targetType); // Perform this filter as well as a way to stop the recursion.

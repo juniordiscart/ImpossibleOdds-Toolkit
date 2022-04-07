@@ -164,7 +164,7 @@
 			SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
 
 			// Get the members that will be inserted in the collection and order them by their index.
-			IReadOnlyList<IMemberAttributeTuple> sourceMembers = GetTypeCache(sourceType).GetMembersWithAttribute(definition.IndexBasedFieldAttribute);
+			IReadOnlyList<IMemberAttributeTuple> sourceMembers = SerializationUtilities.GetTypeMap(sourceType).GetMembersWithAttribute(definition.IndexBasedFieldAttribute);
 			foreach (IMemberAttributeTuple sourceMember in sourceMembers)
 			{
 				object processedValue = Serializer.Serialize(sourceMember.GetValue(source), definition);
@@ -188,7 +188,7 @@
 		private void Deserialize(object target, IList source)
 		{
 			// Get all of the fields that would like to get their value filled in
-			IReadOnlyList<IMemberAttributeTuple> targetMembers = GetTypeCache(target.GetType()).GetMembersWithAttribute(definition.IndexBasedFieldAttribute);
+			IReadOnlyList<IMemberAttributeTuple> targetMembers = SerializationUtilities.GetTypeMap(target.GetType()).GetMembersWithAttribute(definition.IndexBasedFieldAttribute);
 
 			foreach (IMemberAttributeTuple targetMember in targetMembers)
 			{
@@ -238,7 +238,7 @@
 			}
 
 			IIndexTypeResolveSupport typeResolveImplementation = definition as IIndexTypeResolveSupport;
-			IEnumerable<ITypeResolveParameter> typeResolveAttributes = GetTypeCache(sourceType).GetTypeResolveParameters(typeResolveImplementation.TypeResolveAttribute);
+			IEnumerable<ITypeResolveParameter> typeResolveAttributes = SerializationUtilities.GetTypeMap(sourceType).GetTypeResolveParameters(typeResolveImplementation.TypeResolveAttribute);
 			return typeResolveAttributes.FirstOrDefault(tr => tr.Target == sourceType);
 		}
 
@@ -249,7 +249,7 @@
 				return targetType;
 			}
 
-			IEnumerable<ITypeResolveParameter> typeResolveAttrs = GetTypeCache(targetType).GetTypeResolveParameters(typeResolveDefinition.TypeResolveAttribute);
+			IEnumerable<ITypeResolveParameter> typeResolveAttrs = SerializationUtilities.GetTypeMap(targetType).GetTypeResolveParameters(typeResolveDefinition.TypeResolveAttribute);
 			foreach (ITypeResolveParameter typeResolveAttr in typeResolveAttrs)
 			{
 				if (source[typeResolveDefinition.TypeResolveIndex].Equals(typeResolveAttr.Value))
@@ -273,7 +273,7 @@
 			int maxIndex = int.MinValue;
 			while ((type != null) && (type != typeof(object)))
 			{
-				IReadOnlyList<IMemberAttributeTuple> members = GetTypeCache(type).GetMembersWithAttribute(definition.IndexBasedFieldAttribute);
+				IReadOnlyList<IMemberAttributeTuple> members = SerializationUtilities.GetTypeMap(type).GetMembersWithAttribute(definition.IndexBasedFieldAttribute);
 				foreach (IMemberAttributeTuple member in members)
 				{
 					maxIndex = Math.Max((member.Attribute as IIndexParameter).Index, maxIndex);
