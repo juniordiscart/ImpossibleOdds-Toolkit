@@ -9,7 +9,6 @@
 		private readonly Attribute attribute;
 		private readonly MethodInfo getMethod;
 		private readonly MethodInfo setMethod;
-		private readonly IRequiredParameter requiredParameter;
 
 		/// <summary>
 		/// The registered property.
@@ -38,24 +37,12 @@
 		}
 
 		/// <inheritdoc />
-		public bool IsRequiredParameter
-		{
-			get { return requiredParameter != null; }
-		}
-
-		/// <inheritdoc />
-		public IRequiredParameter RequiredParameter
-		{
-			get { return requiredParameter; }
-		}
-
-		/// <inheritdoc />
 		MemberInfo IMemberAttributeTuple.Member
 		{
 			get { return Member; }
 		}
 
-		public PropertyAttributeTuple(PropertyInfo property, Attribute serializationAttribute, Type requiredAttributeType = null)
+		public PropertyAttributeTuple(PropertyInfo property, Attribute serializationAttribute)
 		{
 			property.ThrowIfNull(nameof(property));
 			serializationAttribute.ThrowIfNull(nameof(serializationAttribute));
@@ -65,15 +52,6 @@
 
 			this.getMethod = property.GetGetMethod(true);
 			this.setMethod = property.GetSetMethod(true);
-
-			if ((requiredAttributeType != null) && property.IsDefined(requiredAttributeType, true))
-			{
-				this.requiredParameter = property.GetCustomAttribute(requiredAttributeType, true) as IRequiredParameter;
-			}
-			else
-			{
-				this.requiredParameter = null;
-			}
 		}
 
 		/// <inheritdoc />

@@ -11,6 +11,7 @@
 		private static readonly Dictionary<Type, object> defaultValueCache = new Dictionary<Type, object>();
 		private static readonly Dictionary<Type, LookupCollectionTypeInfo> lookupTypeInfoCache = new Dictionary<Type, LookupCollectionTypeInfo>();
 		private static readonly Dictionary<Type, SequenceCollectionTypeInfo> sequenceTypeInfoCache = new Dictionary<Type, SequenceCollectionTypeInfo>();
+		private static readonly Dictionary<Type, SerializationTypeMap> typeMapCache = new Dictionary<Type, SerializationTypeMap>();
 
 		/// <summary>
 		/// Test wether a type is truely nullable.
@@ -277,6 +278,23 @@
 			}
 
 			return sequenceTypeInfoCache[instanceType];
+		}
+
+		/// <summary>
+		/// Retrieve the cached information about a type.
+		/// </summary>
+		/// <param name="type">The type for which to retrieve the cached information.</param>
+		/// <returns>The type cache associated with the given type.</returns>
+		public static SerializationTypeMap GetTypeMap(Type target)
+		{
+			target.ThrowIfNull(nameof(target));
+
+			if (!typeMapCache.ContainsKey(target))
+			{
+				typeMapCache[target] = new SerializationTypeMap(target);
+			}
+
+			return typeMapCache[target];
 		}
 	}
 }
