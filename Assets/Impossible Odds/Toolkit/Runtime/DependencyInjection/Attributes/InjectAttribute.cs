@@ -1,32 +1,43 @@
 ﻿namespace ImpossibleOdds.DependencyInjection
 {
 	using System;
+	using System.Collections.Generic;
 
 	/// <summary>
 	/// Defines that a field, property or method should be injected.
 	/// Can optionally be set with an ID to restrict injections for certain sources.
 	/// </summary>
-	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method | AttributeTargets.Constructor)]
+	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method | AttributeTargets.Constructor, AllowMultiple = true)]
 	public sealed class InjectAttribute : Attribute
 	{
-		private readonly string injectID = null;
+		private readonly HashSet<string> injectionNames = null;
 
-		public string InjectID
+		public bool HasNamedInjections
 		{
-			get { return injectID; }
+			get { return injectionNames != null; }
 		}
 
-		public bool HasInjectionIDSet
+		public IReadOnlyCollection<string> InjectionIds
 		{
-			get { return !string.IsNullOrEmpty(injectID); }
+			get => injectionNames;
 		}
 
 		public InjectAttribute()
 		{ }
 
-		public InjectAttribute(string injectID)
+		public InjectAttribute(params string[] injectionIds)
 		{
-			this.injectID = injectID;
+			this.injectionNames = new HashSet<string>(injectionIds);
+		}
+
+		public bool IsInjectionIdDefined(string injectionId)
+		{
+			if (string.IsNullOrEmpty(injectionId))
+			{
+				return (injectionNames == null) || injectionNames.Contains(string.Empty);
+			}
+
+			return injectionNames.Contains(injectionId);
 		}
 	}
 }
