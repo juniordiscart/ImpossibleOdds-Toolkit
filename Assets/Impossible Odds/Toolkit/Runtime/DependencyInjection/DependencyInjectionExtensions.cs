@@ -15,7 +15,7 @@
 		{
 			gameObject.ThrowIfNull(nameof(gameObject));
 			container.ThrowIfNull(nameof(container));
-			IEnumerable<Component> components = includeChildren ? gameObject.GetComponentsInChildren<Component>(true) : gameObject.GetComponents<Component>();
+			IEnumerable<MonoBehaviour> components = includeChildren ? gameObject.GetComponentsInChildren<MonoBehaviour>(true) : gameObject.GetComponents<MonoBehaviour>();
 			DependencyInjector.Inject(container, components);
 		}
 
@@ -32,7 +32,7 @@
 			container.ThrowIfNull(nameof(container));
 			injectionId.ThrowIfNullOrEmpty(nameof(injectionId));
 
-			IEnumerable<Component> components = includeChildren ? gameObject.GetComponentsInChildren<Component>(true) : gameObject.GetComponents<Component>();
+			IEnumerable<MonoBehaviour> components = includeChildren ? gameObject.GetComponentsInChildren<MonoBehaviour>(true) : gameObject.GetComponents<MonoBehaviour>();
 			DependencyInjector.Inject(container, injectionId, components);
 		}
 
@@ -72,7 +72,7 @@
 		/// </summary>
 		/// <param name="component">Component to be injected</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
-		public static void Inject(this Component component, IDependencyContainer container)
+		public static void Inject(this MonoBehaviour component, IDependencyContainer container)
 		{
 			component.ThrowIfNull(nameof(component));
 			container.ThrowIfNull(nameof(container));
@@ -86,7 +86,7 @@
 		/// <param name="component">Component to be injected.</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
 		/// <param name="injectionId">Name of the scope these resources belong to.</param>
-		public static void Inject(this Component component, IDependencyContainer container, string injectionId)
+		public static void Inject(this MonoBehaviour component, IDependencyContainer container, string injectionId)
 		{
 			component.ThrowIfNull(nameof(component));
 			container.ThrowIfNull(nameof(container));
@@ -99,7 +99,7 @@
 		/// </summary>
 		/// <param name="components">Components to be injected.</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
-		public static void Inject(this IEnumerable<Component> components, IDependencyContainer container)
+		public static void Inject(this IEnumerable<MonoBehaviour> components, IDependencyContainer container)
 		{
 			components.ThrowIfNull(nameof(components));
 			container.ThrowIfNull(nameof(container));
@@ -112,7 +112,7 @@
 		/// <param name="components">Components to be injected.</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
 		/// <param name="injectionId">Name of the scope these resources belong to.</param>
-		public static void Inject(this IEnumerable<Component> components, IDependencyContainer container, string injectionId)
+		public static void Inject(this IEnumerable<MonoBehaviour> components, IDependencyContainer container, string injectionId)
 		{
 			components.ThrowIfNull(nameof(components));
 			container.ThrowIfNull(nameof(container));
@@ -128,7 +128,7 @@
 		/// <typeparam name="TComponent">Type of component to tadd to the game object.</typeparam>
 		/// <returns>The component, injected with resources.</returns>
 		public static TComponent AddComponentAndInject<TComponent>(this GameObject gameObject, IDependencyContainer container)
-		where TComponent : Component
+		where TComponent : MonoBehaviour
 		{
 			return gameObject.AddComponentAndInject<TComponent>(container, string.Empty);
 		}
@@ -143,7 +143,7 @@
 		/// <typeparam name="TComponent">Type of component to tadd to the game object.</typeparam>
 		/// <returns>The component, injected with resources.</returns>
 		public static TComponent AddComponentAndInject<TComponent>(this GameObject gameObject, IDependencyContainer container, string injectionId)
-		where TComponent : Component
+		where TComponent : MonoBehaviour
 		{
 			gameObject.ThrowIfNull(nameof(gameObject));
 			container.ThrowIfNull(nameof(container));

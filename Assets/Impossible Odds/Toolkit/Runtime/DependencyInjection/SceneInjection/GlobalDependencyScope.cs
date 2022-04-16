@@ -17,7 +17,7 @@
 		}
 
 		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-		private static void InitializeGlobalScope()
+		private static void Initialize()
 		{
 			globalScope = new GlobalDependencyScope();
 		}
@@ -41,7 +41,7 @@
 		private GlobalDependencyScope()
 		{
 			InitializeGlobalContainer();
-			InitializeGlobalScopes();
+			this.InitializeGlobalScope();
 			SceneManager.sceneLoaded += OnSceneLoaded;
 		}
 
@@ -71,13 +71,13 @@
 			}
 		}
 
-		private void InitializeGlobalScopes()
+		private void InitializeGlobalScope()
 		{
-			// Find all global scope initialization methods
+			// Find all global scope initialization methods.
 			IEnumerable<MethodInfo> scopeInitMethods = FindStaticMethods(typeof(GlobalScopeInstallerAttribute));
 			scopeInitMethods = scopeInitMethods.OrderBy(m => m.GetCustomAttribute<GlobalScopeInstallerAttribute>(false).InstallPriority);
 
-			// Parameter list used to invoke the global scope installers
+			// Parameter list used to invoke the global scope installers.
 			object[] paramList = new object[] { globalContainer };
 
 			Type currentContainerType = globalContainer.GetType();
@@ -85,7 +85,7 @@
 			{
 				ParameterInfo[] parameters = scopeInitMethod.GetParameters();
 
-				// Perform final check on scope installer method parameters
+				// Perform final check on scope installer method parameters.
 				if ((parameters.Length == 1) && parameters[0].ParameterType.IsAssignableFrom(currentContainerType))
 				{
 					scopeInitMethod.Invoke(null, paramList);
