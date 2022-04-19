@@ -20,7 +20,7 @@
 		/// Note: a suitable constructor is necessary to create the instance. Either a constructor marked
 		/// with the 'Inject' attribute, or an accessable default constructor.
 		/// </summary>
-		/// <param name="container">Container with dependency bindings.</param>
+		/// <param name="container">Container with resources to inject.</param>
 		/// <typeparam name="T">The type of object to create an instance of.</typeparam>
 		/// <returns>An instance of the target type, injected with resources found in the container.</returns>
 		public static T CreateAndInject<T>(IDependencyContainer container)
@@ -31,17 +31,44 @@
 		/// <summary>
 		/// Creates an instance of the target type and injects the newly create object.
 		/// Note: a suitable constructor is necessary to create the instance. Either a constructor marked
+		/// with the 'Inject' attribute, or an accessable default constructor.
+		/// </summary>
+		/// <param name="targetType">The type of object to create an instance of.</param>
+		/// <param name="container">Container with resources to inject.</param>
+		/// <returns>An instance of the target type, injected with resources found in the container.</returns>
+		public static object CreateAndInject(Type targetType, IDependencyContainer container)
+		{
+			return CreateAndInject(targetType, container, string.Empty);
+		}
+
+		/// <summary>
+		/// Creates an instance of the target type and injects the newly create object.
+		/// Note: a suitable constructor is necessary to create the instance. Either a constructor marked
 		/// with the 'Inject' attribute (with matching injection identifier), or an accessable default constructor.
 		/// </summary>
-		/// <param name="container">Container with dependency bindings.</param>
-		/// <param name="injectionID">Only injects members with the injection ID.</param>
+		/// <param name="container">Container with resources to inject.</param>
+		/// <param name="injectionId">Only injects members with the same injection identifier.</param>
 		/// <typeparam name="T">The type of object to create an instance of.</typeparam>
 		/// <returns>An instance of the target type, injected with resources found in the container.</returns>
 		public static T CreateAndInject<T>(IDependencyContainer container, string injectionId)
 		{
+			return (T)CreateAndInject(typeof(T), container, injectionId);
+		}
+
+		/// <summary>
+		/// Creates an instance of the target type and injects the newly create object.
+		/// Note: a suitable constructor is necessary to create the instance. Either a constructor marked
+		/// with the 'Inject' attribute (with matching injection identifier), or an accessable default constructor.
+		/// </summary>
+		/// <param name="targetType">The type of object to create an instance of.</param>
+		/// <param name="container">Container with resources to inject.</param>
+		/// <param name="injectionId">Only injects members with the same injection identifier.</param>
+		/// <returns>An instance of the target type, injected with resources found in the container.</returns>
+		public static object CreateAndInject(Type targetType, IDependencyContainer container, string injectionId)
+		{
+			targetType.ThrowIfNull(nameof(targetType));
 			container.ThrowIfNull(nameof(container));
 
-			Type targetType = typeof(T);
 			if (targetType.IsInterface || targetType.IsAbstract)
 			{
 				throw new DependencyInjectionException("Cannot create an instance of type {0} because it is either an interface or declared abstract.", targetType.Name);
@@ -57,7 +84,7 @@
 				object[] parameters = GetParameterInjectionList(parameterInfo.Length);
 				FillPamaterInjectionList(parameterInfo, parameters, container);
 
-				instance = (T)constructor.Invoke(parameters);
+				instance = constructor.Invoke(parameters);
 			}
 			else
 			{
@@ -66,9 +93,7 @@
 
 			// Inject the instance as well for fields, properties and other methods.
 			Inject(container, instance);
-
-			// Return the typed instance here so that any unboxing can be done.
-			return (T)instance;
+			return instance;
 		}
 
 		/// <summary>
@@ -88,15 +113,15 @@
 		/// Inject the target object using the bindings found in the container.
 		/// </summary>
 		/// <param name="container">Container with dependency bindings.</param>
-		/// <param name="injectionID">Only injects members with the injection ID.</param>
+		/// <param name="injectionId">Only injects members with the injection ID.</param>
 		/// <param name="target">Target to be injected.</param>
-		public static void Inject(IDependencyContainer container, string injectionID, object target)
+		public static void Inject(IDependencyContainer container, string injectionId, object target)
 		{
 			container.ThrowIfNull(nameof(container));
-			injectionID.ThrowIfNullOrWhitespace(nameof(injectionID));
+			injectionId.ThrowIfNullOrWhitespace(nameof(injectionId));
 			target.ThrowIfNull(nameof(target));
 
-			ResolveDependenciesForObject(target, container, injectionID);
+			ResolveDependenciesForObject(target, container, injectionId);
 		}
 
 		/// <summary>
@@ -122,19 +147,19 @@
 		/// Inject the target objects using the bindings found in the container.
 		/// </summary>
 		/// <param name="container">Container with dependency bindings.</param>
-		/// <param name="injectionID">Only injects members with the injection ID.</param>
+		/// <param name="injectionId">Only injects members with the injection ID.</param>
 		/// <param name="targets">Targets to be injected.</param>
-		public static void Inject(IDependencyContainer container, string injectionID, IEnumerable targets)
+		public static void Inject(IDependencyContainer container, string injectionId, IEnumerable targets)
 		{
 			container.ThrowIfNull(nameof(container));
-			injectionID.ThrowIfNullOrWhitespace(nameof(injectionID));
+			injectionId.ThrowIfNullOrWhitespace(nameof(injectionId));
 			targets.ThrowIfNull(nameof(targets));
 
 			foreach (object target in targets)
 			{
 				if (target != null)
 				{
-					ResolveDependenciesForObject(target, container, injectionID);
+					ResolveDependenciesForObject(target, container, injectionId);
 				}
 			}
 		}

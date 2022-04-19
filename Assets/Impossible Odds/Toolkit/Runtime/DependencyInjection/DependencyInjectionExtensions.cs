@@ -2,9 +2,33 @@
 {
 	using System.Collections.Generic;
 	using UnityEngine;
+	using UnityEngine.SceneManagement;
 
 	public static class DependencyInjectionExtensions
 	{
+		/// <summary>
+		/// Inject the scene's game objects with the given resources container.
+		/// </summary>
+		/// <param name="scene">The scene to inject.</param>
+		/// <param name="container">The container with resources for the scene.</param>
+		public static void Inject(this Scene scene, IDependencyContainer container)
+		{
+			container.ThrowIfNull(nameof(container));
+			scene.GetRootGameObjects().Inject(container, true);
+		}
+
+		/// <summary>
+		/// Inject the scene's game objects with the given resources container.
+		/// </summary>
+		/// <param name="scene">The scene to inject.</param>
+		/// <param name="container">The container with resources for the scene.</param>
+		/// <param name="injectionId">The identifier of the injection being performed.</param>
+		public static void Inject(this Scene scene, IDependencyContainer container, string injectionId)
+		{
+			container.ThrowIfNull(nameof(container));
+			scene.GetRootGameObjects().Inject(container, injectionId, true);
+		}
+
 		/// <summary>
 		/// Inject the components found on the GameObject. Optionally includes the children as well.
 		/// </summary>
