@@ -12,7 +12,7 @@
 		private readonly static Dictionary<Type, TypeInjectionInfo> typeInjectionCache = new Dictionary<Type, TypeInjectionInfo>();
 		private readonly static HashSet<Type> rejectedTypes = new HashSet<Type>();
 
-		// Cache for parameter lists of injectable methods
+		// Cache for parameter lists of injectable methods.
 		private readonly static Dictionary<int, object[]> parameterCacheList = new Dictionary<int, object[]>();
 
 		/// <summary>
@@ -23,7 +23,7 @@
 		/// <param name="container">Container with resources to inject.</param>
 		/// <typeparam name="T">The type of object to create an instance of.</typeparam>
 		/// <returns>An instance of the target type, injected with resources found in the container.</returns>
-		public static T CreateAndInject<T>(IDependencyContainer container)
+		public static T CreateAndInject<T>(IReadOnlyDependencyContainer container)
 		{
 			return CreateAndInject<T>(container, string.Empty);
 		}
@@ -36,7 +36,7 @@
 		/// <param name="targetType">The type of object to create an instance of.</param>
 		/// <param name="container">Container with resources to inject.</param>
 		/// <returns>An instance of the target type, injected with resources found in the container.</returns>
-		public static object CreateAndInject(Type targetType, IDependencyContainer container)
+		public static object CreateAndInject(Type targetType, IReadOnlyDependencyContainer container)
 		{
 			return CreateAndInject(targetType, container, string.Empty);
 		}
@@ -50,7 +50,7 @@
 		/// <param name="injectionId">Only injects members with the same injection identifier.</param>
 		/// <typeparam name="T">The type of object to create an instance of.</typeparam>
 		/// <returns>An instance of the target type, injected with resources found in the container.</returns>
-		public static T CreateAndInject<T>(IDependencyContainer container, string injectionId)
+		public static T CreateAndInject<T>(IReadOnlyDependencyContainer container, string injectionId)
 		{
 			return (T)CreateAndInject(typeof(T), container, injectionId);
 		}
@@ -64,7 +64,7 @@
 		/// <param name="container">Container with resources to inject.</param>
 		/// <param name="injectionId">Only injects members with the same injection identifier.</param>
 		/// <returns>An instance of the target type, injected with resources found in the container.</returns>
-		public static object CreateAndInject(Type targetType, IDependencyContainer container, string injectionId)
+		public static object CreateAndInject(Type targetType, IReadOnlyDependencyContainer container, string injectionId)
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 			container.ThrowIfNull(nameof(container));
@@ -101,7 +101,7 @@
 		/// </summary>
 		/// <param name="container">Container with dependency bindings.</param>
 		/// <param name="target">Target to be injected.</param>
-		public static void Inject(IDependencyContainer container, object target)
+		public static void Inject(IReadOnlyDependencyContainer container, object target)
 		{
 			container.ThrowIfNull(nameof(container));
 			target.ThrowIfNull(nameof(target));
@@ -115,7 +115,7 @@
 		/// <param name="container">Container with dependency bindings.</param>
 		/// <param name="injectionId">Only injects members with the injection ID.</param>
 		/// <param name="target">Target to be injected.</param>
-		public static void Inject(IDependencyContainer container, string injectionId, object target)
+		public static void Inject(IReadOnlyDependencyContainer container, string injectionId, object target)
 		{
 			container.ThrowIfNull(nameof(container));
 			injectionId.ThrowIfNullOrWhitespace(nameof(injectionId));
@@ -129,7 +129,7 @@
 		/// </summary>
 		/// <param name="container">Container with dependency bindings.</param>
 		/// <param name="targets">Targets to be injected.</param>
-		public static void Inject(IDependencyContainer container, IEnumerable targets)
+		public static void Inject(IReadOnlyDependencyContainer container, IEnumerable targets)
 		{
 			container.ThrowIfNull(nameof(container));
 			targets.ThrowIfNull(nameof(targets));
@@ -149,7 +149,7 @@
 		/// <param name="container">Container with dependency bindings.</param>
 		/// <param name="injectionId">Only injects members with the injection ID.</param>
 		/// <param name="targets">Targets to be injected.</param>
-		public static void Inject(IDependencyContainer container, string injectionId, IEnumerable targets)
+		public static void Inject(IReadOnlyDependencyContainer container, string injectionId, IEnumerable targets)
 		{
 			container.ThrowIfNull(nameof(container));
 			injectionId.ThrowIfNullOrWhitespace(nameof(injectionId));
@@ -169,7 +169,7 @@
 		/// </summary>
 		/// <param name="container">Container with dependency bindings.</param>
 		/// <param name="targets">Targets to be injected.</param>
-		public static void Inject(IDependencyContainer container, params object[] targets)
+		public static void Inject(IReadOnlyDependencyContainer container, params object[] targets)
 		{
 			if (targets.Length == 0)
 			{
@@ -183,24 +183,24 @@
 		/// Inject the target objects using the bindings found in the container.
 		/// </summary>
 		/// <param name="container">Container with dependency bindings.</param>
-		/// <param name="injectionID">Only injects members with the injection ID.</param>
+		/// <param name="injectionId">Only injects members with the injection ID.</param>
 		/// <param name="targets">Targets to be injected.</param>
-		public static void Inject(IDependencyContainer container, string injectionID, params object[] targets)
+		public static void Inject(IReadOnlyDependencyContainer container, string injectionId, params object[] targets)
 		{
 			if (targets.Length == 0)
 			{
 				return;
 			}
 
-			Inject(container, targets, injectionID);
+			Inject(container, targets, injectionId);
 		}
 
-		private static void ResolveDependenciesForObject(object objToInject, IDependencyContainer container, string injectionID = null)
+		private static void ResolveDependenciesForObject(object objToInject, IReadOnlyDependencyContainer container, string injectionId = null)
 		{
-			ResolveDependenciesForObject(objToInject, objToInject.GetType(), container, injectionID);
+			ResolveDependenciesForObject(objToInject, objToInject.GetType(), container, injectionId);
 		}
 
-		private static void ResolveDependenciesForObject(object objToInject, Type currentType, IDependencyContainer container, string injectionID = null)
+		private static void ResolveDependenciesForObject(object objToInject, Type currentType, IReadOnlyDependencyContainer container, string injectionId = null)
 		{
 			// Don't inject on a null type, or an object type.
 			if ((currentType == null) || (currentType == ObjectType))
@@ -209,7 +209,7 @@
 			}
 
 			// Inject the base types first, like we do with constructors.
-			ResolveDependenciesForObject(objToInject, currentType.BaseType, container, injectionID);
+			ResolveDependenciesForObject(objToInject, currentType.BaseType, container, injectionId);
 
 			// Don't bother if the type is not injectable.
 			if (!IsInjectable(currentType))
@@ -223,7 +223,9 @@
 			foreach (InjectableMemberInfo<FieldInfo> field in injectionInfo.injectableFields)
 			{
 				Type fieldType = field.member.FieldType;
-				if (field.IsInjectionScopeDefined(injectionID) && container.BindingExists(fieldType))
+				bool isInjectionScopeDefined = field.IsInjectionScopeDefined(injectionId);
+				bool bindingExists = container.BindingExists(fieldType);
+				if (isInjectionScopeDefined && bindingExists)
 				{
 					field.member.SetValue(objToInject, container.GetBinding(fieldType).GetInstance());
 				}
@@ -233,7 +235,7 @@
 			foreach (InjectableMemberInfo<PropertyInfo> property in injectionInfo.injectableProperties)
 			{
 				Type propertyType = property.member.PropertyType;
-				if (property.IsInjectionScopeDefined(injectionID) && container.BindingExists(propertyType))
+				if (property.IsInjectionScopeDefined(injectionId) && container.BindingExists(propertyType))
 				{
 					property.member.SetValue(objToInject, container.GetBinding(propertyType).GetInstance());
 				}
@@ -242,7 +244,7 @@
 			// Methods
 			foreach (InjectableMemberInfo<MethodInfo> method in injectionInfo.injectableMethods)
 			{
-				if (!method.IsInjectionScopeDefined(injectionID))
+				if (!method.IsInjectionScopeDefined(injectionId))
 				{
 					continue;
 				}
@@ -264,7 +266,7 @@
 			return parameterCacheList[nrOfParams];
 		}
 
-		private static void FillPamaterInjectionList(ParameterInfo[] parameterInfo, object[] parameters, IDependencyContainer container)
+		private static void FillPamaterInjectionList(ParameterInfo[] parameterInfo, object[] parameters, IReadOnlyDependencyContainer container)
 		{
 			// Resolve the dependencies for the method parameters
 			for (int i = 0; i < parameterInfo.Length; ++i)

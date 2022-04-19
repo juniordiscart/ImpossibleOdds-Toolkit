@@ -123,7 +123,6 @@
 			return bindings.Remove(typeKey);
 		}
 
-
 		/// <summary>
 		/// Get an instance of the requested type from a registered binding.
 		/// </summary>
