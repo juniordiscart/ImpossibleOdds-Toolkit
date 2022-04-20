@@ -223,9 +223,7 @@
 			foreach (InjectableMemberInfo<FieldInfo> field in injectionInfo.injectableFields)
 			{
 				Type fieldType = field.member.FieldType;
-				bool isInjectionScopeDefined = field.IsInjectionScopeDefined(injectionId);
-				bool bindingExists = container.BindingExists(fieldType);
-				if (isInjectionScopeDefined && bindingExists)
+				if (field.IsInjectionScopeDefined(injectionId) && container.BindingExists(fieldType))
 				{
 					field.member.SetValue(objToInject, container.GetBinding(fieldType).GetInstance());
 				}
