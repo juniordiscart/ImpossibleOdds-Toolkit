@@ -202,62 +202,100 @@
 			Inject(container, targets, injectionId);
 		}
 
+		/// <summary>
+		/// Resolve the dependencies of the object using the resources found in the given container.
+		/// </summary>
+		/// <param name="objToInject">The object to inject with resources.</param>
+		/// <param name="container">The resources to inject into the object.</param>
+		/// <param name="injectionId">An identifier to restrict to specifically defined scopes.</param>
 		private static void ResolveDependenciesForObject(object objToInject, IReadOnlyDependencyContainer container, string injectionId = null)
 		{
-			ResolveDependenciesForObject(objToInject, objToInject.GetType(), container, injectionId);
+			Type type = objToInject.GetType();
+			ResolveFieldDependencies(objToInject, type, container, injectionId);
+			ResolvePropertyDependencies(objToInject, type, container, injectionId);
+			ResolveMethodDependencies(objToInject, type, container, injectionId);
 		}
 
-		private static void ResolveDependenciesForObject(object objToInject, Type currentType, IReadOnlyDependencyContainer container, string injectionId = null)
+		/// <summary>
+		/// Resolve all injectable fields across the type-chain.
+		/// </summary>
+		/// <param name="objToInject">The object for which to inject its fields.</param>
+		/// <param name="currentType">The current type across the type chain.</param>
+		/// <param name="container">The resource container.</param>
+		/// <param name="injectionId">An identifier to restrict to specifically defined scopes.</param>
+		private static void ResolveFieldDependencies(object objToInject, Type currentType, IReadOnlyDependencyContainer container, string injectionId = null)
 		{
-			// Don't inject on a null type, or an object type.
-			if (currentType == null)
+			if (currentType.BaseType != null)
 			{
-				return;
+				ResolveFieldDependencies(objToInject, currentType.BaseType, container, injectionId);
 			}
 
-			// Inject the base types first, like we do with constructors.
-			ResolveDependenciesForObject(objToInject, currentType.BaseType, container, injectionId);
-
-			// Don't bother if the type is not injectable.
-			if (!IsInjectable(currentType))
+			if (IsInjectable(currentType))
 			{
-				return;
-			}
-
-			TypeInjectionCache injectionInfo = GetTypeInjectionInfo(currentType);
-
-			// Fields
-			foreach (MemberInjectionValue<FieldInfo> field in injectionInfo.InjectableFields)
-			{
-				Type fieldType = field.Member.FieldType;
-				if (field.Attribute.IsInjectionIdDefined(injectionId) && container.BindingExists(fieldType))
+				foreach (MemberInjectionValue<FieldInfo> field in GetTypeInjectionInfo(currentType).InjectableFields)
 				{
-					field.Member.SetValue(objToInject, container.GetBinding(fieldType).GetInstance());
+					Type fieldType = field.Member.FieldType;
+					if (field.Attribute.IsInjectionIdDefined(injectionId) && container.BindingExists(fieldType))
+					{
+						field.Member.SetValue(objToInject, container.GetBinding(fieldType).GetInstance());
+					}
 				}
 			}
+		}
 
-			// Properties
-			foreach (MemberInjectionValue<PropertyInfo> property in injectionInfo.InjectableProperties)
+		/// <summary>
+		/// Resolve all injectable properties across the type-chain.
+		/// </summary>
+		/// <param name="objToInject">The object for which to inject its properties.</param>
+		/// <param name="currentType">The current type across the type chain.</param>
+		/// <param name="container">The resource container.</param>
+		/// <param name="injectionId">An identifier to restrict to specifically defined scopes.</param>
+		private static void ResolvePropertyDependencies(object objToInject, Type currentType, IReadOnlyDependencyContainer container, string injectionId = null)
+		{
+			if (currentType.BaseType != null)
 			{
-				Type propertyType = property.Member.PropertyType;
-				if (property.Attribute.IsInjectionIdDefined(injectionId) && container.BindingExists(propertyType))
-				{
-					property.Member.SetValue(objToInject, container.GetBinding(propertyType).GetInstance());
-				}
+				ResolvePropertyDependencies(objToInject, currentType.BaseType, container, injectionId);
 			}
 
-			// Methods
-			foreach (MemberInjectionValue<MethodInfo> method in injectionInfo.InjectableMethods)
+			if (IsInjectable(currentType))
 			{
-				if (!method.Attribute.IsInjectionIdDefined(injectionId))
+				foreach (MemberInjectionValue<PropertyInfo> property in GetTypeInjectionInfo(currentType).InjectableProperties)
 				{
-					continue;
+					Type propertyType = property.Member.PropertyType;
+					if (property.Attribute.IsInjectionIdDefined(injectionId) && container.BindingExists(propertyType))
+					{
+						property.Member.SetValue(objToInject, container.GetBinding(propertyType).GetInstance());
+					}
 				}
+			}
+		}
 
-				ParameterInfo[] parameterInfo = method.Member.GetParameters();
-				object[] parameters = GetParameterInjectionList(parameterInfo.Length);
-				FillPamaterInjectionList(parameterInfo, parameters, container);
-				method.Member.Invoke(objToInject, parameters);
+		/// <summary>
+		/// Resolve all injectable methods across the type-chain.
+		/// </summary>
+		/// <param name="objToInject">The object for which to inject its methods.</param>
+		/// <param name="currentType">The current type across the type chain.</param>
+		/// <param name="container">The resource container.</param>
+		/// <param name="injectionId">An identifier to restrict to specifically defined scopes.</param>
+		private static void ResolveMethodDependencies(object objToInject, Type currentType, IReadOnlyDependencyContainer container, string injectionId = null)
+		{
+			if (currentType.BaseType != null)
+			{
+				ResolveMethodDependencies(objToInject, currentType.BaseType, container, injectionId);
+			}
+
+			if (IsInjectable(currentType))
+			{
+				foreach (MemberInjectionValue<MethodInfo> method in GetTypeInjectionInfo(currentType).InjectableMethods)
+				{
+					if (method.Attribute.IsInjectionIdDefined(injectionId))
+					{
+						ParameterInfo[] parameterInfo = method.Member.GetParameters();
+						object[] parameters = GetParameterInjectionList(parameterInfo.Length);
+						FillPamaterInjectionList(parameterInfo, parameters, container);
+						method.Member.Invoke(objToInject, parameters);
+					}
+				}
 			}
 		}
 
