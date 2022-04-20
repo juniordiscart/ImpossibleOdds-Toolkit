@@ -2,16 +2,40 @@
 {
 	using System.Collections.Generic;
 	using UnityEngine;
+	using UnityEngine.SceneManagement;
 
 	public static class DependencyInjectionExtensions
 	{
+		/// <summary>
+		/// Inject the scene's game objects with the given resources container.
+		/// </summary>
+		/// <param name="scene">The scene to inject.</param>
+		/// <param name="container">The container with resources for the scene.</param>
+		public static void Inject(this Scene scene, IReadOnlyDependencyContainer container)
+		{
+			container.ThrowIfNull(nameof(container));
+			scene.GetRootGameObjects().Inject(container, true);
+		}
+
+		/// <summary>
+		/// Inject the scene's game objects with the given resources container.
+		/// </summary>
+		/// <param name="scene">The scene to inject.</param>
+		/// <param name="container">The container with resources for the scene.</param>
+		/// <param name="injectionId">The identifier of the injection being performed.</param>
+		public static void Inject(this Scene scene, IReadOnlyDependencyContainer container, string injectionId)
+		{
+			container.ThrowIfNull(nameof(container));
+			scene.GetRootGameObjects().Inject(container, injectionId, true);
+		}
+
 		/// <summary>
 		/// Inject the components found on the GameObject. Optionally includes the children as well.
 		/// </summary>
 		/// <param name="gameObject">The GameObject of which the components will be injected.</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
 		/// <param name="includeChildren">Include components found in children of the GameObject.</param>
-		public static void Inject(this GameObject gameObject, IDependencyContainer container, bool includeChildren = false)
+		public static void Inject(this GameObject gameObject, IReadOnlyDependencyContainer container, bool includeChildren = false)
 		{
 			gameObject.ThrowIfNull(nameof(gameObject));
 			container.ThrowIfNull(nameof(container));
@@ -26,7 +50,7 @@
 		/// <param name="container">Container containing resources that can be injected.</param>
 		/// <param name="injectionId">Name of the scope these resources belong to.</param>
 		/// <param name="includeChildren">Include components found in children of the GameObject.</param>
-		public static void Inject(this GameObject gameObject, IDependencyContainer container, string injectionId, bool includeChildren = false)
+		public static void Inject(this GameObject gameObject, IReadOnlyDependencyContainer container, string injectionId, bool includeChildren = false)
 		{
 			gameObject.ThrowIfNull(nameof(gameObject));
 			container.ThrowIfNull(nameof(container));
@@ -42,7 +66,7 @@
 		/// <param name="gameObjects">The GameObjects of which the components will be injected.</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
 		/// <param name="includeChildren">Include components found in children of the GameObjects.</param>
-		public static void Inject(this IEnumerable<GameObject> gameObjects, IDependencyContainer container, bool includeChildren = false)
+		public static void Inject(this IEnumerable<GameObject> gameObjects, IReadOnlyDependencyContainer container, bool includeChildren = false)
 		{
 			gameObjects.ThrowIfNull(nameof(gameObjects));
 			foreach (GameObject gameObject in gameObjects)
@@ -58,7 +82,7 @@
 		/// <param name="container">Container containing resources that can be injected.</param>
 		/// <param name="injectionId">Name of the scope these resources belong to.</param>
 		/// <param name="includeChildren">Include components found in children of the GameObjects.</param>
-		public static void Inject(this IEnumerable<GameObject> gameObjects, IDependencyContainer container, string injectionId, bool includeChildren = false)
+		public static void Inject(this IEnumerable<GameObject> gameObjects, IReadOnlyDependencyContainer container, string injectionId, bool includeChildren = false)
 		{
 			gameObjects.ThrowIfNull(nameof(gameObjects));
 			foreach (GameObject gameObject in gameObjects)
@@ -72,7 +96,7 @@
 		/// </summary>
 		/// <param name="component">Component to be injected</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
-		public static void Inject(this MonoBehaviour component, IDependencyContainer container)
+		public static void Inject(this MonoBehaviour component, IReadOnlyDependencyContainer container)
 		{
 			component.ThrowIfNull(nameof(component));
 			container.ThrowIfNull(nameof(container));
@@ -86,7 +110,7 @@
 		/// <param name="component">Component to be injected.</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
 		/// <param name="injectionId">Name of the scope these resources belong to.</param>
-		public static void Inject(this MonoBehaviour component, IDependencyContainer container, string injectionId)
+		public static void Inject(this MonoBehaviour component, IReadOnlyDependencyContainer container, string injectionId)
 		{
 			component.ThrowIfNull(nameof(component));
 			container.ThrowIfNull(nameof(container));
@@ -99,7 +123,7 @@
 		/// </summary>
 		/// <param name="components">Components to be injected.</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
-		public static void Inject(this IEnumerable<MonoBehaviour> components, IDependencyContainer container)
+		public static void Inject(this IEnumerable<MonoBehaviour> components, IReadOnlyDependencyContainer container)
 		{
 			components.ThrowIfNull(nameof(components));
 			container.ThrowIfNull(nameof(container));
@@ -112,7 +136,7 @@
 		/// <param name="components">Components to be injected.</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
 		/// <param name="injectionId">Name of the scope these resources belong to.</param>
-		public static void Inject(this IEnumerable<MonoBehaviour> components, IDependencyContainer container, string injectionId)
+		public static void Inject(this IEnumerable<MonoBehaviour> components, IReadOnlyDependencyContainer container, string injectionId)
 		{
 			components.ThrowIfNull(nameof(components));
 			container.ThrowIfNull(nameof(container));
@@ -127,7 +151,7 @@
 		/// <param name="container">Container containing resources that can be injected.</param>
 		/// <typeparam name="TComponent">Type of component to tadd to the game object.</typeparam>
 		/// <returns>The component, injected with resources.</returns>
-		public static TComponent AddComponentAndInject<TComponent>(this GameObject gameObject, IDependencyContainer container)
+		public static TComponent AddComponentAndInject<TComponent>(this GameObject gameObject, IReadOnlyDependencyContainer container)
 		where TComponent : MonoBehaviour
 		{
 			return gameObject.AddComponentAndInject<TComponent>(container, string.Empty);
@@ -142,7 +166,7 @@
 		/// <param name="injectionId">Name of the scope these resources belong to.</param>
 		/// <typeparam name="TComponent">Type of component to tadd to the game object.</typeparam>
 		/// <returns>The component, injected with resources.</returns>
-		public static TComponent AddComponentAndInject<TComponent>(this GameObject gameObject, IDependencyContainer container, string injectionId)
+		public static TComponent AddComponentAndInject<TComponent>(this GameObject gameObject, IReadOnlyDependencyContainer container, string injectionId)
 		where TComponent : MonoBehaviour
 		{
 			gameObject.ThrowIfNull(nameof(gameObject));
