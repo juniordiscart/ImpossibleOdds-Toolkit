@@ -122,5 +122,25 @@
 			typeKey.ThrowIfNull(nameof(typeKey));
 			return bindings.Remove(typeKey);
 		}
+
+		/// <summary>
+		/// Get an instance of the requested type from a registered binding.
+		/// </summary>
+		/// <param name="typeOfObject">Type of object to look for in the resources container.</param>
+		/// <returns>An instance of the requested type if a binding exists, null otherwise.</returns>
+		public object GetInstance(Type typeOfObject)
+		{
+			return BindingExists(typeOfObject) ? GetBinding(typeOfObject).GetInstance() : null;
+		}
+
+		/// <summary>
+		/// Get an instance of the requested type from a registered binding.
+		/// </summary>
+		/// <typeparam name="TypeKey">Type of object to look for in the resources container.</typeparam>
+		/// <returns>An instance of the requested type if a binding exists, null otherwise.</returns>
+		public TypeKey GetInstance<TypeKey>()
+		{
+			return (TypeKey)GetInstance(typeof(TypeKey));
+		}
 	}
 }

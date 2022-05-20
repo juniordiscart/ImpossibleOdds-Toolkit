@@ -269,6 +269,25 @@ public class MyPrefabSpawner : MonoBehaviour
 }
 ```
 
+The `DependencyInjector` class also allows you to create an instance of an object and even inject the constructor parameters when a constructor is marked with the `Inject` attribute using its `CreateAndInject` method:
+
+```cs
+[Injectable]
+public class InputAnalytics
+{
+	private IInputManager inputManager;
+
+	[Inject]
+	public InputAnalytics(IInputManager inputManager)
+	{
+		this.inputManager = inputManager;
+	}
+}
+
+// Create and inject.
+InputAnalytics ia = DependencyInjector.CreateAndInject<InputAnalytics>(myResourceContainer);
+```
+
 ### Named Injections
 
 Along with custom injections, _named_ injections may prove to be useful under specific circumstances. A member can be labeled as injectable along with a name that restricts where the dependency comes from. When injecting a target, a name can be passed along which states that only members labeled with that name will receive these resources.
@@ -304,6 +323,12 @@ myGameObject.Inject(myContainer, true);
 // Inject all components on the GameObjects, excluding their children.
 GameObject[] myGameObjects;
 myGameObjects.Inject(myContainer, false);
+```
+
+Or, add a component to a game object and inject it immediately:
+
+```cs
+myGameObject.AddComponentAndInject<MyPrefabSpawner>(myResourceContainer);
 ```
 
 ## Example

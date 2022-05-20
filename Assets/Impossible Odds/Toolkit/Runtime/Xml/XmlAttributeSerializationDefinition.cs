@@ -92,6 +92,8 @@
 				new PrimitiveTypeProcessor(this),
 				new DecimalProcessor(this),
 				new DateTimeProcessor(this),
+				new VersionProcessor(this),
+				new GuidProcessor(this),
 				new StringProcessor(this),
 			};
 		}

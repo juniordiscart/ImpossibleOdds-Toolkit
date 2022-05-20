@@ -7,41 +7,53 @@
 	using UnityEngine;
 	using UnityEngine.SceneManagement;
 
+	/// <summary>
+	/// A dependency injection scope that manages resources that are global to the project.
+	/// </summary>
 	public class GlobalDependencyScope : IDependencyScope
 	{
+#if IMPOSSIBLE_ODDS_DEPENDENCY_INJECTION_DISABLE_GLOBAL_AUTO_INJECT
+		private static bool autoInjectLoadedScenes = false;
+#else
+		private static bool autoInjectLoadedScenes = true;
+#endif
 		private static GlobalDependencyScope globalScope = null;
 
-		internal static IDependencyScope GlobalScope
+		/// <summary>
+		/// The global dependency scope.
+		/// </summary>
+		public static IDependencyScope GlobalScope
 		{
-			get { return globalScope; }
+			get => globalScope;
+		}
+
+		/// <summary>
+		/// Defines whether the global scope should inject its resources when a scene has been loaded.
+		/// </summary>
+		public static bool AutoInjectLoadedScenes
+		{
+			get => autoInjectLoadedScenes;
+			set => autoInjectLoadedScenes = value;
 		}
 
 		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-		private static void InitializeGlobalScope()
+		private static void Initialize()
 		{
 			globalScope = new GlobalDependencyScope();
 		}
 
 		private IDependencyContainer globalContainer = new DependencyContainer();
 
+		/// <inheritdoc />
 		public IDependencyContainer DependencyContainer
 		{
 			get { return globalContainer; }
 		}
 
-		public void InjectScene(Scene scene)
-		{
-			if (scene.isLoaded)
-			{
-				Log.Info("Injecting scene '{0}' with the global dependency scope.", scene.name);
-				scene.GetRootGameObjects().Inject(DependencyContainer, true);
-			}
-		}
-
 		private GlobalDependencyScope()
 		{
 			InitializeGlobalContainer();
-			InitializeGlobalScopes();
+			this.InitializeGlobalScope();
 			SceneManager.sceneLoaded += OnSceneLoaded;
 		}
 
@@ -71,13 +83,13 @@
 			}
 		}
 
-		private void InitializeGlobalScopes()
+		private void InitializeGlobalScope()
 		{
-			// Find all global scope initialization methods
+			// Find all global scope initialization methods.
 			IEnumerable<MethodInfo> scopeInitMethods = FindStaticMethods(typeof(GlobalScopeInstallerAttribute));
 			scopeInitMethods = scopeInitMethods.OrderBy(m => m.GetCustomAttribute<GlobalScopeInstallerAttribute>(false).InstallPriority);
 
-			// Parameter list used to invoke the global scope installers
+			// Parameter list used to invoke the global scope installers.
 			object[] paramList = new object[] { globalContainer };
 
 			Type currentContainerType = globalContainer.GetType();
@@ -85,7 +97,7 @@
 			{
 				ParameterInfo[] parameters = scopeInitMethod.GetParameters();
 
-				// Perform final check on scope installer method parameters
+				// Perform final check on scope installer method parameters.
 				if ((parameters.Length == 1) && parameters[0].ParameterType.IsAssignableFrom(currentContainerType))
 				{
 					scopeInitMethod.Invoke(null, paramList);
@@ -115,9 +127,10 @@
 
 		private void OnSceneLoaded(Scene scene, LoadSceneMode sceneLoadMode)
 		{
-#if !IMPOSSIBLE_ODDS_DEPENDENCY_INJECTION_DISABLE_GLOBAL_AUTO_INJECT
-			InjectScene(scene);
-#endif
+			if (autoInjectLoadedScenes)
+			{
+				scene.Inject(globalContainer);
+			}
 		}
 	}
 }

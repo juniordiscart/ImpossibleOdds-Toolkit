@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: MovementSettings
   m_EditorClassIdentifier: 
   walkSpeed: 10
-  jumpHeight: 1
-  jumpApexTime: 0.1
+  jumpHeight: 2
+  jumpApexTime: 0.2
   rotateSpeed: 90
