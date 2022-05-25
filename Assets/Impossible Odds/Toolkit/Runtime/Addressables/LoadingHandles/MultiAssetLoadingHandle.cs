@@ -8,6 +8,7 @@
 	using UnityEngine.ResourceManagement.AsyncOperations;
 	using UnityEngine.ResourceManagement.ResourceLocations;
 	using ImpossibleOdds;
+	using System.Threading.Tasks;
 
 	public class MultiAssetLoadingHandle<T> : IMultiAddressablesLoadingHandle<T>
 	where T : UnityEngine.Object
@@ -52,22 +53,32 @@
 
 		public bool IsDisposed
 		{
-			get { return isDisposed; }
+			get => isDisposed;
 		}
 
 		public IList<T> Result
 		{
-			get { return assetsLoadingHandle.Result; }
+			get => assetsLoadingHandle.Result;
+		}
+
+		public Task<IList<T>> Task
+		{
+			get => assetsLoadingHandle.Task;
 		}
 
 		object IAddressablesLoadingHandle.Result
 		{
-			get { return Result; }
+			get => Result;
 		}
 
 		object IEnumerator.Current
 		{
-			get { return null; }
+			get => null;
+		}
+
+		Task IAddressablesLoadingHandle.Task
+		{
+			get => assetsLoadingHandle.Task;
 		}
 
 		event Action<IAddressablesLoadingHandle> IAddressablesLoadingHandle.onCompleted
@@ -76,11 +87,11 @@
 			remove { onCompleted -= value; }
 		}
 
-		public MultiAssetLoadingHandle(IList<string> keys)
+		public MultiAssetLoadingHandle(IEnumerable keys)
 		: this(keys, Addressables.MergeMode.Union)
 		{ }
 
-		public MultiAssetLoadingHandle(IList<string> keys, Addressables.MergeMode mergeMode)
+		public MultiAssetLoadingHandle(IEnumerable keys, Addressables.MergeMode mergeMode)
 		{
 			this.locationLoadingHandle = Addressables.LoadResourceLocationsAsync(keys, mergeMode, typeof(T));
 			locationLoadingHandle.Completed += OnLocationLoadingCompleted;

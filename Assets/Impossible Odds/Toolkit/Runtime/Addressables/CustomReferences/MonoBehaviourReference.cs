@@ -6,11 +6,15 @@ using UnityEngine.AddressableAssets;
 using UnityEditor;
 #endif
 
+/// <summary>
+/// An asset reference for GameObjects with a specific component on them.
+/// </summary>
 [Serializable]
 public class MonoBehaviourReference<T> : AssetReferenceGameObject
 where T : MonoBehaviour
 {
-	public MonoBehaviourReference(string guid) : base(guid)
+	public MonoBehaviourReference(string guid)
+	: base(guid)
 	{ }
 
 #if UNITY_EDITOR

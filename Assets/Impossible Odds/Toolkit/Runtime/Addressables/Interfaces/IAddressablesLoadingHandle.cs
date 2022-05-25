@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.Threading.Tasks;
 
 	/// <summary>
 	/// A basic loading handle interface for fetching Addressable Assets.
@@ -55,6 +56,14 @@
 		}
 
 		/// <summary>
+		/// The task for awaiting the loading asynchonously.
+		/// </summary>
+		Task Task
+		{
+			get;
+		}
+
+		/// <summary>
 		/// Synchronously wait for the asset loading to complete.
 		/// </summary>
 		void WaitForCompletion();
@@ -78,6 +87,14 @@
 		{
 			get;
 		}
+
+		/// <summary>
+		/// The task for awaiting the loading asynchonously.
+		/// </summary>
+		new Task<T> Task
+		{
+			get;
+		}
 	}
 
 	/// <summary>
@@ -95,6 +112,14 @@
 		/// The loaded assets, if the operation succeeded.
 		/// </summary>
 		new IList<T> Result
+		{
+			get;
+		}
+
+		/// <summary>
+		/// The task for awaiting the loading asynchonously.
+		/// </summary>
+		new Task<IList<T>> Task
 		{
 			get;
 		}

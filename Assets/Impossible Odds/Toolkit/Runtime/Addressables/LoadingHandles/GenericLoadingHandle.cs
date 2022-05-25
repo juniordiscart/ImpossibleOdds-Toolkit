@@ -5,6 +5,8 @@
 	using UnityEngine.AddressableAssets;
 	using UnityEngine.ResourceManagement.AsyncOperations;
 	using ImpossibleOdds;
+	using System.Threading.Tasks;
+	using System.Runtime.CompilerServices;
 
 	/// <summary>
 	/// Generic loading handle.
@@ -21,55 +23,68 @@
 		/// <inheritdoc />
 		event Action<IAddressablesLoadingHandle> IAddressablesLoadingHandle.onCompleted
 		{
-			add { onCompleted += value; }
-			remove { onCompleted -= value; }
+			add => onCompleted += value;
+			remove => onCompleted -= value;
 		}
 
 		/// <inheritdoc />
 		public AsyncOperationHandle<T> LoadingHandle
 		{
-			get { return loadingHandle; }
+			get => loadingHandle;
 		}
 
 		/// <inheritdoc />
 		public float Progress
 		{
-			get { return loadingHandle.PercentComplete; }
+			get => loadingHandle.PercentComplete;
 		}
 
 		/// <inheritdoc />
 		public bool IsDone
 		{
-			get { return loadingHandle.IsDone; }
+			get => loadingHandle.IsDone;
 		}
 
 		/// <inheritdoc />
 		public bool IsSuccess
 		{
-			get { return IsDone && (loadingHandle.Status == AsyncOperationStatus.Succeeded); }
+			get => IsDone && (loadingHandle.Status == AsyncOperationStatus.Succeeded);
 		}
 
 		/// <inheritdoc />
 		public bool IsDisposed
 		{
-			get { return disposed; }
+			get => disposed;
 		}
 
 		/// <inheritdoc />
 		public T Result
 		{
-			get { return loadingHandle.Result; }
+			get => loadingHandle.Result;
+		}
+
+		/// <inheritdoc />
+		public Task<T> Task
+		{
+			get => loadingHandle.Task;
 		}
 
 		/// <inheritdoc />
 		object IAddressablesLoadingHandle.Result
 		{
-			get { return Result; }
+			get => Result;
 		}
 
+		/// <inheritdoc />
 		object IEnumerator.Current
 		{
-			get { return null; }
+			get => null;
+		}
+
+		/// <inheritdoc />
+		Task IAddressablesLoadingHandle.Task
+		{
+			get => Task;
 		}
 
 		public GenericLoadingHandle(AsyncOperationHandle<T> loadingHandle)
