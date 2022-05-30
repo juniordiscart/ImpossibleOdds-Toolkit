@@ -160,8 +160,23 @@
 
 		public void WaitForCompletion()
 		{
-			throw new NotImplementedException();
+			if (locationLoadingHandle.IsValid() && !locationLoadingHandle.IsDone)
+			{
+				locationLoadingHandle.WaitForCompletion();
+				locationLoadingHandle.Completed -= OnLocationLoadingCompleted;
+			}
+
+			if (!assetsLoadingHandle.IsValid() && locationLoadingHandle.IsValid() && locationLoadingHandle.IsDone)
+			{
+				OnLocationLoadingCompleted(locationLoadingHandle);
+			}
+
+			if (assetsLoadingHandle.IsValid() && !assetsLoadingHandle.IsDone)
+			{
+				assetsLoadingHandle.WaitForCompletion();
+				assetsLoadingHandle.Completed -= OnAssetsLoadingCompleted;
+				OnAssetsLoadingCompleted(assetsLoadingHandle);
+			}
 		}
 	}
-
 }
