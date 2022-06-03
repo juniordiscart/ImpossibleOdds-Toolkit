@@ -6,19 +6,19 @@
 	using UnityEngine.ResourceManagement.AsyncOperations;
 	using ImpossibleOdds;
 	using System.Threading.Tasks;
-	using System.Runtime.CompilerServices;
 
 	/// <summary>
 	/// Generic loading handle.
 	/// </summary>
-	/// <typeparam name="T">Type of asset that should be expected to load by the loading handle.</typeparam>
-	public class GenericLoadingHandle<T> : IAddressablesLoadingHandle<T>
+	/// <typeparam name="TObject">Type of asset that should be expected to load by the loading handle.</typeparam>
+	public class GenericLoadingHandle<TObject> : IAddressablesLoadingHandle<TObject>
+	where TObject : UnityEngine.Object
 	{
-		protected readonly AsyncOperationHandle<T> loadingHandle;
+		protected readonly AsyncOperationHandle<TObject> loadingHandle;
 		private bool disposed = false;
 
 		/// <inheritdoc />
-		public event Action<IAddressablesLoadingHandle<T>> onCompleted;
+		public event Action<IAddressablesLoadingHandle<TObject>> onCompleted;
 
 		/// <inheritdoc />
 		event Action<IAddressablesLoadingHandle> IAddressablesLoadingHandle.onCompleted
@@ -28,7 +28,7 @@
 		}
 
 		/// <inheritdoc />
-		public AsyncOperationHandle<T> LoadingHandle
+		public AsyncOperationHandle<TObject> LoadingHandle
 		{
 			get => loadingHandle;
 		}
@@ -58,13 +58,13 @@
 		}
 
 		/// <inheritdoc />
-		public T Result
+		public TObject Result
 		{
 			get => loadingHandle.Result;
 		}
 
 		/// <inheritdoc />
-		public Task<T> Task
+		public Task<TObject> Task
 		{
 			get => loadingHandle.Task;
 		}
@@ -87,7 +87,7 @@
 			get => Task;
 		}
 
-		public GenericLoadingHandle(AsyncOperationHandle<T> loadingHandle)
+		public GenericLoadingHandle(AsyncOperationHandle<TObject> loadingHandle)
 		{
 			if (!loadingHandle.IsValid())
 			{
@@ -113,26 +113,31 @@
 		}
 
 		/// <inheritdoc />
-		public virtual void WaitForCompletion()
+		public virtual TObject WaitForCompletion()
 		{
 			// If the handle is already done, then don't complete again.
-			if (!IsDone)
-			{
-				loadingHandle.WaitForCompletion();
-			}
+			return !IsDone ? loadingHandle.WaitForCompletion() : loadingHandle.Result;
 		}
 
+		/// <inheritdoc />
 		bool IEnumerator.MoveNext()
 		{
 			return !IsDone;
 		}
 
+		/// <inheritdoc />
 		void IEnumerator.Reset()
 		{
 			throw new NotImplementedException();
 		}
 
-		private void OnCompleted(AsyncOperationHandle<T> handle)
+		/// <inheritdoc />
+		object IAddressablesLoadingHandle.WaitForCompletion()
+		{
+			return WaitForCompletion();
+		}
+
+		private void OnCompleted(AsyncOperationHandle<TObject> handle)
 		{
 			onCompleted.InvokeIfNotNull(this);
 		}

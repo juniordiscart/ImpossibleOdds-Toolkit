@@ -10,22 +10,22 @@
 	using ImpossibleOdds;
 	using System.Threading.Tasks;
 
-	public class MultiAssetLoadingHandle<T> : IMultiAddressablesLoadingHandle<T>
-	where T : UnityEngine.Object
+	public class MultiAssetLoadingHandle<TObject> : IMultiAddressablesLoadingHandle<TObject>
+	where TObject : UnityEngine.Object
 	{
 		protected AsyncOperationHandle<IList<IResourceLocation>> locationLoadingHandle;
-		protected AsyncOperationHandle<IList<T>> assetsLoadingHandle;
+		protected AsyncOperationHandle<IList<TObject>> assetsLoadingHandle;
 		private bool isDisposed = false;
 		private bool isDone = false;
 
-		public event Action<IMultiAddressablesLoadingHandle<T>> onCompleted;
+		public event Action<IMultiAddressablesLoadingHandle<TObject>> onCompleted;
 
 		public AsyncOperationHandle<IList<IResourceLocation>> ResourceLocationLoadingHandle
 		{
 			get { return locationLoadingHandle; }
 		}
 
-		public AsyncOperationHandle<IList<T>> AssetsLoadingHandle
+		public AsyncOperationHandle<IList<TObject>> AssetsLoadingHandle
 		{
 			get { return assetsLoadingHandle; }
 		}
@@ -56,12 +56,12 @@
 			get => isDisposed;
 		}
 
-		public IList<T> Result
+		public IList<TObject> Result
 		{
 			get => assetsLoadingHandle.Result;
 		}
 
-		public Task<IList<T>> Task
+		public Task<IList<TObject>> Task
 		{
 			get => assetsLoadingHandle.Task;
 		}
@@ -93,7 +93,7 @@
 
 		public MultiAssetLoadingHandle(IEnumerable keys, Addressables.MergeMode mergeMode)
 		{
-			this.locationLoadingHandle = Addressables.LoadResourceLocationsAsync(keys, mergeMode, typeof(T));
+			this.locationLoadingHandle = Addressables.LoadResourceLocationsAsync(keys, mergeMode, typeof(TObject));
 			locationLoadingHandle.Completed += OnLocationLoadingCompleted;
 		}
 
@@ -129,36 +129,8 @@
 			isDisposed = true;
 		}
 
-		private void OnLocationLoadingCompleted(AsyncOperationHandle<IList<IResourceLocation>> r)
-		{
-			if (locationLoadingHandle.Status != AsyncOperationStatus.Succeeded)
-			{
-				Debug.LogErrorFormat("The loading of resource locations in loadinghandle of type '{0}' did not complete successfully.", this.GetType().Name);
-				isDone = true;
-				return;
-			}
-
-			assetsLoadingHandle = Addressables.LoadAssetsAsync<T>(r.Result, null);
-			assetsLoadingHandle.Completed += OnAssetsLoadingCompleted;
-		}
-
-		private void OnAssetsLoadingCompleted(AsyncOperationHandle<IList<T>> r)
-		{
-			isDone = true;
-			onCompleted.InvokeIfNotNull(this);
-		}
-
-		bool IEnumerator.MoveNext()
-		{
-			return !IsDone;
-		}
-
-		void IEnumerator.Reset()
-		{
-			throw new NotImplementedException();
-		}
-
-		public void WaitForCompletion()
+		/// <inheritdoc />
+		public IList<TObject> WaitForCompletion()
 		{
 			if (locationLoadingHandle.IsValid() && !locationLoadingHandle.IsDone)
 			{
@@ -177,6 +149,45 @@
 				assetsLoadingHandle.Completed -= OnAssetsLoadingCompleted;
 				OnAssetsLoadingCompleted(assetsLoadingHandle);
 			}
+
+			return assetsLoadingHandle.Result;
+		}
+
+		private void OnLocationLoadingCompleted(AsyncOperationHandle<IList<IResourceLocation>> r)
+		{
+			if (locationLoadingHandle.Status != AsyncOperationStatus.Succeeded)
+			{
+				Debug.LogErrorFormat("The loading of resource locations in loadinghandle of type '{0}' did not complete successfully.", this.GetType().Name);
+				isDone = true;
+				return;
+			}
+
+			assetsLoadingHandle = Addressables.LoadAssetsAsync<TObject>(r.Result, null);
+			assetsLoadingHandle.Completed += OnAssetsLoadingCompleted;
+		}
+
+		private void OnAssetsLoadingCompleted(AsyncOperationHandle<IList<TObject>> r)
+		{
+			isDone = true;
+			onCompleted.InvokeIfNotNull(this);
+		}
+
+		/// <inheritdoc />
+		bool IEnumerator.MoveNext()
+		{
+			return !IsDone;
+		}
+
+		/// <inheritdoc />
+		void IEnumerator.Reset()
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc />
+		object IAddressablesLoadingHandle.WaitForCompletion()
+		{
+			return WaitForCompletion();
 		}
 	}
 }
