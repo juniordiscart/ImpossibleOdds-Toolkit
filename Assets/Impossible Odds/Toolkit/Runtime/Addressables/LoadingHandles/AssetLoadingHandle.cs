@@ -27,6 +27,16 @@
 		}
 
 		/// <summary>
+		/// Load the object using an asset reference.
+		/// </summary>
+		/// <param name="reference">The asset reference.</param>
+		public AssetLoadingHandle(AssetReferenceT<T> reference)
+		: base(reference.LoadAssetAsync())
+		{
+			base.onCompleted += OnCompleted;
+		}
+
+		/// <summary>
 		/// Load the object using it's resource location.
 		/// </summary>
 		/// <param name="location">The resource location of the asset.</param>

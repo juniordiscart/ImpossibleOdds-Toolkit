@@ -1,6 +1,7 @@
 ﻿namespace ImpossibleOdds.Addressables
 {
 	using UnityEngine;
+	using UnityEngine.AddressableAssets;
 	using UnityEngine.ResourceManagement.AsyncOperations;
 
 	/// <summary>
@@ -13,7 +14,7 @@
 		/// </summary>
 		public new AsyncOperationHandle<GameObject> LoadingHandle
 		{
-			get { return loadingHandle; }
+			get => loadingHandle;
 		}
 
 		/// <summary>
@@ -21,7 +22,7 @@
 		/// </summary>
 		public GameObject GameObject
 		{
-			get { return IsSuccess ? loadingHandle.Result : null; }
+			get => IsSuccess ? loadingHandle.Result : null;
 		}
 
 		public GameObjectLoadingHandle(string assetAddress)
@@ -30,6 +31,10 @@
 
 		public GameObjectLoadingHandle(AsyncOperationHandle<GameObject> loadingHandle)
 		: base(loadingHandle)
+		{ }
+
+		public GameObjectLoadingHandle(AssetReferenceGameObject gameObjectReference)
+		: base(gameObjectReference)
 		{ }
 	}
 }

@@ -10,10 +10,10 @@ using UnityEditor;
 /// An asset reference for GameObjects with a specific component on them.
 /// </summary>
 [Serializable]
-public class MonoBehaviourReference<T> : AssetReferenceGameObject
-where T : MonoBehaviour
+public class ComponentReference<T> : AssetReferenceGameObject
+where T : Component
 {
-	public MonoBehaviourReference(string guid)
+	public ComponentReference(string guid)
 	: base(guid)
 	{ }
 
@@ -44,6 +44,4 @@ where T : MonoBehaviour
 		}
 	}
 #endif
-
-
 }

@@ -11,7 +11,7 @@
 	/// </summary>
 	/// <typeparam name="T">The type of the component to load.</typeparam>
 	public class MultiComponentLoadingHandle<T> : MultiGameObjectLoadingHandle
-	where T : MonoBehaviour
+	where T : Component
 	{
 		private IList<T> components = null;
 
