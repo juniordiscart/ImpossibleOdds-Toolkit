@@ -14,12 +14,12 @@
 
 		public XmlSerializationDefinition Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		ISerializationDefinition IProcessor.Definition
 		{
-			get { return Definition; }
+			get => Definition;
 		}
 
 		public XmlLookupProcessor(XmlSerializationDefinition definition)

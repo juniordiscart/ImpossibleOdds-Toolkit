@@ -16,22 +16,22 @@
 
 		public float WalkSpeed
 		{
-			get { return walkSpeed; }
+			get => walkSpeed;
 		}
 
 		public float JumpHeight
 		{
-			get { return jumpHeight; }
+			get => jumpHeight;
 		}
 
 		public float JumpApexTime
 		{
-			get { return jumpApexTime; }
+			get => jumpApexTime;
 		}
 
 		public float RotateSpeed
 		{
-			get { return rotateSpeed; }
+			get => rotateSpeed;
 		}
 	}
 }

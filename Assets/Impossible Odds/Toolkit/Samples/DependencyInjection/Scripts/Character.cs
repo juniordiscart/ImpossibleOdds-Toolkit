@@ -17,7 +17,7 @@
 
 		private float Gravity
 		{
-			get { return 2f * settings.JumpHeight / Mathf.Pow(settings.JumpApexTime, 2f); }
+			get => 2f * settings.JumpHeight / Mathf.Pow(settings.JumpApexTime, 2f);
 		}
 
 		private void Awake()

@@ -13,12 +13,12 @@
 
 		public string Name
 		{
-			get { return name; }
+			get => name;
 		}
 
 		public IReadOnlyList<LeaderboardEntry> Entries
 		{
-			get { return entries; }
+			get => entries;
 		}
 	}
 }

@@ -2,12 +2,13 @@
 {
 	using System;
 	using System.Reflection;
+	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using UnityEngine.Events;
 
 	public static class DelegateExtensions
 	{
-		private static Dictionary<Type, List<FieldInfo>> delegateCache = new Dictionary<Type, List<FieldInfo>>();
+		private static ConcurrentDictionary<Type, List<FieldInfo>> delegateCache = new ConcurrentDictionary<Type, List<FieldInfo>>();
 
 		/// <summary>
 		/// Clears the invokation lists of delegates found in the source that target the target.
@@ -38,6 +39,7 @@
 				}
 
 				Delegate[] delegates = eventDelegate.GetInvocationList();
+
 				foreach (Delegate del in delegates)
 				{
 					// Mismatch in static/instance target object - field declaration
@@ -265,18 +267,16 @@
 
 		private static List<FieldInfo> GetDelegatesForType(Type type)
 		{
-			if (delegateCache.ContainsKey(type))
+			if (delegateCache.TryGetValue(type, out List<FieldInfo> d))
 			{
-				return delegateCache[type];
+				return d;
 			}
 
 			Type delegateType = typeof(Delegate);
 			BindingFlags flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
-			List<FieldInfo> delegates = new List<FieldInfo>();
-			delegateCache.Add(type, delegates);
-
 			// Find all delegate fields through the type hierarchy.
+			List<FieldInfo> delegates = new List<FieldInfo>();
 			while ((type != null) && (type != typeof(object)))
 			{
 				FieldInfo[] fields = type.GetFields(flags);
@@ -292,7 +292,7 @@
 				type = type.BaseType;
 			}
 
-			return delegates;
+			return delegateCache.GetOrAdd(type, delegates);
 		}
 	}
 }

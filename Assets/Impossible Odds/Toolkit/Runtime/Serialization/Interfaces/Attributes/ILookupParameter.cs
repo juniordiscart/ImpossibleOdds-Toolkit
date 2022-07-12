@@ -5,6 +5,9 @@
 	/// </summary>
 	public interface ILookupParameter
 	{
+		/// <summary>
+		/// The key used in the lookup data structure.
+		/// </summary>
 		object Key
 		{
 			get;
@@ -16,6 +19,9 @@
 	/// </summary>
 	public interface ILookupParameter<TKey> : ILookupParameter
 	{
+		/// <summary>
+		/// The key used in the lookup data structure.
+		/// </summary>
 		new TKey Key
 		{
 			get;

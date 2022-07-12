@@ -14,7 +14,7 @@
 
 		public bool HasNamedInjections
 		{
-			get { return injectionNames != null; }
+			get => injectionNames != null;
 		}
 
 		public IReadOnlyCollection<string> InjectionIds

@@ -23,19 +23,19 @@ namespace ImpossibleOdds.Examples.Photon.WebRpc
 		/// <inheritdoc />
 		public string UriPath
 		{
-			get { return "webrpc/updateleaderboard.php"; }
+			get => "webrpc/updateleaderboard.php";
 		}
 
 		/// <inheritdoc />
 		public bool UseAuthCookie
 		{
-			get { return false; }
+			get => false;
 		}
 
 		/// <inheritdoc />
 		public bool UseEncryption
 		{
-			get { return true; }
+			get => true;
 		}
 
 		public UpdateLeaderboardRequest(int userID, string leaderboardID, int score, bool forceUpdate = false)
@@ -69,22 +69,22 @@ namespace ImpossibleOdds.Examples.Photon.WebRpc
 
 		public bool IsSuccess
 		{
-			get { return (resultCode == ResultCode.None) && (updateCode != UpdateCode.None); }
+			get => (resultCode == ResultCode.None) && (updateCode != UpdateCode.None);
 		}
 
 		public ResultCode ResultCode
 		{
-			get { return resultCode; }
+			get => resultCode;
 		}
 
 		public UpdateCode UpdateCode
 		{
-			get { return updateCode; }
+			get => updateCode;
 		}
 
 		public int CurrentScore
 		{
-			get { return currentScore; }
+			get => currentScore;
 		}
 
 		public void ToString(StringBuilder builder)

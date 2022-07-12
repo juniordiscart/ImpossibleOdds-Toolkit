@@ -19,15 +19,15 @@
 
 		public string Name
 		{
-			get { return name; }
-			set { name = value; }
+			get => name;
+			set => name = value;
 		}
 
 		[XmlElement("DateOfBirth")]
 		public DateTime DateOfBirth
 		{
-			get { return dateOfBirth; }
-			set { dateOfBirth = value; }
+			get => dateOfBirth;
+			set => dateOfBirth = value;
 		}
 
 		[OnXmlSerializing]

@@ -36,7 +36,7 @@ public class TestBindingFlags : MonoBehaviour
 
 		public bool Enabled
 		{
-			get { return false; }
+			get => false;
 		}
 	}
 

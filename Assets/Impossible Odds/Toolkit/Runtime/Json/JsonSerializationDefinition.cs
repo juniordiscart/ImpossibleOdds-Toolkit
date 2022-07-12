@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.Linq;
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Processors;
 
@@ -12,106 +13,89 @@
 	/// <typeparam name="TJsonObject">Custom JSON object type.</typeparam>
 	/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
 	public class JsonSerializationDefinition :
-	IndexAndLookupDefinition<JsonArrayAttribute, JsonIndexAttribute, ArrayList, JsonObjectAttribute, JsonFieldAttribute, Dictionary<string, object>>,
-	ICallbacksSupport<OnJsonSerializingAttribute, OnJsonSerializedAttribute, OnJsonDeserializingAttribute, OnJsonDeserializedAttribute>,
-	ILookupTypeResolveSupport<JsonTypeAttribute>,
-	IRequiredValueSupport<JsonRequiredAttribute>,
-	IEnumAliasSupport<JsonEnumStringAttribute, JsonEnumAliasAttribute>
+		IndexAndLookupDefinition<JsonArrayAttribute, JsonIndexAttribute, ArrayList, JsonObjectAttribute, JsonFieldAttribute, Dictionary<string, object>>,
+		ICallbacksSupport<OnJsonSerializingAttribute, OnJsonSerializedAttribute, OnJsonDeserializingAttribute, OnJsonDeserializedAttribute>,
+		ILookupTypeResolveSupport<JsonTypeAttribute>,
+		IRequiredValueSupport<JsonRequiredAttribute>,
+		IEnumAliasSupport<JsonEnumStringAttribute, JsonEnumAliasAttribute>
 	{
-		public const string JsonTypeKey = "jsi:type";
+		public const string JsonDefaultTypeKey = "jsi:type";
 
-		private List<IProcessor> processors = null;
-		private HashSet<Type> supportedTypes = null;
-		private string typeResolveKey = JsonTypeKey;
+		private readonly ISerializationProcessor[] serializationProcessors = null;
+		private readonly IDeserializationProcessor[] deserializationProcessors = null;
+		private readonly HashSet<Type> supportedTypes = null;
+		private string typeResolveKey = JsonDefaultTypeKey;
 
 		/// <inheritdoc />
 		public Type JsonObjectType
 		{
-			get { return typeof(Dictionary<string, object>); }
+			get => typeof(Dictionary<string, object>);
 		}
 
 		/// <inheritdoc />
 		public Type JsonArrayType
 		{
-			get { return typeof(ArrayList); }
+			get => typeof(ArrayList);
 		}
 
 		/// <inheritdoc />
 		public override IEnumerable<ISerializationProcessor> SerializationProcessors
 		{
-			get
-			{
-				foreach (IProcessor processor in processors)
-				{
-					if (processor is ISerializationProcessor serializationProcessor)
-					{
-						yield return serializationProcessor;
-					}
-				}
-			}
+			get => serializationProcessors;
 		}
 
 		/// <inheritdoc />
 		public override IEnumerable<IDeserializationProcessor> DeserializationProcessors
 		{
-			get
-			{
-				foreach (IProcessor processor in processors)
-				{
-					if (processor is IDeserializationProcessor deserializationProcessor)
-					{
-						yield return deserializationProcessor;
-					}
-				}
-			}
+			get => deserializationProcessors;
 		}
 
 		/// <inheritdoc />
 		public override HashSet<Type> SupportedTypes
 		{
-			get { return supportedTypes; }
+			get => supportedTypes;
 		}
 
 		/// <inheritdoc />
 		public Type OnSerializationCallbackType
 		{
-			get { return typeof(OnJsonSerializingAttribute); }
+			get => typeof(OnJsonSerializingAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type OnSerializedCallbackType
 		{
-			get { return typeof(OnJsonSerializedAttribute); }
+			get => typeof(OnJsonSerializedAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type OnDeserializionCallbackType
 		{
-			get { return typeof(OnJsonDeserializingAttribute); }
+			get => typeof(OnJsonDeserializingAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type OnDeserializedCallbackType
 		{
-			get { return typeof(OnJsonDeserializedAttribute); }
+			get => typeof(OnJsonDeserializedAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type TypeResolveAttribute
 		{
-			get { return typeof(JsonTypeAttribute); }
+			get => typeof(JsonTypeAttribute);
 		}
 
 		/// <inheritdoc />
 		object ILookupTypeResolveSupport.TypeResolveKey
 		{
-			get { return typeResolveKey; }
+			get => typeResolveKey;
 		}
 
 		/// <inheritdoc />
 		public string TypeResolveKey
 		{
-			get { return typeResolveKey; }
+			get => typeResolveKey;
 			set
 			{
 				value.ThrowIfNullOrEmpty(nameof(value));
@@ -122,19 +106,19 @@
 		/// <inheritdoc />
 		public Type RequiredAttributeType
 		{
-			get { return typeof(JsonRequiredAttribute); }
+			get => typeof(JsonRequiredAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type EnumAsStringAttributeType
 		{
-			get { return typeof(JsonEnumStringAttribute); }
+			get => typeof(JsonEnumStringAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type EnumAliasValueAttributeType
 		{
-			get { return typeof(JsonEnumAliasAttribute); }
+			get => typeof(JsonEnumAliasAttribute);
 		}
 
 		public JsonSerializationDefinition()
@@ -145,7 +129,6 @@
 #else
 			PrimitiveProcessingMethod.LOOKUP;
 #endif
-
 			supportedTypes = new HashSet<Type>()
 			{
 				typeof(byte),
@@ -158,7 +141,7 @@
 				typeof(char)
 			};
 
-			processors = new List<IProcessor>()
+			List<IProcessor> processors = new List<IProcessor>()
 			{
 				new NullValueProcessor(this),
 				new ExactMatchProcessor(this),
@@ -182,6 +165,9 @@
 				new CustomObjectSequenceProcessor(this),
 				new CustomObjectLookupProcessor(this),
 			};
+
+			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>().ToArray();
+			deserializationProcessors = processors.Where(p => p is IDeserializationProcessor).Cast<IDeserializationProcessor>().ToArray();
 		}
 
 		/// <summary>
@@ -190,7 +176,15 @@
 		/// <param name="preferredProcessingMethod">The preferred processing method.</param>
 		public void UpdateUnityPrimitiveRepresentation(PrimitiveProcessingMethod preferredProcessingMethod)
 		{
-			foreach (IProcessor processor in processors)
+			foreach (IProcessor processor in serializationProcessors)
+			{
+				if (processor is IUnityPrimitiveSwitchProcessor switchProcessor)
+				{
+					switchProcessor.ProcessingMethod = preferredProcessingMethod;
+				}
+			}
+
+			foreach (IProcessor processor in deserializationProcessors)
 			{
 				if (processor is IUnityPrimitiveSwitchProcessor switchProcessor)
 				{

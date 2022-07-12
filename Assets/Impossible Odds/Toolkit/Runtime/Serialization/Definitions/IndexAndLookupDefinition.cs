@@ -30,43 +30,55 @@
 
 		public Type IndexBasedClassMarkingAttribute
 		{
-			get { return typeof(TListObject); }
+			get => typeof(TListObject);
 		}
 
 		public Type IndexBasedFieldAttribute
 		{
-			get { return typeof(TListField); }
+			get => typeof(TListField);
 		}
 
 		public Type IndexBasedDataType
 		{
-			get { return typeof(TListType); }
+			get => typeof(TListType);
 		}
 
 		public Type LookupBasedClassMarkingAttribute
 		{
-			get { return typeof(TLookupObject); }
+			get => typeof(TLookupObject);
 		}
 
 		public Type LookupBasedFieldAttribute
 		{
-			get { return typeof(TLookupField); }
+			get => typeof(TLookupField);
 		}
 
 		public Type LookupBasedDataType
 		{
-			get { return typeof(TLookupType); }
+			get => typeof(TLookupType);
 		}
 
 		public IFormatProvider FormatProvider
 		{
-			get { return formatProvider; }
-			set { formatProvider = value; }
+			get => formatProvider;
+			set => formatProvider = value;
 		}
 
-		public abstract IEnumerable<ISerializationProcessor> SerializationProcessors { get; }
-		public abstract IEnumerable<IDeserializationProcessor> DeserializationProcessors { get; }
-		public abstract HashSet<Type> SupportedTypes { get; }
+		public abstract IEnumerable<ISerializationProcessor> SerializationProcessors
+		{
+			get;
+		}
+
+		public abstract IEnumerable<IDeserializationProcessor> DeserializationProcessors
+		{
+			get;
+		}
+
+		public abstract HashSet<Type> SupportedTypes
+		{
+			get;
+		}
+
 
 		public abstract TListType CreateSequenceInstance(int capacity);
 		public abstract TLookupType CreateLookupInstance(int capacity);

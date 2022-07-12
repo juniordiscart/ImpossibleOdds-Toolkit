@@ -5,7 +5,6 @@
 
 	public static class DependencyInjectionUtilities
 	{
-
 		/// <summary>
 		/// Get the current type and implemented interfaces for the given object.
 		/// </summary>

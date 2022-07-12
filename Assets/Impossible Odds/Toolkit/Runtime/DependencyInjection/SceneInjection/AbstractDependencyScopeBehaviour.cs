@@ -13,8 +13,8 @@
 
 		public IDependencyContainer DependencyContainer
 		{
-			get { return container; }
-			protected set { container = value; }
+			get => container;
+			protected set => container = value;
 		}
 
 		public abstract void Inject();

@@ -5,16 +5,16 @@
 
 	public abstract class UnityPrimitiveLookupProcessor<T> : ISerializationProcessor, IDeserializationProcessor
 	{
-		private ILookupSerializationDefinition definition = null;
+		private readonly ILookupSerializationDefinition definition = null;
 
 		public ILookupSerializationDefinition Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		ISerializationDefinition IProcessor.Definition
 		{
-			get { return Definition; }
+			get => Definition;
 		}
 
 		public UnityPrimitiveLookupProcessor(ILookupSerializationDefinition definition)

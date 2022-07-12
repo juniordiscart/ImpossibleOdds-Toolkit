@@ -9,11 +9,11 @@
 	/// </summary>
 	public class NullValueProcessor : IDeserializationProcessor
 	{
-		private ISerializationDefinition definition = null;
+		private readonly ISerializationDefinition definition = null;
 
 		public ISerializationDefinition Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		public NullValueProcessor(ISerializationDefinition definition)

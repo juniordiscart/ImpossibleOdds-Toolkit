@@ -3,15 +3,16 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.Collections.Concurrent;
 
 	public class DependencyContainer : IDependencyContainer
 	{
-		private Dictionary<Type, IDependencyBinding> bindings = new Dictionary<Type, IDependencyBinding>();
+		private ConcurrentDictionary<Type, IDependencyBinding> bindings = new ConcurrentDictionary<Type, IDependencyBinding>();
 
 		/// <inheritdoc />
 		public IDictionary<Type, IDependencyBinding> Bindings
 		{
-			get { return bindings; }
+			get => bindings;
 		}
 
 		/// <inheritdoc />
@@ -50,12 +51,7 @@
 				throw new DependencyInjectionException("Type key {0} is not assignable from type {1} as reported by {2}.", typeKey.Name, binding.GetTypeBinding().Name, nameof(binding));
 			}
 
-			if (bindings.ContainsKey(typeKey))
-			{
-				Log.Warning("A binding for type {0} already exists. Overriding with new binding.", typeKey.Name);
-			}
-
-			bindings[typeKey] = binding;
+			bindings.AddOrUpdate(typeKey, binding, (t, b) => binding);
 		}
 
 		/// <inheritdoc />
@@ -107,7 +103,7 @@
 		public IDependencyBinding GetBinding(Type typeKey)
 		{
 			typeKey.ThrowIfNull(nameof(typeKey));
-			return bindings.ContainsKey(typeKey) ? bindings[typeKey] : null;
+			return bindings.TryGetValue(typeKey, out IDependencyBinding binding) ? binding : null;
 		}
 
 		/// <inheritdoc />
@@ -120,7 +116,7 @@
 		public bool Remove(Type typeKey)
 		{
 			typeKey.ThrowIfNull(nameof(typeKey));
-			return bindings.Remove(typeKey);
+			return bindings.TryRemove(typeKey, out _);
 		}
 
 		/// <summary>

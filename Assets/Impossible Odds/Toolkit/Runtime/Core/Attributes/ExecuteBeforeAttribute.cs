@@ -13,7 +13,7 @@
 
 		public Type[] ExecuteBefore
 		{
-			get { return executeBefore; }
+			get => executeBefore;
 		}
 
 		public ExecuteBeforeAttribute(params Type[] executeBefore)

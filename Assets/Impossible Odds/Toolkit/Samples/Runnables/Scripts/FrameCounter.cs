@@ -9,12 +9,12 @@
 
 		public int UpdateCounter
 		{
-			get { return updateCounter; }
+			get => updateCounter;
 		}
 
 		public int FixedUpdateCounter
 		{
-			get { return fixedUpdateCounter; }
+			get => fixedUpdateCounter;
 		}
 
 		public void FixedUpdate()

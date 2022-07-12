@@ -140,7 +140,7 @@ public enum GameModes
 }
 ```
 
-Finally, these values can be retrieved using their extension `DisplayName` and `LocalizationKey` methods:
+Finally, these values can be retrieved using their `DisplayName` and `LocalizationKey` extension methods:
 
 ```cs
 // Gets the display name and localization key of the enum value.
@@ -152,6 +152,22 @@ string locaKey = value.LocalizationKey();
 **Note**: when your enum value has no display name defined, calling the `DisplayName` extension menthod will perform the `ToString` method on the value and return that result instead. The `LocalizationKey` extension method will return a `string.Empty` result when no translation key is set.
 
 **Another note**: don't confuse the Impossible Odds `DisplayName` attribute with the C# `DisplayName` attribute found in the `System.ComponentModel` namespace.
+
+A caveat of enums and their underlying values is that it's impossible to distinguish them from each other if they share the same underlying value, and may return the name of another one. Take, for example, the following enum definition:
+
+```cs
+public enum Options
+{
+	[DisplayName(Name="None")]
+	NONE = 0,
+	[DisplayName(Name="Enabled")]
+	ENABLED = 1,
+	[DisplayName(Name="Default")]
+	DEFAULT = NONE
+}
+```
+
+The `Options.NONE` and `Options.DEFAULT` enum values are defined to share the same underlying value, and no meaningful distinction can be made between them. Consequently, calling `Options.NONE.DisplayName()` could result in `Default` being returned instead of `None`.
 
 ## Logging
 

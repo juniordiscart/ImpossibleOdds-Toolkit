@@ -6,7 +6,7 @@
 
 		public bool HandleTurned
 		{
-			get { return handleTurned; }
+			get => handleTurned;
 		}
 
 		public void TurnHandle()

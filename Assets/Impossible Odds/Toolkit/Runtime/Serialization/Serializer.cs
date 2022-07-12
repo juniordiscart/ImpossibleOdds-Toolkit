@@ -1,6 +1,7 @@
 ﻿namespace ImpossibleOdds.Serialization
 {
 	using System;
+	using System.Collections.Generic;
 	using ImpossibleOdds.Serialization.Processors;
 
 	public static class Serializer
@@ -20,13 +21,24 @@
 				throw new SerializationException("No serialization processors defined in the definition of type {0}.", serializationDefinition.GetType().Name);
 			}
 
-			object result = null;
-			foreach (ISerializationProcessor processor in serializationDefinition.SerializationProcessors)
+			// Pick a specific implementation to reduce memory allocations.
+			if (serializationDefinition.SerializationProcessors is ISerializationProcessor[] spArray)
 			{
-				if (processor.Serialize(objectToSerialize, out result))
+				if (SerializeObject(spArray, objectToSerialize, out object result))
 				{
 					return result;
 				}
+			}
+			else if (serializationDefinition.SerializationProcessors is List<ISerializationProcessor> spList)
+			{
+				if (SerializeObject(spList, objectToSerialize, out object result))
+				{
+					return result;
+				}
+			}
+			else if (SerializeObject(serializationDefinition.SerializationProcessors, objectToSerialize, out object result))
+			{
+				return result;
 			}
 
 			if (objectToSerialize == null)
@@ -89,13 +101,24 @@
 				throw new SerializationException("No deserialization processors are defined in the definition of type {0}.", deserializationDefinition.GetType().Name);
 			}
 
-			object result = null;
-			foreach (IDeserializationProcessor processor in deserializationDefinition.DeserializationProcessors)
+			// Pick a specific implementation to reduce memory allocations.
+			if (deserializationDefinition.DeserializationProcessors is IDeserializationProcessor[] dspArray)
 			{
-				if (processor.Deserialize(targetType, dataToDeserialize, out result))
+				if (DeserializeObject(dspArray, targetType, dataToDeserialize, out object result))
 				{
 					return result;
 				}
+			}
+			else if (deserializationDefinition.DeserializationProcessors is List<IDeserializationProcessor> dspList)
+			{
+				if (DeserializeObject(dspList, targetType, dataToDeserialize, out object result))
+				{
+					return result;
+				}
+			}
+			else if (DeserializeObject(deserializationDefinition.DeserializationProcessors, targetType, dataToDeserialize, out object result))
+			{
+				return result;
 			}
 
 			throw new SerializationException("Failed to deserialize a source value to target type {0}.", targetType.Name);
@@ -112,21 +135,153 @@
 			deserializationTarget.ThrowIfNull(nameof(deserializationTarget));
 			deserializationDefinition.ThrowIfNull(nameof(deserializationTarget));
 
-			foreach (IDeserializationProcessor processor in deserializationDefinition.DeserializationProcessors)
+			// Pick a specific implementation to reduce memory allocations.
+			if (deserializationDefinition.DeserializationProcessors is IDeserializationProcessor[] dspArray)
 			{
-				if ((processor == null) || !(processor is IDeserializationToTargetProcessor))
-				{
-					continue;
-				}
-
-				// If the processor implements this interface, and was able to successfully map, then we can stop.
-				if ((processor as IDeserializationToTargetProcessor).Deserialize(deserializationTarget, dataToDeserialize))
+				if (DeserializeObjectDirectely(dspArray, deserializationTarget, dataToDeserialize))
 				{
 					return;
 				}
 			}
+			else if (deserializationDefinition.DeserializationProcessors is List<IDeserializationProcessor> dspList)
+			{
+				if (DeserializeObjectDirectely(dspList, deserializationTarget, dataToDeserialize))
+				{
+					return;
+				}
+			}
+			else if (DeserializeObjectDirectely(deserializationDefinition.DeserializationProcessors, deserializationTarget, dataToDeserialize))
+			{
+				return;
+			}
 
 			throw new SerializationException("Failed to deserialize a source value to a target instance of type {0}.", deserializationTarget.GetType().Name);
+		}
+
+		private static bool SerializeObject(ISerializationProcessor[] processors, object objectToSerialize, out object result)
+		{
+			foreach (ISerializationProcessor processor in processors)
+			{
+				if (processor.Serialize(objectToSerialize, out result))
+				{
+					return true;
+				}
+			}
+
+			result = null;
+			return false;
+		}
+
+		private static bool SerializeObject(List<ISerializationProcessor> processors, object objectToSerialize, out object result)
+		{
+			foreach (ISerializationProcessor processor in processors)
+			{
+				if (processor.Serialize(objectToSerialize, out result))
+				{
+					return true;
+				}
+			}
+
+			result = null;
+			return false;
+		}
+
+		private static bool SerializeObject(IEnumerable<ISerializationProcessor> processors, object objectToSerialize, out object result)
+		{
+			foreach (ISerializationProcessor processor in processors)
+			{
+				if (processor.Serialize(objectToSerialize, out result))
+				{
+					return true;
+				}
+			}
+
+			result = null;
+			return false;
+		}
+
+		private static bool DeserializeObject(IDeserializationProcessor[] processors, Type targetType, object dataToDeserialize, out object result)
+		{
+			foreach (IDeserializationProcessor processor in processors)
+			{
+				if (processor.Deserialize(targetType, dataToDeserialize, out result))
+				{
+					return true;
+				}
+			}
+
+			result = null;
+			return false;
+		}
+
+		private static bool DeserializeObject(List<IDeserializationProcessor> processors, Type targetType, object dataToDeserialize, out object result)
+		{
+			foreach (IDeserializationProcessor processor in processors)
+			{
+				if (processor.Deserialize(targetType, dataToDeserialize, out result))
+				{
+					return true;
+				}
+			}
+
+			result = null;
+			return false;
+		}
+
+		private static bool DeserializeObject(IEnumerable<IDeserializationProcessor> processors, Type targetType, object dataToDeserialize, out object result)
+		{
+			foreach (IDeserializationProcessor processor in processors)
+			{
+				if (processor.Deserialize(targetType, dataToDeserialize, out result))
+				{
+					return true;
+				}
+			}
+
+			result = null;
+			return false;
+		}
+
+		private static bool DeserializeObjectDirectely(IDeserializationProcessor[] processors, object deserializationTarget, object dataToDeserialize)
+		{
+			foreach (IDeserializationProcessor processor in processors)
+			{
+				if ((processor is IDeserializationToTargetProcessor toTargetProcessor) &&
+					toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		private static bool DeserializeObjectDirectely(List<IDeserializationProcessor> processors, object deserializationTarget, object dataToDeserialize)
+		{
+			foreach (IDeserializationProcessor processor in processors)
+			{
+				if ((processor is IDeserializationToTargetProcessor toTargetProcessor) &&
+					toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		private static bool DeserializeObjectDirectely(IEnumerable<IDeserializationProcessor> processors, object deserializationTarget, object dataToDeserialize)
+		{
+			foreach (IDeserializationProcessor processor in processors)
+			{
+				if ((processor is IDeserializationToTargetProcessor toTargetProcessor) &&
+					toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize))
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 	}
 }

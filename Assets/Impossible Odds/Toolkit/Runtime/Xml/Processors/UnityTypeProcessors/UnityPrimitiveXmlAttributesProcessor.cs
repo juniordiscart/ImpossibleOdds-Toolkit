@@ -7,16 +7,16 @@
 
 	public abstract class UnityPrimitiveXmlAttributesProcessor<T> : ISerializationProcessor, IDeserializationProcessor
 	{
-		private XmlSerializationDefinition definition = null;
+		private readonly XmlSerializationDefinition definition = null;
 
 		public XmlSerializationDefinition Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		ISerializationDefinition IProcessor.Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		public UnityPrimitiveXmlAttributesProcessor(XmlSerializationDefinition definition)

@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.Collections.Concurrent;
 	using ImpossibleOdds.Http;
 	using ImpossibleOdds.Weblink;
 	using ImpossibleOdds.Serialization;
@@ -19,7 +20,7 @@
 	{
 		private readonly LoadBalancingClient photonClient = null;
 		private IWebRpcMessageConfigurator messageConfigurator = null;
-		private Dictionary<object, WebRpcMessageHandle> pendingCalls = null;
+		private ConcurrentDictionary<object, WebRpcMessageHandle> pendingCalls = null;
 
 		/// <summary>
 		/// The configurator used by the messenger for handling the URL and body of the requests and incoming responses.
@@ -27,7 +28,7 @@
 		/// </summary>
 		public IWebRpcMessageConfigurator MessageConfigurator
 		{
-			get { return messageConfigurator; }
+			get => messageConfigurator;
 			set
 			{
 				value.ThrowIfNull(nameof(value));
@@ -51,7 +52,7 @@
 
 			this.photonClient = photonClient;
 			this.messageConfigurator = configurator;
-			this.pendingCalls = new Dictionary<object, WebRpcMessageHandle>();
+			this.pendingCalls = new ConcurrentDictionary<object, WebRpcMessageHandle>();
 
 			photonClient.AddCallbackTarget(this);
 		}
@@ -107,7 +108,7 @@
 			if (IsPending(request))
 			{
 				WebRpcMessageHandle handle = GetMessageHandle(request);
-				pendingCalls.Remove(handle.RequestId);
+				pendingCalls.TryRemove(handle.RequestId, out _);
 			}
 
 			base.RemovePendingRequest(request);
@@ -227,7 +228,7 @@
 			/// </summary>
 			public virtual int GeneratedIdLength
 			{
-				get { return generatedIdLength; }
+				get => generatedIdLength;
 				set
 				{
 					if (value < MinimumIdLength)

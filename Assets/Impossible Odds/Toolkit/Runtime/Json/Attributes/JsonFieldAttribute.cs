@@ -8,15 +8,17 @@
 	{
 		private string key = null;
 
+		/// <inheritdoc />
 		object ILookupParameter.Key
 		{
-			get { return Key; }
+			get => Key;
 		}
 
+		/// <inheritdoc />
 		public string Key
 		{
-			get { return key; }
-			set { key = value; }
+			get => key;
+			set => key = value;
 		}
 
 		public JsonFieldAttribute()

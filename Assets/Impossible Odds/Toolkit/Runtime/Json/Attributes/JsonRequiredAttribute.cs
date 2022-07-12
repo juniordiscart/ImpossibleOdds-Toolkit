@@ -10,8 +10,8 @@
 
 		public bool NullCheck
 		{
-			get { return performNullCheck; }
-			set { performNullCheck = value; }
+			get => performNullCheck;
+			set => performNullCheck = value;
 		}
 	}
 }

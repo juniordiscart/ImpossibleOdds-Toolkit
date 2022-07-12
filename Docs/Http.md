@@ -41,7 +41,7 @@ public class GetLeaderboardRequest : IHttpRequest
 {
 	public string URL
 	{
-		get { return "https://my.domain.com/getleaderboard.php"; }
+		get => "https://my.domain.com/getleaderboard.php";
 	}
 
 	// Other details omitted...
@@ -62,7 +62,7 @@ public class GetLeaderboardRequest : IHttpPostRequest
 
 	public string URL
 	{
-		get { return "https://my.domain.com/getleaderboard.php"; }
+		get => "https://my.domain.com/getleaderboard.php";
 	}
 
 	// Other details omitted...
@@ -84,7 +84,7 @@ public class GetLeaderboardRequest : IHttpPostRequest
 
 	public string URL
 	{
-		get { return "https://my.domain.com/getleaderboard.php"; }
+		get => "https://my.domain.com/getleaderboard.php";
 	}
 
 	// Other details omitted...
@@ -112,7 +112,7 @@ public class GetLeaderboardRequest : IHttpGetRequest
 
 	public string URL
 	{
-		get { return "https://my.domain.com/getleaderboard.php"; }
+		get => "https://my.domain.com/getleaderboard.php";
 	}
 
 	// Other details omitted...
@@ -176,7 +176,7 @@ public class MyStringPutRequest : IHttpPutStringRequest
 {
 	public string PutData
 	{
-		get { return File.ReadAllText("configuration.xml"); }
+		get => File.ReadAllText("configuration.xml");
 	}
 
 	// Other details omitted...
@@ -188,7 +188,7 @@ public class MyBinaryPutRequest : IHttpPutBinaryRequest
 {
 	public byte[] PutData
 	{
-		get { return File.ReadAllBytes("banner.png"); }
+		get => File.ReadAllBytes("banner.png");
 	}
 
 	// Other details omitted...
@@ -529,7 +529,7 @@ public class GetLeaderboardRequest : IHttpPostRequest
 
 	public string URL
 	{
-		get { return "https://my.domain.com/getleaderboard.php"; }
+		get => "https://my.domain.com/getleaderboard.php";
 	}
 }
 ```

@@ -2,16 +2,17 @@
 {
 	using System;
 	using System.Collections;
-	using System.Collections.Generic;
+	// using System.Collections.Generic;
+	using System.Collections.Concurrent;
 	using System.Runtime.Serialization;
 	using ImpossibleOdds.Serialization.Caching;
 
 	public static class SerializationUtilities
 	{
-		private static readonly Dictionary<Type, object> defaultValueCache = new Dictionary<Type, object>();
-		private static readonly Dictionary<Type, LookupCollectionTypeInfo> lookupTypeInfoCache = new Dictionary<Type, LookupCollectionTypeInfo>();
-		private static readonly Dictionary<Type, SequenceCollectionTypeInfo> sequenceTypeInfoCache = new Dictionary<Type, SequenceCollectionTypeInfo>();
-		private static readonly Dictionary<Type, SerializationTypeMap> typeMapCache = new Dictionary<Type, SerializationTypeMap>();
+		private static readonly ConcurrentDictionary<Type, object> defaultValueCache = new ConcurrentDictionary<Type, object>();
+		private static readonly ConcurrentDictionary<Type, LookupCollectionTypeInfo> lookupTypeInfoCache = new ConcurrentDictionary<Type, LookupCollectionTypeInfo>();
+		private static readonly ConcurrentDictionary<Type, SequenceCollectionTypeInfo> sequenceTypeInfoCache = new ConcurrentDictionary<Type, SequenceCollectionTypeInfo>();
+		private static readonly ConcurrentDictionary<Type, ISerializationReflectionMap> typeMapCache = new ConcurrentDictionary<Type, ISerializationReflectionMap>();
 
 		/// <summary>
 		/// Test wether a type is truely nullable.
@@ -79,12 +80,7 @@
 		{
 			if (type.IsValueType)
 			{
-				if (!defaultValueCache.ContainsKey(type))
-				{
-					defaultValueCache[type] = Activator.CreateInstance(type);
-				}
-
-				return defaultValueCache[type];
+				return defaultValueCache.ContainsKey(type) ? defaultValueCache[type] : defaultValueCache.GetOrAdd(type, Activator.CreateInstance(type));
 			}
 			else
 			{
@@ -252,14 +248,7 @@
 		public static LookupCollectionTypeInfo GetCollectionTypeInfo(IDictionary instance)
 		{
 			instance.ThrowIfNull(nameof(instance));
-
-			Type instanceType = instance.GetType();
-			if (!lookupTypeInfoCache.ContainsKey(instanceType))
-			{
-				lookupTypeInfoCache[instanceType] = new LookupCollectionTypeInfo(instance);
-			}
-
-			return lookupTypeInfoCache[instanceType];
+			return lookupTypeInfoCache.GetOrAdd(instance.GetType(), (type) => new LookupCollectionTypeInfo(type));
 		}
 
 		/// <summary>
@@ -270,14 +259,7 @@
 		public static SequenceCollectionTypeInfo GetCollectionTypeInfo(IList instance)
 		{
 			instance.ThrowIfNull(nameof(instance));
-
-			Type instanceType = instance.GetType();
-			if (!sequenceTypeInfoCache.ContainsKey(instanceType))
-			{
-				sequenceTypeInfoCache[instanceType] = new SequenceCollectionTypeInfo(instance);
-			}
-
-			return sequenceTypeInfoCache[instanceType];
+			return sequenceTypeInfoCache.GetOrAdd(instance.GetType(), (type) => new SequenceCollectionTypeInfo(type));
 		}
 
 		/// <summary>
@@ -285,16 +267,10 @@
 		/// </summary>
 		/// <param name="type">The type for which to retrieve the cached information.</param>
 		/// <returns>The type cache associated with the given type.</returns>
-		public static SerializationTypeMap GetTypeMap(Type target)
+		public static ISerializationReflectionMap GetTypeMap(Type target)
 		{
 			target.ThrowIfNull(nameof(target));
-
-			if (!typeMapCache.ContainsKey(target))
-			{
-				typeMapCache[target] = new SerializationTypeMap(target);
-			}
-
-			return typeMapCache[target];
+			return typeMapCache.GetOrAdd(target, (type) => new SerializationReflectionMap(type));
 		}
 	}
 }

@@ -7,24 +7,24 @@
 	where TSequenceProcessor : UnityPrimitiveSequenceProcessor<TPrimitive>
 	where TLookupProcessor : UnityPrimitiveLookupProcessor<TPrimitive>
 	{
-		private TSequenceProcessor sequenceProcessor = null;
-		private TLookupProcessor lookupProcessor = null;
+		private readonly TSequenceProcessor sequenceProcessor = null;
+		private readonly TLookupProcessor lookupProcessor = null;
 		private PrimitiveProcessingMethod processingMethod;
 
 		public TSequenceProcessor SequenceProcessor
 		{
-			get { return sequenceProcessor; }
+			get => sequenceProcessor;
 		}
 
 		public TLookupProcessor LookupProcessor
 		{
-			get { return lookupProcessor; }
+			get => lookupProcessor;
 		}
 
 		public PrimitiveProcessingMethod ProcessingMethod
 		{
-			get { return processingMethod; }
-			set { processingMethod = value; }
+			get => processingMethod;
+			set => processingMethod = value;
 		}
 
 		public ISerializationDefinition Definition

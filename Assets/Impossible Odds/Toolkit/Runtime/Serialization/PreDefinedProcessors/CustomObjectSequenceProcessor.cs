@@ -2,9 +2,6 @@
 {
 	using System;
 	using System.Collections;
-	using System.Collections.Generic;
-	using System.Linq;
-	using System.Reflection;
 	using ImpossibleOdds.Serialization.Caching;
 
 	/// <summary>
@@ -12,16 +9,16 @@
 	/// </summary>
 	public class CustomObjectSequenceProcessor : AbstractCustomObjectProcessor, ISerializationProcessor, IDeserializationToTargetProcessor
 	{
-		private bool requiresMarking = false;
-		private IIndexSerializationDefinition definition = null;
-		private IIndexTypeResolveSupport typeResolveDefinition = null;
+		private readonly bool requiresMarking = false;
+		private readonly IIndexSerializationDefinition definition = null;
+		private readonly IIndexTypeResolveSupport typeResolveDefinition = null;
 
 		/// <summary>
 		/// Does the serialization definition have support for type resolve parameters?
 		/// </summary>
 		public bool SupportsTypeResolvement
 		{
-			get { return typeResolveDefinition != null; }
+			get => typeResolveDefinition != null;
 		}
 
 		/// <summary>
@@ -29,7 +26,7 @@
 		/// </summary>
 		public IIndexTypeResolveSupport TypeResolveDefinition
 		{
-			get { return typeResolveDefinition; }
+			get => typeResolveDefinition;
 		}
 
 		/// <summary>
@@ -37,7 +34,7 @@
 		/// </summary>
 		public new IIndexSerializationDefinition Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		/// <summary>
@@ -45,7 +42,7 @@
 		/// </summary>
 		public bool RequiresMarking
 		{
-			get { return requiresMarking; }
+			get => requiresMarking;
 		}
 
 		public CustomObjectSequenceProcessor(IIndexSerializationDefinition definition, bool requiresMarking = true)
@@ -71,7 +68,7 @@
 			}
 
 			Type sourceType = objectToSerialize.GetType();
-			if (RequiresMarking && !sourceType.GetTypeInfo().IsDefined(definition.IndexBasedClassMarkingAttribute, true))
+			if (RequiresMarking && !Attribute.IsDefined(sourceType, definition.IndexBasedClassMarkingAttribute))
 			{
 				serializedResult = null;
 				return false;
@@ -107,7 +104,7 @@
 
 			// Create instance
 			Type instanceType = ResolveTypeFromSequence(targetType, dataToDeserialize as IList);
-			if (RequiresMarking && !instanceType.IsDefined(Definition.IndexBasedClassMarkingAttribute, true))
+			if (RequiresMarking && !Attribute.IsDefined(instanceType, definition.IndexBasedClassMarkingAttribute))
 			{
 				deserializedResult = null;
 				return false;
@@ -142,7 +139,7 @@
 			{
 				return true;
 			}
-			else if (RequiresMarking && !deserializationTarget.GetType().IsDefined(definition.IndexBasedClassMarkingAttribute, true))
+			else if (RequiresMarking && !Attribute.IsDefined(deserializationTarget.GetType(), definition.IndexBasedClassMarkingAttribute))
 			{
 				return false;
 			}
@@ -164,8 +161,8 @@
 			SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
 
 			// Get the members that will be inserted in the collection and order them by their index.
-			IReadOnlyList<IMemberAttributeTuple> sourceMembers = SerializationUtilities.GetTypeMap(sourceType).GetMembersWithAttribute(definition.IndexBasedFieldAttribute);
-			foreach (IMemberAttributeTuple sourceMember in sourceMembers)
+			ISerializableMember[] sourceMembers = SerializationUtilities.GetTypeMap(sourceType).GetSerializableMembers(definition.IndexBasedFieldAttribute);
+			foreach (ISerializableMember sourceMember in sourceMembers)
 			{
 				object processedValue = Serializer.Serialize(sourceMember.GetValue(source), definition);
 				SerializationUtilities.InsertInSequence(processedValues, collectionInfo, GetIndex(sourceMember), processedValue);
@@ -188,9 +185,8 @@
 		private void Deserialize(object target, IList source)
 		{
 			// Get all of the fields that would like to get their value filled in
-			IReadOnlyList<IMemberAttributeTuple> targetMembers = SerializationUtilities.GetTypeMap(target.GetType()).GetMembersWithAttribute(definition.IndexBasedFieldAttribute);
-
-			foreach (IMemberAttributeTuple targetMember in targetMembers)
+			ISerializableMember[] targetMembers = SerializationUtilities.GetTypeMap(target.GetType()).GetSerializableMembers(definition.IndexBasedFieldAttribute);
+			foreach (ISerializableMember targetMember in targetMembers)
 			{
 				int index = GetIndex(targetMember);
 
@@ -213,7 +209,7 @@
 			}
 		}
 
-		private int GetIndex(IMemberAttributeTuple member)
+		private int GetIndex(ISerializableMember member)
 		{
 			if (member.Attribute is IIndexParameter indexParameter)
 			{
@@ -237,9 +233,7 @@
 				return null;
 			}
 
-			IIndexTypeResolveSupport typeResolveImplementation = definition as IIndexTypeResolveSupport;
-			IEnumerable<ITypeResolveParameter> typeResolveAttributes = SerializationUtilities.GetTypeMap(sourceType).GetTypeResolveParameters(typeResolveImplementation.TypeResolveAttribute);
-			return typeResolveAttributes.FirstOrDefault(tr => tr.Target == sourceType);
+			return Array.Find(SerializationUtilities.GetTypeMap(sourceType).GetTypeResolveParameters(TypeResolveDefinition.TypeResolveAttribute), tr => tr.Target == sourceType);
 		}
 
 		private Type ResolveTypeFromSequence(Type targetType, IList source)
@@ -249,7 +243,7 @@
 				return targetType;
 			}
 
-			IEnumerable<ITypeResolveParameter> typeResolveAttrs = SerializationUtilities.GetTypeMap(targetType).GetTypeResolveParameters(typeResolveDefinition.TypeResolveAttribute);
+			ITypeResolveParameter[] typeResolveAttrs = SerializationUtilities.GetTypeMap(targetType).GetTypeResolveParameters(typeResolveDefinition.TypeResolveAttribute);
 			foreach (ITypeResolveParameter typeResolveAttr in typeResolveAttrs)
 			{
 				if (source[typeResolveDefinition.TypeResolveIndex].Equals(typeResolveAttr.Value))
@@ -273,8 +267,8 @@
 			int maxIndex = int.MinValue;
 			while ((type != null) && (type != typeof(object)))
 			{
-				IReadOnlyList<IMemberAttributeTuple> members = SerializationUtilities.GetTypeMap(type).GetMembersWithAttribute(definition.IndexBasedFieldAttribute);
-				foreach (IMemberAttributeTuple member in members)
+				ISerializableMember[] members = SerializationUtilities.GetTypeMap(type).GetSerializableMembers(definition.IndexBasedFieldAttribute);
+				foreach (ISerializableMember member in members)
 				{
 					maxIndex = Math.Max((member.Attribute as IIndexParameter).Index, maxIndex);
 				}

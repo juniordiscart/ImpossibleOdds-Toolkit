@@ -13,35 +13,35 @@
 
 		public bool IsRunning
 		{
-			get { return endedOn == DateTime.MinValue; }
+			get => endedOn == DateTime.MinValue;
 		}
 
 		[XmlElement]
 		public int NrOfEpisodes
 		{
-			get { return nrOfEpisodes; }
-			set { nrOfEpisodes = value; }
+			get => nrOfEpisodes;
+			set => nrOfEpisodes = value;
 		}
 
 		[XmlElement]
 		public int NrOfSeasons
 		{
-			get { return nrOfSeasons; }
-			set { nrOfSeasons = value; }
+			get => nrOfSeasons;
+			set => nrOfSeasons = value;
 		}
 
 		[XmlElement]
 		public DateTime StartedOn
 		{
-			get { return runningSince; }
-			set { runningSince = value; }
+			get => runningSince;
+			set => runningSince = value;
 		}
 
 		[XmlElement]
 		public DateTime EndedOn
 		{
-			get { return endedOn; }
-			set { endedOn = value; }
+			get => endedOn;
+			set => endedOn = value;
 		}
 
 	}

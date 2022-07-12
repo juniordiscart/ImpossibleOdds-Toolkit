@@ -9,7 +9,7 @@
 
 		public Type ResponseType
 		{
-			get { return responseType; }
+			get => responseType;
 		}
 
 		public WeblinkResponseCallbackAttribute(Type responseType)

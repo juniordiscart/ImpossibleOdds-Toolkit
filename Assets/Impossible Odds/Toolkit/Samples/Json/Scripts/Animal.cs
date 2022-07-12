@@ -26,36 +26,36 @@
 
 		public int NrOfLegs
 		{
-			get { return nrOfLegs; }
-			set { nrOfLegs = value; }
+			get => nrOfLegs;
+			set => nrOfLegs = value;
 		}
 
 		[JsonField]
 		public float Weight
 		{
-			get { return weight; }
-			set { weight = value; }
+			get => weight;
+			set => weight = value;
 		}
 
 		[JsonField, JsonRequired(NullCheck = true)]
 		public string Name
 		{
-			get { return name; }
-			set { name = value; }
+			get => name;
+			set => name = value;
 		}
 
 		[JsonField]
 		public DateTime DateOfBirth
 		{
-			get { return dateOfBirth; }
-			set { dateOfBirth = value; }
+			get => dateOfBirth;
+			set => dateOfBirth = value;
 		}
 
 		[JsonField]
 		public TaxonomyClass Classification
 		{
-			get { return classification; }
-			set { classification = value; }
+			get => classification;
+			set => classification = value;
 		}
 
 		[OnJsonSerializing]

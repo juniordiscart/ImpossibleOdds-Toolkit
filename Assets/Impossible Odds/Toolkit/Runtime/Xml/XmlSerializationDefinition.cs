@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Globalization;
+	using System.Linq;
 	using System.Runtime.Serialization.Formatters.Binary;
 	using System.Xml.Linq;
 	using ImpossibleOdds.Serialization;
@@ -10,18 +11,19 @@
 	using ImpossibleOdds.Xml.Processors;
 
 	public class XmlSerializationDefinition :
-	ISerializationDefinition,
-	ICallbacksSupport<OnXmlSerializingAttribute, OnXmlSerializedAttribute, OnXmlDeserializingAttribute, OnXmlDeserializedAttribute>,
-	ILookupTypeResolveSupport<XmlTypeAttribute>,
-	IRequiredValueSupport<XmlRequiredAttribute>,
-	IEnumAliasSupport<XmlEnumStringAttribute, XmlEnumAliasAttribute>
+		ISerializationDefinition,
+		ICallbacksSupport<OnXmlSerializingAttribute, OnXmlSerializedAttribute, OnXmlDeserializingAttribute, OnXmlDeserializedAttribute>,
+		ILookupTypeResolveSupport<XmlTypeAttribute>,
+		IRequiredValueSupport<XmlRequiredAttribute>,
+		IEnumAliasSupport<XmlEnumStringAttribute, XmlEnumAliasAttribute>
 	{
 		public const string XmlSchemaURL = "http://www.w3.org/2001/XMLSchema-instance";
 		public const string XmlSchemaPrefix = "xsi";
 		public const string XmlTypeKey = "type";
 
 		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
-		private List<IProcessor> processors = null;
+		private ISerializationProcessor[] serializationProcessors = null;
+		private IDeserializationProcessor[] deserializationProcessors = null;
 		private HashSet<Type> supportedTypes = null;
 		private BinaryFormatter binaryFormatter = new BinaryFormatter();
 		private ISerializationDefinition attributeDefinition = null;
@@ -32,80 +34,62 @@
 		/// <inheritdoc />
 		public IEnumerable<ISerializationProcessor> SerializationProcessors
 		{
-			get
-			{
-				foreach (IProcessor processor in processors)
-				{
-					if (processor is ISerializationProcessor serializationProcessor)
-					{
-						yield return serializationProcessor;
-					}
-				}
-			}
+			get => serializationProcessors;
 		}
 
 		/// <inheritdoc />
 		public IEnumerable<IDeserializationProcessor> DeserializationProcessors
 		{
-			get
-			{
-				foreach (IProcessor processor in processors)
-				{
-					if (processor is IDeserializationProcessor deserializationProcessor)
-					{
-						yield return deserializationProcessor;
-					}
-				}
-			}
+			get => deserializationProcessors;
 		}
 
 		/// <inheritdoc />
 		public IFormatProvider FormatProvider
 		{
-			get { return formatProvider; }
-			set { formatProvider = value; }
+			get => formatProvider;
+			set => formatProvider = value;
 		}
 
 		/// <inheritdoc />
 		public HashSet<Type> SupportedTypes
 		{
-			get { return supportedTypes; }
+			get => supportedTypes;
 		}
 
 		/// <inheritdoc />
 		public Type OnSerializationCallbackType
 		{
-			get { return typeof(OnXmlSerializingAttribute); }
+			get => typeof(OnXmlSerializingAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type OnSerializedCallbackType
 		{
-			get { return typeof(OnXmlSerializedAttribute); }
+			get => typeof(OnXmlSerializedAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type OnDeserializionCallbackType
 		{
-			get { return typeof(OnXmlDeserializingAttribute); }
+			get => typeof(OnXmlDeserializingAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type OnDeserializedCallbackType
 		{
-			get { return typeof(OnXmlDeserializedAttribute); }
+			get => typeof(OnXmlDeserializedAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type TypeResolveAttribute
 		{
-			get { return typeof(XmlTypeAttribute); }
+			get => typeof(XmlTypeAttribute);
 		}
 
 		/// <inheritdoc />
 		object ILookupTypeResolveSupport.TypeResolveKey
 		{
-			get { return TypeResolveKey; }
+			get => TypeResolveKey;
 		}
 
 		/// <summary>
@@ -113,25 +97,25 @@
 		/// </summary>
 		public XName TypeResolveKey
 		{
-			get { return xmlTypeKey; }
+			get => xmlTypeKey;
 		}
 
 		/// <inheritdoc />
 		public Type RequiredAttributeType
 		{
-			get { return typeof(XmlRequiredAttribute); }
+			get => typeof(XmlRequiredAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type EnumAsStringAttributeType
 		{
-			get { return typeof(XmlEnumStringAttribute); }
+			get => typeof(XmlEnumStringAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type EnumAliasValueAttributeType
 		{
-			get { return typeof(XmlEnumAliasAttribute); }
+			get => typeof(XmlEnumAliasAttribute);
 		}
 
 		/// <summary>
@@ -139,8 +123,8 @@
 		/// </summary>
 		public ISerializationDefinition AttributeSerializationDefinition
 		{
-			get { return attributeDefinition; }
-			set { attributeDefinition = value; }
+			get => attributeDefinition;
+			set => attributeDefinition = value;
 		}
 
 		/// <summary>
@@ -148,8 +132,8 @@
 		/// </summary>
 		public ISerializationDefinition CDataSerializationDefinition
 		{
-			get { return cdataDefinition; }
-			set { cdataDefinition = value; }
+			get => cdataDefinition;
+			set => cdataDefinition = value;
 		}
 
 		public XmlSerializationDefinition()
@@ -174,7 +158,7 @@
 				typeof(XElement)
 			};
 
-			processors = new List<IProcessor>()
+			List<IProcessor> processors = new List<IProcessor>()
 			{
 				new NullValueProcessor(this),
 				new ExactMatchProcessor(this),
@@ -198,6 +182,9 @@
 				new XmlCustomObjectProcessor(this),
 			};
 
+			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>().ToArray();
+			deserializationProcessors = processors.Where(p => p is IDeserializationProcessor).Cast<IDeserializationProcessor>().ToArray();
+
 			xmlTypeKey = XNamespace.Get(XmlSchemaURL) + XmlTypeKey;
 
 			attributeDefinition = new XmlAttributeSerializationDefinition();
@@ -210,7 +197,15 @@
 		/// <param name="preferredProcessingMethod">The preferred processing method.</param>
 		public void UpdateUnityPrimitiveRepresentation(XmlPrimitiveProcessingMethod preferredProcessingMethod)
 		{
-			foreach (IProcessor processor in processors)
+			foreach (IProcessor processor in serializationProcessors)
+			{
+				if (processor is IUnityPrimitiveXmlSwitchProcessor switchProcessor)
+				{
+					switchProcessor.ProcessingMethod = preferredProcessingMethod;
+				}
+			}
+
+			foreach (IProcessor processor in deserializationProcessors)
 			{
 				if (processor is IUnityPrimitiveXmlSwitchProcessor switchProcessor)
 				{

@@ -28,42 +28,42 @@
 		[XmlAttribute, XmlRequired(NullCheck = true)]
 		public string Name
 		{
-			get { return name; }
-			set { name = value; }
+			get => name;
+			set => name = value;
 		}
 
 		[XmlElement]
 		public float Score
 		{
-			get { return score; }
-			set { score = value; }
+			get => score;
+			set => score = value;
 		}
 
 		[XmlElement]
 		public Genre Genre
 		{
-			get { return genre; }
-			set { genre = value; }
+			get => genre;
+			set => genre = value;
 		}
 
 		[XmlElement]
 		public string Director
 		{
-			get { return director; }
-			set { director = value; }
+			get => director;
+			set => director = value;
 		}
 
 		[XmlListElement(EntryName = "Actor")]
 		public string[] Actors
 		{
-			get { return actors; }
-			set { actors = value; }
+			get => actors;
+			set => actors = value;
 		}
 
 		public Texture2D Poster
 		{
-			get { return poster; }
-			set { poster = value; }
+			get => poster;
+			set => poster = value;
 		}
 
 		[OnXmlSerializing]

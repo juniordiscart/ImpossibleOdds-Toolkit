@@ -12,7 +12,7 @@
 
 		public int Order
 		{
-			get { return order; }
+			get => order;
 		}
 
 		public ExecuteAtAttribute(int order)

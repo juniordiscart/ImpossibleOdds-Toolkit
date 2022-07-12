@@ -6,7 +6,7 @@
 
 		public bool InsertedCoin
 		{
-			get { return insertedCoin; }
+			get => insertedCoin;
 		}
 
 		public void InsertCoin()

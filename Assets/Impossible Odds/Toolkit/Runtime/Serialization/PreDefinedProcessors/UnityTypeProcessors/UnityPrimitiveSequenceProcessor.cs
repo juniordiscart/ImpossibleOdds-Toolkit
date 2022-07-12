@@ -5,16 +5,16 @@
 
 	public abstract class UnityPrimitiveSequenceProcessor<T> : ISerializationProcessor, IDeserializationProcessor
 	{
-		private IIndexSerializationDefinition definition = null;
+		private readonly IIndexSerializationDefinition definition = null;
 
 		public IIndexSerializationDefinition Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		ISerializationDefinition IProcessor.Definition
 		{
-			get { return Definition; }
+			get => Definition;
 		}
 
 		public UnityPrimitiveSequenceProcessor(IIndexSerializationDefinition definition)

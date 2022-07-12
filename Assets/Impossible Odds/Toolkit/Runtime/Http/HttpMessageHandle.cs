@@ -15,7 +15,7 @@
 		/// </summary>
 		public IHttpRequest Request
 		{
-			get { return request; }
+			get => request;
 		}
 
 		/// <summary>
@@ -23,7 +23,7 @@
 		/// </summary>
 		public UnityWebRequest WebRequest
 		{
-			get { return webRequest; }
+			get => webRequest;
 		}
 
 		/// <summary>
@@ -31,8 +31,8 @@
 		/// </summary>
 		public IHttpResponse Response
 		{
-			get { return response; }
-			set { response = value; }
+			get => response;
+			set => response = value;
 		}
 
 		/// <summary>
@@ -41,9 +41,9 @@
 		public bool IsDone
 		{
 #if UNITY_2020_2_OR_NEWER
-			get { return (response != null) || IsError; }
+			get => (response != null) || IsError;
 #else
-			get { return ((webRequest != null) && (webRequest.isNetworkError || webRequest.isHttpError)) || (response != null); }
+			get => ((webRequest != null) && (webRequest.isNetworkError || webRequest.isHttpError)) || (response != null);
 #endif
 		}
 
@@ -67,7 +67,7 @@
 			}
 #else
 
-			get { return (webRequest != null) && (webRequest.isNetworkError || webRequest.isHttpError); }
+			get => (webRequest != null) && (webRequest.isNetworkError || webRequest.isHttpError);
 #endif
 		}
 
@@ -76,17 +76,17 @@
 		/// </summary>
 		object IEnumerator.Current
 		{
-			get { return null; }
+			get => null;
 		}
 
 		IWeblinkRequest IWeblinkMessageHandle.Request
 		{
-			get { return Request; }
+			get => Request;
 		}
 
 		IWeblinkResponse IWeblinkMessageHandle.Response
 		{
-			get { return Response; }
+			get => Response;
 		}
 
 		public HttpMessageHandle(IHttpRequest request, UnityWebRequest webRequest)

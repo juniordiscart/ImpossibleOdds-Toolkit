@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Collections.Concurrent;
 
 	/// <summary>
 	/// An abstract messenger framework for matching outgoing requests with a single incoming response.
@@ -23,7 +24,7 @@
 		/// <inheritdoc />
 		public event Action<THandle> onMessageFailed;
 
-		private Dictionary<TRequest, THandle> pendingRequests = new Dictionary<TRequest, THandle>();
+		private ConcurrentDictionary<TRequest, THandle> pendingRequests = new ConcurrentDictionary<TRequest, THandle>();
 		private List<object> responseCallbacks = new List<object>();
 
 		/// <inheritdoc />
@@ -89,7 +90,7 @@
 		/// </summary>
 		public int Count
 		{
-			get { return pendingRequests.Count; }
+			get => pendingRequests.Count;
 		}
 
 		/// <inheritdoc />
@@ -99,9 +100,12 @@
 		public void RegisterCallback(object callback)
 		{
 			callback.ThrowIfNull(nameof(callback));
-			if (!responseCallbacks.Contains(callback))
+			lock (responseCallbacks)
 			{
-				responseCallbacks.Add(callback);
+				if (!responseCallbacks.Contains(callback))
+				{
+					responseCallbacks.Add(callback);
+				}
 			}
 		}
 
@@ -109,7 +113,10 @@
 		public void RemoveCallback(object callback)
 		{
 			callback.ThrowIfNull(nameof(callback));
-			responseCallbacks.Remove(callback);
+			lock (responseCallbacks)
+			{
+				responseCallbacks.Remove(callback);
+			}
 		}
 
 		/// <inheritdoc />
@@ -162,7 +169,7 @@
 				throw new WeblinkException("A handle with the same request is already pending.");
 			}
 
-			pendingRequests.Add(handle.Request, handle);
+			pendingRequests.TryAdd(handle.Request, handle);
 		}
 
 		/// <summary>
@@ -182,7 +189,7 @@
 		protected virtual void RemovePendingRequest(TRequest request)
 		{
 			request.ThrowIfNull(nameof(request));
-			pendingRequests.Remove(request);
+			pendingRequests.TryRemove(request, out _);
 		}
 
 		/// <summary>

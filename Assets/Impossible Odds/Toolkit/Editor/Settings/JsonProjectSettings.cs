@@ -13,12 +13,12 @@
 
 		public override string SettingName
 		{
-			get { return "JSON Serialization Settings"; }
+			get => "JSON Serialization Settings";
 		}
 
 		public override string Symbol
 		{
-			get { return JsonUnityTypesAsArray; }
+			get => JsonUnityTypesAsArray;
 		}
 
 		public override void DisplayGUI(string searchContext)

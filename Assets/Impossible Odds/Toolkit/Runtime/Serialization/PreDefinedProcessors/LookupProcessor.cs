@@ -9,16 +9,16 @@
 	/// </summary>
 	public class LookupProcessor : ISerializationProcessor, IDeserializationProcessor, IDeserializationToTargetProcessor
 	{
-		private ILookupSerializationDefinition definition;
+		private readonly ILookupSerializationDefinition definition;
 
 		ISerializationDefinition IProcessor.Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		ILookupSerializationDefinition Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		public LookupProcessor(ILookupSerializationDefinition definition)

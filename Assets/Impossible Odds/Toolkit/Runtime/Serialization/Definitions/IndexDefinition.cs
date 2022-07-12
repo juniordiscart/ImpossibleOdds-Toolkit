@@ -22,28 +22,39 @@
 
 		public Type IndexBasedClassMarkingAttribute
 		{
-			get { return typeof(T); }
+			get => typeof(T);
 		}
 
 		public Type IndexBasedFieldAttribute
 		{
-			get { return typeof(U); }
+			get => typeof(U);
 		}
 
 		public Type IndexBasedDataType
 		{
-			get { return typeof(V); }
+			get => typeof(V);
 		}
 
 		public IFormatProvider FormatProvider
 		{
-			get { return formatProvider; }
-			set { formatProvider = value; }
+			get => formatProvider;
+			set => formatProvider = value;
 		}
 
-		public abstract IEnumerable<ISerializationProcessor> SerializationProcessors { get; }
-		public abstract IEnumerable<IDeserializationProcessor> DeserializationProcessors { get; }
-		public abstract HashSet<Type> SupportedTypes { get; }
+		public abstract IEnumerable<ISerializationProcessor> SerializationProcessors
+		{
+			get;
+		}
+
+		public abstract IEnumerable<IDeserializationProcessor> DeserializationProcessors
+		{
+			get;
+		}
+
+		public abstract HashSet<Type> SupportedTypes
+		{
+			get;
+		}
 
 		public abstract V CreateSequenceInstance(int capacity);
 

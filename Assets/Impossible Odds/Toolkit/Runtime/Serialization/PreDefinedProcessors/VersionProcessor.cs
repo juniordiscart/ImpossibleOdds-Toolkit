@@ -7,16 +7,17 @@ namespace ImpossibleOdds.Serialization.Processors
 	/// </summary>
 	public class VersionProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
+		private readonly ISerializationDefinition definition = null;
+
 		public ISerializationDefinition Definition
 		{
-			get;
-			private set;
+			get => definition;
 		}
 
 		public VersionProcessor(ISerializationDefinition definition)
 		{
 			definition.ThrowIfNull(nameof(definition));
-			Definition = definition;
+			this.definition = definition;
 		}
 
 		/// <summary>

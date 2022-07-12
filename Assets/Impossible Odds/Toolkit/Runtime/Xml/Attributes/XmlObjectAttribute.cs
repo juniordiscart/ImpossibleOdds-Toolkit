@@ -13,8 +13,8 @@
 		/// </summary>
 		public string RootName
 		{
-			get { return rootName; }
-			set { rootName = value; }
+			get => rootName;
+			set => rootName = value;
 		}
 	}
 }

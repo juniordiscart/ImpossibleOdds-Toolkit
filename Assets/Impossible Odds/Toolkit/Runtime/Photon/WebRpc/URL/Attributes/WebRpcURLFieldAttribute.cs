@@ -10,13 +10,13 @@
 
 		object ILookupParameter.Key
 		{
-			get { return Key; }
+			get => Key;
 		}
 
 		public string Key
 		{
-			get { return key; }
-			set { key = value; }
+			get => key;
+			set => key = value;
 		}
 
 		public WebRpcUrlFieldAttribute()

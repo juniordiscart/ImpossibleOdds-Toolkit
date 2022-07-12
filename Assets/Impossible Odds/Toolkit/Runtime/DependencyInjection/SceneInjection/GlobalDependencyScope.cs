@@ -12,6 +12,7 @@
 	/// </summary>
 	public class GlobalDependencyScope : IDependencyScope
 	{
+		#region Static
 #if IMPOSSIBLE_ODDS_DEPENDENCY_INJECTION_DISABLE_GLOBAL_AUTO_INJECT
 		private static bool autoInjectLoadedScenes = false;
 #else
@@ -41,13 +42,14 @@
 		{
 			globalScope = new GlobalDependencyScope();
 		}
+		#endregion
 
 		private IDependencyContainer globalContainer = new DependencyContainer();
 
 		/// <inheritdoc />
 		public IDependencyContainer DependencyContainer
 		{
-			get { return globalContainer; }
+			get => globalContainer;
 		}
 
 		private GlobalDependencyScope()
@@ -55,6 +57,14 @@
 			InitializeGlobalContainer();
 			this.InitializeGlobalScope();
 			SceneManager.sceneLoaded += OnSceneLoaded;
+		}
+
+		/// <summary>
+		/// Injects the currently active scene with the global resources.
+		/// </summary>
+		public void Inject()
+		{
+			SceneManager.GetActiveScene().Inject(globalContainer);
 		}
 
 		private void InitializeGlobalContainer()
@@ -114,7 +124,7 @@
 				{
 					foreach (MethodInfo method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
 					{
-						if (method.IsDefined(attributeType, false))
+						if (Attribute.IsDefined(method, attributeType, false))
 						{
 							methods.Add(method);
 						}

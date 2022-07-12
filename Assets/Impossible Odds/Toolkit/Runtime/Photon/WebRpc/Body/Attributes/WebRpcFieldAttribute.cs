@@ -8,7 +8,7 @@
 	{
 		public object Key
 		{
-			get { return key; }
+			get => key;
 		}
 
 		private readonly object key;

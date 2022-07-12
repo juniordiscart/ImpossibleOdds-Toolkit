@@ -12,12 +12,12 @@
 
 		public override string Symbol
 		{
-			get { return EnableCachingSymbol; }
+			get => EnableCachingSymbol;
 		}
 
 		public override string SettingName
 		{
-			get { return "Editor Extensions"; }
+			get => "Editor Extensions";
 		}
 
 		public override void DisplayGUI(string searchContext)

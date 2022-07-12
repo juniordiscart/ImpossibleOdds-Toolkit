@@ -18,7 +18,7 @@
 		/// </summary>
 		public IHttpMessageConfigurator MessageConfigurator
 		{
-			get { return messageConfigurator; }
+			get => messageConfigurator;
 			set
 			{
 				value.ThrowIfNull(nameof(value));

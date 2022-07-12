@@ -28,12 +28,12 @@ namespace ImpossibleOdds.Examples.Photon.WebRpc
 
 		public bool IsConnected
 		{
-			get { return client.IsConnectedAndReady; }
+			get => client.IsConnectedAndReady;
 		}
 
 		public LoadBalancingClient Client
 		{
-			get { return client; }
+			get => client;
 		}
 
 		public void Connect()

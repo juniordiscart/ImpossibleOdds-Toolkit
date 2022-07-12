@@ -69,5 +69,25 @@
 
 			return false;
 		}
+
+		/// <summary>
+		/// Checks whether the string is either null, or empty.
+		/// </summary>
+		/// <param name="s"></param>
+		/// <returns>True if the string is either null or empty. False otherwise.</returns>
+		public static bool IsNullOrEmpty(this string s)
+		{
+			return string.IsNullOrEmpty(s);
+		}
+
+		/// <summary>
+		/// Checks whether the string is either null, empty, or only consists of whitespace characters.
+		/// </summary>
+		/// <param name="s"></param>
+		/// <returns>True if the string is either null, empty or only whitespace characters. False otherwise.</returns>
+		public static bool IsNullOrWhiteSpace(this string s)
+		{
+			return string.IsNullOrWhiteSpace(s);
+		}
 	}
 }

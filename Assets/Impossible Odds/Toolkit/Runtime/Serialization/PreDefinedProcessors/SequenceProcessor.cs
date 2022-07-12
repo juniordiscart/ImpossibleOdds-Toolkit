@@ -9,16 +9,16 @@
 	/// </summary>
 	public class SequenceProcessor : ISerializationProcessor, IDeserializationProcessor, IDeserializationToTargetProcessor
 	{
-		private IIndexSerializationDefinition definition;
+		private readonly IIndexSerializationDefinition definition;
 
 		ISerializationDefinition IProcessor.Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		IIndexSerializationDefinition Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		public SequenceProcessor(IIndexSerializationDefinition definition)

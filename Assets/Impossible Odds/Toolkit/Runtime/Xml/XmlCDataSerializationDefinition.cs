@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Globalization;
+	using System.Linq;
 	using System.Xml.Linq;
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Processors;
@@ -15,50 +16,33 @@
 	ISerializationDefinition
 	{
 		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
-		private List<IProcessor> processors = null;
+		private ISerializationProcessor[] serializationProcessors = null;
+		private IDeserializationProcessor[] deserializationProcessors = null;
 		private HashSet<Type> supportedTypes = null;
 
 		/// <inheritdoc />
 		public IEnumerable<ISerializationProcessor> SerializationProcessors
 		{
-			get
-			{
-				foreach (IProcessor processor in processors)
-				{
-					if (processor is ISerializationProcessor serializationProcessor)
-					{
-						yield return serializationProcessor;
-					}
-				}
-			}
+			get => serializationProcessors;
 		}
 
 		/// <inheritdoc />
 		public IEnumerable<IDeserializationProcessor> DeserializationProcessors
 		{
-			get
-			{
-				foreach (IProcessor processor in processors)
-				{
-					if (processor is IDeserializationProcessor deserializationProcessor)
-					{
-						yield return deserializationProcessor;
-					}
-				}
-			}
+			get => deserializationProcessors;
 		}
 
 		/// <inheritdoc />
 		public IFormatProvider FormatProvider
 		{
-			get { return formatProvider; }
-			set { formatProvider = value; }
+			get => formatProvider;
+			set => formatProvider = value;
 		}
 
 		/// <inheritdoc />
 		public HashSet<Type> SupportedTypes
 		{
-			get { return supportedTypes; }
+			get => supportedTypes;
 		}
 
 		public XmlCDataSerializationDefinition()
@@ -69,12 +53,15 @@
 				typeof(XCData)
 			};
 
-			processors = new List<IProcessor>()
+			List<IProcessor> processors = new List<IProcessor>()
 			{
 				new NullValueProcessor(this),
 				new ExactMatchProcessor(this),
 				new XmlCDataProcessor(this),
 			};
+
+			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>().ToArray();
+			deserializationProcessors = processors.Where(p => p is IDeserializationProcessor).Cast<IDeserializationProcessor>().ToArray();
 		}
 	}
 }

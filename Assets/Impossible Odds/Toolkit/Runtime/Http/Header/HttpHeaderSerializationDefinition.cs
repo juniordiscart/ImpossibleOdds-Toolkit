@@ -4,6 +4,7 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Globalization;
+	using System.Linq;
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Processors;
 
@@ -11,47 +12,30 @@
 	/// Serialization definition for the header of HTTP requests.
 	/// </summary>
 	public class HttpHeaderSerializationDefinition :
-	ILookupSerializationDefinition,
-	IEnumAliasSupport<HttpEnumStringAttribute, HttpEnumAliasAttribute>
+		ILookupSerializationDefinition,
+		IEnumAliasSupport<HttpEnumStringAttribute, HttpEnumAliasAttribute>
 	{
 		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
-		private List<IProcessor> processors = null;
+		private ISerializationProcessor[] serializationProcessors = null;
+		private IDeserializationProcessor[] deserializationProcessors = null;
 		private HashSet<Type> supportedTypes = null;
 
 		/// <inheritdoc />
 		public IEnumerable<ISerializationProcessor> SerializationProcessors
 		{
-			get
-			{
-				foreach (IProcessor processor in processors)
-				{
-					if (processor is ISerializationProcessor serializationProcessor)
-					{
-						yield return serializationProcessor;
-					}
-				}
-			}
+			get => serializationProcessors;
 		}
 
 		/// <inheritdoc />
 		public IEnumerable<IDeserializationProcessor> DeserializationProcessors
 		{
-			get
-			{
-				foreach (IProcessor processor in processors)
-				{
-					if (processor is IDeserializationProcessor deserializationProcessor)
-					{
-						yield return deserializationProcessor;
-					}
-				}
-			}
+			get => deserializationProcessors;
 		}
 
 		/// <inheritdoc />
 		public HashSet<Type> SupportedTypes
 		{
-			get { return supportedTypes; }
+			get => supportedTypes;
 		}
 
 		/// <summary>
@@ -59,56 +43,42 @@
 		/// </summary>
 		Type ILookupSerializationDefinition.LookupBasedClassMarkingAttribute
 		{
-			get { throw new NotImplementedException(); }
+			get => throw new NotImplementedException();
 		}
 
 		/// <inheritdoc />
 		public Type LookupBasedFieldAttribute
 		{
-			get { return typeof(HttpHeaderFieldAttribute); }
+			get => typeof(HttpHeaderFieldAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type LookupBasedDataType
 		{
-			get { return typeof(Dictionary<string, string>); }
+			get => typeof(Dictionary<string, string>);
 		}
 
 		/// <inheritdoc />
 		public IFormatProvider FormatProvider
 		{
-			get { return formatProvider; }
-			set { formatProvider = value; }
+			get => formatProvider;
+			set => formatProvider = value;
 		}
 
 		/// <inheritdoc />
 		public Type EnumAsStringAttributeType
 		{
-			get { return typeof(HttpEnumStringAttribute); }
+			get => typeof(HttpEnumStringAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type EnumAliasValueAttributeType
 		{
-			get { return typeof(HttpEnumAliasAttribute); }
+			get => typeof(HttpEnumAliasAttribute);
 		}
 
 		public HttpHeaderSerializationDefinition()
 		{
-			processors = new List<IProcessor>()
-			{
-				new NullValueProcessor(this),
-				new ExactMatchProcessor(this),
-				new EnumProcessor(this),
-				new PrimitiveTypeProcessor(this),
-				new DateTimeProcessor(this),
-				new VersionProcessor(this),
-				new GuidProcessor(this),
-				new StringProcessor(this),
-				new LookupProcessor(this),
-				new CustomObjectLookupProcessor(this, false)
-			};
-
 			// Basic set of types
 			supportedTypes = new HashSet<Type>()
 			{
@@ -123,6 +93,23 @@
 				typeof(bool),
 				typeof(string)
 			};
+
+			List<IProcessor> processors = new List<IProcessor>()
+			{
+				new NullValueProcessor(this),
+				new ExactMatchProcessor(this),
+				new EnumProcessor(this),
+				new PrimitiveTypeProcessor(this),
+				new DateTimeProcessor(this),
+				new VersionProcessor(this),
+				new GuidProcessor(this),
+				new StringProcessor(this),
+				new LookupProcessor(this),
+				new CustomObjectLookupProcessor(this, false)
+			};
+
+			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>().ToArray();
+			deserializationProcessors = processors.Where(p => p is IDeserializationProcessor).Cast<IDeserializationProcessor>().ToArray();
 		}
 
 		/// <inheritdoc />

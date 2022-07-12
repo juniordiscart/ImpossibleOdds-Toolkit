@@ -7,11 +7,11 @@
 	/// </summary>
 	public class ExactMatchProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
-		private ISerializationDefinition definition = null;
+		private readonly ISerializationDefinition definition = null;
 
 		public ISerializationDefinition Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		public ExactMatchProcessor(ISerializationDefinition definition)

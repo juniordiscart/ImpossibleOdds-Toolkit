@@ -7,10 +7,12 @@ namespace ImpossibleOdds.Serialization.Processors
 	/// </summary>
 	public class GuidProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
+		private string format = string.Empty;
+		private readonly ISerializationDefinition definition = null;
+
 		public ISerializationDefinition Definition
 		{
-			get;
-			private set;
+			get => definition;
 		}
 
 		/// <summary>
@@ -19,8 +21,8 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// </summary>
 		public string Format
 		{
-			get;
-			set;
+			get => format;
+			set => format = value;
 		}
 
 		public GuidProcessor(ISerializationDefinition definition)
@@ -30,7 +32,7 @@ namespace ImpossibleOdds.Serialization.Processors
 		public GuidProcessor(ISerializationDefinition definition, string format)
 		{
 			definition.ThrowIfNull(nameof(definition));
-			Definition = definition;
+			this.definition = definition;
 			Format = format;
 		}
 

@@ -13,27 +13,27 @@
 		/// <inheritdoc />
 		public Type Target
 		{
-			get { return target; }
+			get => target;
 		}
 
 		/// <inheritdoc />
 		public object Value
 		{
-			get { return value; }
-			set { this.value = value; }
+			get => value;
+			set => this.value = value;
 		}
 
 		/// <inheritdoc />
 		object ILookupTypeResolveParameter.KeyOverride
 		{
-			get { return KeyOverride; }
+			get => KeyOverride;
 		}
 
 		/// <inheritdoc />
 		public string KeyOverride
 		{
-			get { return keyOverride; }
-			set { keyOverride = value; }
+			get => keyOverride;
+			set => keyOverride = value;
 		}
 
 		public HttpTypeAttribute(Type target)

@@ -12,7 +12,7 @@
 
 		public int InstallPriority
 		{
-			get { return installPriority; }
+			get => installPriority;
 		}
 
 		public GlobalScopeInstallerAttribute()

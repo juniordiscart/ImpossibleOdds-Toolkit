@@ -15,13 +15,13 @@
 
 		public bool IsChanged
 		{
-			get { return isSet != loadedSymbols.Contains(Symbol); }
+			get => isSet != loadedSymbols.Contains(Symbol);
 		}
 
 		public bool IsSet
 		{
-			get { return isSet; }
-			set { isSet = value; }
+			get => isSet;
+			set => isSet = value;
 		}
 
 		public abstract string SettingName

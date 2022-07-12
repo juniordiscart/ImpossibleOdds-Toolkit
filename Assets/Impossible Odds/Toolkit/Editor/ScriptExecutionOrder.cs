@@ -50,7 +50,7 @@
 				Type monoType = monoScript.GetClass();
 				if ((monoType != null) && typeof(MonoBehaviour).IsAssignableFrom(monoType))
 				{
-					if (monoType.IsDefined(typeof(ExecuteAtAttribute)))
+					if (Attribute.IsDefined(monoType, typeof(ExecuteAtAttribute)))
 					{
 						scripts[monoType] = new ScriptExecutionInfo(monoScript, monoType, monoType.GetCustomAttribute<ExecuteAtAttribute>(false).Order, true);
 					}
@@ -69,7 +69,7 @@
 			foreach (ScriptExecutionInfo script in scripts.Values)
 			{
 				// Scripts that depend on executing before others
-				if (script.Type.IsDefined(typeof(ExecuteBeforeAttribute)))
+				if (Attribute.IsDefined(script.Type, typeof(ExecuteBeforeAttribute)))
 				{
 					ExecuteBeforeAttribute attr = script.Type.GetCustomAttribute<ExecuteBeforeAttribute>(false);
 					foreach (Type executeBeforeType in attr.ExecuteBefore)
@@ -82,7 +82,7 @@
 				}
 
 				// Scripts that depend on executing after others
-				if (script.Type.IsDefined(typeof(ExecuteAfterAttribute)))
+				if (Attribute.IsDefined(script.Type, typeof(ExecuteAfterAttribute)))
 				{
 					ExecuteAfterAttribute attr = script.Type.GetCustomAttribute<ExecuteAfterAttribute>(false);
 					foreach (Type executeAfterType in attr.ExecuteAfter)
@@ -225,22 +225,22 @@
 
 			public MonoScript MonoScript
 			{
-				get { return monoScript; }
+				get => monoScript;
 			}
 
 			public Type Type
 			{
-				get { return type; }
+				get => type;
 			}
 
 			public bool IsFixedOrder
 			{
-				get { return isFixedOrder; }
+				get => isFixedOrder;
 			}
 
 			public int Order
 			{
-				get { return order; }
+				get => order;
 				set
 				{
 					if (IsFixedOrder)
@@ -254,17 +254,17 @@
 
 			public bool IsValidExecutionOrder
 			{
-				get { return !HasDependencies || (order < dependsOn.Min(d => d.order)); }
+				get => !HasDependencies || (order < dependsOn.Min(d => d.order));
 			}
 
 			public bool HasDependencies
 			{
-				get { return dependsOn.Count > 0; }
+				get => dependsOn.Count > 0;
 			}
 
 			public HashSet<ScriptExecutionInfo> Dependencies
 			{
-				get { return dependsOn; }
+				get => dependsOn;
 			}
 
 			public ScriptExecutionInfo(MonoScript monoScript, Type type, int order)
@@ -306,20 +306,20 @@
 
 			public bool IsUnvisited
 			{
-				get { return mark == 0; }
-				set { mark = value ? 0 : mark; }
+				get => mark == 0;
+				set => mark = value ? 0 : mark;
 			}
 
 			public bool IsTermporary
 			{
-				get { return mark == 1; }
-				set { mark = value ? 1 : mark; }
+				get => mark == 1;
+				set => mark = value ? 1 : mark;
 			}
 
 			public bool IsPermanent
 			{
-				get { return mark == 2; }
-				set { mark = value ? 2 : mark; }
+				get => mark == 2;
+				set => mark = value ? 2 : mark;
 			}
 
 			public GraphNode(ScriptExecutionInfo script)

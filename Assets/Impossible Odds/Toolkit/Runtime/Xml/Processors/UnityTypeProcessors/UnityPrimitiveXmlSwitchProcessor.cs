@@ -9,24 +9,24 @@
 	where TAttributesProcessor : UnityPrimitiveXmlAttributesProcessor<TPrimitive>
 	where TElementsProcessor : UnityPrimitiveXmlElementsProcessor<TPrimitive>
 	{
-		private TAttributesProcessor attributesProcessor = null;
-		private TElementsProcessor elementsProcessor = null;
+		private readonly TAttributesProcessor attributesProcessor = null;
+		private readonly TElementsProcessor elementsProcessor = null;
 		private XmlPrimitiveProcessingMethod processingMethod;
 
 		public TAttributesProcessor SequenceProcessor
 		{
-			get { return attributesProcessor; }
+			get => attributesProcessor;
 		}
 
 		public TElementsProcessor LookupProcessor
 		{
-			get { return elementsProcessor; }
+			get => elementsProcessor;
 		}
 
 		public XmlPrimitiveProcessingMethod ProcessingMethod
 		{
-			get { return processingMethod; }
-			set { processingMethod = value; }
+			get => processingMethod;
+			set => processingMethod = value;
 		}
 
 		ISerializationDefinition IProcessor.Definition

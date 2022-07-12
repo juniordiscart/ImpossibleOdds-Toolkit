@@ -79,7 +79,7 @@
 
 		public bool IsChanged
 		{
-			get { return IsEditorSymbolChanged || IsBuildSymbolChanged; }
+			get => IsEditorSymbolChanged || IsBuildSymbolChanged;
 		}
 
 		public bool IsEditorSymbolChanged
@@ -130,7 +130,7 @@
 
 		public string SettingName
 		{
-			get { return "Logging Settings"; }
+			get => "Logging Settings";
 		}
 
 		public LoggingSettings(HashSet<string> loadedSymbols)

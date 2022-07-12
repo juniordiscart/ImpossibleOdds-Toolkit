@@ -14,8 +14,8 @@
 		/// </summary>
 		public string EntryName
 		{
-			get { return childElementName; }
-			set { childElementName = value; }
+			get => childElementName;
+			set => childElementName = value;
 		}
 
 		public XmlListElementAttribute()

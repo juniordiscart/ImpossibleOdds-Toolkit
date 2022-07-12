@@ -8,7 +8,7 @@
 	{
 		public int Index
 		{
-			get { return index; }
+			get => index;
 		}
 
 		private readonly int index;

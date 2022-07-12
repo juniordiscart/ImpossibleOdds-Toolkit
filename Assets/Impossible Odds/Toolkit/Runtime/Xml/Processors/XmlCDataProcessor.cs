@@ -12,12 +12,12 @@
 	/// </summary>
 	public class XmlCDataProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
-		private ISerializationDefinition definition = null;
-		private BinaryFormatter binaryFormatter = null;
+		private readonly ISerializationDefinition definition = null;
+		private readonly BinaryFormatter binaryFormatter = null;
 
 		public ISerializationDefinition Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		public XmlCDataProcessor(ISerializationDefinition definition)

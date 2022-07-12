@@ -1,18 +1,15 @@
 ﻿namespace ImpossibleOdds.Weblink
 {
 	using System;
-	using System.Linq;
-	using System.Collections.Generic;
+	using System.Collections.Concurrent;
 	using System.Reflection;
+	using ImpossibleOdds.ReflectionCaching;
+	using ImpossibleOdds.Weblink.Caching;
 
 	public static class WeblinkUtilities
 	{
-		private readonly static Type ObjectType = typeof(object);
-		private readonly static Type HandleType = typeof(IWeblinkMessageHandle);
-		private readonly static Type RequestType = typeof(IWeblinkRequest);
-		private readonly static Type ResponseType = typeof(IWeblinkResponse);
-
-		private readonly static Dictionary<Type, Type> requestResponseMapping = new Dictionary<Type, Type>();
+		private readonly static ConcurrentDictionary<Type, Type> requestResponseMapping = new ConcurrentDictionary<Type, Type>();
+		private readonly static ConcurrentDictionary<Type, IWeblinkReflectionMap> typeMapCache = new ConcurrentDictionary<Type, IWeblinkReflectionMap>();
 
 		/// <summary>
 		/// Retrieve the associated response type for the given request type.
@@ -24,14 +21,7 @@
 		where TResponseAssocAttr : WeblinkResponseAttribute
 		{
 			requestType.ThrowIfNull(nameof(requestType));
-
-			if (!requestResponseMapping.ContainsKey(requestType))
-			{
-				TResponseAssocAttr attr = requestType.GetCustomAttribute<TResponseAssocAttr>(false);
-				requestResponseMapping.Add(requestType, attr?.ResponseType);
-			}
-
-			return requestResponseMapping[requestType];
+			return requestResponseMapping.GetOrAdd(requestType, (t) => t.GetCustomAttribute<TResponseAssocAttr>(false)?.ResponseType);
 		}
 
 		/// <summary>
@@ -85,24 +75,21 @@
 			Type handleType = handle.GetType();
 			Type targetType = target.GetType();
 			Type responseType = GetResponseType<TResponseAssocAttr>(requestType);
-			BindingFlags methodFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-			while (targetType != ObjectType)
+			IWeblinkReflectionMap reflectionMap = GetWeblinkReflectionMap(targetType);
+			foreach (ITargetedCallback callback in reflectionMap.GetTargetedCallbacks(typeof(TCallbackAttr)))
 			{
-				IEnumerable<MethodInfo> methods = targetType.GetMethods(methodFlags).Where(m => m.IsDefined(typeof(TCallbackAttr), true));
-				foreach (MethodInfo callBack in methods)
+				if (!callback.ResponseType.IsAssignableFrom(responseType))
 				{
-					TCallbackAttr callbackAttr = callBack.GetCustomAttribute<TCallbackAttr>(false);
-					if (!callbackAttr.ResponseType.IsAssignableFrom(responseType))
-					{
-						continue;
-					}
+					continue;
+				}
 
-					ParameterInfo[] parametersInfo = callBack.GetParameters();
-					object[] parameters = (parametersInfo.Length > 0) ? new object[parametersInfo.Length] : null;
+				if (!callback.Parameters.IsNullOrEmpty())
+				{
+					object[] parameters = TypeReflectionUtilities.GetParameterInvokationList(callback.Parameters.Length);
 					for (int i = 0; i < parameters.Length; ++i)
 					{
-						Type parameterType = parametersInfo[i].ParameterType;
+						Type parameterType = callback.Parameters[i].ParameterType;
 						if (parameterType.IsAssignableFrom(handleType))
 						{
 							parameters[i] = handle;
@@ -121,11 +108,20 @@
 						}
 					}
 
-					callBack.Invoke(target, parameters);
+					callback.Method.Invoke(target, parameters);
+					TypeReflectionUtilities.ReturnParameterInvokationList(parameters);
 				}
-
-				targetType = targetType.BaseType;
+				else
+				{
+					callback.Method.Invoke(target, null);
+				}
 			}
+		}
+
+		private static IWeblinkReflectionMap GetWeblinkReflectionMap(Type target)
+		{
+			target.ThrowIfNull(nameof(target));
+			return typeMapCache.GetOrAdd(target, (t) => new WeblinkReflectionMap(t));
 		}
 	}
 }

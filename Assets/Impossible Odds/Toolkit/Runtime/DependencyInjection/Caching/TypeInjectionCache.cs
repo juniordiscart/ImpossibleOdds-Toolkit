@@ -6,111 +6,100 @@
 	using System.Reflection;
 	using ImpossibleOdds.ReflectionCaching;
 
-	internal class TypeInjectionCache : TypeReflectionMap<IMemberInjectionValue>
-	{
-		private struct ValueRange
-		{
-			public int Index;
-			public int Offset;
-		}
+	using InjectableField = MemberInjectionValue<System.Reflection.FieldInfo>;
+	using InjectableProperty = MemberInjectionValue<System.Reflection.PropertyInfo>;
+	using InjectableMethod = MemberInjectionValue<System.Reflection.MethodInfo>;
+	using InjectableConstructor = MemberInjectionValue<System.Reflection.ConstructorInfo>;
 
-		private ValueRange fields;
-		private ValueRange properties;
-		private ValueRange methods;
-		private ValueRange constructors;
-		private List<IMemberInjectionValue> injectableMembers = null;
+	/// <summary>
+	/// Caching system for injectable members of a type.
+	/// </summary>
+	internal class TypeInjectionCache : IReflectionMap
+	{
+		private readonly Type type;
+		private InjectableField[] injectableFields = null;
+		private InjectableProperty[] injectableProperties = null;
+		private InjectableMethod[] injectableMethods = null;
+		private InjectableConstructor[] injectableConstructors = null;
 
 		public TypeInjectionCache(Type type)
-		: base(type)
 		{
+			type.ThrowIfNull(nameof(type));
+			this.type = type;
 			ScanType();
 		}
 
 		/// <inheritdoc />
-		public override IEnumerable<IMemberInjectionValue> MemberAttributePairs
+		public Type Type
 		{
-			get => injectableMembers;
+			get => type;
 		}
 
 		/// <summary>
 		/// Injectable constructors.
 		/// </summary>
-		public IEnumerable<MemberInjectionValue<ConstructorInfo>> InjectableConstructors
+		public InjectableConstructor[] InjectableConstructors
 		{
-			get => GetFilteredMembers<ConstructorInfo>(constructors);
+			get => injectableConstructors;
 		}
 
 		/// <summary>
 		/// Injectable fields.
 		/// </summary>
-		public IEnumerable<MemberInjectionValue<FieldInfo>> InjectableFields
+		public InjectableField[] InjectableFields
 		{
-			get => GetFilteredMembers<FieldInfo>(fields);
+			get => injectableFields;
 		}
 
 		/// <summary>
 		/// Injectable properties.
 		/// </summary>
-		public IEnumerable<MemberInjectionValue<PropertyInfo>> InjectableProperties
+		public InjectableProperty[] InjectableProperties
 		{
-			get => GetFilteredMembers<PropertyInfo>(properties);
+			get => injectableProperties;
 		}
 
 		/// <summary>
 		/// Injectable methods.
 		/// </summary>
-		public IEnumerable<MemberInjectionValue<MethodInfo>> InjectableMethods
+		public InjectableMethod[] InjectableMethods
 		{
-			get => GetFilteredMembers<MethodInfo>(methods);
+			get => injectableMethods;
 		}
 
 		private void ScanType()
 		{
-			injectableMembers = new List<IMemberInjectionValue>();
+			const MemberTypes requestedMembers = MemberTypes.Constructor | MemberTypes.Field | MemberTypes.Property | MemberTypes.Method;
+			const BindingFlags bindingFlags = TypeReflectionUtilities.DefaultBindingFlags | BindingFlags.Static;    // Include static bindings as well.
+			IEnumerable<MemberInfo> injectableMembers = TypeReflectionUtilities.FindAllMembersWithAttribute(Type, typeof(InjectAttribute), requestedMembers, bindingFlags);
 
-			// Fields
-			fields.Index = injectableMembers.Count;
-			injectableMembers.AddRange(Type.
-				GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).
-				Where(f => f.IsDefined(typeof(InjectAttribute), false) && !f.IsLiteral).    // Exclude constants.
-				Select(f => new MemberInjectionValue<FieldInfo>(f, f.GetCustomAttribute<InjectAttribute>(false))));
-			fields.Offset = injectableMembers.Count - fields.Index;
+			injectableFields =
+				injectableMembers
+				.Where(m => m is FieldInfo f && !f.IsLiteral)   // Exclude constants.
+				.Cast<FieldInfo>()
+				.Select(f => new InjectableField(f, f.GetCustomAttribute<InjectAttribute>(true)))
+				.ToArray();
 
-			// Properties
-			properties.Index = injectableMembers.Count;
-			injectableMembers.AddRange(Type.
-				GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).
-				Where(f => f.IsDefined(typeof(InjectAttribute), false) && f.CanWrite).  // Exclude properties we can't write to.;
-				Select(p => new MemberInjectionValue<PropertyInfo>(p, p.GetCustomAttribute<InjectAttribute>(false))));
-			properties.Offset = injectableMembers.Count - properties.Index;
+			injectableProperties =
+				injectableMembers
+				.Where(m => m is PropertyInfo p && p.CanWrite)  // Exclude properties we can't write to.
+				.Cast<PropertyInfo>()
+				.Select(p => new InjectableProperty(p, p.GetCustomAttribute<InjectAttribute>(true)))
+				.ToArray();
 
-			// Methods
-			methods.Index = injectableMembers.Count;
-			injectableMembers.AddRange(Type.
-				GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).
-				Where(f => f.IsDefined(typeof(InjectAttribute), false)).
-				Select(m => new MemberInjectionValue<MethodInfo>(m, m.GetCustomAttribute<InjectAttribute>(false))));
-			methods.Offset = injectableMembers.Count - methods.Index;
+			injectableMethods =
+				injectableMembers
+				.Where(m => m is MethodInfo)
+				.Cast<MethodInfo>()
+				.Select(m => new InjectableMethod(m, m.GetCustomAttribute<InjectAttribute>(true)))
+				.ToArray();
 
-			// Constructors
-			constructors.Index = injectableMembers.Count;
-			injectableMembers.AddRange(Type.
-				GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).
-				Where(c => c.IsDefined(typeof(InjectAttribute), false)).
-				Select(m => new MemberInjectionValue<ConstructorInfo>(m, m.GetCustomAttribute<InjectAttribute>(false))));
-			constructors.Offset = injectableMembers.Count - constructors.Index;
-		}
-
-		private IEnumerable<MemberInjectionValue<TMemberInfo>> GetFilteredMembers<TMemberInfo>(ValueRange indices)
-		where TMemberInfo : MemberInfo
-		{
-			if (!injectableMembers.IsNullOrEmpty() && (indices.Offset > 0))
-			{
-				for (int i = 0; i < indices.Offset; ++i)
-				{
-					yield return injectableMembers[indices.Index + i] as MemberInjectionValue<TMemberInfo>;
-				}
-			}
+			injectableConstructors =
+				injectableMembers
+				.Where(m => m is ConstructorInfo)
+				.Cast<ConstructorInfo>()
+				.Select(c => new InjectableConstructor(c, c.GetCustomAttribute<InjectAttribute>(true)))
+				.ToArray();
 		}
 	}
 }

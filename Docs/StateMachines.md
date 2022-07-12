@@ -38,7 +38,7 @@ public class TrafficLightState : MonoBehaviour, IState
 
 	public bool IsComplete
 	{
-		get { return timer >= activeTime; }
+		get => timer >= activeTime;
 	}
 
 	public void Enter()
@@ -108,7 +108,7 @@ public class TrafficLightTransition : IStateTransition<TrafficLightStateKey>
 
 	public bool CanTrigger
 	{
-		get { return from.IsComplete; }
+		get => from.IsComplete;
 	}
 
 	public void Trigger()
@@ -246,7 +246,7 @@ public class TrafficLightState : MonoBehaviour, IState
 
 	public bool IsComplete
 	{
-		get { return timer >= activeTime; }
+		get => timer >= activeTime;
 	}
 
 	public void Enter()
@@ -295,7 +295,7 @@ public class TrafficLightTransition : IStateTransition<TrafficLightStateKey>
 
 	public bool CanTrigger
 	{
-		get { return from.IsComplete; }
+		get => from.IsComplete;
 	}
 
 	public void Trigger()

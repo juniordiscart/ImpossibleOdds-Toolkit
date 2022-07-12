@@ -1,12 +1,13 @@
 ﻿namespace ImpossibleOdds.StateMachines
 {
 	using System;
+	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 
 	public class StateMachine<TStateKey> : IStateMachine<TStateKey>
 	{
-		private Dictionary<TStateKey, IState> stateMapping = new Dictionary<TStateKey, IState>();
-		private Dictionary<TStateKey, List<IStateTransition<TStateKey>>> transitions = new Dictionary<TStateKey, List<IStateTransition<TStateKey>>>();
+		private ConcurrentDictionary<TStateKey, IState> stateMapping = new ConcurrentDictionary<TStateKey, IState>();
+		private ConcurrentDictionary<TStateKey, List<IStateTransition<TStateKey>>> transitions = new ConcurrentDictionary<TStateKey, List<IStateTransition<TStateKey>>>();
 		private TStateKey currentState;
 
 		public event Action<TStateKey> onStateChanged;
@@ -15,19 +16,19 @@
 		/// <inheritdoc />
 		public TStateKey CurrentState
 		{
-			get { return currentState; }
+			get => currentState;
 		}
 
 		/// <inheritdoc />
 		object IStateMachine.CurrentState
 		{
-			get { return CurrentState; }
+			get => CurrentState;
 		}
 
 		/// <inheritdoc />
 		private IState CurrentStateObj
 		{
-			get { return stateMapping.ContainsKey(currentState) ? stateMapping[currentState] : null; }
+			get => stateMapping.TryGetValue(currentState, out IState state) ? state : null;
 		}
 
 		/// <inheritdoc />
@@ -89,7 +90,7 @@
 		{
 			stateKey.ThrowIfNull(nameof(stateKey));
 			state.ThrowIfNull(nameof(state));
-			stateMapping[stateKey] = state;
+			stateMapping.AddOrUpdate(stateKey, state, (sk, s) => state);
 		}
 
 		/// <inheritdoc />
@@ -161,17 +162,15 @@
 				CurrentStateObj.Exit();
 			}
 
-			stateMapping.Remove(stateKey);
+			stateMapping.TryRemove(stateKey, out _);
 
-			// Remove all transitions associated with this state.
-			if (transitions.ContainsKey(stateKey))
+			lock (transitions)
 			{
-				transitions.Remove(stateKey);
-			}
-
-			foreach (TStateKey sk in transitions.Keys)
-			{
-				transitions[sk].RemoveAll(t => t.To.Equals(stateKey));
+				transitions.TryRemove(stateKey, out _);
+				foreach (TStateKey sk in transitions.Keys)
+				{
+					transitions[sk].RemoveAll(t => t.To.Equals(stateKey));
+				}
 			}
 		}
 
@@ -215,7 +214,7 @@
 		public IState GetState(TStateKey stateKey)
 		{
 			stateKey.ThrowIfNull(nameof(stateKey));
-			return stateMapping.ContainsKey(stateKey) ? stateMapping[stateKey] : null;
+			return stateMapping.TryGetValue(stateKey, out IState state) ? state : null;
 		}
 
 		/// <inheritdoc />
@@ -269,19 +268,15 @@
 				throw new StateMachineException("The transition's destination state ({0}) is not present in this state machine.", transition.To.ToString());
 			}
 
-			if (!transitions.ContainsKey(transition.From))
+			List<IStateTransition<TStateKey>> stateTransitions = transitions.GetOrAdd(transition.From, (s) => new List<IStateTransition<TStateKey>>());
+			lock (stateTransitions)
 			{
-				transitions[transition.From] = new List<IStateTransition<TStateKey>>();
+				if (!transitions[transition.From].Contains(transition))
+				{
+					transitions[transition.From].Add(transition);
+					transition.onTriggered += OnTransitionTriggered;
+				}
 			}
-			else if (transitions[transition.From].Contains(transition))
-			{
-				return; // A transition can only exist once in the list.
-			}
-
-			// A transition from one state to another can exist multiple times.
-			// They may contain different a different condition to trigger.
-			transitions[transition.From].Add(transition);
-			transition.onTriggered += OnTransitionTriggered;
 		}
 
 		/// <inheritdoc />
@@ -299,10 +294,13 @@
 		{
 			transition.ThrowIfNull(nameof(transition));
 
-			if (transitions.ContainsKey(transition.From))
+			if (transitions.TryGetValue(transition.From, out List<IStateTransition<TStateKey>> stateTransitions))
 			{
-				transitions[transition.From].Remove(transition);
-				transition.onTriggered -= OnTransitionTriggered;
+				lock (stateTransitions)
+				{
+					stateTransitions.Remove(transition);
+					transition.onTriggered -= OnTransitionTriggered;
+				}
 			}
 		}
 
@@ -389,19 +387,19 @@
 			{
 				currentState.Update();
 
-				// If there are no transitions going out of the current state, then don't bother.
-				if (!transitions.ContainsKey(CurrentState))
-				{
-					return;
-				}
-
 				// Check whether any transition originating from the current state is able to trigger.
-				foreach (IStateTransition<TStateKey> transition in transitions[CurrentState])
+				if (transitions.TryGetValue(CurrentState, out List<IStateTransition<TStateKey>> stateTransitions))
 				{
-					if (transition.CanTrigger)
+					lock (stateTransitions)
 					{
-						transition.Trigger();
-						break;
+						foreach (IStateTransition<TStateKey> transition in stateTransitions)
+						{
+							if (transition.CanTrigger)
+							{
+								transition.Trigger();
+								break;
+							}
+						}
 					}
 				}
 			}

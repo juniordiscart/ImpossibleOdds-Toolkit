@@ -2,7 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using ImpossibleOdds.Json;
+	using System.Linq;
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Processors;
 
@@ -16,86 +16,71 @@
 	IEnumAliasSupport<WebRpcEnumStringAttribute, WebRpcEnumAliasAttribute>,
 	IRequiredValueSupport<WebRpcRequiredAttribute>
 	{
-		private List<IProcessor> processors = null;
-		private HashSet<Type> supportedTypes = null;
-		private string typeResolveKey = JsonSerializationDefinition.JsonTypeKey;
+		public const string WebRpcDefaultTypeKey = "jsi:type";
+
+		private readonly ISerializationProcessor[] serializationProcessors = null;
+		private readonly IDeserializationProcessor[] deserializationProcessors = null;
+		private readonly HashSet<Type> supportedTypes = null;
+		private string typeResolveKey = WebRpcDefaultTypeKey;
 
 		/// <inheritdoc />
 		public override IEnumerable<ISerializationProcessor> SerializationProcessors
 		{
-			get
-			{
-				foreach (IProcessor processor in processors)
-				{
-					if (processor is ISerializationProcessor serializationProcessor)
-					{
-						yield return serializationProcessor;
-					}
-				}
-			}
+			get => serializationProcessors;
 		}
 
 		/// <inheritdoc />
 		public override IEnumerable<IDeserializationProcessor> DeserializationProcessors
 		{
-			get
-			{
-				foreach (IProcessor processor in processors)
-				{
-					if (processor is IDeserializationProcessor deserializationProcessor)
-					{
-						yield return deserializationProcessor;
-					}
-				}
-			}
+			get => deserializationProcessors;
 		}
 
 		/// <inheritdoc />
 		public override HashSet<Type> SupportedTypes
 		{
-			get { return supportedTypes; }
+			get => supportedTypes;
 		}
 
 		/// <inheritdoc />
 		public Type OnSerializationCallbackType
 		{
-			get { return typeof(OnWebRpcSerializingAttribute); }
+			get => typeof(OnWebRpcSerializingAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type OnSerializedCallbackType
 		{
-			get { return typeof(OnWebRpcSerializedAttribute); }
+			get => typeof(OnWebRpcSerializedAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type OnDeserializionCallbackType
 		{
-			get { return typeof(OnWebRpcDeserializingAttribute); }
+			get => typeof(OnWebRpcDeserializingAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type OnDeserializedCallbackType
 		{
-			get { return typeof(OnWebRpcDeserializedAttribute); }
+			get => typeof(OnWebRpcDeserializedAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type TypeResolveAttribute
 		{
-			get { return typeof(WebRpcTypeAttribute); }
+			get => typeof(WebRpcTypeAttribute);
 		}
 
 		/// <inheritdoc />
 		object ILookupTypeResolveSupport.TypeResolveKey
 		{
-			get { return typeResolveKey; }
+			get => typeResolveKey;
 		}
 
 		/// <inheritdoc />
 		public string TypeResolveKey
 		{
-			get { return typeResolveKey; }
+			get => typeResolveKey;
 			set
 			{
 				value.ThrowIfNullOrEmpty(nameof(value));
@@ -106,19 +91,19 @@
 		/// <inheritdoc />
 		public Type EnumAsStringAttributeType
 		{
-			get { return typeof(WebRpcEnumStringAttribute); }
+			get => typeof(WebRpcEnumStringAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type EnumAliasValueAttributeType
 		{
-			get { return typeof(WebRpcEnumAliasAttribute); }
+			get => typeof(WebRpcEnumAliasAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type RequiredAttributeType
 		{
-			get { return typeof(WebRpcRequiredAttribute); }
+			get => typeof(WebRpcRequiredAttribute);
 		}
 
 		public WebRpcBodySerializationDefinition()
@@ -144,7 +129,7 @@
 				typeof(byte[]),
 			};
 
-			processors = new List<IProcessor>()
+			List<IProcessor> processors = new List<IProcessor>()
 			{
 				new NullValueProcessor(this),
 				new ExactMatchProcessor(this),
@@ -166,6 +151,9 @@
 				new CustomObjectSequenceProcessor(this),
 				new CustomObjectLookupProcessor(this),
 			};
+
+			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>().ToArray();
+			deserializationProcessors = processors.Where(p => p is IDeserializationProcessor).Cast<IDeserializationProcessor>().ToArray();
 		}
 
 		/// <summary>
@@ -174,7 +162,15 @@
 		/// <param name="preferredProcessingMethod">The preferred processing method.</param>
 		public void UpdateUnityPrimitiveRepresentation(PrimitiveProcessingMethod preferredProcessingMethod)
 		{
-			foreach (IProcessor processor in processors)
+			foreach (IProcessor processor in serializationProcessors)
+			{
+				if (processor is IUnityPrimitiveSwitchProcessor switchProcessor)
+				{
+					switchProcessor.ProcessingMethod = preferredProcessingMethod;
+				}
+			}
+
+			foreach (IProcessor processor in deserializationProcessors)
 			{
 				if (processor is IUnityPrimitiveSwitchProcessor switchProcessor)
 				{

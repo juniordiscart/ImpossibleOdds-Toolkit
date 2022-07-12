@@ -11,7 +11,7 @@
 		private const string TrueStringAlternative = "1";
 		private const string FalseStringAlternative = "0";
 
-		private static List<Type> primitiveTypeOrder = new List<Type>()
+		private readonly static List<Type> primitiveTypeOrder = new List<Type>()
 		{
 			typeof(bool),
 			typeof(byte),
@@ -27,11 +27,11 @@
 			typeof(double)
 		};
 
-		private ISerializationDefinition definition = null;
+		private readonly ISerializationDefinition definition = null;
 
 		public ISerializationDefinition Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		public PrimitiveTypeProcessor(ISerializationDefinition definition)

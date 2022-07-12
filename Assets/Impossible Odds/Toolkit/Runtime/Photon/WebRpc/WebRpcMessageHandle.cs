@@ -14,19 +14,19 @@
 		/// </summary>
 		public object RequestId
 		{
-			get { return requestId; }
+			get => requestId;
 		}
 
 		/// <inheritdoc />
 		public IWebRpcRequest Request
 		{
-			get { return request; }
+			get => request;
 		}
 
 		/// <inheritdoc />
 		public IWebRpcResponse Response
 		{
-			get { return response; }
+			get => response;
 		}
 
 		/// <summary>
@@ -34,31 +34,31 @@
 		/// </summary>
 		public string DebugMessage
 		{
-			get { return debugMessage; }
+			get => debugMessage;
 		}
 
 		/// <inheritdoc />
 		public bool IsDone
 		{
-			get { return response != null; }
+			get => response != null;
 		}
 
 		/// <inheritdoc />
 		public object Current
 		{
-			get { return null; }
+			get => null;
 		}
 
 		/// <inheritdoc />
 		IWeblinkRequest IWeblinkMessageHandle.Request
 		{
-			get { return Request; }
+			get => Request;
 		}
 
 		/// <inheritdoc />
 		IWeblinkResponse IWeblinkMessageHandle.Response
 		{
-			get { return Response; }
+			get => Response;
 		}
 
 		public WebRpcMessageHandle(IWebRpcRequest request, object requestId)

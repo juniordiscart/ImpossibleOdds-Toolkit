@@ -10,8 +10,8 @@
 		[XmlElement]
 		public int ReleaseYear
 		{
-			get { return releaseYear; }
-			set { releaseYear = value; }
+			get => releaseYear;
+			set => releaseYear = value;
 		}
 	}
 }

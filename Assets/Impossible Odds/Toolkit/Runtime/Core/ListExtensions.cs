@@ -215,6 +215,37 @@ namespace ImpossibleOdds
 		}
 
 		/// <summary>
+		/// Tries to find the index of the element that matches.
+		/// </summary>
+		/// <returns>True if an element is present that matches, false otherwise.</returns>
+		public static bool TryFindIndex<TElement>(this TElement[] arr, Predicate<TElement> match, out int index)
+		{
+			arr.ThrowIfNull(nameof(arr));
+			index = Array.FindIndex(arr, match);
+			return index >= 0;
+		}
+
+		/// <summary>
+		/// Tries to find the index of the element that matches.
+		/// </summary>
+		/// <returns>True if an element is present that matches, false otherwise.</returns>
+		public static bool TryFindIndex<TElement>(this IReadOnlyList<TElement> l, Predicate<TElement> match, out int index)
+		{
+			l.ThrowIfNull(nameof(l));
+			for (int i = 0; i < l.Count; ++i)
+			{
+				if (match(l[i]))
+				{
+					index = i;
+					return true;
+				}
+			}
+
+			index = -1;
+			return false;
+		}
+
+		/// <summary>
 		/// Checks whether the collection is null or empty.
 		/// </summary>
 		/// <param name="c">The collection to test.</param>
@@ -222,6 +253,66 @@ namespace ImpossibleOdds
 		public static bool IsNullOrEmpty(this ICollection c)
 		{
 			return (c == null) || (c.Count == 0);
+		}
+
+		/// <summary>
+		/// Checks whether the collection is null or empty.
+		/// </summary>
+		/// <param name="c">The collection to test.</param>
+		/// <returns>True if the collection is either null, or has 0 elements in it. False otherwise.</returns>
+		public static bool IsNullOrEmpty<TElement>(this ICollection<TElement> c)
+		{
+			return (c == null) || (c.Count == 0);
+		}
+
+		/// <summary>
+		/// Checks whether the collection is null or empty.
+		/// </summary>
+		/// <param name="c">The collection to test.</param>
+		/// <returns>True if the collection is either null, or has 0 elements in it. False otherwise.</returns>
+		public static bool IsNullOrEmpty<TElement>(this IReadOnlyCollection<TElement> c)
+		{
+			return (c == null) || (c.Count == 0);
+		}
+
+		/// <summary>
+		/// Checks whether the array is null or empty.
+		/// </summary>
+		/// <param name="c">The array to test.</param>
+		/// <returns>True if the array is either null, or has 0 elements in it. False otherwise.</returns>
+		public static bool IsNullOrEmpty<TElement>(this TElement[] c)
+		{
+			return (c == null) || (c.Length == 0);
+		}
+
+		/// <summary>
+		/// Checks whether the list is null or empty.
+		/// </summary>
+		/// <param name="c">The list to test.</param>
+		/// <returns>True if the list is either null, or has 0 elements in it. False otherwise.</returns>
+		public static bool IsNullOrEmpty<TElement>(this List<TElement> c)
+		{
+			return (c == null) || (c.Count == 0);
+		}
+
+		/// <summary>
+		/// Checks whether the dictionary is null or empty.
+		/// </summary>
+		/// <param name="d">The dictionary to test.</param>
+		/// <returns>True if the dictionary is either null, or has 0 elements in it. False otherwise.</returns>
+		public static bool IsNullOrEmpty<TKey, TValue>(this Dictionary<TKey, TValue> d)
+		{
+			return (d == null) || (d.Count == 0);
+		}
+
+		/// <summary>
+		/// Checks whether the collection is null or empty.
+		/// </summary>
+		/// <param name="a">The collection to test.</param>
+		/// <returns>True if the collection is either null, or has 0 elements in it. False otherwise.</returns>
+		public static bool IsNullOrEmpty(this ArrayList a)
+		{
+			return (a == null) || (a.Count == 0);
 		}
 	}
 }

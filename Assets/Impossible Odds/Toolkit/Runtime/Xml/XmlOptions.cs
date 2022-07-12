@@ -1,7 +1,7 @@
-﻿using System.Text;
-
-namespace ImpossibleOdds.Xml
+﻿namespace ImpossibleOdds.Xml
 {
+	using System.Text;
+
 	public class XmlOptions
 	{
 		/// <summary>

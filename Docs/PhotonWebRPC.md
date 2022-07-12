@@ -42,7 +42,7 @@ public class UpdateLeaderboardRequest : IWebRpcRequest
 	// to the URL value set in the Photon application dashboard.
 	public string UriPath
 	{
-		get { return "webrpc/updateleaderboard.php";}
+		get => "webrpc/updateleaderboard.php";
 	}
 
 	// Other details omitted...
@@ -93,19 +93,19 @@ public class UpdateLeaderboardRequest : IWebRpcRequest
 	// to the URL value set in the Photon application dashboard.
 	public string UriPath
 	{
-		get { return "webrpc/updateleaderboard.php";}
+		get => "webrpc/updateleaderboard.php";
 	}
 
 	// Should additional user information be forwarded to the server?
 	public bool UseAuthCookie
 	{
-		get { return isAdmin; }
+		get => isAdmin;
 	}
 
 	// Should the request be encrypted when being put on the wire?
 	public bool Encrypt
 	{
-		get { return true; }
+		get => true;
 	}
 }
 ```
@@ -156,12 +156,12 @@ public class UpdateLeaderboardResponse : IWebRpcResponse
 
 	public bool IsSuccess
 	{
-		get { return resultCode != UpdateLeaderboardResultCode.None; }
+		get => resultCode != UpdateLeaderboardResultCode.None;
 	}
 
 	public UpdateLeaderboardResultCode ResultCode
 	{
-		get { return resultCode; }
+		get => resultCode;
 	}
 }
 ```
@@ -444,19 +444,19 @@ public class UpdateLeaderboardRequest : IWebRpcRequest
 	// to the URL value set in the Photon application dashboard.
 	public string UriPath
 	{
-		get { return "webrpc/updateleaderboard.php";}
+		get => "webrpc/updateleaderboard.php";
 	}
 
 	// Should additional user information be forwarded to the server?
 	public bool UseAuthCookie
 	{
-		get { return isAdmin; }
+		get => isAdmin;
 	}
 
 	// Should the request be encrypted when being put on the wire?
 	public bool Encrypt
 	{
-		get { return true; }
+		get => true;
 	}
 }
 ```
@@ -471,12 +471,12 @@ public class UpdateLeaderboardResponse : IWebRpcResponse
 	// When the result code is changed from its default value, then the request completed successfully.
 	public bool IsSuccess
 	{
-		get { return resultCode != UpdateLeaderboardResultCode.None; }
+		get => resultCode != UpdateLeaderboardResultCode.None;
 	}
 
 	public UpdateLeaderboardResultCode ResultCode
 	{
-		get { return resultCode; }
+		get => resultCode;
 	}
 }
 ```

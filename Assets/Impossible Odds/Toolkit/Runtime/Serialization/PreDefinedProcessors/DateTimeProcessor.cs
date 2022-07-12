@@ -8,12 +8,12 @@
 	/// </summary>
 	public class DateTimeProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
-		private string dateTimeFormat = string.Empty;
+		private readonly string dateTimeFormat = string.Empty;
+		private readonly ISerializationDefinition definition = null;
 
 		public ISerializationDefinition Definition
 		{
-			get;
-			private set;
+			get => definition;
 		}
 
 		public DateTimeProcessor(ISerializationDefinition definition)
@@ -23,7 +23,7 @@
 		public DateTimeProcessor(ISerializationDefinition definition, string dateTimeFormat)
 		{
 			definition.ThrowIfNull(nameof(definition));
-			Definition = definition;
+			this.definition = definition;
 			this.dateTimeFormat = dateTimeFormat;
 		}
 

@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.Linq;
 	using ImpossibleOdds.Json;
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Processors;
@@ -11,67 +12,50 @@
 	/// Serialization definition for the body of HTTP requests.
 	/// </summary>
 	public class HttpBodySerializationDefinition :
-	IndexAndLookupDefinition<HttpBodyArrayAttribute, HttpBodyIndexAttribute, ArrayList, HttpBodyObjectAttribute, HttpBodyFieldAttribute, Dictionary<string, object>>,
-	IEnumAliasSupport<HttpEnumStringAttribute, HttpEnumAliasAttribute>,
-	ILookupTypeResolveSupport<HttpTypeAttribute>,
-	IRequiredValueSupport<HttpBodyRequiredAttribute>
+		IndexAndLookupDefinition<HttpBodyArrayAttribute, HttpBodyIndexAttribute, ArrayList, HttpBodyObjectAttribute, HttpBodyFieldAttribute, Dictionary<string, object>>,
+		IEnumAliasSupport<HttpEnumStringAttribute, HttpEnumAliasAttribute>,
+		ILookupTypeResolveSupport<HttpTypeAttribute>,
+		IRequiredValueSupport<HttpBodyRequiredAttribute>
 	{
-		private List<IProcessor> processors = null;
-		private HashSet<Type> supportedTypes = null;
-		private string typeResolveKey = JsonSerializationDefinition.JsonTypeKey;
+		private readonly ISerializationProcessor[] serializationProcessors = null;
+		private readonly IDeserializationProcessor[] deserializationProcessors = null;
+		private readonly HashSet<Type> supportedTypes = null;
+		private string typeResolveKey = JsonSerializationDefinition.JsonDefaultTypeKey;
 
 		/// <inheritdoc />
 		public override IEnumerable<ISerializationProcessor> SerializationProcessors
 		{
-			get
-			{
-				foreach (IProcessor processor in processors)
-				{
-					if (processor is ISerializationProcessor serializationProcessor)
-					{
-						yield return serializationProcessor;
-					}
-				}
-			}
+			get => serializationProcessors;
 		}
 
 		/// <inheritdoc />
 		public override IEnumerable<IDeserializationProcessor> DeserializationProcessors
 		{
-			get
-			{
-				foreach (IProcessor processor in processors)
-				{
-					if (processor is IDeserializationProcessor deserializationProcessor)
-					{
-						yield return deserializationProcessor;
-					}
-				}
-			}
+			get => deserializationProcessors;
 		}
 
 		/// <inheritdoc />
 		public override HashSet<Type> SupportedTypes
 		{
-			get { return supportedTypes; }
+			get => supportedTypes;
 		}
 
 		/// <inheritdoc />
 		public Type TypeResolveAttribute
 		{
-			get { return typeof(HttpTypeAttribute); }
+			get => typeof(HttpTypeAttribute);
 		}
 
 		/// <inheritdoc />
 		object ILookupTypeResolveSupport.TypeResolveKey
 		{
-			get { return typeResolveKey; }
+			get => typeResolveKey;
 		}
 
 		/// <inheritdoc />
 		public string TypeResolveKey
 		{
-			get { return typeResolveKey; }
+			get => typeResolveKey;
 			set
 			{
 				value.ThrowIfNullOrEmpty(nameof(value));
@@ -82,19 +66,19 @@
 		/// <inheritdoc />
 		public Type EnumAsStringAttributeType
 		{
-			get { return typeof(HttpEnumStringAttribute); }
+			get => typeof(HttpEnumStringAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type EnumAliasValueAttributeType
 		{
-			get { return typeof(HttpEnumAliasAttribute); }
+			get => typeof(HttpEnumAliasAttribute);
 		}
 
 		/// <inheritdoc />
 		public Type RequiredAttributeType
 		{
-			get { return typeof(HttpBodyRequiredAttribute); }
+			get => typeof(HttpBodyRequiredAttribute);
 		}
 
 		public HttpBodySerializationDefinition()
@@ -106,7 +90,22 @@
 			PrimitiveProcessingMethod.LOOKUP;
 #endif
 
-			processors = new List<IProcessor>()
+			// Basic set of types
+			supportedTypes = new HashSet<Type>()
+			{
+				typeof(short),
+				typeof(ushort),
+				typeof(int),
+				typeof(uint),
+				typeof(long),
+				typeof(ulong),
+				typeof(float),
+				typeof(double),
+				typeof(bool),
+				typeof(string)
+			};
+
+			List<IProcessor> processors = new List<IProcessor>()
 			{
 				new NullValueProcessor(this),
 				new ExactMatchProcessor(this),
@@ -130,20 +129,8 @@
 				new CustomObjectLookupProcessor(this),
 			};
 
-			// Basic set of types
-			supportedTypes = new HashSet<Type>()
-			{
-				typeof(short),
-				typeof(ushort),
-				typeof(int),
-				typeof(uint),
-				typeof(long),
-				typeof(ulong),
-				typeof(float),
-				typeof(double),
-				typeof(bool),
-				typeof(string)
-			};
+			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>().ToArray();
+			deserializationProcessors = processors.Where(p => p is IDeserializationProcessor).Cast<IDeserializationProcessor>().ToArray();
 		}
 
 		/// <inheritdoc />
@@ -164,7 +151,15 @@
 		/// <param name="preferredProcessingMethod">The preferred processing method.</param>
 		public void UpdateUnityPrimitiveRepresentation(PrimitiveProcessingMethod preferredProcessingMethod)
 		{
-			foreach (IProcessor processor in processors)
+			foreach (IProcessor processor in serializationProcessors)
+			{
+				if (processor is IUnityPrimitiveSwitchProcessor switchProcessor)
+				{
+					switchProcessor.ProcessingMethod = preferredProcessingMethod;
+				}
+			}
+
+			foreach (IProcessor processor in deserializationProcessors)
 			{
 				if (processor is IUnityPrimitiveSwitchProcessor switchProcessor)
 				{

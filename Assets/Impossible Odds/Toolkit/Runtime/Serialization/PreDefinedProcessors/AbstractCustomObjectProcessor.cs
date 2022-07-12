@@ -1,18 +1,25 @@
 ﻿namespace ImpossibleOdds.Serialization.Processors
 {
 	using System;
-	using System.Collections.Generic;
+	using System.Reflection;
+	using ImpossibleOdds.ReflectionCaching;
 	using ImpossibleOdds.Serialization.Caching;
 
 	public abstract class AbstractCustomObjectProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
-		private ISerializationDefinition definition = null;
-		private ICallbacksSupport callbacksDefinition = null;
+		private readonly ISerializationDefinition definition = null;
+		private readonly ICallbacksSupport callbacksDefinition = null;
+
+		public AbstractCustomObjectProcessor(ISerializationDefinition definition)
+		{
+			this.definition = definition;
+			this.callbacksDefinition = (definition is ICallbacksSupport) ? definition as ICallbacksSupport : null;
+		}
 
 		/// <inheritdoc />
 		public ISerializationDefinition Definition
 		{
-			get { return definition; }
+			get => definition;
 		}
 
 		/// <summary>
@@ -20,7 +27,7 @@
 		/// </summary>
 		public bool SupportsSerializationCallbacks
 		{
-			get { return callbacksDefinition != null; }
+			get => callbacksDefinition != null;
 		}
 
 		/// <summary>
@@ -28,13 +35,7 @@
 		/// </summary>
 		public ICallbacksSupport CallbacksSupport
 		{
-			get { return callbacksDefinition; }
-		}
-
-		public AbstractCustomObjectProcessor(ISerializationDefinition definition)
-		{
-			this.definition = definition;
-			this.callbacksDefinition = (definition is ICallbacksSupport) ? definition as ICallbacksSupport : null;
+			get => callbacksDefinition;
 		}
 
 		/// <inheritdoc />
@@ -100,10 +101,30 @@
 				return;
 			}
 
-			IEnumerable<SerializationCallbackInfo> callbacks = SerializationUtilities.GetTypeMap(target.GetType()).GetSerializationCallbacks(callbackAttributeType);
-			foreach (SerializationCallbackInfo callback in callbacks)
+			ISerializationCallback[] callbacks = SerializationUtilities.GetTypeMap(target.GetType()).GetSerializationCallbackMethods(callbackAttributeType);
+			foreach (ISerializationCallback callback in callbacks)
 			{
-				callback.Invoke(target, this);
+				if (callback.Parameters.Length > 0)
+				{
+					Type processorType = this.GetType();
+					ParameterInfo[] callbackParameters = callback.Parameters;
+					object[] callbackParams = TypeReflectionUtilities.GetParameterInvokationList(callbackParameters.Length);
+					for (int i = 0; i < callbackParameters.Length; ++i)
+					{
+						Type parameterType = callbackParameters[i].ParameterType;
+						callbackParams[i] =
+							parameterType.IsAssignableFrom(processorType) ?
+							this :
+							SerializationUtilities.GetDefaultValue(parameterType);
+					}
+
+					callback.Method.Invoke(target, callbackParameters);
+					TypeReflectionUtilities.ReturnParameterInvokationList(callbackParams);
+				}
+				else
+				{
+					callback.Method.Invoke(target, null);
+				}
 			}
 		}
 	}

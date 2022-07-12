@@ -13,7 +13,7 @@
 
 		public Type[] ExecuteAfter
 		{
-			get { return executeAfter; }
+			get => executeAfter;
 		}
 
 		public ExecuteAfterAttribute(params Type[] executeAfter)

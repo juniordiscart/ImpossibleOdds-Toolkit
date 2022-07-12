@@ -684,7 +684,7 @@
 
 			public int IndentationLevel
 			{
-				get { return indentLvl; }
+				get => indentLvl;
 				set
 				{
 					indentLvl = Math.Max(0, value);
@@ -694,7 +694,7 @@
 
 			public string IndentString
 			{
-				get { return indentStr; }
+				get => indentStr;
 			}
 
 			public SerializationSettings(StringBuilder resultStore = null)

@@ -13,12 +13,12 @@
 
 		public override string SettingName
 		{
-			get { return "XML Serialization Settings"; }
+			get => "XML Serialization Settings";
 		}
 
 		public override string Symbol
 		{
-			get { return XmlUnityTypesAsAttributes; }
+			get => XmlUnityTypesAsAttributes;
 		}
 
 		public override void DisplayGUI(string searchContext)

@@ -7,7 +7,7 @@
 	/// <summary>
 	/// Contains type information about the sequence data structure, i.e. whether it restricts its values to be type restricted, and whether it is an array or not.
 	/// </summary>
-	public struct SequenceCollectionTypeInfo
+	public class SequenceCollectionTypeInfo
 	{
 		/// <summary>
 		/// Generic type info of the sequence.

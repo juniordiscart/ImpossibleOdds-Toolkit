@@ -14,27 +14,27 @@
 
 		public Turnstile.StateKey From
 		{
-			get { return from; }
+			get => from;
 		}
 
 		public Turnstile.StateKey To
 		{
-			get { return to; }
+			get => to;
 		}
 
 		public bool CanTrigger
 		{
-			get { return triggerEval(); }
+			get => triggerEval();
 		}
 
 		object IStateTransition.From
 		{
-			get { return from; }
+			get => from;
 		}
 
 		object IStateTransition.To
 		{
-			get { return to; }
+			get => to;
 		}
 
 		public TurnstileTransition(Turnstile.StateKey from, Turnstile.StateKey to, Func<bool> trigger)

@@ -2,24 +2,21 @@
 {
 	using System;
 	using System.Collections;
-	using System.Collections.Generic;
+	using System.Collections.Concurrent;
 	using System.Linq;
 	using System.Reflection;
+	using ImpossibleOdds.ReflectionCaching;
 
 	public static class DependencyInjector
 	{
-		private readonly static HashSet<Type> rejectedTypesCache = new HashSet<Type>();
-		private readonly static Dictionary<Type, TypeInjectionCache> typeInjectionCache = new Dictionary<Type, TypeInjectionCache>();
-		private readonly static Dictionary<int, object[]> parametersCache = new Dictionary<int, object[]>();
+		private readonly static ConcurrentDictionary<Type, TypeInjectionCache> typeInjectionCache = new ConcurrentDictionary<Type, TypeInjectionCache>();
 
 		/// <summary>
 		/// Clears the caches used by the dependency injector.
 		/// </summary>
 		public static void ClearCaches()
 		{
-			rejectedTypesCache.Clear();
 			typeInjectionCache.Clear();
-			parametersCache.Clear();
 		}
 
 		/// <summary>
@@ -81,17 +78,15 @@
 				throw new DependencyInjectionException("Cannot create an instance of type {0} because it is either an interface or declared abstract.", targetType.Name);
 			}
 
-			TypeInjectionCache typeInfo = GetTypeInjectionInfo(targetType);
-
 			object instance = null;
-			if (typeInfo.InjectableConstructors.Any(c => c.Attribute.IsInjectionIdDefined(string.Empty)))
+			if (TryGetTypeInjectionInfo(targetType, out TypeInjectionCache typeInfo) && typeInfo.InjectableConstructors.Any(c => c.Attribute.IsInjectionIdDefined(string.Empty)))
 			{
 				MemberInjectionValue<ConstructorInfo> constructorInfo = typeInfo.InjectableConstructors.First(c => c.Attribute.IsInjectionIdDefined(string.Empty));
 				ParameterInfo[] parameterInfo = constructorInfo.Member.GetParameters();
-				object[] parameters = GetParameterInjectionList(parameterInfo.Length);
+				object[] parameters = TypeReflectionUtilities.GetParameterInvokationList(parameterInfo.Length);
 				FillPamaterInjectionList(parameterInfo, parameters, container);
-
 				instance = constructorInfo.Member.Invoke(parameters);
+				TypeReflectionUtilities.ReturnParameterInvokationList(parameters);
 			}
 			else
 			{
@@ -105,6 +100,7 @@
 
 		/// <summary>
 		/// Inject the target object using the bindings found in the container.
+		/// Note: if the target is of type Type, then it's static members will be injected.
 		/// </summary>
 		/// <param name="container">Container with dependency bindings.</param>
 		/// <param name="target">Target to be injected.</param>
@@ -118,6 +114,7 @@
 
 		/// <summary>
 		/// Inject the target object using the bindings found in the container.
+		/// Note: if the target is of type Type, then it's static members will be injected.
 		/// </summary>
 		/// <param name="container">Container with dependency bindings.</param>
 		/// <param name="injectionId">Only injects members with the injection ID.</param>
@@ -225,19 +222,23 @@
 		/// <param name="injectionId">An identifier to restrict to specifically defined scopes.</param>
 		private static void ResolveFieldDependencies(object objToInject, Type currentType, IReadOnlyDependencyContainer container, string injectionId = null)
 		{
-			if (currentType.BaseType != null)
+			if (TryGetTypeInjectionInfo(currentType, out TypeInjectionCache cache))
 			{
-				ResolveFieldDependencies(objToInject, currentType.BaseType, container, injectionId);
-			}
+				bool isStaticInjection = objToInject is Type;
 
-			if (IsInjectable(currentType))
-			{
-				foreach (MemberInjectionValue<FieldInfo> field in GetTypeInjectionInfo(currentType).InjectableFields)
+				foreach (MemberInjectionValue<FieldInfo> field in cache.InjectableFields)
 				{
 					Type fieldType = field.Member.FieldType;
 					if (field.Attribute.IsInjectionIdDefined(injectionId) && container.BindingExists(fieldType))
 					{
-						field.Member.SetValue(objToInject, container.GetBinding(fieldType).GetInstance());
+						if (isStaticInjection && field.Member.IsStatic)
+						{
+							field.Member.SetValue(null, container.GetBinding(fieldType).GetInstance());
+						}
+						else if (!isStaticInjection && !field.Member.IsStatic)
+						{
+							field.Member.SetValue(objToInject, container.GetBinding(fieldType).GetInstance());
+						}
 					}
 				}
 			}
@@ -252,19 +253,23 @@
 		/// <param name="injectionId">An identifier to restrict to specifically defined scopes.</param>
 		private static void ResolvePropertyDependencies(object objToInject, Type currentType, IReadOnlyDependencyContainer container, string injectionId = null)
 		{
-			if (currentType.BaseType != null)
+			if (TryGetTypeInjectionInfo(currentType, out TypeInjectionCache cache))
 			{
-				ResolvePropertyDependencies(objToInject, currentType.BaseType, container, injectionId);
-			}
+				bool isStaticInjection = objToInject is Type;
 
-			if (IsInjectable(currentType))
-			{
-				foreach (MemberInjectionValue<PropertyInfo> property in GetTypeInjectionInfo(currentType).InjectableProperties)
+				foreach (MemberInjectionValue<PropertyInfo> property in cache.InjectableProperties)
 				{
 					Type propertyType = property.Member.PropertyType;
 					if (property.Attribute.IsInjectionIdDefined(injectionId) && container.BindingExists(propertyType))
 					{
-						property.Member.SetValue(objToInject, container.GetBinding(propertyType).GetInstance());
+						if (isStaticInjection && property.Member.SetMethod.IsStatic)
+						{
+							property.Member.SetValue(null, container.GetBinding(propertyType).GetInstance());
+						}
+						else if (!isStaticInjection && !property.Member.SetMethod.IsStatic)
+						{
+							property.Member.SetValue(objToInject, container.GetBinding(propertyType).GetInstance());
+						}
 					}
 				}
 			}
@@ -279,34 +284,33 @@
 		/// <param name="injectionId">An identifier to restrict to specifically defined scopes.</param>
 		private static void ResolveMethodDependencies(object objToInject, Type currentType, IReadOnlyDependencyContainer container, string injectionId = null)
 		{
-			if (currentType.BaseType != null)
+			if (TryGetTypeInjectionInfo(currentType, out TypeInjectionCache cache))
 			{
-				ResolveMethodDependencies(objToInject, currentType.BaseType, container, injectionId);
-			}
+				bool isStaticInjection = objToInject is Type;
 
-			if (IsInjectable(currentType))
-			{
-				foreach (MemberInjectionValue<MethodInfo> method in GetTypeInjectionInfo(currentType).InjectableMethods)
+				foreach (MemberInjectionValue<MethodInfo> method in cache.InjectableMethods)
 				{
 					if (method.Attribute.IsInjectionIdDefined(injectionId))
 					{
-						ParameterInfo[] parameterInfo = method.Member.GetParameters();
-						object[] parameters = GetParameterInjectionList(parameterInfo.Length);
-						FillPamaterInjectionList(parameterInfo, parameters, container);
-						method.Member.Invoke(objToInject, parameters);
+						if (isStaticInjection && method.Member.IsStatic)
+						{
+							ParameterInfo[] parameterInfo = method.Member.GetParameters();
+							object[] parameters = TypeReflectionUtilities.GetParameterInvokationList(parameterInfo.Length);
+							FillPamaterInjectionList(parameterInfo, parameters, container);
+							method.Member.Invoke(null, parameters);
+							TypeReflectionUtilities.ReturnParameterInvokationList(parameters);
+						}
+						else if (!isStaticInjection && !method.Member.IsStatic)
+						{
+							ParameterInfo[] parameterInfo = method.Member.GetParameters();
+							object[] parameters = TypeReflectionUtilities.GetParameterInvokationList(parameterInfo.Length);
+							FillPamaterInjectionList(parameterInfo, parameters, container);
+							method.Member.Invoke(objToInject, parameters);
+							TypeReflectionUtilities.ReturnParameterInvokationList(parameters);
+						}
 					}
 				}
 			}
-		}
-
-		private static object[] GetParameterInjectionList(int nrOfParams)
-		{
-			if (!parametersCache.ContainsKey(nrOfParams))
-			{
-				parametersCache.Add(nrOfParams, new object[nrOfParams]);
-			}
-
-			return parametersCache[nrOfParams];
 		}
 
 		private static void FillPamaterInjectionList(ParameterInfo[] parameterInfo, object[] parameters, IReadOnlyDependencyContainer container)
@@ -323,36 +327,16 @@
 			}
 		}
 
-		private static TypeInjectionCache GetTypeInjectionInfo(Type type)
+		private static bool TryGetTypeInjectionInfo(Type type, out TypeInjectionCache typeInjection)
 		{
-			if (!typeInjectionCache.ContainsKey(type))
+			if (typeInjectionCache.TryGetValue(type, out typeInjection))
 			{
-				typeInjectionCache.Add(type, new TypeInjectionCache(type));
-			}
-
-			return typeInjectionCache[type];
-		}
-
-		private static bool IsInjectable(Type type)
-		{
-			if (rejectedTypesCache.Contains(type))
-			{
-				return false;
-			}
-			else if (typeInjectionCache.ContainsKey(type))
-			{
-				return true;
-			}
-
-			// Check for the injectable attribute
-			if (!type.IsDefined(typeof(InjectableAttribute), false))
-			{
-				rejectedTypesCache.Add(type);
-				return false;
+				return typeInjection != null;
 			}
 			else
 			{
-				return true;
+				typeInjection = typeInjectionCache.GetOrAdd(type, (t) => Attribute.IsDefined(type, typeof(InjectableAttribute), true) ? new TypeInjectionCache(t) : null);
+				return typeInjection != null;
 			}
 		}
 	}

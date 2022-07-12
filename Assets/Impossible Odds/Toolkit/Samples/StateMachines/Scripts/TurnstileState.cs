@@ -16,12 +16,12 @@
 
 		public Turnstile.StateKey StateKey
 		{
-			get { return stateKey; }
+			get => stateKey;
 		}
 
 		public bool IsStateActive
 		{
-			get { return isStateActive; }
+			get => isStateActive;
 		}
 
 		private void Awake()

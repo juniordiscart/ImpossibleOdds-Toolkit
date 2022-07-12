@@ -1,96 +1,62 @@
 ﻿namespace ImpossibleOdds
 {
 	using System;
-	using System.Collections.Generic;
+	using System.Collections.Concurrent;
 	using System.Reflection;
 	using ImpossibleOdds.ReflectionCaching;
 
-	internal struct DisplayNamePair : IMemberAttributePair
+	/// <summary>
+	/// Caching system for enum display names.
+	/// </summary>
+	internal class DisplayNameCache : IReflectionMap
 	{
-		private readonly FieldInfo field;
-		private readonly DisplayNameAttribute displayNameAttribute;
-
-		public DisplayNamePair(FieldInfo enumField, DisplayNameAttribute displayNameAttribute)
-		{
-			enumField.ThrowIfNull(nameof(enumField));
-			displayNameAttribute.ThrowIfNull(nameof(displayNameAttribute));
-
-			this.field = enumField;
-			this.displayNameAttribute = displayNameAttribute;
-		}
-
-		/// <inheritdoc />
-		MemberInfo IMemberAttributePair.Member
-		{
-			get => field;
-		}
-
-		/// <inheritdoc />
-		Attribute IMemberAttributePair.Attribute
-		{
-			get => displayNameAttribute;
-		}
-
-		/// <inheritdoc />
-		Type IMemberAttributePair.TypeOfAttribute
-		{
-			get => displayNameAttribute.GetType();
-		}
-
-		public DisplayNameAttribute Attribute
-		{
-			get => displayNameAttribute;
-		}
-	}
-
-	internal class DisplayNameCache : TypeReflectionMap<DisplayNamePair>
-	{
-		internal static Dictionary<Type, DisplayNameCache> cache = new Dictionary<Type, DisplayNameCache>();
+		internal static ConcurrentDictionary<Type, DisplayNameCache> cache = new ConcurrentDictionary<Type, DisplayNameCache>();
 
 		internal static DisplayNameAttribute GetAttributeFromEnum(Enum e)
 		{
 			Type enumType = e.GetType();
 			if (!cache.ContainsKey(enumType))
 			{
-				cache[enumType] = new DisplayNameCache(enumType);
+				cache.TryAdd(enumType, new DisplayNameCache(enumType));
 			}
 
 			return cache[enumType][e];
 		}
 
-		private Dictionary<Enum, DisplayNamePair> displayNameFields = null;
+		private readonly Type enumType;
+		private ConcurrentDictionary<Enum, DisplayNameCacheEntry> displayNameFields = null;
 
 		public DisplayNameCache(Type type)
-		: base(type)
 		{
+			type.ThrowIfNull(nameof(type));
+
 			if (!type.IsEnum)
 			{
-				throw new ImpossibleOddsException("Type {0} is not an enum.", type.Name);
+				throw new ReflectionCachingException("The provided type {0} is not an enum.", type.Name);
 			}
 
-			Array enumValues = Enum.GetValues(type);
-			displayNameFields = new Dictionary<Enum, DisplayNamePair>(enumValues.Length);
+			this.enumType = type;
 
-			foreach (Enum enumValue in enumValues)
+			displayNameFields = new ConcurrentDictionary<Enum, DisplayNameCacheEntry>();
+			foreach (Enum enumValue in Enum.GetValues(type))
 			{
 				FieldInfo enumField = type.GetField(enumValue.ToString());
-				if (enumField.IsDefined(typeof(DisplayNameAttribute)))
+				if (Attribute.IsDefined(enumField, typeof(DisplayNameAttribute)))
 				{
-					displayNameFields[enumValue] = new DisplayNamePair(enumField, enumField.GetCustomAttribute<DisplayNameAttribute>());
+					displayNameFields.TryAdd(enumValue, new DisplayNameCacheEntry(enumField, enumField.GetCustomAttribute<DisplayNameAttribute>()));
 				}
 			}
+		}
+
+		/// <inheritdoc />
+		public Type Type
+		{
+			get => enumType;
 		}
 
 		public DisplayNameAttribute this[Enum enumValue]
 		{
 			get => displayNameFields.ContainsKey(enumValue) ? displayNameFields[enumValue].Attribute : null;
 		}
-
-		/// <inheritdoc />
-		public override IEnumerable<DisplayNamePair> MemberAttributePairs
-		{
-			get => displayNameFields.Values;
-		}
 	}
-
 }

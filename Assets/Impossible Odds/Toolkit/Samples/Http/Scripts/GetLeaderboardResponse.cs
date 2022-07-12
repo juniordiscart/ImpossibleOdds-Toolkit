@@ -27,17 +27,17 @@
 
 		public bool IsSuccess
 		{
-			get { return (responseError == ResponseError.None) && (leaderboard != null); }
+			get => (responseError == ResponseError.None) && (leaderboard != null);
 		}
 
 		public ResponseError ResponseError
 		{
-			get { return responseError; }
+			get => responseError;
 		}
 
 		public Leaderboard Leaderboard
 		{
-			get { return leaderboard; }
+			get => leaderboard;
 		}
 
 		public void ToString(StringBuilder builder)
@@ -52,7 +52,7 @@
 
 				foreach (LeaderboardEntry entry in leaderboard.Entries)
 				{
-					builder.AppendFormat("\t{0}. - User ID: {1} - Score: {2}\n", (entry.Rank + 1), entry.PlayerID, entry.Score);
+					builder.AppendFormat("\t{0}. - User ID: {1} - Score: {2}\n", (entry.Rank + 1), entry.PlayerId, entry.Score);
 				}
 			}
 		}

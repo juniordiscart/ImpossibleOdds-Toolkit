@@ -13,12 +13,12 @@
 
 		public override string SettingName
 		{
-			get { return "Dependency Injection Settings"; }
+			get => "Dependency Injection Settings";
 		}
 
 		public override string Symbol
 		{
-			get { return GlobalDependencyInjectionDisabled; }
+			get => GlobalDependencyInjectionDisabled;
 		}
 
 		public override void DisplayGUI(string searchContext)

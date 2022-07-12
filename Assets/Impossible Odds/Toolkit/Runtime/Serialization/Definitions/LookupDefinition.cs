@@ -23,31 +23,42 @@
 		/// <inheritdoc />
 		public Type LookupBasedClassMarkingAttribute
 		{
-			get { return typeof(T); }
+			get => typeof(T);
 		}
 
 		/// <inheritdoc />
 		public Type LookupBasedFieldAttribute
 		{
-			get { return typeof(U); }
+			get => typeof(U);
 		}
 
 		/// <inheritdoc />
 		public Type LookupBasedDataType
 		{
-			get { return typeof(V); }
+			get => typeof(V);
 		}
 
 		/// <inheritdoc />
 		public IFormatProvider FormatProvider
 		{
-			get { return formatProvider; }
-			set { formatProvider = value; }
+			get => formatProvider;
+			set => formatProvider = value;
 		}
 
-		public abstract IEnumerable<ISerializationProcessor> SerializationProcessors { get; }
-		public abstract IEnumerable<IDeserializationProcessor> DeserializationProcessors { get; }
-		public abstract HashSet<Type> SupportedTypes { get; }
+		public abstract IEnumerable<ISerializationProcessor> SerializationProcessors
+		{
+			get;
+		}
+
+		public abstract IEnumerable<IDeserializationProcessor> DeserializationProcessors
+		{
+			get;
+		}
+
+		public abstract HashSet<Type> SupportedTypes
+		{
+			get;
+		}
 
 		public abstract V CreateLookupInstance(int capacity);
 

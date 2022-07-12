@@ -27,26 +27,26 @@
 
 		public string Name
 		{
-			get { return name; }
-			set { name = value; }
+			get => name;
+			set => name = value;
 		}
 
 		public string Biography
 		{
-			get { return bio; }
-			set { bio = value; }
+			get => bio;
+			set => bio = value;
 		}
 
 		public DateTime DateOfBirth
 		{
-			get { return dateOfBirth; }
-			set { dateOfBirth = value; }
+			get => dateOfBirth;
+			set => dateOfBirth = value;
 		}
 
 		private Texture2D Picture
 		{
-			get { return picture; }
-			set { picture = value; }
+			get => picture;
+			set => picture = value;
 		}
 
 		[OnXmlSerializing]

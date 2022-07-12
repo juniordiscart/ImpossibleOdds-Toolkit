@@ -1,12 +1,12 @@
 ﻿namespace ImpossibleOdds.Runnables
 {
-	using System.Collections.Generic;
+	using System.Collections.Concurrent;
 	using UnityEngine;
 	using UnityEngine.SceneManagement;
 
 	public class SceneRunner : Runner
 	{
-		private static Dictionary<Scene, SceneRunner> sceneRunners = new Dictionary<Scene, SceneRunner>();
+		private static ConcurrentDictionary<Scene, SceneRunner> sceneRunners = new ConcurrentDictionary<Scene, SceneRunner>();
 
 		/// <summary>
 		/// Get the runner that is associated with the currently active scene.
@@ -14,7 +14,7 @@
 		/// </summary>
 		public static SceneRunner Get
 		{
-			get { return GetRunnerForScene(SceneManager.GetActiveScene()); }
+			get => GetRunnerForScene(SceneManager.GetActiveScene());
 		}
 
 		/// <summary>
@@ -22,7 +22,7 @@
 		/// </summary>
 		public static bool Exists
 		{
-			get { return ExistsForScene(SceneManager.GetActiveScene()); }
+			get => ExistsForScene(SceneManager.GetActiveScene());
 		}
 
 		/// <summary>
@@ -42,21 +42,19 @@
 				throw new RunnablesException("Could'nt search a {0} for scene {1} because it isn't loaded.", typeof(SceneRunner).Name, scene.name);
 			}
 
-			if (sceneRunners.ContainsKey(scene))
+			return sceneRunners.GetOrAdd(scene, delegate (Scene s)
 			{
-				return sceneRunners[scene];
-			}
+				GameObject sceneRunnerObj = new GameObject(string.Format("{0}_{1}", nameof(SceneRunner), scene.name));
+				SceneRunner sceneRunner = sceneRunnerObj.AddComponent<SceneRunner>();
 
-			GameObject sceneRunnerObj = new GameObject("ImpossibleOdds::SceneRunner_" + scene.name);
-			SceneRunner sceneRunner = sceneRunnerObj.AddComponent<SceneRunner>();
+				// Move the object to the requested scene, if necessary
+				if (sceneRunnerObj.scene != scene)
+				{
+					SceneManager.MoveGameObjectToScene(sceneRunnerObj, scene);
+				}
 
-			// Move the object to the requested scene, if necessary
-			if (sceneRunnerObj.scene != scene)
-			{
-				SceneManager.MoveGameObjectToScene(sceneRunnerObj, scene);
-			}
-
-			return sceneRunner;
+				return sceneRunner;
+			});
 		}
 
 		/// <summary>
@@ -77,17 +75,15 @@
 			{
 				throw new RunnablesException("Cannot register a {0} for scene {1} because it is invalid.", typeof(SceneRunner).Name, scene.name);
 			}
-			else if (sceneRunners.ContainsKey(scene))
+			else if (!sceneRunners.TryAdd(scene, runner))
 			{
 				throw new RunnablesException("Only one instance of a {0} can be associated with scene {1}.", typeof(SceneRunner).Name, scene.name);
 			}
-
-			sceneRunners.Add(scene, runner);
 		}
 
 		private static void RemoveRunner(Scene scene)
 		{
-			sceneRunners.Remove(scene);
+			sceneRunners.TryRemove(scene, out _);
 		}
 
 		private void Awake()

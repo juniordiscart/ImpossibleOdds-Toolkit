@@ -15,7 +15,7 @@
 
 		public string URL
 		{
-			get { return "https://impossible-odds.net/toolkit/examples/getleaderboard.php"; }
+			get => "https://impossible-odds.net/toolkit/examples/getleaderboard.php";
 		}
 
 		public GetLeaderboardRequest(string leaderboardID, int nrOfEntries, int offset)

@@ -10,7 +10,7 @@
 
 		public string Alias
 		{
-			get { return alias; }
+			get => alias;
 		}
 
 		public WebRpcEnumAliasAttribute(string alias)

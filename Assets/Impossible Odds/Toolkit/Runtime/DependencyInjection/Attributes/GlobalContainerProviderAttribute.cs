@@ -14,7 +14,7 @@
 
 		public int Priority
 		{
-			get { return priority; }
+			get => priority;
 		}
 
 		public GlobalContainerProviderAttribute()

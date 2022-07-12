@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.IO;
-	using System.Reflection;
 	using System.Text;
 	using System.Xml;
 	using System.Xml.Linq;
@@ -269,7 +268,7 @@
 			{
 				// The type should define an XML root attribute.
 				Type objectType = objectToSerialize.GetType();
-				XmlObjectAttribute rootInfo = objectType.GetCustomAttribute<XmlObjectAttribute>(false);
+				XmlObjectAttribute rootInfo = Attribute.GetCustomAttribute(objectType, typeof(XmlObjectAttribute), false) as XmlObjectAttribute;
 				if (rootInfo == null)
 				{
 					throw new XmlException("The object to serialize of type {0} has not defined an {1} attribute.", objectType.Name, typeof(XmlObjectAttribute).Name);

@@ -18,6 +18,22 @@
 #else
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_INFO")]
 #endif
+		public static void Info(UnityEngine.Object context, object message)
+		{
+			context.ThrowIfNull(nameof(context));
+			UnityEngine.Debug.Log(message.ToString(), context);
+		}
+
+		/// <summary>
+		/// Log an information message to the Unity console.
+		/// </summary>
+		/// <param name="context">The Unity object context for this message.</param>
+		/// <param name="message">The message to log to console.</param>
+#if UNITY_EDITOR
+		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO")]
+#else
+		[Conditional("IMPOSSIBLE_ODDS_LOGGING_INFO")]
+#endif
 		public static void Info(UnityEngine.Object context, string message)
 		{
 			context.ThrowIfNull(nameof(context));
@@ -98,6 +114,20 @@
 #else
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_INFO")]
 #endif
+		public static void Info(object message)
+		{
+			UnityEngine.Debug.Log(message.ToString());
+		}
+
+		/// <summary>
+		/// Log an information message to the Unity console.
+		/// </summary>
+		/// <param name="message">The message to log to console.</param>
+#if UNITY_EDITOR
+		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO")]
+#else
+		[Conditional("IMPOSSIBLE_ODDS_LOGGING_INFO")]
+#endif
 		public static void Info(string message)
 		{
 			UnityEngine.Debug.Log(message);
@@ -158,6 +188,24 @@
 		public static void Info(string message, params object[] additionalParams)
 		{
 			UnityEngine.Debug.Log(string.Format(message, additionalParams));
+		}
+
+		/// <summary>
+		/// Log a warning message to the Unity console.
+		/// </summary>
+		/// <param name="context">The Unity object context for this message.</param>
+		/// <param name="message">The message to log to console.</param>
+#if UNITY_EDITOR
+		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
+		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING")]
+#else
+		[Conditional("IMPOSSIBLE_ODDS_LOGGING_INFO"),
+		Conditional("IMPOSSIBLE_ODDS_LOGGING_WARNING")]
+#endif
+		public static void Warning(UnityEngine.Object context, object message)
+		{
+			context.ThrowIfNull(nameof(context));
+			UnityEngine.Debug.LogWarning(message.ToString(), context);
 		}
 
 		/// <summary>
@@ -262,6 +310,22 @@
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_WARNING")]
 #endif
+		public static void Warning(object message)
+		{
+			UnityEngine.Debug.LogWarning(message.ToString());
+		}
+
+		/// <summary>
+		/// Log a warning message to the Unity console.
+		/// </summary>
+		/// <param name="message">The message to log to console.</param>
+#if UNITY_EDITOR
+		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
+		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING")]
+#else
+		[Conditional("IMPOSSIBLE_ODDS_LOGGING_INFO"),
+		Conditional("IMPOSSIBLE_ODDS_LOGGING_WARNING")]
+#endif
 		public static void Warning(string message)
 		{
 			UnityEngine.Debug.LogWarning(message);
@@ -330,6 +394,26 @@
 		public static void Warning(string message, params object[] additionalParams)
 		{
 			UnityEngine.Debug.LogWarning(string.Format(message, additionalParams));
+		}
+
+		/// <summary>
+		/// Log an error message to the Unity console.
+		/// </summary>
+		/// <param name="context">The Unity object context for this message.</param>
+		/// <param name="message">The message to log to console.</param>
+#if UNITY_EDITOR
+		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
+		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING"),
+		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_ERROR")]
+#else
+		[Conditional("IMPOSSIBLE_ODDS_LOGGING_INFO"),
+		Conditional("IMPOSSIBLE_ODDS_LOGGING_WARNING"),
+		Conditional("IMPOSSIBLE_ODDS_LOGGING_ERROR")]
+#endif
+		public static void Error(UnityEngine.Object context, object message)
+		{
+			context.ThrowIfNull(nameof(context));
+			UnityEngine.Debug.LogError(message.ToString(), context);
 		}
 
 		/// <summary>
@@ -431,6 +515,24 @@
 		{
 			context.ThrowIfNull(nameof(context));
 			UnityEngine.Debug.LogError(string.Format(message, additionalParams), context);
+		}
+
+		/// <summary>
+		/// Log an error message to the Unity console.
+		/// </summary>
+		/// <param name="message">The message to log to console.</param>
+#if UNITY_EDITOR
+		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
+		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING"),
+		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_ERROR")]
+#else
+		[Conditional("IMPOSSIBLE_ODDS_LOGGING_INFO"),
+		Conditional("IMPOSSIBLE_ODDS_LOGGING_WARNING"),
+		Conditional("IMPOSSIBLE_ODDS_LOGGING_ERROR")]
+#endif
+		public static void Error(object message)
+		{
+			UnityEngine.Debug.LogError(message.ToString());
 		}
 
 		/// <summary>
