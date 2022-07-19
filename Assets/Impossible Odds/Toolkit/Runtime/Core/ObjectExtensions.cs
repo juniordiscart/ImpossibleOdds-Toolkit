@@ -9,7 +9,6 @@
 		/// </summary>
 		/// <param name="argument">The argument to check for null.</param>
 		/// <param name="argumentName">The name of the argument in case it is null.</param>
-		/// <typeparam name="T"></typeparam>
 		/// <returns>Returns the argument.</returns>
 		public static T ThrowIfNull<T>(this T argument, string argumentName)
 		{
@@ -26,7 +25,6 @@
 		/// </summary>
 		/// <param name="argument">The argument to test.</param>
 		/// <param name="argumentName">The name of the argument. This will be printed in the error message.</param>
-		/// <typeparam name="T"></typeparam>
 		/// <returns>True if an error was logged/the argument is null. False otherwise.</returns>
 		public static bool LogErrorIfNull<T>(this T argument, string argumentName)
 		{

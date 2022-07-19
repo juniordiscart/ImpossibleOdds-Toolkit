@@ -7,6 +7,7 @@ You can expect to find the following features in this tookit:
 * [Core utilities](#core-utilities): extension and utility functions to speed-up programming work and reduce boiler-plate code.
 * [Dependency injection](#dependency-injection): keep your code organized and clean by removing tightly coupled design patterns.
 * [Runnables](#runnables): avoid the MonoBehaviour and GameObject tax if your classes only need the `Update` functionality.
+* [State machines](#state-machines): use the state machine design pattern with a quick, easy and robust setup.
 * [JSON](#json): serialize your data to and from the JSON data format, with support for saving type information.
 * [XML](#xml): serialize your data to and from the XML data format using an easier alternative compared to C#'s built-in XML tools.
 * [HTTP](#http): easily transform your objects for sending data to your server using Unity’s web requests.
@@ -19,6 +20,7 @@ In the overarching `ImpossibleOdds` namespace, you'll find many smaller, but use
 * Custom logging tool for which logging levels can be enabled/disabled.
 * Clear out delegates of specific objects in a single line of code.
 * Invoke actions with a null-check in a single line of code.
+* Useful list extensions to write more concise code.
 * Decorate enum values with a display name or translation key.
 * Automatic script execution ordering based on execution dependencies between scripts.
 * Object and string extensions to throw or log an error when null.
@@ -36,6 +38,12 @@ Interested in integrating this in your project? Read more about how it works [he
 The `ImpossibleOdds.Runnables` namespace provides the tools to ditch the GameObject and MonoBehaviour methodology for classes and data that require the `Update` functionality, but don't need anything more than that to function properly.
 
 Read about how to get your scripts running [here][Runnables].
+
+## State Machines
+
+A state machine is a commonly used pattern in game development and comes in a wide variety of shapes, sizes and complexity. The `ImpossilbleOdds.StateMachines` namespace contains a generic framework to get you started on setting up custom state machines.
+
+To learn all about it's ins and outs, please read its documentation page [here][StateMachines].
 
 ## JSON
 
@@ -74,16 +82,6 @@ For more information about this tool and how to get started, read on [here][Phot
 For more details about the data (de)serialization process, check the [Serialization][Serialization] section.
 
 **Note**: this tool is only available when a valid Photon package is installed in your project. It is disabled otherwise.
-
-## State Machines
-
-A state machine is a commonly used pattern in game development and comes in a wide variety of shapes, sizes and complexity. The `ImpossilbleOdds.StateMachines` namespace contains a generic framework to get you started on setting up custom state machines quick and easy.
-
-To learn all about it's ins and outs, please read its documentation page [here][StateMachines].
-
-## Addressables Extensions
-
-
 
 ## Editor Settings
 

@@ -101,6 +101,8 @@
 				new EnumProcessor(this),
 				new PrimitiveTypeProcessor(this),
 				new DateTimeProcessor(this),
+				new VersionProcessor(this),
+				new GuidProcessor(this),
 				new StringProcessor(this),
 				new LookupProcessor(this),
 				new CustomObjectLookupProcessor(this, false)

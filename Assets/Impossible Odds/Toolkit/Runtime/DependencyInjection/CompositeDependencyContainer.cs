@@ -3,7 +3,6 @@ namespace ImpossibleOdds.DependencyInjection
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using System.Linq;
 
 	/// <summary>
 	/// A composite resource container that combines the resources of multiple others in one.
@@ -76,14 +75,22 @@ namespace ImpossibleOdds.DependencyInjection
 		/// <inheritdoc />
 		public bool BindingExists<TypeKey>()
 		{
-			return containers.Any(c => c.BindingExists<TypeKey>());
+			return BindingExists(typeof(TypeKey));
 		}
 
 		/// <inheritdoc />
 		public bool BindingExists(Type typeKey)
 		{
 			typeKey.ThrowIfNull(nameof(typeKey));
-			return containers.Any(c => c.BindingExists(typeKey));
+			foreach (IReadOnlyDependencyContainer c in containers)
+			{
+				if (c.BindingExists(typeKey))
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		/// <inheritdoc />

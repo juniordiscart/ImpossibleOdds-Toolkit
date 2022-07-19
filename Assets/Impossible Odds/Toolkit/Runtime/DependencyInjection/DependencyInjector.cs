@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections;
+	using System.Collections.Generic;
 	using System.Collections.Concurrent;
 	using System.Linq;
 	using System.Reflection;
@@ -9,7 +10,34 @@
 
 	public static class DependencyInjector
 	{
-		private readonly static ConcurrentDictionary<Type, TypeInjectionCache> typeInjectionCache = new ConcurrentDictionary<Type, TypeInjectionCache>();
+		private readonly static HashSet<Type> rejectedTypes = null;
+		private readonly static ConcurrentDictionary<Type, TypeInjectionCache> typeInjectionCache = null;
+
+		static DependencyInjector()
+		{
+			int count = 0;
+			rejectedTypes = new HashSet<Type>();
+			foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+			{
+				foreach (Type type in assembly.GetTypes())
+				{
+					if (!Attribute.IsDefined(type, typeof(InjectableAttribute), true))
+					{
+						lock (rejectedTypes)
+						{
+							rejectedTypes.Add(type);
+						}
+					}
+					else
+					{
+						count++;
+					}
+				}
+			}
+
+			// Set a concurrency level of 4. No real reason why this was chosen.
+			typeInjectionCache = new ConcurrentDictionary<Type, TypeInjectionCache>(4, count);
+		}
 
 		/// <summary>
 		/// Clears the caches used by the dependency injector.
@@ -17,6 +45,10 @@
 		public static void ClearCaches()
 		{
 			typeInjectionCache.Clear();
+
+			// Don't clear this one, as it's statically filled once, and will not work properly anymore otherwise.
+			// This is a performance optimization.
+			// rejectedTypes.Clear();
 		}
 
 		/// <summary>
@@ -329,14 +361,15 @@
 
 		private static bool TryGetTypeInjectionInfo(Type type, out TypeInjectionCache typeInjection)
 		{
-			if (typeInjectionCache.TryGetValue(type, out typeInjection))
+			if (rejectedTypes.Contains(type))
 			{
-				return typeInjection != null;
+				typeInjection = null;
+				return false;
 			}
 			else
 			{
-				typeInjection = typeInjectionCache.GetOrAdd(type, (t) => Attribute.IsDefined(type, typeof(InjectableAttribute), true) ? new TypeInjectionCache(t) : null);
-				return typeInjection != null;
+				typeInjection = typeInjectionCache.GetOrAdd(type, (t) => new TypeInjectionCache(t));
+				return true;
 			}
 		}
 	}

@@ -173,6 +173,8 @@ All this may sound pretty abstract, and providing a simple example for the sake 
 * `StringProcessor`: deserializer-only processor to convert a string to a different type, e.g. a string value that represents a float value.
 * `DecimalProcessor`: provides support for the `decimal` type.
 * `DateTimeProcessor`: provides support for the `DateTime` type.
+* `GuidProcessor`: Provides support for the `Guid` type.
+* `VersionProcessor`: Provides support for the `Version` type.
 * `Vector2Processor`: provides support for the `Vector2` type. This processor can switch between processing modes, e.g. lookup-based versus sequence-based.
 * `Vector2IntProcessor`: provides support for the `Vector2Int` type. This processor can switch between processing modes, e.g. lookup-based versus sequence-based.
 * `Vector3Processor`: provides support for the `Vector3` type. This processor can switch between processing modes, e.g. lookup-based versus sequence-based.

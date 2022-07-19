@@ -3,12 +3,14 @@
 	using System;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
+	using ImpossibleOdds.Runnables;
 
 	public class StateMachine<TStateKey> : IStateMachine<TStateKey>
 	{
 		private ConcurrentDictionary<TStateKey, IState> stateMapping = new ConcurrentDictionary<TStateKey, IState>();
 		private ConcurrentDictionary<TStateKey, List<IStateTransition<TStateKey>>> transitions = new ConcurrentDictionary<TStateKey, List<IStateTransition<TStateKey>>>();
 		private TStateKey currentState;
+		private bool initialised = false;
 
 		public event Action<TStateKey> onStateChanged;
 		public event Action<IStateTransition<TStateKey>> onTransitionTriggered;
@@ -117,10 +119,13 @@
 			}
 
 			// If the state machine is already in this state, then don't bother.
-			if (currentState.Equals(stateKey))
+			if (initialised && currentState.Equals(stateKey))
 			{
 				return;
 			}
+
+			// Moving to a state always initializes the state machine.
+			initialised = true;
 
 			if (CurrentStateObj != null)
 			{
@@ -380,8 +385,13 @@
 		/// <summary>
 		/// Check the current state for any outgoing transitions that can be triggered.
 		/// </summary>
-		public void MonitorCurrentState()
+		public void Update()
 		{
+			if (!initialised)
+			{
+				return;
+			}
+
 			IState currentState = CurrentStateObj;
 			if (currentState != null)
 			{

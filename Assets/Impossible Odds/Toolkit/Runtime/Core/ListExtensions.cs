@@ -14,19 +14,42 @@ namespace ImpossibleOdds
 	public static class ListExtensions
 	{
 		/// <summary>
+		/// Shuffles a list's elements using Unity's random number generator.
+		/// Source: https://stackoverflow.com/a/1262619
+		/// </summary>
+		/// <param name="list">The list whose elements should be shuffled.</param>
+		/// <typeparam name="T">The element type of the list.</typeparam>
+		public static void Shuffle<T>(this IList<T> list)
+		{
+			list.ThrowIfNull(nameof(list));
+
+			int n = list.Count;
+			while (n > 1)
+			{
+				n--;
+				int k = UnityEngine.Random.Range(0, n + 1);
+				list.Swap(n, k);
+			}
+		}
+
+		/// <summary>
 		/// Shuffles a list's elements with the provided random number generator.
-		/// Source: https://stackoverflow.com/a/22668974/892910
+		/// Source: https://stackoverflow.com/a/1262619
 		/// </summary>
 		/// <param name="list">The list whose elements should be shuffled.</param>
 		/// <param name="rnd">The random number generator.</param>
 		/// <typeparam name="T">The element type of the list.</typeparam>
 		public static void Shuffle<T>(this IList<T> list, Random rnd)
 		{
+			list.ThrowIfNull(nameof(list));
 			rnd.ThrowIfNull(nameof(rnd));
 
-			for (var i = 0; i < list.Count - 1; i++)
+			int n = list.Count;
+			while (n > 1)
 			{
-				list.Swap(i, rnd.Next(i, list.Count));
+				n--;
+				int k = rnd.Next(0, n + 1);
+				list.Swap(n, k);
 			}
 		}
 
@@ -40,13 +63,15 @@ namespace ImpossibleOdds
 		/// <typeparam name="T">The element type of the list.</typeparam>
 		public static void Swap<T>(this IList<T> list, int i, int j)
 		{
+			list.ThrowIfNull(nameof(list));
+
 			if ((i < 0) || (i >= list.Count))
 			{
-				throw new ArgumentOutOfRangeException(nameof(i));
+				throw new ArgumentOutOfRangeException(string.Format("Parameter {0} has value {1}, while the list has size {2}.", nameof(i), i, list.Count));
 			}
 			else if ((j < 0) || (j >= list.Count))
 			{
-				throw new ArgumentOutOfRangeException(nameof(j));
+				throw new ArgumentOutOfRangeException(string.Format("Parameter {0} has value {1}, while the list has size {2}.", nameof(j), j, list.Count));
 			}
 
 			T temp = list[i];
@@ -91,8 +116,17 @@ namespace ImpossibleOdds
 		/// <typeparam name="T">The element type of the list.</typeparam>
 		public static void SortedInsert<T>(this IList<T> list, T value, Comparison<T> comparison)
 		{
+			list.ThrowIfNull(nameof(list));
 			comparison.ThrowIfNull(nameof(comparison));
 
+			// If no elements exist in the list, add it.
+			if (list.Count == 0)
+			{
+				list.Add(value);
+				return;
+			}
+
+			// Search for the insertion index using binary search.
 			int startIndex = 0;
 			int endIndex = list.Count;
 			while (endIndex > startIndex)
@@ -170,6 +204,13 @@ namespace ImpossibleOdds
 		public static void SortedInsert(this IList list, IComparable value, Comparison<IComparable> comparison)
 		{
 			comparison.ThrowIfNull(nameof(comparison));
+
+			// If no elements exist in the list, add it.
+			if (list.Count == 0)
+			{
+				list.Add(value);
+				return;
+			}
 
 			int startIndex = 0;
 			int endIndex = list.Count;

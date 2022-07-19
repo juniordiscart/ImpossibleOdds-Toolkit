@@ -64,7 +64,7 @@
 		/// </summary>
 		public void Inject()
 		{
-			SceneManager.GetActiveScene().Inject(globalContainer);
+			SceneManager.GetActiveScene().GetRootGameObjects().Inject(globalContainer, true);
 		}
 
 		private void InitializeGlobalContainer()
@@ -139,7 +139,7 @@
 		{
 			if (autoInjectLoadedScenes)
 			{
-				scene.Inject(globalContainer);
+				scene.GetRootGameObjects().Inject(globalContainer, true);
 			}
 		}
 	}

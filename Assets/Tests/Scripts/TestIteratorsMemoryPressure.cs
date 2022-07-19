@@ -20,7 +20,6 @@ public class TestIteratorsMemoryPressure : MonoBehaviour
 	{
 		foreach (ISerializationProcessor processor in processors)
 		{
-			int _;
 		}
 	}
 
@@ -28,7 +27,6 @@ public class TestIteratorsMemoryPressure : MonoBehaviour
 	{
 		foreach (ISerializationProcessor processor in processors)
 		{
-			int _;
 		}
 	}
 }

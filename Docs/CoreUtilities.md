@@ -8,6 +8,7 @@ In here you'll find smaller but useful utilities to speed up your programming. A
 * Extensions to quickly invoke events and delegates.
 * Extensions to quickly check if the value is null, or a string is empty.
 * Extensions for enum values, to provide them with a suitable name for display to your users.
+* Extensions for list and other collections to check whether they're null or empty, shuffle or insert values.
 * Custom logging tool to enable/disable certain levels of logging.
 * Define script execution order dependencies of your scripts using attributes.
 
@@ -124,6 +125,34 @@ A similar extension method is available to dispose of objects that implement the
 myDisposable.DisposeIfNotNull();
 ```
 
+### Strings
+
+Common value checking of objects of type `string` is to see whether they're null, empty or only contain whitespace characters. This is usually done through the static `IsNullOrEmpty` or `IsNullOrWhitespace` methods. This toolkit makes these two functions also available as extensions functions to any string object, writing the code just that little bit shorter:
+
+```cs
+string myString;
+if (myString.IsNullOrEmpty())
+{
+	Log.Error("The string is null or empty.");
+}
+else if (myString.IsNullOrWhitespace())
+{
+	Log.Error("The string is null, empty, or a set of whitespace characters.");
+}
+```
+
+### Lists & Collections
+
+Just like with strings, you sometimes are simply interested in whether the list or collection is null or empty before doing anything with it.
+
+```cs
+List<string> myValues;
+if (myValues.IsNullOrEmpty())
+{
+	Log.Error("The list is null or empty.");
+}
+```
+
 ## Enums
 
 There are situations where you might want to display an enum value properly instead of its internal/code name. The usual way to go about it is to write a `switch`-statement and list all possibilities, but that becomes tedious the more values there are, as well as very error prone depending on the amount of locations in your code this is used.
@@ -169,6 +198,51 @@ public enum Options
 
 The `Options.NONE` and `Options.DEFAULT` enum values are defined to share the same underlying value, and no meaningful distinction can be made between them. Consequently, calling `Options.NONE.DisplayName()` could result in `Default` being returned instead of `None`.
 
+## List & Collection Extensions
+
+Lists and other `IEnumerable` collections are commonly used datastructures throughout a codebase. `System.Linq` already provides a wide set of extra tools to help write more concise code.
+
+In the [Value Checking](#value-checking) section, you've already seen the `IsNullOrEmpty` extension method. In this module though, you'll find a few more that can be of use that are detailed below.
+
+### Sorted Insertion
+
+When a list already contains an ordered set of values, inserting a new value (or values) right in place can be done using the `SortedInsert` methods. There are a wide variety of overloads of this method to configure the way the sorting should happen. Most of them operate on the basis of that the values being inserted have the `IComparable` interface implemented, which makes comparing the values trivial for the insertion algorithm.
+
+```cs
+List<int> sortedList = new List<int>() { -1, 0, 5, 66 };
+sortedList.SortedInsert(9);	// Will insert the value between values 5 and 66.
+```
+
+If no `IComparable` interface is implemented by the element type, then a custom comparison operator can be provided.
+
+### Shuffling
+
+In some occasions, it's desirable to have a randomly ordered set of values. The `Shuffle` extension method allows you to shuffle a set of values in it.
+
+```cs
+List<float> myValues;
+myValues.Shuffle();
+```
+
+The default shuffle method will work with Unity's static `Random` class to generate the random numbers that determine the shuffle positions. Alternatively, if you want some 'predictability' to the shuffle, there's also the overload that takes a `System.Random` value as a parameter.
+
+### Swapping Elements
+
+When needing to swap two elements in a list or array, it takes a few lines of code to accomplish, with a tendency to make an error in where to slot the temporary value back in:
+
+```cs
+// Swap the first two elements of the list.
+var tempValue = myList[0];
+myList[0] = myList[1];
+myList[1] = tempValue;
+```
+
+With the `Swap` extension function, you can perform this in a single line:
+
+```cs
+myList.Swap(0, 1); // Swap the first two elements of the list.
+```
+
 ## Logging
 
 Logging debug output is a necessity during development and testing to trace what's going on in your code. However, when your project edges to its release-state, you're generally only interested in the errors that may still occur, and your _info_-level messages tend to get in the way. Even worse, generating these info-level messages may allocate memory, which could trigger garbage collection. To remedy this, the custom logger in this toolkit allows you to outright disable certain levels of logging in your build, and even in the editor too, if you prefer.
@@ -207,7 +281,7 @@ Controlling which levels of logging are enabled/disabled can be done using the I
 
 ## Script Execution Order
 
-In an ideal Unity project environment, your scripts can work idependently from each other, meaning that, no matter in which order they get initialized and updated, the result stays the same. This is however not always the case, and you may want to define a certain order for some scripts to state that one should execute before or after another script, because its result depends on their result.
+In an ideal Unity project environment, your scripts can work independently from each other, meaning that, no matter in which order they get initialized and updated, the result stays the same. This is however not always the case, and you may want to define a certain order for some scripts to state that one should execute before or after another script, because its result depends on their result.
 
 Unity already provides this through its _script execution order_ feature found in your project settings panel. However, this view does not tell you _why_ a certain script is assigned a certain execution order value, or relative to which script that value is important. Furthermore, as a project grows larger and more and more scripts are added which may have to interact with these specific scripts for which the order is important, it becomes increasingly difficult to maintain the order of execution dependencies.
 

@@ -11,7 +11,7 @@
 		/// <inheritdoc />
 		void IRunnable.Update()
 		{
-			MonitorCurrentState();
+			Update();
 		}
 	}
 }

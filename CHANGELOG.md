@@ -4,6 +4,48 @@ You'll find the full update history of this toolkit below. This might be useful 
 
 **General note about installing updates**: it is recommended that you remove the current installed package first before updating to a newer one. Some files may have been deleted or moved, which may cause conflicts or compilation errors. The default location for this package in your Unity project is at `Assets/Impossible Odds/Toolkit`.
 
+## v1.5 - State Machines, Dependency Injection Improvements & Optimizations
+
+Changelist:
+
+### Added
+
+* Added the State Machines functionality to set up and manage state machines.
+* Added Unity package data so that this toolkit can now be included as an embedded project package.
+* Added `IsNullOrEmpty` and `IsNullOrWhitespace` string extension functions in analogy of their static counterparts.
+* Added `IsNullOrEmpty` collection extension functions to quickly check if a list, array or other type of collection is null or empty.
+* Added `TryFindIndex` list and array extensions to find an index of an element.
+* Added additional sorted insertion extension functions for list-structures.
+* Added additional logging functions to provide an object as parameter, rather than a string to quickly log the value of an object without having to convert it to string manually.
+* Added a serialization processor for the `System.Version` and `System.Guid` types so these can be included in serialized data. This processor has been added to all available serialization definitions.
+* Added Dependency Injection extension functions to add a component to a game object and inject it immediately.
+* Added Dependency Injection extension functions to inject a scene, which will loop over all game objects in the scene.
+* Added an optional injection identifier for the `Scene` and `Hierarchy` scopes, to inject their scopes to objects requiring their resources to come from specific sources only.
+* Added the `CompositeDependencyContainer` type which is a resource container that is built by combining multiple resource containers. This allows to inject a large set objects in one go instead of going over them per resource container.
+* Added an `IReadOnlyDependencyContainer` interface which allows to only get resources from the container. The `IDependencyContainer` now inherits from this new interface as well.
+* Added a reflection caching framework to optimize and unify the way meta-data is cached and stored. The enum display namaes, dependency injection, weblink and serialization frameworks now use this caching instead of their internal solutions.
+
+### Updated
+
+* Updated the Dependency Injection framework to allow constructor-based injection.
+* Updated the Dependency Injection framework to allow static injection. If the object to inject is of type `Type`, then its static fields and properties will be injected.
+* Updated most dependency injection methods to receive a read-only container now if they only require resources to be read from the container.
+* Updated the `GlobalDependencyScope` to have its `GlobalScope` property be `public` instead of `internal`.
+* Updated the `GlobalDependencyScope` to be able to adjust the `AutoInjectLoadedScenes` at runtime.
+* Updated most frameworks to work with concurrency-safe structures. This should make (most of) this toolkit safe to use and run in multi-threaded environments.
+* Updated most attribute-related functions to work with the static `Attribute` functions rather than the member functions defined on the `MemberInfo` classes to ensure the frameworks work with attribute-related data.
+* Updated most interal workings to use arrays instead of the `IEnumerable<T>` interface to optimise iterating the collections.
+* Updated reflection-based method invokation to use a cached parameter list to reduce garbage generation.
+
+### Fixed
+
+* Fixed an issue where serialization callbacks would get invoked multiple times if overrides of the same method had the callback attribute defined as well.
+* Fixed an issue with the `Shuffle` extension function for lists, where certain placement patterns weren't possible.
+
+### Breaking Changes
+
+* The `IDependencyScope` requires the implementation of an `Inject` method now. Calling this method on your scope object should inject the objects under its scope with the resources found in its resources container. If you have a custom dependency scope type, you'll have to provide an implementation for this.
+
 ## v1.4 - Serialization Type Key Overrides & Several Fixes
 
 Changelist:

@@ -137,6 +137,8 @@
 				new PrimitiveTypeProcessor(this),
 				new DecimalProcessor(this),
 				new DateTimeProcessor(this),
+				new VersionProcessor(this),
+				new GuidProcessor(this),
 				new StringProcessor(this),
 				new Vector2Processor(this, this, defaultProcessingMethod),
 				new Vector2IntProcessor(this, this, defaultProcessingMethod),

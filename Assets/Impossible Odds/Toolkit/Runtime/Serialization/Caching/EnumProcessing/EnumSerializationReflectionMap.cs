@@ -155,7 +155,7 @@
 				{
 					if (aliasEntries.TryFindIndex((ae => ae.alias.Equals(splitValues[i])), out resultIndex))
 					{
-						splitValues[i] = aliasEntries[resultIndex].originalName;
+						splitValues[i] = aliasEntries[resultIndex].name;
 					}
 				}
 
@@ -205,23 +205,23 @@
 			return enumSerializableValues.GetOrAdd(attributeType, !enumSerializationNames.IsNullOrEmpty() ? enumSerializationNames : Array.Empty<CachedEnumEntry>());
 		}
 
-		public struct CachedEnumEntry
+		internal struct CachedEnumEntry
 		{
 			public readonly Enum value;
-			public readonly string originalName;
+			public readonly string name;
 			public readonly string alias;
 
 			public CachedEnumEntry(Enum value, string originalName, string alias)
 			{
 				originalName.ThrowIfNullOrEmpty(nameof(originalName));
 				this.value = value;
-				this.originalName = originalName;
+				this.name = originalName;
 				this.alias = alias;
 			}
 
 			public string StringBasedRespresentation
 			{
-				get => !string.IsNullOrEmpty(alias) ? alias : originalName;
+				get => !string.IsNullOrEmpty(alias) ? alias : name;
 			}
 		}
 	}

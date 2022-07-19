@@ -77,9 +77,9 @@ These predefined bindings are very generic and broadly usable, though might not 
 
 ## Containers
 
-A dependency injection container, simply put, is a collection of bindings. It allows to store, retrieve and check if a binding exists for a type. Such a container is used as the main source to inject your objects.
+A dependency injection container, simply put, is a collection of keys and values that binds a type to an instance of a resource. It allows to store, retrieve, remove and check if a binding exists. Such a resource container is used as the main source to inject your objects with.
 
-To have your binding be registered to a type in a container, simply call its `Register` method.
+To have your binding be registered to a type in a resource container, simply call its `Register` method.
 
 ```cs
 IDependencyBinding<MyType> binding;	// Binding to get a resource of MyType.
@@ -132,6 +132,22 @@ container.RegisterWithInterfaces<InputManager>(binding);	// Registers the type a
 
 The predefined `DependencyContainer` type can be used to store bindings suitable for injection. A custom container type can be created however by implementing the `IDependencyContainer` interface.
 
+### Composite Containers
+
+You'll quickly run into situations where you're dealing with multiple resource containers that each serve a specific purpose, but do have a certain connection. For example, you might have global, scene and per-player resource containers. Now each time you spawn an object that belongs to a specific player, you may want to inject it with the necessary resources. The naive way would be to keep a reference to each of those containers and inject them one by one into the created object.
+
+Much easier would be to combine these resource containers into a single, composite container, holding all relevant resources for that player.
+
+This can be achieved using the `CompositeDependencyContainer` class. It's a _read-only_ container, meaning you can't add/remove bindings to/from it, but you can stack on additional resource containers (including other composite containers).
+
+```cs
+DependencyContainer globalResources;
+DependencyContainer sceneResources;
+DependencyContainer playerResources;
+
+CompositeDependencyContainer combinedResources = new CompositeDependencyContainer(globalResources, sceneResources, playerResources);
+```
+
 ## Scopes & Installers
 
 Now that your objects are prepared for injection and we know how containers can be populated with resources, it's time to define _who_ will be injected, and _when_. This is done using the concept of a dependency injection scope. For example, if the scope we're talking about would be the currently active scene, then it should search through the scene to find components that have the `Injectable` attribute.
@@ -167,7 +183,7 @@ You can create multiple such methods spread across your project if your resource
 
 Now that global resources have been installed, each time a scene is loaded, it will scan that scene and inject any component that requires its resources.
 
-**Important note**: the global dependency scope will, by default, inject each newly loaded scene. This may have an impact on loading times or be a cause of frame drops when a scene is streamed in. You can disable the automatic injection process in the Impossible Odds project settings panel. You can use the `InjectScene` method of the global scope to apply it to any loaded scene afterwards.
+**Important note**: the global dependency scope will, by default, inject each newly loaded scene. This may have an impact on loading times or be a cause of frame drops when a scene is streamed in. You can disable the automatic injection process in the Impossible Odds project settings panel. You can use the `InjectScene` method of the global scope to apply it to any loaded scene afterwards. Alternatively, if you want to control this behaviour at runtime, the global scope exposes the `AutoInjectLoadedScenes` property to turn this feature on/off.
 
 #### Advanced
 

@@ -16,6 +16,9 @@ This document is auto-stitched together using multiple documentation files into 
 <<[Docs/Runnables.md]
 <!--BREAK-->
 
+<<[Docs/StateMachines.md]
+<!--BREAK-->
+
 <<[Docs/Json.md]
 <!--BREAK-->
 

@@ -2,8 +2,9 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using ImpossibleOdds.Runnables;
 
-	public interface IStateMachine
+	public interface IStateMachine : IRunnable
 	{
 		event Action<object> onStateChanged;
 		event Action<IStateTransition> onTransitionTriggered;

@@ -4,11 +4,11 @@
 	using System.Reflection;
 	using ImpossibleOdds.ReflectionCaching;
 
-	internal class MemberInjectionValue<TMemberInfo> : IMemberInjectionValue
+	internal struct MemberInjectionValue<TMemberInfo> : IMemberInjectionValue
 	where TMemberInfo : MemberInfo
 	{
-		private readonly InjectAttribute injectAttribute = null;
-		private readonly TMemberInfo member = null;
+		private readonly InjectAttribute injectAttribute;
+		private readonly TMemberInfo member;
 
 		public MemberInjectionValue(TMemberInfo member, InjectAttribute injectAttribute)
 		{
