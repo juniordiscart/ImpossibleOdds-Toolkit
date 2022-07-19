@@ -2,7 +2,7 @@
 
 All functionality described in this section can be found in the `ImpossibleOdds.Runnables` namespace.
 
-Sometimes, having a script be a `MonoBehaviour` feels like overkill for what it tries to do, or simply needs the update functionality without any of the Unity callstack behind it. This tool tries to minimize/eliminate this by
+Sometimes, having a script be a `MonoBehaviour` feels like overkill for what it tries to do, or simply needs the update functionality without any of the Unity call stack behind it. This tool tries to minimize/eliminate this by
 
 ## Runnables
 
@@ -35,7 +35,7 @@ public class MyObject : IRunnable, IFixedRunnable, ILateRunnable
 
 ## Runners
 
-To have you objects actually receive their calls to the kind of update they want, they should be registred to a runner. A runner collects the different objects that require update notifications and delegate the type of events they need.
+To have you objects actually receive their calls to the kind of update they want, they should be registered to a runner. A runner collects the different objects that require update notifications and delegate the type of events they need.
 
 The following types of runners are predefined for you to use:
 

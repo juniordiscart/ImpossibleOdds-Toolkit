@@ -8,7 +8,7 @@
 	JsonType(typeof(Cat), KeyOverride = "AnimalType", Value = AnimalType.CAT),
 	JsonType(typeof(Dog), KeyOverride = "AnimalType", Value = AnimalType.DOG),
 	JsonType(typeof(Crocodile), Value = "Kroko"),
-	JsonType(typeof(Pidgeon), Value = "Dove")]
+	JsonType(typeof(Pigeon), Value = "Dove")]
 	public abstract class Animal
 	{
 		public static StringBuilder SerializationLog

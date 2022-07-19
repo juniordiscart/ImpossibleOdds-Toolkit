@@ -173,7 +173,7 @@ private void Start()
 	// Add transitions.
 	stateMachine.AddTransition(new TrafficLightTransition(TrafficLightStateKey.Red, TrafficLightStateKey.Green, () => redState.TimeActive > 20f));
 	stateMachine.AddTransition(new TrafficLightTransition(TrafficLightStateKey.Green, TrafficLightStateKey.Yellow), () => yellowState.TimeActive > 5f);
-	stateMachine.AddTransition(new TrafficLightTransition(TrafficLightStateKey.Yellow, TrafficLightStateKey.Red), () => greemState.TimeActive > 30f);
+	stateMachine.AddTransition(new TrafficLightTransition(TrafficLightStateKey.Yellow, TrafficLightStateKey.Red), () => greenState.TimeActive > 30f);
 
 	// Initialize the state machine to its start state.
 	stateMachine.MoveToState(startState);

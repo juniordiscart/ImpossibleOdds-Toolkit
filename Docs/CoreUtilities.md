@@ -4,7 +4,7 @@ These general tools can all be found by including the `ImpossibleOdds` namespace
 
 In here you'll find smaller but useful utilities to speed up your programming. A quick summary of what you can expect to find in here:
 
-* Extenions for delegates and events to immediately remove an object from all delegates found on another object.
+* Extensions for delegates and events to immediately remove an object from all delegates found on another object.
 * Extensions to quickly invoke events and delegates.
 * Extensions to quickly check if the value is null, or a string is empty.
 * Extensions for enum values, to provide them with a suitable name for display to your users.
@@ -16,7 +16,7 @@ In here you'll find smaller but useful utilities to speed up your programming. A
 
 When subscribing to events in C#, a best practice is to also unsubscribe when you're done or no longer need them, e.g. when your GameObject gets destroyed. This often results in listing every method you had subscribed to it. Manually listing these functions is tedious and can be error prone.
 
-A quick way to clear the object you're done with from all events on a particular object is to use the `PurgeDelegatesOf` extension method defined on all objects. It searches the object for all delegate fields and removes the target object from their invokation lists.
+A quick way to clear the object you're done with from all events on a particular object is to use the `PurgeDelegatesOf` extension method defined on all objects. It searches the object for all delegate fields and removes the target object from their invocation lists.
 
 ```cs
 // Clears the delegates of myObject from methods belonging to myDisposedObject.
@@ -178,7 +178,7 @@ string name = value.DisplayName();
 string locaKey = value.LocalizationKey();
 ```
 
-**Note**: when your enum value has no display name defined, calling the `DisplayName` extension menthod will perform the `ToString` method on the value and return that result instead. The `LocalizationKey` extension method will return a `string.Empty` result when no translation key is set.
+**Note**: when your enum value has no display name defined, calling the `DisplayName` extension method will perform the `ToString` method on the value and return that result instead. The `LocalizationKey` extension method will return a `string.Empty` result when no translation key is set.
 
 **Another note**: don't confuse the Impossible Odds `DisplayName` attribute with the C# `DisplayName` attribute found in the `System.ComponentModel` namespace.
 
@@ -200,7 +200,7 @@ The `Options.NONE` and `Options.DEFAULT` enum values are defined to share the sa
 
 ## List & Collection Extensions
 
-Lists and other `IEnumerable` collections are commonly used datastructures throughout a codebase. `System.Linq` already provides a wide set of extra tools to help write more concise code.
+Lists and other `IEnumerable` collections are commonly used data structures throughout a codebase. `System.Linq` already provides a wide set of extra tools to help write more concise code.
 
 In the [Value Checking](#value-checking) section, you've already seen the `IsNullOrEmpty` extension method. In this module though, you'll find a few more that can be of use that are detailed below.
 
@@ -273,7 +273,7 @@ public class MyBehaviour : MonoBehaviour
 }
 ```
 
-Controlling which levels of logging are enabled/disabled can be done using the Impossible Odds preferences panel, which you can find in your project's preferences. It'll tell you which levels of logging messages are still coming through as well as which ones are supressed.
+Controlling which levels of logging are enabled/disabled can be done using the Impossible Odds preferences panel, which you can find in your project's preferences. It'll tell you which levels of logging messages are still coming through as well as which ones are suppressed.
 
 ![Editor Settings][EditorSettingsImg]
 

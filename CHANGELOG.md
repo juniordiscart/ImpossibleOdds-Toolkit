@@ -6,7 +6,7 @@ You'll find the full update history of this toolkit below. This might be useful 
 
 ## v1.5 - State Machines, Dependency Injection Improvements & Optimizations
 
-Changelist:
+Changelog:
 
 ### Added
 
@@ -23,7 +23,7 @@ Changelist:
 * Added an optional injection identifier for the `Scene` and `Hierarchy` scopes, to inject their scopes to objects requiring their resources to come from specific sources only.
 * Added the `CompositeDependencyContainer` type which is a resource container that is built by combining multiple resource containers. This allows to inject a large set objects in one go instead of going over them per resource container.
 * Added an `IReadOnlyDependencyContainer` interface which allows to only get resources from the container. The `IDependencyContainer` now inherits from this new interface as well.
-* Added a reflection caching framework to optimize and unify the way meta-data is cached and stored. The enum display namaes, dependency injection, weblink and serialization frameworks now use this caching instead of their internal solutions.
+* Added a reflection caching framework to optimize and unify the way meta-data is cached and stored. The enum display names, dependency injection, Weblink and serialization frameworks now use this caching instead of their internal solutions.
 
 ### Updated
 
@@ -34,8 +34,8 @@ Changelist:
 * Updated the `GlobalDependencyScope` to be able to adjust the `AutoInjectLoadedScenes` at runtime.
 * Updated most frameworks to work with concurrency-safe structures. This should make (most of) this toolkit safe to use and run in multi-threaded environments.
 * Updated most attribute-related functions to work with the static `Attribute` functions rather than the member functions defined on the `MemberInfo` classes to ensure the frameworks work with attribute-related data.
-* Updated most interal workings to use arrays instead of the `IEnumerable<T>` interface to optimise iterating the collections.
-* Updated reflection-based method invokation to use a cached parameter list to reduce garbage generation.
+* Updated most internal workings to use arrays instead of the `IEnumerable<T>` interface to optimize iterating the collections.
+* Updated reflection-based method invocation to use a cached parameter list to reduce garbage generation.
 
 ### Fixed
 
@@ -48,7 +48,7 @@ Changelist:
 
 ## v1.4 - Serialization Type Key Overrides & Several Fixes
 
-Changelist:
+Changelog:
 
 ### Added
 
@@ -66,7 +66,7 @@ Changelist:
 
 ### Fixed
 
-* The type verification check of a value against generic type arguments of a list or dictionary would fail for vaules that were not null. See issue [#4](https://github.com/juniordiscart/ImpossibleOdds-Toolkit/issues/4).
+* The type verification check of a value against generic type arguments of a list or dictionary would fail for values that were not null. See issue [#4](https://github.com/juniordiscart/ImpossibleOdds-Toolkit/issues/4).
 * All registered targeted callback methods were called when a message completed instead of only the matching ones to the response. See issue [#5](https://github.com/juniordiscart/ImpossibleOdds-Toolkit/issues/5).
 * The `ExactMatchProcessor` would have an unhandled scenario where it would attempt to set the wrong kind of data during deserialization.
 
@@ -76,7 +76,7 @@ Changelist:
 
 ## v1.3 - Multi-Named Injections & Small Optimizations
 
-Changelist:
+Changelog:
 
 ### Added
 
@@ -88,13 +88,13 @@ Changelist:
 
 ### Improved
 
-* The `Log` class has now multiple overloads for each log function that can take up to three parameters, similar to the `String.Format` overloads, to minimise the amount of memory allocationss that would otherwise occur from creating the list of parameters.
+* The `Log` class has now multiple overloads for each log function that can take up to three parameters, similar to the `String.Format` overloads, to minimize the amount of memory allocations that would otherwise occur from creating the list of parameters.
 
 ## v1.2 - Photon WebRPC Support & Tool Interoperability
 
-**Note: this release contains minor breaking changes regarding the JSON tool. Please check the 'Renamed' and 'Removed' entries in the changelist below.**
+**Note: this release contains minor breaking changes regarding the JSON tool. Please check the 'Renamed' and 'Removed' entries in the changelog below.**
 
-Changelist:
+Changelog:
 
 ### Added
 
@@ -113,7 +113,7 @@ Changelist:
 
 ### Updated
 
-* The `InvokeIfNotNull` extension method with flexible parameter list has been marked obsolete because of its unintentional fallback for otherwise invalid delegate invokations.
+* The `InvokeIfNotNull` extension method with flexible parameter list has been marked obsolete because of its unintentional fallback for otherwise invalid delegate invocations.
 * The `IHttpJsonResponse` interface is marked obsolete as the name does not fully cover the extends of where the interface should be applied. Implement the `IHttpStructuredResponse` interface instead.
 * The `JsonProcessor` now accepts an optional instance of `JsonOptions` for all of its serialization and deserialization methods. If a custom serialization definition is defined, it will use those data structures instead of the predefined types by the processor itself.
 * The default logging level of the `Log` utility is now set to the 'info'-level when the toolkit detects no logging level has been set before.
@@ -136,9 +136,9 @@ Changelist:
 
 ## v1.1 - XML Support & Serialization Performance
 
-**Note: this release contains breaking changes! Check the 'Removed' and 'Renamed' entries in the changelist below.**
+**Note: this release contains breaking changes! Check the 'Removed' and 'Renamed' entries in the changelog below.**
 
-Changelist:
+Changelog:
 
 ### Added
 
@@ -182,9 +182,9 @@ Changelist:
 
 ## v1.0.2 - Extensions & Fixes
 
-**Note: this release contains a breaking change! Check the 'Renamed' entries in the changelist below.**
+**Note: this release contains a breaking change! Check the 'Renamed' entries in the changelog below.**
 
-Changelist:
+Changelog:
 
 ### Added
 
@@ -200,7 +200,7 @@ Changelist:
 
 ## v1.0.1 - Improved Documentation & Combined Package
 
-Changelist:
+Changelog:
 
 ### Added
 

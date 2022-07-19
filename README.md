@@ -2,7 +2,7 @@
 
 The Impossible Odds C# Toolkit for Unity is a set of carefully crafted tools to help you kickstart your project's codebase. It's designed with ease-of-use in mind, provide tools to keep your codebase clean and efficient. It combines several utilities and frameworks to help you think more about your game and gameplay design rather than code design.
 
-You can expect to find the following features in this tookit:
+You can expect to find the following features in this toolkit:
 
 * [Core utilities](#core-utilities): extension and utility functions to speed-up programming work and reduce boiler-plate code.
 * [Dependency injection](#dependency-injection): keep your code organized and clean by removing tightly coupled design patterns.
@@ -41,7 +41,7 @@ Read about how to get your scripts running [here][Runnables].
 
 ## State Machines
 
-A state machine is a commonly used pattern in game development and comes in a wide variety of shapes, sizes and complexity. The `ImpossilbleOdds.StateMachines` namespace contains a generic framework to get you started on setting up custom state machines.
+A state machine is a commonly used pattern in game development and comes in a wide variety of shapes, sizes and complexity. The `ImpossibleOdds.StateMachines` namespace contains a generic framework to get you started on setting up custom state machines.
 
 To learn all about it's ins and outs, please read its documentation page [here][StateMachines].
 
@@ -87,7 +87,7 @@ For more details about the data (de)serialization process, check the [Serializat
 
 This toolkit has a custom entry in your project settings panel. It currently allows you to adjust the following settings:
 
-* Enable editor extensions: whether or not some context senstive menu's are enabled or not.
+* Enable editor extensions: whether or not some context sensitive menu's are enabled or not.
 * Editor logging level: enable/disable certain logging messages from being executed while playing in editor.
 * Player logging level: enable/disable certain logging messages from being executed in the player build.
 * Json serialization settings: define the default behaviour of the JSON serializer for certain Unity data types such as `Color`, `Vector3`, `Quaternion`, etc.

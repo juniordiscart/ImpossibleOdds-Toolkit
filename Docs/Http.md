@@ -129,7 +129,7 @@ This tool offers several other predefined and more specific kinds of `GET`-type 
 
 A `POST`-type request serves to send over some structured/complex data to the server and do something with it, e.g. a registration form, or updating a score on a leaderboard. It's not designed to send over big chunks of data like images, video or other forms of binary data, though. You'll read about those in an upcoming section.
 
-To have your object be recognised as a `POST`-type request by this framework, have it implement the `IHttpPostRequest` interface. This interface on its own does not force any additional properties or methods to be implemented but does allow you to define a complex set of parameters that will be set in the request's body. The default approach of this `POST`-type request implementation is to send over your data in the JSON format. As such, it takes a very similar approach as the [JSON tool][JsonTool] in this toolkit. You have have four attributes to work with to assist the tool in how to process your objects:
+To have your object be recognized as a `POST`-type request by this framework, have it implement the `IHttpPostRequest` interface. This interface on its own does not force any additional properties or methods to be implemented but does allow you to define a complex set of parameters that will be set in the request's body. The default approach of this `POST`-type request implementation is to send over your data in the JSON format. As such, it takes a very similar approach as the [JSON tool][JsonTool] in this toolkit. You have have four attributes to work with to assist the tool in how to process your objects:
 
 * Use the `HttpBodyObject` attribute to process your object to a JSON object. It's assisted by the `HttpBodyField` attribute, which can define an optional, alternative name for the member.
 * The `HttpBodyArray` attribute to process your object a JSON array. It's assisted by the `HttpBodyIndex` attribute to define the index of a member in this list.
@@ -290,9 +290,9 @@ public class MyCustomResponse : IHttpCustomResponse
 
 ## Type Information & Inheritance
 
-When dealing with JSON data of a request's `POST`-body or its response, it's possible it may contain data with a chain of ancestor types. By default, no type information about the data being processed is taken into account. This means data returned in a response may not be fully reconstructable when received.
+When dealing with JSON data of a request's `POST`-body or its response, it's possible it may contain data with a chain of ancestor types. By default, no type information about the data being processed is taken into account. This means data returned in a response may not be fully reconstructible when received.
 
-This is where the `HttpType` attribute comes into play. You can place these at any of a base class in the hierarchy or interfaces. This attribute defines which child classes are eligible for including its type information in the serialized result. By default, the type's name will be used as a value for identification. However, you can provide a custom alias for the type by setting the `Value` property on the attribute. This also makes it more resiliant to refactoring or name changes of the type.
+This is where the `HttpType` attribute comes into play. You can place these at any of a base class in the hierarchy or interfaces. This attribute defines which child classes are eligible for including its type information in the serialized result. By default, the type's name will be used as a value for identification. However, you can provide a custom alias for the type by setting the `Value` property on the attribute. This also makes it more resilient to refactoring or name changes of the type.
 
 ```cs
 [HttpType(typeof(RaceLeaderboard), Value="Race"),
@@ -465,7 +465,7 @@ public class HttpTest : MonoBehaviour
 
 The `HttpMessenger`'s default implementation can also be switched out for a completely custom message configurator, by implementing the `IHttpMessageConfigurator` interface, which requires the implementation of setting up the serialization of your request and responses. For inspiration, you can always check out the `DefaultMessageConfigurator` implementation in the messenger class.
 
-**Note**: tread carefully when assigning custom serialization definitions to message configurators as not every serialization definition's output is compatible in terms of supported datatypes, even when they share the same interfaces. For example, the `XmlSerializationDefinition` from the [XML][XmlTool] tool cannot be used as it does not output supported data structures for the `UnityWebRequest` class to deal with, e.g. it stores data in `XElement` structures, rather than dictionaries and lists. For XML support, a fully custom message configurator should be written.
+**Note**: tread carefully when assigning custom serialization definitions to message configurators as not every serialization definition's output is compatible in terms of supported data types, even when they share the same interfaces. For example, the `XmlSerializationDefinition` from the [XML][XmlTool] tool cannot be used as it does not output supported data structures for the `UnityWebRequest` class to deal with, e.g. it stores data in `XElement` structures, rather than dictionaries and lists. For XML support, a fully custom message configurator should be written.
 
 **Another note**: make sure you also assign a type of serialization definition only once to each of the data streams (URL versus headers versus body), as using the same serialization definition will pick up the exact same data from the request objects each time, resulting in duplicating data in different streams.
 

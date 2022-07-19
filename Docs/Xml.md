@@ -317,7 +317,7 @@ public class MovieDatabase
 	{
 		XmlOptions xmlOptions = new XmlOptions();
 		xmlOptions.CompactOutput = false;	// For pretty printing.
-		xmlOptions.Encoding = Encoding.UTF8;	// Enconding. Might still be overridden by the writer.
+		xmlOptions.Encoding = Encoding.UTF8;	// Encoding. Might still be overridden by the writer.
 		xmlOptions.HideHeader = true;	// To hide the XML header in the document.
 
 		using (StreamWriter writer = File.CreateText(path))

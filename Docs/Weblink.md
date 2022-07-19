@@ -2,17 +2,17 @@
 
 The `ImpossibleOdds.Weblink` namespace contains a general purpose messaging framework. It packs request objects and waits for incoming responses. When a response is received, it matches it to the request it belongs to and lets you know new data is available.
 
-**Note**: everything described below is implemented abstractly for which a custom and solid implementation should be provided based on the intended usecase. For example, the tools found in [HTTP][Http] and [Photon Extensions][PhotonExtensions] extensively use this framework. If you think these tools could be useful to you, you can check them out as a guide for implementation as well.
+**Note**: everything described below is implemented abstractly for which a custom and solid implementation should be provided based on the intended use case. For example, the tools found in [HTTP][Http] and [Photon Extensions][PhotonExtensions] extensively use this framework. If you think these tools could be useful to you, you can check them out as a guide for implementation as well.
 
 ## Messenger
 
 The _Messenger_ concept in this Weblink framework basically keeps a register of requests that have been sent out and are awaiting a response. When it receives response data it will look up the request it belongs to and hand it back over to the caller or any other interested party.
 
-The abstract `WeblinkMessenger` class provides a barebones implementation already.
+The abstract `WeblinkMessenger` class provides a bare bones implementation already.
 
 A complete custom messenger class can be created using the `IWeblinkMessenger` interface. There's also a generic variant of this interface that already places certain requirements on the type parameters. It requests that you implement the following functionality:
 
-* Send out a request, depending on the intended usecase of the custom implementation.
+* Send out a request, depending on the intended use case of the custom implementation.
 * Stop a request from processing a future incoming response.
 * Check whether a request is still awaiting a response.
 * Retrieve a message handle for a pending request.
@@ -26,7 +26,7 @@ The handle also implements the `IEnumerator` interface which should make it yiel
 
 ## Response Mapping
 
-One of the tasks the messenger also takes on is to map any request it sents out to any response data that comes in, and processes it to a usable object. A request object should be marked with a singular `WeblinkResponse` attribute, which defines the type of the response it is to be associated with.
+One of the tasks the messenger also takes on is to map any request it sends out to any response data that comes in, and processes it to a usable object. A request object should be marked with a singular `WeblinkResponse` attribute, which defines the type of the response it is to be associated with.
 
 ```cs
 [WeblinkResponse(typeof(MyResponse))]

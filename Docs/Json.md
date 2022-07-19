@@ -55,7 +55,7 @@ By adding the `JsonType` attribute to your base classes, you can define what chi
 JsonType(typeof(Cat)),
 JsonType(typeof(Dog)),
 JsonType(typeof(Crocodile), Value = "Kroko"),
-JsonType(typeof(Pidgeon), Value = "Dove")]
+JsonType(typeof(Pigeon), Value = "Dove")]
 public abstract class Animal
 {
 	[JsonField, JsonRequired]
@@ -90,7 +90,7 @@ A possible output for a list of animals:
 
 **Another note**: serializing type information is only supported for objects that are serialized as JSON objects. It's currently not supported in this tool to save type information in JSON array objects.
 
-As shown in the example above, the key for the type information is set to be `jsi:type`. This default key is defined by the _serialization definition_ which you will come to know more about below. However, sometimes, you may want to alter this key, perhaps because the type information can be infered from a value already present in the data itself! You can provide a `KeyOverride` and set a custom key value, optionally paired with a custom value.
+As shown in the example above, the key for the type information is set to be `jsi:type`. This default key is defined by the _serialization definition_ which you will come to know more about below. However, sometimes, you may want to alter this key, perhaps because the type information can be inferred from a value already present in the data itself! You can provide a `KeyOverride` and set a custom key value, optionally paired with a custom value.
 
 ```cs
 [JsonEnumString]
@@ -99,7 +99,7 @@ public enum AnimalType
 	CAT,
 	DOG,
 	CROCODILE,
-	PIDGEON
+	PIGEON
 }
 ```
 
@@ -108,7 +108,7 @@ public enum AnimalType
 JsonType(typeof(Cat), KeyOverride = "animalType", Value = AnimalType.CAT),
 JsonType(typeof(Dog), KeyOverride = "animalType", Value = AnimalType.DOG),
 JsonType(typeof(Crocodile), Value = "Kroko"),
-JsonType(typeof(Pidgeon), Value = "Dove")]
+JsonType(typeof(Pigeon), Value = "Dove")]
 public abstract class Animal
 {
 	[JsonField, JsonRequired]
@@ -401,7 +401,7 @@ public enum TaxonomyClass
 JsonType(typeof(Cat), KeyOverride = "animalType", Value = AnimalType.CAT),
 JsonType(typeof(Dog), KeyOverride = "animalType", Value = AnimalType.DOG),
 JsonType(typeof(Crocodile), Value = "Kroko"),
-JsonType(typeof(Pidgeon), Value = "Dove")]
+JsonType(typeof(Pigeon), Value = "Dove")]
 public abstract class Animal
 {
 	[JsonField, JsonRequired]

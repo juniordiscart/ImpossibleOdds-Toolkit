@@ -1,8 +1,8 @@
 # ![Impossible Odds Logo][Logo] C# Toolkit - Serialization
 
-The idea behind the tools found in the `ImpossibleOdds.Serialization` namespace is to be able to deconstruct complex objects into queryable and well-known datastructures, enabling further and easy post-processing to any other kind of data format. The other way should also hold true: given a structured set of known data types, it should be able to piece this data back to an instance of a complex object.
+The idea behind the tools found in the `ImpossibleOdds.Serialization` namespace is to be able to deconstruct complex objects into queryable and well-known data structures, enabling further and easy post-processing to any other kind of data format. The other way should also hold true: given a structured set of known data types, it should be able to piece this data back to an instance of a complex object.
 
-This is achieved using a _serialization definition_, which defines how objects should be (de)constructed and a set of data processing units that are specialised in handling specific kinds of data.
+This is achieved using a _serialization definition_, which defines how objects should be (de)constructed and a set of data processing units that are specialized in handling specific kinds of data.
 
 The structure of the tools described here aim to provide a flexible framework to easily define or provide support for custom data formats. This is proven by the [JSON][Json], XML[Xml] and [HTTP][Http] tools found in this toolkit as well as the [Photon Extensions][PhotonExtensions] package to help speed up multiplayer development in the Photon networking framework.
 
@@ -34,14 +34,14 @@ This list of processors defined by the serialization definition can be queried u
 
 ### Index-based Definitions
 
-When a serialization definition also implements the `IIndexSerializationDefinition` interface, it states that it supports index-based datastructures such arrays and lists.
+When a serialization definition also implements the `IIndexSerializationDefinition` interface, it states that it supports index-based data structures such arrays and lists.
 
 This interface requires two attributes to be defined to aid the framework in processing custom objects:
 
-* The _index-based class marking_ attribute that states that an object wishes to be processed as an index-based datastructure, and
+* The _index-based class marking_ attribute that states that an object wishes to be processed as an index-based data structure, and
 * The _index-based field marking_ attribute that is to be placed over the fields that need to be processed of that class.
 
-For example, the serialization definition used by the [JSON][Json] framework has support for index-based datastructures and has defined the `JsonArray` and `JsonIndex` attributes to process custom objects to array-like objects:
+For example, the serialization definition used by the [JSON][Json] framework has support for index-based data structures and has defined the `JsonArray` and `JsonIndex` attributes to process custom objects to array-like objects:
 
 ```cs
 [JsonArray]
@@ -64,10 +64,10 @@ The `ILookupSerializationDefinition` interfaces provides a serialization definit
 
 Just like the index-based definition interface, it requires two attributes to be defined:
 
-* The _lookup-based class marking_ attribute which states that an object wishes to be processed as a lookup-based datastructure, and
+* The _lookup-based class marking_ attribute which states that an object wishes to be processed as a lookup-based data structure, and
 * The _lookup-based field marking_ attribute that is to be placed over the fields that need to be processed of that class.
 
-For example, the same [JSON][Json] serialization definition supports lookup-based datastructures using the `JsonObject` and `JsonField` attributes:
+For example, the same [JSON][Json] serialization definition supports lookup-based data structures using the `JsonObject` and `JsonField` attributes:
 
 ```cs
 [JsonObject]
@@ -124,7 +124,7 @@ When a serialization definitions allows the processing of complex custom objects
 
 When serializing data to a human accessible/readable format, using the internal value of an enum type is difficult to interpret its meaning. By enabling the enum alias feature on a serialization definition using the `IEnumAliasSupport`, it will write the value as something more readable.
 
-You can decorete the enum with an attribute that defines that this enum prefers to be serialized as their string value. For example the `JsonEnumString` attribute in the `JSON` serialization:
+You can decorate the enum with an attribute that defines that this enum prefers to be serialized as their string value. For example the `JsonEnumString` attribute in the `JSON` serialization:
 
 ```cs
 [JsonEnumString]
@@ -188,7 +188,7 @@ All this may sound pretty abstract, and providing a simple example for the sake 
 * `CustomObjectSequenceProcessor`: processes custom objects to/from an array-like data structure.
 * `CustomObjectLookupProcessor`: processes custom objects to/from a dictionary-like data structure.
 
-**Note**: all of these data processors have access to the serialization definition they belong to. When they deal with complex data, like the `SequenceProcessor` or `CustomObjectLookupProcessor`, they may call the (de)serialization process again on an individual element they think needs further processing. This way, complex objects are broken down into smaller and manageble pieces.
+**Note**: all of these data processors have access to the serialization definition they belong to. When they deal with complex data, like the `SequenceProcessor` or `CustomObjectLookupProcessor`, they may call the (de)serialization process again on an individual element they think needs further processing. This way, complex objects are broken down into smaller and manageable pieces.
 
 ### Serialization Callbacks
 

@@ -8,7 +8,7 @@ If you wish to get started with this extension tool in your code, you can do so 
 
 ## Prerequisites
 
-The Photon WebRPC module described further below depends on the _Photon Realtime_ library being present in your project. You can find it in each of the [Photon][PhotonWebsite] packages. Exit Games provides several flavors of Photon, depending on which featureset you need. You can find them on the [Unity Asset Store][PhotonUnityAssetStore] as well.
+The Photon WebRPC module described further below depends on the _Photon Realtime_ library being present in your project. You can find it in each of the [Photon][PhotonWebsite] packages. Exit Games provides several flavors of Photon, depending on which feature set you need. You can find them on the [Unity Asset Store][PhotonUnityAssetStore] as well.
 
 While not strictly necessary, it might also be best that you familiarize yourself with Photon first before jumping onto this feature.
 
@@ -131,7 +131,7 @@ and will be sent to `https://my.custom.domain.com/webrpc/updateleaderboard.php?v
 
 ## WebRPC Responses
 
-When the Photon client receives a reply back from your server, it will notify you it has received something and dump it in your lap in a pretty raw format. This framework also picks up on this and tries to preprocess them for you so that you may directly interact with the result in a meaningful way. However, just like with requests, you'll have to put some guidance markers on your objects for this framework to process them correctly.
+When the Photon client receives a reply back from your server, it will notify you it has received something and dump it in your lap in a pretty raw format. This framework also picks up on this and tries to pre-process them for you so that you may directly interact with the result in a meaningful way. However, just like with requests, you'll have to put some guidance markers on your objects for this framework to process them correctly.
 
 First off, you must associate your request object with its corresponding response object. This is done by decorating the **request** class with a `WebRpcResponseType` attribute. It takes as only parameter the type of the **response** it is associated with.
 
@@ -202,7 +202,7 @@ The default implementation will treat the WebRPC requests and responses as JSON-
 
 ## WebRPC Messenger
 
-To send a WebRPC request over the Photon network, you don't address it directly anymore. Instead, your request is prepared by a `WebRpcMessenger`. The messenger takes care of transforming your object into a Photon-compatible datastructure, tracking its progress and processing the response.
+To send a WebRPC request over the Photon network, you don't address it directly anymore. Instead, your request is prepared by a `WebRpcMessenger`. The messenger takes care of transforming your object into a Photon-compatible data structure, tracking its progress and processing the response.
 
 Any instance of the `WebRpcMessenger` requires the use of a Photon `LoadBalancingClient`. It is the component that provides the gateway for sending out requests. By default, you can provide the `PhotonNetwork.NetworkingClient` as a parameter. When you work with a more advanced Photon network setup, you might need to provide a different one. The messenger will hook into the load balancing client's event callback system to get notified about received responses.
 
@@ -239,7 +239,7 @@ public class WebRpcTest : MonoBehaviour
 
 ### Message Handles
 
-For each request sent through the `WebRpcMessenger`, it will return you a messange handle. This handle allows you to check its status and whether it's completed or not. When the response is received, it will also be immediately available through its `Response` property.
+For each request sent through the `WebRpcMessenger`, it will return you a message handle. This handle allows you to check its status and whether it's completed or not. When the response is received, it will also be immediately available through its `Response` property.
 
 Additionally, the handle is yieldable. So you can use it in a coroutine to wait for it to complete and continue.
 
@@ -334,7 +334,7 @@ public class WebRpcTest : MonoBehaviour
 
 ### Request & Response Identifiers
 
-Perhaps you've already noticed, but the way this WebRPC tool and the [HTTP tool][HttpTool] work is earily similar. However, there's one important difference: Photon does not allow you to track a request to a response out of the box. When a request is sent out, it merely lets you know that it was successful or not, but doesn't provide any additional information about the request, like `UnityWebRequest` allows us to do with HTTP requests.
+Perhaps you've already noticed, but the way this WebRPC tool and the [HTTP tool][HttpTool] work is eerily similar. However, there's one important difference: Photon does not allow you to track a request to a response out of the box. When a request is sent out, it merely lets you know that it was successful or not, but doesn't provide any additional information about the request, like `UnityWebRequest` allows us to do with HTTP requests.
 
 That's why this tool inserts some additional unique data into the request object and expects the server to send it back in its response so that the messenger can match it. So make sure you keep this in mind when configuring your server!
 
@@ -394,7 +394,7 @@ public class WebRpcTest: MonoBehaviour
 
 The `WebRpcMessenger`'s default implementation can also be switched out for a completely custom message configurator, by implementing the `IWebRpcMessageConfigurator` interface, which requires the implementation of setting up the serialization of your request and responses as well as generating adequate identifiers. For inspiration, you can always check out the `DefaultMessageConfigurator` implementation in the messenger.
 
-**Note**: tread carefully when assigning custom serialization definitions as not every serialization definition's output is compatible in terms of supported datatypes, even when they share the same interfaces. For example, the `XmlSerializationDefinition` from the [XML][XmlTool] tool cannot be used as it does not output supported data structures for Photon to deal with.
+**Note**: tread carefully when assigning custom serialization definitions as not every serialization definition's output is compatible in terms of supported data types, even when they share the same interfaces. For example, the `XmlSerializationDefinition` from the [XML][XmlTool] tool cannot be used as it does not output supported data structures for Photon to deal with.
 
 **Another note**: make sure you also assign a type of serialization definition only once to each of the data streams (URL versus body), as using the same serialization definition will pick up the exact same data from the request each time, resulting in duplicating data in different streams.
 
@@ -538,7 +538,7 @@ public class WebRpcTest: MonoBehaviour
 }
 ```
 
-Check out the WebRPC sample scene for a hands-on example! Please note that you need to have a [Photon package][PhotonUnityAssetStore] installed in your project for it to work. But, you're not required to have performed the initial setup of entering your app ID. The demo will connnect with the _Impossible Odds demo server_ to demonstrate it's functionality.
+Check out the WebRPC sample scene for a hands-on example! Please note that you need to have a [Photon package][PhotonUnityAssetStore] installed in your project for it to work. But, you're not required to have performed the initial setup of entering your app ID. The demo will connect with the _Impossible Odds demo server_ to demonstrate it's functionality.
 
 [Logo]: ./Images/ImpossibleOddsLogo.png
 [PhotonWebsite]: https://www.photonengine.com/

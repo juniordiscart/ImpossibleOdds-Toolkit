@@ -2,7 +2,7 @@
 
 The dependency injection tools are accessed by including the `ImpossibleOdds.DependencyInjection` namespace in your scripts.
 
-Depenendency injection's intention is to facilitate separation of concerns and responsibilities, which helps in code reusability and readability. The essence is that it removes the need for your objects to go and fetch the resources they need, but rather they state that they depend on them and expect them to be delivered/injected. Sounds too abstract? Let's illustrate with an example. Let's say that, in order for a character to move through a world, it needs an input manager to determine where it's going next. One way is to create an input manager class and assign it through Unity's inspector view, or have it be a singleton and access it whenever needed. However, what if a different kind of input method is required, such as touch controls, or simulated input for an A.I. agent to be trained to interact with the world? The dependency injection framework allows the character to state that it needs _a_ input manager, and it will try its best to deliver it.
+Dependency injection's intention is to facilitate separation of concerns and responsibilities, which helps in code reusability and readability. The essence is that it removes the need for your objects to go and fetch the resources they need, but rather they state that they depend on them and expect them to be delivered/injected. Sounds too abstract? Let's illustrate with an example. Let's say that, in order for a character to move through a world, it needs an input manager to determine where it's going next. One way is to create an input manager class and assign it through Unity's inspector view, or have it be a singleton and access it whenever needed. However, what if a different kind of input method is required, such as touch controls, or simulated input for an A.I. agent to be trained to interact with the world? The dependency injection framework allows the character to state that it needs _a_ input manager, and it will try its best to deliver it.
 
 ```cs
 [Injectable]
@@ -255,7 +255,7 @@ When a situation arises in which above outlined scopes do not fit the circumstan
 DependencyInjector.Inject(myContainer, myTarget);
 ```
 
-This might be helpfull in cases that objects are spawned further down the line and still need an injection with the resources found in a container. Additionally, you can bind the container to itself and have it injected into objects that need the container later on.
+This might be helpful in cases that objects are spawned further down the line and still need an injection with the resources found in a container. Additionally, you can bind the container to itself and have it injected into objects that need the container later on.
 
 ```cs
 // Placed on a SceneDependencyScope.
