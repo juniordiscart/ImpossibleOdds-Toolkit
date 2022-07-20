@@ -277,19 +277,20 @@
 
 			// Find all delegate fields through the type hierarchy.
 			List<FieldInfo> delegates = new List<FieldInfo>();
-			while ((type != null) && (type != typeof(object)))
+			Type typeIt = type;
+			while ((typeIt != null) && (typeIt != typeof(object)))
 			{
-				FieldInfo[] fields = type.GetFields(flags);
+				FieldInfo[] fields = typeIt.GetFields(flags);
 
 				foreach (FieldInfo field in fields)
 				{
-					if ((field.DeclaringType == type) && delegateType.IsAssignableFrom(field.FieldType))
+					if ((field.DeclaringType == typeIt) && delegateType.IsAssignableFrom(field.FieldType))
 					{
 						delegates.Add(field);
 					}
 				}
 
-				type = type.BaseType;
+				typeIt = typeIt.BaseType;
 			}
 
 			return delegateCache.GetOrAdd(type, delegates);
