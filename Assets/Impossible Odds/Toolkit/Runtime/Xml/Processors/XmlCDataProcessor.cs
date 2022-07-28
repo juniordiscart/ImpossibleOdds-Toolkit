@@ -8,7 +8,7 @@
 
 	/// <summary>
 	/// Processor for (de)serializing CDATA sections in an XML document. It uses a binary formatter in combination with formatting the binary result as a Base64 string.
-	/// Note: the use of the BinaryFormatter is discouraged for safetypurposes. However, there's no (built-in) alternative for transforming data to a stream of bytes.
+	/// Note: the use of the BinaryFormatter is discouraged for safety purposes. However, there's no (built-in) alternative for transforming data to a stream of bytes.
 	/// </summary>
 	public class XmlCDataProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
@@ -45,7 +45,10 @@
 			{
 				using (MemoryStream ms = new MemoryStream())
 				{
-					binaryFormatter.Serialize(ms, objectToSerialize);
+					lock (binaryFormatter)
+					{
+						binaryFormatter.Serialize(ms, objectToSerialize);
+					}
 					binaryResult = ms.ToArray();
 				}
 			}
@@ -88,7 +91,10 @@
 
 				using (MemoryStream ms = new MemoryStream(binaryData))
 				{
-					deserializedResult = binaryFormatter.Deserialize(ms);
+					lock (binaryFormatter)
+					{
+						deserializedResult = binaryFormatter.Deserialize(ms);
+					}
 				}
 
 				if (!targetType.IsAssignableFrom(deserializedResult.GetType()))

@@ -2,6 +2,8 @@
 {
 	using System;
 	using System.Collections;
+	using System.Linq;
+	using System.Threading.Tasks;
 	using ImpossibleOdds.Serialization.Caching;
 
 	/// <summary>
@@ -10,6 +12,23 @@
 	public class LookupProcessor : ISerializationProcessor, IDeserializationProcessor, IDeserializationToTargetProcessor
 	{
 		private readonly ILookupSerializationDefinition definition;
+		private readonly IParallelProcessingSupport parallelProcessingSupport = null;
+
+		/// <summary>
+		/// Does the serialization definition have support for processing values in parallel?
+		/// </summary>
+		public bool SupportsParallelProcessing
+		{
+			get => parallelProcessingSupport != null;
+		}
+
+		/// <summary>
+		/// The parallel processing serialization definition.
+		/// </summary>
+		public IParallelProcessingSupport ParallelProcessingDefinition
+		{
+			get => parallelProcessingSupport;
+		}
 
 		ISerializationDefinition IProcessor.Definition
 		{
@@ -24,6 +43,7 @@
 		public LookupProcessor(ILookupSerializationDefinition definition)
 		{
 			this.definition = definition;
+			this.parallelProcessingSupport = (definition is IParallelProcessingSupport parallelProcessingDefinition) ? parallelProcessingDefinition : null;
 		}
 
 		/// <summary>
@@ -53,15 +73,38 @@
 			IDictionary sourceValues = objectToSerialize as IDictionary;
 			IDictionary processedValues = definition.CreateLookupInstance(sourceValues.Count);
 			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
-			foreach (DictionaryEntry keyValuePair in sourceValues)
+			object parallelLock = null;
+
+			if (SupportsParallelProcessing && ParallelProcessingDefinition.Enabled && (sourceValues.Count > 1))
 			{
-				object processedKey = Serializer.Serialize(keyValuePair.Key, definition);
-				object processedValue = Serializer.Serialize(keyValuePair.Value, definition);
-				SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
+				parallelLock = new object();
+				Parallel.ForEach<DictionaryEntry>(sourceValues.Cast<DictionaryEntry>(), SerializeMember);
+			}
+			else
+			{
+				foreach (DictionaryEntry key in sourceValues)
+				{
+					SerializeMember(key);
+				}
 			}
 
 			serializedResult = processedValues;
 			return true;
+
+			void SerializeMember(DictionaryEntry entry)
+			{
+				object processedKey = Serializer.Serialize(entry.Key, definition);
+				object processedValue = Serializer.Serialize(entry.Value, definition);
+
+				if (parallelLock != null)
+				{
+					lock (parallelLock) SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
+				}
+				else
+				{
+					SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
+				}
+			}
 		}
 
 		/// <summary>
@@ -131,14 +174,37 @@
 			IDictionary sourceValues = dataToDeserialize as IDictionary;
 			IDictionary targetValues = deserializationTarget as IDictionary;
 			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetValues);
-			foreach (DictionaryEntry dictionaryEntry in sourceValues)
+			object parallelLock = null;
+
+			if (SupportsParallelProcessing && ParallelProcessingDefinition.Enabled && (sourceValues.Count > 1))
 			{
-				object processedKey = Serializer.Deserialize(collectionInfo.keyType, dictionaryEntry.Key, definition);
-				object processedValue = Serializer.Deserialize(collectionInfo.valueType, dictionaryEntry.Value, definition);
-				SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
+				parallelLock = new object();
+				Parallel.ForEach(sourceValues.Cast<DictionaryEntry>(), DeserializeMember);
+			}
+			else
+			{
+				foreach (DictionaryEntry entry in sourceValues)
+				{
+					DeserializeMember(entry);
+				}
 			}
 
 			return true;
+
+			void DeserializeMember(DictionaryEntry entry)
+			{
+				object processedKey = Serializer.Deserialize(collectionInfo.keyType, entry.Key, definition);
+				object processedValue = Serializer.Deserialize(collectionInfo.valueType, entry.Value, definition);
+
+				if (parallelLock != null)
+				{
+					lock (parallelLock) SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
+				}
+				else
+				{
+					SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
+				}
+			}
 		}
 	}
 }

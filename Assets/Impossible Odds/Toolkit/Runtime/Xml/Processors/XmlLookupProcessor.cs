@@ -2,6 +2,8 @@
 {
 	using System;
 	using System.Collections;
+	using System.Linq;
+	using System.Threading.Tasks;
 	using System.Xml.Linq;
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Caching;
@@ -46,10 +48,28 @@
 			// Process each individual lookup entry.
 			XElement lookupRoot = new XElement("LookupElement");   // Create default-named root.
 			IDictionary sourceValues = objectToSerialize as IDictionary;
-			foreach (DictionaryEntry keyValuePair in sourceValues)
+			object parallelLock = null;
+
+			if (Definition.ParallelProcessingEnabled && (sourceValues.Count > 1))
 			{
-				object processedKey = Serializer.Serialize(keyValuePair.Key, definition);
-				object processedValue = Serializer.Serialize(keyValuePair.Value, definition);
+				parallelLock = new object();
+				Parallel.ForEach(sourceValues.Cast<DictionaryEntry>(), SerializeMember);
+			}
+			else
+			{
+				foreach (DictionaryEntry sourceValue in sourceValues)
+				{
+					SerializeMember(sourceValue);
+				}
+			}
+
+			serializedResult = lookupRoot;
+			return true;
+
+			void SerializeMember(DictionaryEntry sourceValue)
+			{
+				object processedKey = Serializer.Serialize(sourceValue.Key, definition);
+				object processedValue = Serializer.Serialize(sourceValue.Value, definition);
 
 				if (!(processedKey is string))
 				{
@@ -69,11 +89,15 @@
 					xmlEntry = new XElement(processedKey as string, processedValue);
 				}
 
-				lookupRoot.Add(xmlEntry);
+				if (parallelLock != null)
+				{
+					lock (parallelLock) lookupRoot.Add(xmlEntry);
+				}
+				else
+				{
+					lookupRoot.Add(xmlEntry);
+				}
 			}
-
-			serializedResult = lookupRoot;
-			return true;
 		}
 
 		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
@@ -130,8 +154,24 @@
 			XElement sourceXml = dataToDeserialize as XElement;
 			IDictionary targetValues = deserializationTarget as IDictionary;
 			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetValues);
+			object parallelLock = null;
 
-			foreach (XElement xmlEntry in sourceXml.Elements())
+			if (Definition.ParallelProcessingEnabled && (targetValues.Count > 1))
+			{
+				parallelLock = new object();
+				Parallel.ForEach(sourceXml.Elements(), DeserializeMember);
+			}
+			else
+			{
+				foreach (XElement xmlEntry in sourceXml.Elements())
+				{
+					DeserializeMember(xmlEntry);
+				}
+			}
+
+			return true;
+
+			void DeserializeMember(XElement xmlEntry)
 			{
 				object processedKey = Serializer.Deserialize(collectionInfo.keyType, xmlEntry.Name.LocalName, definition);
 
@@ -139,10 +179,15 @@
 				object processedValue = (xmlEntry.HasElements || xmlEntry.HasAttributes) ? (object)xmlEntry : (object)xmlEntry.Value;
 				processedValue = Serializer.Deserialize(collectionInfo.valueType, processedValue, definition);
 
-				SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
+				if (parallelLock != null)
+				{
+					lock (parallelLock) SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
+				}
+				else
+				{
+					SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
+				}
 			}
-
-			return true;
 		}
 	}
 }

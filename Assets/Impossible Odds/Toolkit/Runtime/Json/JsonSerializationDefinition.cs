@@ -17,7 +17,8 @@
 		ICallbacksSupport<OnJsonSerializingAttribute, OnJsonSerializedAttribute, OnJsonDeserializingAttribute, OnJsonDeserializedAttribute>,
 		ILookupTypeResolveSupport<JsonTypeAttribute>,
 		IRequiredValueSupport<JsonRequiredAttribute>,
-		IEnumAliasSupport<JsonEnumStringAttribute, JsonEnumAliasAttribute>
+		IEnumAliasSupport<JsonEnumStringAttribute, JsonEnumAliasAttribute>,
+		IParallelProcessingSupport
 	{
 		public const string JsonDefaultTypeKey = "jsi:type";
 
@@ -25,6 +26,7 @@
 		private readonly IDeserializationProcessor[] deserializationProcessors = null;
 		private readonly HashSet<Type> supportedTypes = null;
 		private string typeResolveKey = JsonDefaultTypeKey;
+		private bool processInParallel = false;
 
 		/// <inheritdoc />
 		public Type JsonObjectType
@@ -121,8 +123,26 @@
 			get => typeof(JsonEnumAliasAttribute);
 		}
 
-		public JsonSerializationDefinition()
+		/// <inheritdoc />
+		bool IParallelProcessingSupport.Enabled
 		{
+			get => ParallelProcessingEnabled;
+		}
+
+		public bool ParallelProcessingEnabled
+		{
+			get => processInParallel;
+			set => processInParallel = value;
+		}
+
+		public JsonSerializationDefinition()
+		: this(false)
+		{ }
+
+		public JsonSerializationDefinition(bool enableParallelProcessing)
+		{
+			this.processInParallel = enableParallelProcessing;
+
 			PrimitiveProcessingMethod defaultProcessingMethod =
 #if IMPOSSIBLE_ODDS_JSON_UNITY_TYPES_AS_ARRAY
 			PrimitiveProcessingMethod.SEQUENCE;

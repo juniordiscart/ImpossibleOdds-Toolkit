@@ -15,6 +15,7 @@
 		ICallbacksSupport<OnXmlSerializingAttribute, OnXmlSerializedAttribute, OnXmlDeserializingAttribute, OnXmlDeserializedAttribute>,
 		ILookupTypeResolveSupport<XmlTypeAttribute>,
 		IRequiredValueSupport<XmlRequiredAttribute>,
+		IParallelProcessingSupport,
 		IEnumAliasSupport<XmlEnumStringAttribute, XmlEnumAliasAttribute>
 	{
 		public const string XmlSchemaURL = "http://www.w3.org/2001/XMLSchema-instance";
@@ -28,6 +29,7 @@
 		private BinaryFormatter binaryFormatter = new BinaryFormatter();
 		private ISerializationDefinition attributeDefinition = null;
 		private ISerializationDefinition cdataDefinition = null;
+		private bool processInParallel = false;
 
 		private XName xmlTypeKey = null;
 
@@ -136,8 +138,26 @@
 			set => cdataDefinition = value;
 		}
 
-		public XmlSerializationDefinition()
+		/// <inheritdoc />
+		bool IParallelProcessingSupport.Enabled
 		{
+			get => ParallelProcessingEnabled;
+		}
+
+		public bool ParallelProcessingEnabled
+		{
+			get => processInParallel;
+			set => processInParallel = value;
+		}
+
+		public XmlSerializationDefinition()
+		: this(false)
+		{ }
+
+		public XmlSerializationDefinition(bool enableParallelProcessing)
+		{
+			this.processInParallel = enableParallelProcessing;
+
 			XmlPrimitiveProcessingMethod defaultProcessingMethod =
 #if IMPOSSIBLE_ODDS_XML_UNITY_TYPES_AS_ATTRIBUTES
 				XmlPrimitiveProcessingMethod.ATTRIBUTES;

@@ -138,19 +138,19 @@
 			// Pick a specific implementation to reduce memory allocations.
 			if (deserializationDefinition.DeserializationProcessors is IDeserializationProcessor[] dspArray)
 			{
-				if (DeserializeObjectDirectely(dspArray, deserializationTarget, dataToDeserialize))
+				if (DeserializeObjectDirectly(dspArray, deserializationTarget, dataToDeserialize))
 				{
 					return;
 				}
 			}
 			else if (deserializationDefinition.DeserializationProcessors is List<IDeserializationProcessor> dspList)
 			{
-				if (DeserializeObjectDirectely(dspList, deserializationTarget, dataToDeserialize))
+				if (DeserializeObjectDirectly(dspList, deserializationTarget, dataToDeserialize))
 				{
 					return;
 				}
 			}
-			else if (DeserializeObjectDirectely(deserializationDefinition.DeserializationProcessors, deserializationTarget, dataToDeserialize))
+			else if (DeserializeObjectDirectly(deserializationDefinition.DeserializationProcessors, deserializationTarget, dataToDeserialize))
 			{
 				return;
 			}
@@ -242,7 +242,7 @@
 			return false;
 		}
 
-		private static bool DeserializeObjectDirectely(IDeserializationProcessor[] processors, object deserializationTarget, object dataToDeserialize)
+		private static bool DeserializeObjectDirectly(IDeserializationProcessor[] processors, object deserializationTarget, object dataToDeserialize)
 		{
 			foreach (IDeserializationProcessor processor in processors)
 			{
@@ -256,7 +256,7 @@
 			return false;
 		}
 
-		private static bool DeserializeObjectDirectely(List<IDeserializationProcessor> processors, object deserializationTarget, object dataToDeserialize)
+		private static bool DeserializeObjectDirectly(List<IDeserializationProcessor> processors, object deserializationTarget, object dataToDeserialize)
 		{
 			foreach (IDeserializationProcessor processor in processors)
 			{
@@ -270,7 +270,7 @@
 			return false;
 		}
 
-		private static bool DeserializeObjectDirectely(IEnumerable<IDeserializationProcessor> processors, object deserializationTarget, object dataToDeserialize)
+		private static bool DeserializeObjectDirectly(IEnumerable<IDeserializationProcessor> processors, object deserializationTarget, object dataToDeserialize)
 		{
 			foreach (IDeserializationProcessor processor in processors)
 			{

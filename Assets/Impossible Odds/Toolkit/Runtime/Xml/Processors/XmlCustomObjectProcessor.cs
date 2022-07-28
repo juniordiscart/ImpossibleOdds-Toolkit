@@ -3,6 +3,7 @@ namespace ImpossibleOdds.Xml.Processors
 	using System;
 	using System.Collections;
 	using System.Reflection;
+	using System.Threading.Tasks;
 	using System.Xml.Linq;
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Caching;
@@ -104,36 +105,17 @@ namespace ImpossibleOdds.Xml.Processors
 		{
 			XElement element = new XElement("Element");  // At this stage, we don't know the name yet.
 			ISerializationReflectionMap sourceTypeCache = SerializationUtilities.GetTypeMap(sourceType);
-
-			// Process child elements.
 			ISerializableMember[] elementFields = sourceTypeCache.GetSerializableMembers(typeof(AbstractXmlMemberAttribute));
-			foreach (ISerializableMember elementField in elementFields)
+			object parallelLock = null;
+
+			if (XmlDefinition.ParallelProcessingEnabled && (elementFields.Length > 1))
 			{
-				object value = elementField.GetValue(source);
-
-				XObject xmlResult = null;
-				if (elementField.Attribute is XmlAttributeAttribute attributeAttribute)
-				{
-					xmlResult = Serialize(value, elementField.Member, attributeAttribute);
-				}
-				else if (elementField.Attribute is XmlElementAttribute elementAttribute)
-				{
-					xmlResult = Serialize(value, elementField.Member, elementAttribute);
-				}
-				else if (elementField.Attribute is XmlListElementAttribute listElementAttribute)
-				{
-					xmlResult = Serialize(value, elementField.Member, listElementAttribute);
-				}
-				else if (elementField.Attribute is XmlCDataAttribute cdataElementAttribute)
-				{
-					xmlResult = Serialize(value, elementField.Member, cdataElementAttribute);
-				}
-				else
-				{
-					throw new XmlException("Unsupported XML serialization attribute of type {0}.", elementField.Attribute.GetType().Name);
-				}
-
-				element.Add(xmlResult);
+				parallelLock = new object();
+				Parallel.ForEach(elementFields, SerializeMember);
+			}
+			else
+			{
+				Array.ForEach(elementFields, SerializeMember);
 			}
 
 			// Add the type information, if any.
@@ -159,6 +141,42 @@ namespace ImpossibleOdds.Xml.Processors
 			}
 
 			return element;
+
+			void SerializeMember(ISerializableMember sourceMember)
+			{
+				object value = sourceMember.GetValue(source);
+
+				XObject xmlResult = null;
+				if (sourceMember.Attribute is XmlAttributeAttribute attributeAttribute)
+				{
+					xmlResult = Serialize(value, sourceMember.Member, attributeAttribute);
+				}
+				else if (sourceMember.Attribute is XmlElementAttribute elementAttribute)
+				{
+					xmlResult = Serialize(value, sourceMember.Member, elementAttribute);
+				}
+				else if (sourceMember.Attribute is XmlListElementAttribute listElementAttribute)
+				{
+					xmlResult = Serialize(value, sourceMember.Member, listElementAttribute);
+				}
+				else if (sourceMember.Attribute is XmlCDataAttribute cdataElementAttribute)
+				{
+					xmlResult = Serialize(value, sourceMember.Member, cdataElementAttribute);
+				}
+				else
+				{
+					throw new XmlException("Unsupported XML serialization attribute of type {0}.", sourceMember.Attribute.GetType().Name);
+				}
+
+				if (parallelLock != null)
+				{
+					lock (parallelLock) element.Add(xmlResult);
+				}
+				else
+				{
+					element.Add(xmlResult);
+				}
+			}
 		}
 
 		private XElement Serialize(object fieldValue, MemberInfo memberInfo, XmlElementAttribute elementAttribute)
@@ -221,40 +239,61 @@ namespace ImpossibleOdds.Xml.Processors
 		private void Deserialize(object target, XElement source)
 		{
 			// Process child elements and attributes. Don't bother if it doesn't have any.
-			if (source.HasElements || source.HasAttributes)
+			if (!source.HasElements && !source.HasAttributes)
 			{
-				ISerializationReflectionMap typeMap = SerializationUtilities.GetTypeMap(target.GetType());
-				ISerializableMember[] members = typeMap.GetSerializableMembers(typeof(AbstractXmlMemberAttribute));
-				foreach (ISerializableMember member in members)
+				return;
+			}
+
+			ISerializationReflectionMap typeMap = SerializationUtilities.GetTypeMap(target.GetType());
+			ISerializableMember[] members = typeMap.GetSerializableMembers(typeof(AbstractXmlMemberAttribute));
+			object parallelLock = null;
+
+			if (XmlDefinition.ParallelProcessingEnabled && (members.Length > 1))
+			{
+				parallelLock = new object();
+				Parallel.ForEach(members, DeserializeMember);
+			}
+			else
+			{
+				Array.ForEach(members, DeserializeMember);
+			}
+
+			void DeserializeMember(ISerializableMember member)
+			{
+				object processedResult = null;
+
+				if (member.Attribute is XmlAttributeAttribute attributeAttribute)
 				{
-					object processedResult = null;
+					processedResult = Deserialize(source, member, attributeAttribute, typeMap);
+				}
+				else if (member.Attribute is XmlElementAttribute elementAttribute)
+				{
+					processedResult = Deserialize(source, member, elementAttribute, typeMap);
+				}
+				else if (member.Attribute is XmlListElementAttribute listElementAttribute)
+				{
+					processedResult = Deserialize(source, member, listElementAttribute, typeMap);
+				}
+				else if (member.Attribute is XmlCDataAttribute cdataElementAttribute)
+				{
+					processedResult = Deserialize(source, member, cdataElementAttribute, typeMap);
+				}
+				else
+				{
+					throw new XmlException("Unsupported XML deserialization attribute of type {0}.", member.Attribute.GetType().Name);
+				}
 
-					if (member.Attribute is XmlAttributeAttribute attributeAttribute)
-					{
-						processedResult = Deserialize(source, member, attributeAttribute, typeMap);
-					}
-					else if (member.Attribute is XmlElementAttribute elementAttribute)
-					{
-						processedResult = Deserialize(source, member, elementAttribute, typeMap);
-					}
-					else if (member.Attribute is XmlListElementAttribute listElementAttribute)
-					{
-						processedResult = Deserialize(source, member, listElementAttribute, typeMap);
-					}
-					else if (member.Attribute is XmlCDataAttribute cdataElementAttribute)
-					{
-						processedResult = Deserialize(source, member, cdataElementAttribute, typeMap);
-					}
-					else
-					{
-						throw new XmlException("Unsupported XML deserialization attribute of type {0}.", member.Attribute.GetType().Name);
-					}
+				if ((processedResult == null) && typeMap.TryGetRequiredMemberInfo(member.Member, xmlDefinition.RequiredAttributeType, out IRequiredSerializableMember requiredAttr) && requiredAttr.RequiredParameterAttribute.NullCheck)
+				{
+					throw new XmlException("The member '{0}' is marked as required on type {1} but the value is null in the source.", member.Member.Name, member.Member.DeclaringType.Name);
+				}
 
-					if ((processedResult == null) && typeMap.TryGetRequiredMemberInfo(member.Member, xmlDefinition.RequiredAttributeType, out IRequiredSerializableMember requiredAttr) && requiredAttr.RequiredParameterAttribute.NullCheck)
-					{
-						throw new XmlException("The member '{0}' is marked as required on type {1} but the value is null in the source.", member.Member.Name, member.Member.DeclaringType.Name);
-					}
-
+				if (parallelLock != null)
+				{
+					lock (parallelLock) member.SetValue(target, processedResult);
+				}
+				else
+				{
 					member.SetValue(target, processedResult);
 				}
 			}

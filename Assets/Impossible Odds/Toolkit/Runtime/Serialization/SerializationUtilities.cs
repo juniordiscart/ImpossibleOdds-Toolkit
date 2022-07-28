@@ -198,7 +198,7 @@
 				{
 					if (collection.IsFixedSize)
 					{
-						throw new SerializationException("The collection of type {0} has a fixed size. No elements can be inserted.", collection.GetType().Name);
+						throw new SerializationException("The collection of type {0} has a fixed size ({1}). An element was requested to be inserted at index {2}.", collection.GetType().Name, collection.Count, index);
 					}
 
 					// Grow the collection until the value can be inserted.

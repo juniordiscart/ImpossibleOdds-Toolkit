@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections;
+	using System.Threading.Tasks;
 	using ImpossibleOdds.Serialization.Caching;
 
 	/// <summary>
@@ -13,6 +14,7 @@
 		private readonly ILookupSerializationDefinition definition = null;
 		private readonly ILookupTypeResolveSupport typeResolveSupport = null;
 		private readonly IRequiredValueSupport requiredValueSupport = null;
+		private readonly IParallelProcessingSupport parallelProcessingSupport = null;
 
 		/// <summary>
 		/// Does the serialization definition have support for type resolve parameters?
@@ -28,6 +30,14 @@
 		public bool SupportsRequiredValues
 		{
 			get => requiredValueSupport != null;
+		}
+
+		/// <summary>
+		/// Does the serialization definition have support for processing values in parallel?
+		/// </summary>
+		public bool SupportsParallelProcessing
+		{
+			get => parallelProcessingSupport != null;
 		}
 
 		/// <summary>
@@ -55,6 +65,14 @@
 		}
 
 		/// <summary>
+		/// The parallel processing serialization definition.
+		/// </summary>
+		public IParallelProcessingSupport ParallelProcessingDefinition
+		{
+			get => parallelProcessingSupport;
+		}
+
+		/// <summary>
 		/// Are objects being processed required to be marked with a processing attribute?
 		/// </summary>
 		public bool RequiresMarking
@@ -67,8 +85,9 @@
 		{
 			this.requiresMarking = requiresObjectMarking;
 			this.definition = definition;
-			this.typeResolveSupport = (definition is ILookupTypeResolveSupport) ? (definition as ILookupTypeResolveSupport) : null;
-			this.requiredValueSupport = (definition is IRequiredValueSupport) ? (definition as IRequiredValueSupport) : null;
+			this.typeResolveSupport = (definition is ILookupTypeResolveSupport typeResolveDefinition) ? typeResolveDefinition : null;
+			this.requiredValueSupport = (definition is IRequiredValueSupport requiredValueDefinition) ? requiredValueDefinition : null;
+			this.parallelProcessingSupport = (definition is IParallelProcessingSupport parallelProcessingDefinition) ? parallelProcessingDefinition : null;
 		}
 
 		/// <summary>
@@ -172,16 +191,17 @@
 			ISerializableMember[] sourceMembers = SerializationUtilities.GetTypeMap(sourceType).GetSerializableMembers(definition.LookupBasedFieldAttribute);
 			IDictionary processedValues = definition.CreateLookupInstance(sourceMembers.Length + 1); // Include capacity for type information.
 			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
+			object parallelLock = null;
 
 			// Process the source key and value pairs.
-			foreach (ISerializableMember sourceMember in sourceMembers)
+			if (SupportsParallelProcessing && ParallelProcessingDefinition.Enabled && (sourceMembers.Length > 1))
 			{
-				object processedKey = Serializer.Serialize(GetKey(sourceMember), definition);
-				object processedValue = Serializer.Serialize(sourceMember.GetValue(source), definition);
-				if (!processedValues.Contains(processedKey))
-				{
-					SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
-				}
+				parallelLock = new object();
+				Parallel.ForEach(sourceMembers, SerializeMember);
+			}
+			else
+			{
+				Array.ForEach(sourceMembers, SerializeMember);
 			}
 
 			// Include type information, if available.
@@ -194,7 +214,7 @@
 					typeKey = Serializer.Serialize(typeKey, definition);
 
 					// If the data already contains a value for the processed key, then the type information is assumed
-					// to be infered from that value. Otherwise, add the processed type key as well.
+					// to be inferred from that value. Otherwise, add the processed type key as well.
 					if (!processedValues.Contains(typeKey))
 					{
 						object typeValue = (typeResolveAttr.Value != null) ? typeResolveAttr.Value : typeResolveAttr.Target.Name;
@@ -205,6 +225,30 @@
 			}
 
 			return processedValues;
+
+			void SerializeMember(ISerializableMember sourceMember)
+			{
+				object processedKey = Serializer.Serialize(GetKey(sourceMember), definition);
+				object processedValue = Serializer.Serialize(sourceMember.GetValue(source), definition);
+
+				if (parallelLock != null)
+				{
+					lock (parallelLock)
+					{
+						if (!processedValues.Contains(processedKey))
+						{
+							SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
+						}
+					}
+				}
+				else
+				{
+					if (!processedValues.Contains(processedKey))
+					{
+						SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
+					}
+				}
+			}
 		}
 
 		private void Deserialize(object target, IDictionary source)
@@ -212,8 +256,19 @@
 			// Get all of the fields that would like to get their value filled in.
 			ISerializationReflectionMap typeMap = SerializationUtilities.GetTypeMap(target.GetType());
 			ISerializableMember[] targetMembers = typeMap.GetSerializableMembers(definition.LookupBasedFieldAttribute);
+			object parallelLock = null;
 
-			foreach (ISerializableMember targetMember in targetMembers)
+			if (SupportsParallelProcessing && ParallelProcessingDefinition.Enabled && (source.Count > 1))
+			{
+				parallelLock = new object();
+				Parallel.ForEach(targetMembers, DeserializeMember);
+			}
+			else
+			{
+				Array.ForEach(targetMembers, DeserializeMember);
+			}
+
+			void DeserializeMember(ISerializableMember targetMember)
 			{
 				object key = GetKey(targetMember);
 
@@ -228,7 +283,7 @@
 					else
 					{
 						Log.Warning("The source does not contain a value associated with key '{0}' for a target of type {1}.", key, target.GetType().Name);
-						continue;
+						return;
 					}
 				}
 
@@ -245,7 +300,12 @@
 					}
 
 					Type memberType = targetMember.MemberType;
-					targetMember.SetValue(target, memberType.IsValueType ? Activator.CreateInstance(memberType, true) : null);
+					result = memberType.IsValueType ? Activator.CreateInstance(memberType, true) : null;
+				}
+
+				if (parallelLock != null)
+				{
+					lock (parallelLock) targetMember.SetValue(target, result);
 				}
 				else
 				{

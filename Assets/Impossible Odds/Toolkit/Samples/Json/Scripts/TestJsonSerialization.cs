@@ -5,6 +5,7 @@
 	using UnityEngine.UI;
 	using TMPro;
 	using ImpossibleOdds.Json;
+	using System.Diagnostics;
 
 	public class TestJsonSerialization : MonoBehaviour
 	{
@@ -18,6 +19,10 @@
 		private Button btnDeserialize = null;
 		[SerializeField]
 		private Button btnClearLog = null;
+		[SerializeField]
+		private Toggle toggleEnableParallelProcessing = null;
+		[SerializeField]
+		private Toggle toggleCompactOutput = null;
 		[SerializeField]
 		private TMP_InputField txtJson = null;
 		[SerializeField]
@@ -34,6 +39,7 @@
 		{
 			jsonOptions = new JsonOptions();
 			jsonOptions.CompactOutput = false;
+			jsonOptions.SerializationDefinition = new JsonSerializationDefinition(false);
 
 			jsonBuilder = new StringBuilder();
 			logBuilder = new StringBuilder();
@@ -51,6 +57,11 @@
 			btnLoadAsset.onClick.AddListener(OnLoadAsset);
 			btnClearLog.onClick.AddListener(OnClearLog);
 
+			toggleCompactOutput.isOn = jsonOptions.CompactOutput;
+			toggleEnableParallelProcessing.isOn = (jsonOptions.SerializationDefinition as JsonSerializationDefinition).ParallelProcessingEnabled;
+			toggleCompactOutput.onValueChanged.AddListener(OnCompactOutput);
+			toggleEnableParallelProcessing.onValueChanged.AddListener(OnParallelProcessing);
+
 			btnDeserialize.interactable = false;
 			btnSerialize.interactable = false;
 			txtJson.text = string.Empty;
@@ -61,27 +72,30 @@
 		{
 			jsonBuilder.Clear();
 
+			Stopwatch serializationTimer = Stopwatch.StartNew();
 			JsonProcessor.Serialize(animalRegister, jsonBuilder, jsonOptions);
-			btnDeserialize.interactable = (jsonBuilder.Length > 0);
+			serializationTimer.Stop();
+			logBuilder.AppendLine(string.Format("Serialized the animal register in {0} ms.", serializationTimer.ElapsedMilliseconds));
 
 			UpdateLog();
 			txtJson.text = jsonBuilder.ToString();
+			btnDeserialize.interactable = (jsonBuilder.Length > 0);
 		}
 
 		private void OnDeserialize()
 		{
-			animalRegister = JsonProcessor.Deserialize<AnimalRegister>(txtJson.text);
-			UpdateLog();
+			Stopwatch deserializationTimer = Stopwatch.StartNew();
+			animalRegister = JsonProcessor.Deserialize<AnimalRegister>(txtJson.text, jsonOptions);
+			deserializationTimer.Stop();
+			logBuilder.AppendLine(string.Format("Deserialized the animal register in {0}ms.", deserializationTimer.ElapsedMilliseconds));
 
+			UpdateLog();
 			btnSerialize.interactable = animalRegister != null;
 		}
 
 		private void OnLoadAsset()
 		{
-			animalRegister = JsonProcessor.Deserialize<AnimalRegister>(jsonAsset.text);
-			UpdateLog();
 			txtJson.text = jsonAsset.text;
-
 			btnSerialize.interactable = animalRegister != null;
 			btnDeserialize.interactable = !string.IsNullOrWhiteSpace(txtJson.text);
 		}
@@ -97,6 +111,16 @@
 		{
 			logBuilder.Clear();
 			txtLog.text = string.Empty;
+		}
+
+		private void OnCompactOutput(bool isOn)
+		{
+			jsonOptions.CompactOutput = isOn;
+		}
+
+		private void OnParallelProcessing(bool isOn)
+		{
+			(jsonOptions.SerializationDefinition as JsonSerializationDefinition).ParallelProcessingEnabled = isOn;
 		}
 	}
 }

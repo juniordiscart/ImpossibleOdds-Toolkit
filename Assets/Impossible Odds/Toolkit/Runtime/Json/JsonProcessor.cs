@@ -2,8 +2,10 @@
 {
 	using System;
 	using System.Collections;
+	using System.IO;
 	using System.Text;
 	using System.Text.RegularExpressions;
+	using System.Threading.Tasks;
 	using ImpossibleOdds.Serialization;
 
 	public static class JsonProcessor
@@ -13,9 +15,26 @@
 		private const string TrueStr = "true";
 		private const string FalseStr = "false";
 
+		private readonly static JsonSerializationDefinition defaultSerializationDefinition = new JsonSerializationDefinition();
 		private readonly static Regex numericalRegex = new Regex(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$");
 		private readonly static char[] numericalSymbols = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '+', 'e', 'E', '.' };
-		private readonly static JsonSerializationDefinition defaultSerializationDefinition = new JsonSerializationDefinition();
+		private readonly static char[] floatingPointDefiningSymbols = { 'e', 'E', '.' };
+		private readonly static char[] sequenceFollowupSymbols = { ',', ']' };
+		private readonly static char[] lookupKeyOrCloseSymbols = { '"', '}' };
+		private readonly static char[] lookupNextOrCloseSymbols = { ',', '}' };
+
+		private static SerializationState DefaultSerializationState
+		{
+			get
+			{
+				SerializationState s = new SerializationState();
+				s.escapeSlashChar = true;
+				s.compactOutput = true;
+				s.IndentationLevel = 0;
+				s.serializationDefinition = defaultSerializationDefinition;
+				return s;
+			}
+		}
 
 		/// <summary>
 		/// Serialize the object to a JSON-string.
@@ -25,14 +44,9 @@
 		/// <returns>A JSON representation of the given object.</returns>
 		public static string Serialize(object obj, JsonOptions options = null)
 		{
-			SerializationSettings serializationSettings = new SerializationSettings();
-			if (options != null)
-			{
-				serializationSettings.ApplyOptions(options);
-			}
-
-			ToJson(obj, serializationSettings);
-			return serializationSettings.resultStore.ToString();
+			StringBuilder resultStore = new StringBuilder(DefaultResultsCacheCapacity);
+			Serialize(obj, resultStore);
+			return resultStore.ToString();
 		}
 
 		/// <summary>
@@ -44,32 +58,65 @@
 		public static void Serialize(object obj, StringBuilder resultStore, JsonOptions options = null)
 		{
 			resultStore.ThrowIfNull(nameof(resultStore));
+			using (StringWriter writer = new StringWriter(resultStore))
+			{
+				Serialize(obj, writer, options);
+			}
+		}
 
-			SerializationSettings serializationSettings = new SerializationSettings(resultStore);
+		/// <summary>
+		/// Serialize the object to a JSON string and write the result directly to the writer.
+		/// </summary>
+		/// <param name="obj">Object to serialize.</param>
+		/// <param name="writer">Write stream for the JSON result.</param>
+		/// <param name="options">Options to modify the string output behaviour.</param>
+		public static void Serialize(object obj, TextWriter writer, JsonOptions options = null)
+		{
+			writer.ThrowIfNull(nameof(writer));
+
+			SerializationState serializationSettings = DefaultSerializationState;
 			if (options != null)
 			{
 				serializationSettings.ApplyOptions(options);
 			}
 
+			serializationSettings.writer = writer;
 			ToJson(obj, serializationSettings);
 		}
 
 		/// <summary>
-		/// Serialize the object to a JSON string with custom formatting/processing settings
-		/// and store the result directly in the result store.
+		/// Serialize the object async to a JSON-string.
 		/// </summary>
 		/// <param name="obj">Object to serialize.</param>
 		/// <param name="options">Options to modify the string output behaviour.</param>
-		/// <param name="resultStore">Write cache for the JSON result.</param>
-		[Obsolete("Use JsonProcessor.Serialize(object obj, StringBuilder resultStore, JsonOptions options = null) instead")]
-		public static void Serialize(object obj, JsonOptions options, StringBuilder resultStore)
+		/// <returns>A JSON representation of the given object.</returns>
+		public static async Task<string> SerializeAsync(object obj, JsonOptions options = null)
 		{
-			options.ThrowIfNull(nameof(options));
-			resultStore.ThrowIfNull(nameof(resultStore));
-			SerializationSettings serializationSettings = new SerializationSettings(resultStore);
-			serializationSettings.ApplyOptions(options);
+			Task<string> asyncResult = Task.Run(() => Serialize(obj, options));
+			await asyncResult;
+			return asyncResult.Result;
+		}
 
-			ToJson(obj, serializationSettings);
+		/// <summary>
+		/// Serialize the object async to a JSON string and store the result directly in the result store.
+		/// </summary>
+		/// <param name="obj">Object to serialize.</param>
+		/// <param name="resultStore">Write cache for the JSON result.</param>
+		/// <param name="options">Options to modify the string output behaviour.</param>
+		public static async Task SerializeAsync(object obj, StringBuilder resultStore, JsonOptions options = null)
+		{
+			await Task.Run(() => Serialize(obj, resultStore, options));
+		}
+
+		/// <summary>
+		/// Serialize the object async to a JSON string and write the result directly to the writer.
+		/// </summary>
+		/// <param name="obj">Object to serialize.</param>
+		/// <param name="writer">Write stream for the JSON result.</param>
+		/// <param name="options">Options to modify the string output behaviour.</param>
+		public static async Task SerializeAsync(object obj, TextWriter writer, JsonOptions options = null)
+		{
+			await Task.Run(() => Serialize(obj, writer, options));
 		}
 
 		/// <summary>
@@ -79,9 +126,27 @@
 		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
 		public static object Deserialize(string jsonStr, JsonOptions options = null)
 		{
-			ISerializationDefinition sd = (options?.SerializationDefinition != null) ? options.SerializationDefinition : defaultSerializationDefinition;
-			int index = 0;
-			return FromJson(sd, jsonStr, ref index);
+			using (StringReader reader = new StringReader(jsonStr))
+			{
+				return Deserialize(reader, options);
+			}
+		}
+
+		/// <summary>
+		/// Process a JSON string to a data structure.
+		/// </summary>
+		/// <param name="jsonReader">JSON representation of an object.</param>
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		public static object Deserialize(TextReader jsonReader, JsonOptions options = null)
+		{
+			jsonReader.ThrowIfNull(nameof(jsonReader));
+
+			DeserializationState state = new DeserializationState();
+			state.definition = (options?.SerializationDefinition != null) ? options.SerializationDefinition : defaultSerializationDefinition;
+			state.buffer = new StringBuilder();
+			state.reader = jsonReader;
+
+			return FromJson(state);
 		}
 
 		/// <summary>
@@ -98,6 +163,17 @@
 		/// <summary>
 		/// Process a JSON string value and attempt to deserialize it to an instance of the target type.
 		/// </summary>
+		/// <param name="jsonReader">JSON representation of an object.</param>
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		/// <typeparam name="TTarget">Target type.</typeparam>
+		public static TTarget Deserialize<TTarget>(TextReader jsonReader, JsonOptions options = null)
+		{
+			return (TTarget)Deserialize(typeof(TTarget), jsonReader, options);
+		}
+
+		/// <summary>
+		/// Process a JSON string value and attempt to deserialize it to an instance of the target type.
+		/// </summary>
 		/// <param name="targetType">Target type.</param>
 		/// <param name="jsonStr">JSON representation of an object.</param>
 		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
@@ -105,6 +181,18 @@
 		{
 			ISerializationDefinition sd = (options?.SerializationDefinition != null) ? options.SerializationDefinition : defaultSerializationDefinition;
 			return Serializer.Deserialize(targetType, Deserialize(jsonStr, options), sd);
+		}
+
+		/// <summary>
+		/// Process a JSON string value and attempt to deserialize it to an instance of the target type.
+		/// </summary>
+		/// <param name="targetType">Target type.</param>
+		/// <param name="jsonReader">JSON representation of an object.</param>
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		public static object Deserialize(Type targetType, TextReader jsonReader, JsonOptions options = null)
+		{
+			ISerializationDefinition sd = (options?.SerializationDefinition != null) ? options.SerializationDefinition : defaultSerializationDefinition;
+			return Serializer.Deserialize(targetType, Deserialize(jsonReader, options), sd);
 		}
 
 		/// <summary>
@@ -120,33 +208,144 @@
 			Serializer.Deserialize(target, result, sd);
 		}
 
+		/// <summary>
+		/// Process a JSON string value and attempt to deserialize it to the given target object.
+		/// </summary>
+		/// <param name="target">Object to which the JSON data is applied to.</param>
+		/// <param name="jsonReader">JSON representation of an object.</param>
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		public static void Deserialize(object target, TextReader jsonReader, JsonOptions options = null)
+		{
+			ISerializationDefinition sd = (options?.SerializationDefinition != null) ? options.SerializationDefinition : defaultSerializationDefinition;
+			object result = Deserialize(jsonReader, options);
+			Serializer.Deserialize(target, result, sd);
+		}
+
+		/// <summary>
+		/// Process a JSON string async to a data structure.
+		/// </summary>
+		/// <param name="jsonStr">JSON representation of an object.</param>
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		public static async Task<object> DeserializeAsync(string jsonStr, JsonOptions options = null)
+		{
+			Task<object> asyncResult = Task.Run(() => Deserialize(jsonStr, options));
+			await asyncResult;
+			return asyncResult.Result;
+		}
+
+		/// <summary>
+		/// Process a JSON string async to a data structure.
+		/// </summary>
+		/// <param name="jsonReader">JSON representation of an object.</param>
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		public static async Task<object> DeserializeAsync(TextReader jsonReader, JsonOptions options = null)
+		{
+			Task<object> asyncResult = Task.Run(() => Deserialize(jsonReader, options));
+			await asyncResult;
+			return asyncResult.Result;
+		}
+
+		/// <summary>
+		/// Process a JSON string value async and attempt to deserialize it to an instance of the target type.
+		/// </summary>
+		/// <param name="jsonStr">JSON representation of an object.</param>
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		/// <typeparam name="TTarget">Target type.</typeparam>
+		public static async Task<TTarget> DeserializeAsync<TTarget>(string jsonStr, JsonOptions options = null)
+		{
+			Task<TTarget> asyncResult = Task.Run(() => Deserialize<TTarget>(jsonStr, options));
+			await asyncResult;
+			return asyncResult.Result;
+		}
+
+		/// <summary>
+		/// Process a JSON string value async and attempt to deserialize it to an instance of the target type.
+		/// </summary>
+		/// <param name="jsonReader">JSON representation of an object.</param>
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		/// <typeparam name="TTarget">Target type.</typeparam>
+		public static async Task<TTarget> DeserializeAsync<TTarget>(TextReader jsonReader, JsonOptions options = null)
+		{
+			Task<TTarget> asyncResult = Task.Run(() => Deserialize<TTarget>(jsonReader, options));
+			await asyncResult;
+			return asyncResult.Result;
+		}
+
+		/// <summary>
+		/// Process a JSON string value async and attempt to deserialize it to an instance of the target type.
+		/// </summary>
+		/// <param name="targetType">Target type.</param>
+		/// <param name="jsonStr">JSON representation of an object.</param>
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		public static async Task<object> DeserializeAsync(Type targetType, string jsonStr, JsonOptions options = null)
+		{
+			Task<object> asyncResult = Task.Run(() => Deserialize(targetType, jsonStr, options));
+			await asyncResult;
+			return asyncResult.Result;
+		}
+
+		/// <summary>
+		/// Process a JSON string value async and attempt to deserialize it to an instance of the target type.
+		/// </summary>
+		/// <param name="targetType">Target type.</param>
+		/// <param name="jsonReader">JSON representation of an object.</param>
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		public static async Task<object> DeserializeAsync(Type targetType, TextReader jsonReader, JsonOptions options = null)
+		{
+			Task<object> asyncResult = Task.Run(() => Deserialize(targetType, jsonReader, options));
+			await asyncResult;
+			return asyncResult.Result;
+		}
+
+		/// <summary>
+		/// Process a JSON string value async and attempt to deserialize it to the given target object.
+		/// </summary>
+		/// <param name="target">Object to which the JSON data is applied to.</param>
+		/// <param name="jsonStr">JSON representation of an object.</param>
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		public static async Task DeserializeAsync(object target, string jsonStr, JsonOptions options = null)
+		{
+			await Task.Run(() => Deserialize(target, jsonStr, options));
+		}
+
+		/// <summary>
+		/// Process a JSON string value async and attempt to deserialize it to the given target object.
+		/// </summary>
+		/// <param name="target">Object to which the JSON data is applied to.</param>
+		/// <param name="jsonReader">JSON representation of an object.</param>
+		/// <param name="options">Additional options to customize the deserialization behaviour.</param>
+		public static async Task DeserializeAsync(object target, TextReader jsonReader, JsonOptions options = null)
+		{
+			await Task.Run(() => Deserialize(target, jsonReader, options));
+		}
+
 		#region To Json
 
-		private static void ToJson(object obj, SerializationSettings options)
+		private static void ToJson(object obj, SerializationState options)
 		{
 			if (obj == null)
 			{
-				options.resultStore.Append(NullStr);
+				options.writer.Write(NullStr);
 			}
 			else if (obj is char)
 			{
-				options.resultStore.Append('"');
+				options.writer.Write('"');
 				CleanStringToJson(new string((char)obj, 1), options);
-				options.resultStore.Append('"');
+				options.writer.Write('"');
 			}
 			else if (obj is string)
 			{
-				options.resultStore.Append('"');
+				options.writer.Write('"');
 				CleanStringToJson((string)obj, options);
-				options.resultStore.Append('"');
+				options.writer.Write('"');
 			}
 			else if (obj is bool)
 			{
-				options.resultStore.Append((bool)obj ? TrueStr : FalseStr);
+				options.writer.Write((bool)obj ? TrueStr : FalseStr);
 			}
 			else if (obj.GetType().IsPrimitive)
 			{
-				options.resultStore.Append(((IConvertible)obj).ToString(options.serializationDefinition.FormatProvider));
+				options.writer.Write(((IConvertible)obj).ToString(options.serializationDefinition.FormatProvider));
 			}
 			else if (obj is IDictionary dictionary)
 			{
@@ -172,13 +371,10 @@
 			}
 		}
 
-		private static void FromLookupToJson(IDictionary obj, SerializationSettings options)
+		private static void FromLookupToJson(IDictionary obj, SerializationState options)
 		{
-			options.resultStore.Append('{');
-			if (!options.compactOutput)
-			{
-				AdvanceLine(options);
-			}
+			options.writer.Write('{');
+			options.AdvanceLine();
 
 			if (obj.Count > 0)
 			{
@@ -189,22 +385,19 @@
 				{
 					if (count > 0)
 					{
-						options.resultStore.Append(',');
-						if (!options.compactOutput)
-						{
-							NewLine(options);
-						}
+						options.writer.Write(',');
+						options.NewLine();
 					}
 					++count;
 
 					// Key
-					options.resultStore.Append('"');
+					options.writer.Write('"');
 					CleanStringToJson(iterator.Key.ToString(), options);
-					options.resultStore.Append("\":");
+					options.writer.Write("\":");
 
 					if (!options.compactOutput)
 					{
-						options.resultStore.Append(' ');
+						options.writer.Write(' ');
 					}
 
 					// Value
@@ -212,20 +405,14 @@
 				}
 			}
 
-			if (!options.compactOutput)
-			{
-				ReturnLine(options);
-			}
-			options.resultStore.Append('}');
+			options.ReturnLine();
+			options.writer.Write('}');
 		}
 
-		private static void FromSequenceToJson(IList obj, SerializationSettings options)
+		private static void FromSequenceToJson(IList obj, SerializationState options)
 		{
-			options.resultStore.Append('[');
-			if (!options.compactOutput)
-			{
-				AdvanceLine(options);
-			}
+			options.writer.Write('[');
+			options.AdvanceLine();
 
 			if (obj.Count > 0)
 			{
@@ -236,30 +423,23 @@
 				{
 					if (count > 0)
 					{
-						options.resultStore.Append(',');
-						if (!options.compactOutput)
-						{
-							NewLine(options);
-						}
+						options.writer.Write(',');
+						options.NewLine();
 					}
-					++count;
 
+					++count;
 					ToJson(iterator.Current, options);
 				}
 			}
 
-			if (!options.compactOutput)
-			{
-				ReturnLine(options);
-			}
-			options.resultStore.Append(']');
+			options.ReturnLine();
+			options.writer.Write(']');
 		}
 
-		private static void CleanStringToJson(string str, SerializationSettings options)
+		private static void CleanStringToJson(string str, SerializationState options)
 		{
-			// Regex.Escape is too agressive in removing characters.
+			// Regex.Escape is too aggressive in removing characters.
 			// builder.Append(Regex.Escape(str));
-
 			for (int i = 0; i < str.Length; ++i)
 			{
 				CleanCharToJson(str[i], options);
@@ -267,453 +447,353 @@
 		}
 
 		// Based on: https://stackoverflow.com/a/17691629
-		private static void CleanCharToJson(char c, SerializationSettings options)
+		private static void CleanCharToJson(char c, SerializationState options)
 		{
 			switch (c)
 			{
 				case '\\':
 				case '"':
-					options.resultStore.Append('\\');
-					options.resultStore.Append(c);
+					options.writer.Write('\\');
+					options.writer.Write(c);
 					break;
 				case '/':
 					if (options.escapeSlashChar)
 					{
-						options.resultStore.Append('\\');
+						options.writer.Write('\\');
 					}
-					options.resultStore.Append(c);
+					options.writer.Write(c);
 					break;
 				case '\b':
-					options.resultStore.Append("\\b");
+					options.writer.Write("\\b");
 					break;
 				case '\t':
-					options.resultStore.Append("\\t");
+					options.writer.Write("\\t");
 					break;
 				case '\n':
-					options.resultStore.Append("\\n");
+					options.writer.Write("\\n");
 					break;
 				case '\f':
-					options.resultStore.Append("\\f");
+					options.writer.Write("\\f");
 					break;
 				case '\r':
-					options.resultStore.Append("\\r");
+					options.writer.Write("\\r");
 					break;
 				default:
 					if (('\x00' <= c) && (c <= '\x1f'))
 					{
-						options.resultStore.Append(string.Format("\\u{0:D4}", ((int)c)));
+						options.writer.Write(string.Format("\\u{0:D4}", ((int)c)));
 					}
 					else
 					{
-						options.resultStore.Append(c);
+						options.writer.Write(c);
 					}
 					break;
 			}
-		}
-
-		private static void NewLine(SerializationSettings options)
-		{
-			options.resultStore.Append('\n').Append(options.IndentString);
-		}
-
-		private static void AdvanceLine(SerializationSettings options)
-		{
-			options.IndentationLevel += 1;
-			NewLine(options);
-		}
-
-		private static void ReturnLine(SerializationSettings options)
-		{
-			options.IndentationLevel -= 1;
-			NewLine(options);
 		}
 
 		#endregion // To Json
 
 		#region From Json
 
-		private static object FromJson(ISerializationDefinition serializationDefinition, string str, ref int index)
+		private static object FromJson(DeserializationState dv)
 		{
-			if (string.IsNullOrEmpty(str))
+			if (dv.IsDone)
 			{
 				return null;
 			}
 
-			SkipWhiteSpace(str, ref index);
+			SkipWhiteSpace(dv);
 
-			if (index >= str.Length)
+			// If, after only reading whitespace, and the reader is already done, then nothing valid was found.
+			if (dv.IsDone)
 			{
 				return null;
 			}
 
-			char firstChar = str[index];
-			switch (firstChar)
+			switch (dv.Peek)
 			{
-				case 'n':
-					if (((index + NullStr.Length - 1) >= str.Length) || (str.IndexOf(NullStr, index, NullStr.Length) == -1))
-					{
-						throw new JsonException("Unexpected end of string. Expected a 'null'-token.");
-					}
-					index += NullStr.Length;
+				case 'n':   // Null
+					ReadValueOrDie(dv, NullStr);
 					return null;
-				case 't':
-					if (((index + TrueStr.Length - 1) >= str.Length) || (str.IndexOf(TrueStr, index, TrueStr.Length) == -1))
-					{
-						throw new JsonException("Unexpected end of string. Expected a 'true'-token.");
-					}
-					index += TrueStr.Length;
+				case 't':   // True
+					ReadValueOrDie(dv, TrueStr);
 					return true;
-				case 'f':
-					if (((index + FalseStr.Length - 1) >= str.Length) || (str.IndexOf(FalseStr, index, FalseStr.Length) == -1))
-					{
-						throw new JsonException("Unexpected end of string. Expected a 'false'-token.");
-					}
-					index += FalseStr.Length;
+				case 'f':   // False
+					ReadValueOrDie(dv, FalseStr);
 					return false;
-				case '"':
-					return FromJsonToString(serializationDefinition, str, ref index);
-				case '{':
+				case '"':   // String
+					return FromJsonToString(dv);
+				case '{':   // Object
+					return FromJsonToLookup(dv);
+				case '[':   // Array
+					return FromJsonToSequence(dv);
+				default:    // Numerical, or unexpected
+					if (char.IsDigit(dv.Peek) || char.Equals(dv.Peek, '-'))
 					{
-						if (serializationDefinition is ILookupSerializationDefinition lookupDefinition)
-						{
-							return FromJsonToLookup(lookupDefinition, str, ref index);
-						}
-						else
-						{
-							throw new JsonException("The serialization definition does not implement the {0} interface, but the value contains JSON-object data.", typeof(ILookupSerializationDefinition).Name);
-						}
-					}
-				case '[':
-					{
-						if (serializationDefinition is IIndexSerializationDefinition indexDefinition)
-						{
-							return FromJsonToSequence(indexDefinition, str, ref index);
-						}
-						else
-						{
-							throw new JsonException("The serialization definition does not implement the {0} interface, but the value contains JSON-array data.", typeof(IIndexSerializationDefinition).Name);
-						}
-					}
-				default:
-					if (char.IsDigit(firstChar) || firstChar.Equals('-'))
-					{
-						return FromJsonToNumerical(serializationDefinition, str, ref index);
+						return FromJsonToNumerical(dv);
 					}
 					else
 					{
-						throw new JsonException("Unexpected symbol '{0}'.", firstChar);
+						throw new JsonException("Unexpected symbol '{0}'.", dv.Peek);
 					}
 			}
 		}
 
-		private static string FromJsonToString(ISerializationDefinition serializationDefinition, string str, ref int index)
+		private static string FromJsonToString(DeserializationState reader)
 		{
-			// Find the first unescaped '"' character
-			int nextIndex = index + 1;
-			if (nextIndex >= str.Length)
+			if (!char.Equals(reader.Peek, '"'))
 			{
-				throw new JsonException("Unexpected end of string. Incomplete string token.");
+				throw new JsonException("Expected the '\"'-token to read a string value.");
 			}
+
+			reader.buffer.Clear();
+			_ = reader.Read;    // Skip the first '"' character.
 
 			do
 			{
-				nextIndex = str.IndexOf('"', nextIndex);
-				if (nextIndex == -1)
+				// Read until the next '"' character.
+				while (!reader.IsDone && !char.Equals(reader.Peek, '"'))
 				{
-					throw new JsonException("Unexpected end of string. Incomplete string token.");
+					reader.buffer.Append(reader.Read);
 				}
-				else if (!IsCharacterEscaped(str, nextIndex))
+
+				if (reader.IsDone)
+				{
+					throw new JsonException("Unexpected end of string. Incomplete string token: '{0}'.", reader.buffer.ToString());
+				}
+				else if (!IsCharacterEscaped(reader))
 				{
 					break;
 				}
-				else
-				{
-					++nextIndex;
-				}
+			}
+			while (!reader.IsDone);
 
-			} while (nextIndex > 0);
+			string value = reader.buffer.ToString();
+			reader.buffer.Clear();
+			_ = reader.Read;    // Read the final '"'-character.
 
-			// Extract the value and advance past the closing '"' character.
-			string value = str.Substring(index + 1, nextIndex - index - 1);
-			index = nextIndex + 1;
-
-			// Unescape values in the string
+			// Unescape the result.
 			return Regex.Unescape(value);
 		}
 
-		private static object FromJsonToNumerical(ISerializationDefinition serializationDefinition, string str, ref int index)
+		private static object FromJsonToNumerical(DeserializationState reader)
 		{
-			AdvanceUntil(str, ref index, numericalSymbols);
+			AdvanceUntil(reader, numericalSymbols);
 
-			// Look for a sequence of characters that matches the set
-			// of allowed numerical symbols. This is just a fuzzy search at the moment.
-			int i = index;
+			reader.buffer.Clear();
 			bool isFloatingPoint = false;
-			while (i < str.Length)
+			while (!reader.IsDone && IsCharacterValid(numericalSymbols, reader.Peek))
 			{
-				if (!IsCharacterValid(numericalSymbols, str[i]))
-				{
-					break;
-				}
-
-				if (str[i].Equals('.') || str[i].Equals('E') || str[i].Equals('e'))
+				if (IsCharacterValid(floatingPointDefiningSymbols, reader.Peek))
 				{
 					isFloatingPoint = true;
 				}
 
-				++i;
+				reader.buffer.Append(reader.Read);
 			}
 
-			// Extract the numerical string and match it with the regex
-			string numberStr = str.Substring(index, i - index);
-			index = i;
+			string numberStr = reader.buffer.ToString();
+			reader.buffer.Clear();
+
 			if (!numericalRegex.IsMatch(numberStr))
 			{
 				throw new JsonException("The string value '{0}' does not match the JSON-defined numerical pattern.", numberStr);
 			}
 
-			// Depending on whether a '.' character is present in the numerical string value,
-			// we decide to process the value as a float or int value.
 			if (isFloatingPoint)
 			{
 				double value = double.Parse(numberStr);
-				if ((value < float.MaxValue) && (value > float.MinValue))
-				{
-					return (float)value;
-				}
-				else
-				{
-					return value;
-				}
+				return ((value < float.MaxValue) && (value > float.MinValue)) ? (float)value : value;
 			}
 			else
 			{
 				long value = long.Parse(numberStr);
-				if ((value < int.MaxValue) && (value > int.MinValue))
-				{
-					return (int)value;
-				}
-				else
-				{
-					return value;
-				}
+				return ((value < int.MaxValue) && (value > int.MinValue)) ? (int)value : value;
 			}
 		}
 
-		private static IDictionary FromJsonToLookup(ILookupSerializationDefinition serializationDefinition, string str, ref int index)
+		private static IDictionary FromJsonToLookup(DeserializationState reader)
 		{
-			AdvanceUntil(str, ref index, '{');
-			IDictionary lookup = serializationDefinition.CreateLookupInstance(0);
-
-			while (index < str.Length)
+			if (!(reader.definition is ILookupSerializationDefinition))
 			{
-				AdvanceUntil(str, ref index, new char[] { '}', '"' });
-				if (str[index].Equals('}'))
+				throw new JsonException("The json data contains a json-object, but the provided serialization definition of type {0} does not support the processing of such data structures.", reader.definition.GetType().Name);
+			}
+
+			IDictionary lookup = (reader.definition as ILookupSerializationDefinition).CreateLookupInstance(0);
+			AdvanceUntil(reader, '{');
+			_ = reader.Read;    // Skip over the '{' character.
+
+			while (!reader.IsDone)
+			{
+				AdvanceUntil(reader, lookupKeyOrCloseSymbols);
+				if (char.Equals(reader.Peek, '}'))
 				{
 					break;
 				}
-				else if (!str[index].Equals('"'))
+				else if (!char.Equals(reader.Peek, '"'))
 				{
-					throw new JsonException("Unexpected '{0}' character. Expected a 'string'-token.", str[index]);
+					throw new JsonException("Unexpected '{0}' character. Expected a string-token.", reader.Peek);
 				}
 
-				string key = FromJsonToString(serializationDefinition, str, ref index);
+				string key = FromJsonToString(reader);
 
-				AdvanceUntil(str, ref index, ':');
-				index++;    // Step over the ':' character.
+				AdvanceUntil(reader, ':');
+				_ = reader.Read;    // Step over the ':' character.
 
-				object value = FromJson(serializationDefinition, str, ref index);
+				object value = FromJson(reader);
 
 				if (lookup.Contains(key))
 				{
-					throw new JsonException("The key {0} has already been processed once before.", key);
+					throw new JsonException("The key '{0}' is present multiple times in the json object.", key);
 				}
 
 				lookup.Add(key, value);
+				AdvanceUntil(reader, lookupNextOrCloseSymbols);
 
-				AdvanceUntil(str, ref index, new char[] { ',', '}' });
-
-				// If we come across the character that denotes that more
-				// key-value pairs are coming, then we skip the character
-				if (str[index].Equals(','))
+				if (char.Equals(reader.Peek, ','))
 				{
-					index++;
-					AdvanceUntil(str, ref index, '"');
+					_ = reader.Read;    // Step over the ',' character.
+					AdvanceUntil(reader, '"');  // We expect an object key next, so advance to the '"' character.
 				}
-				else if (str[index].Equals('}'))
+				else if (char.Equals(reader.Peek, '}'))
 				{
 					break;
 				}
 			}
 
-			index++;    // Step over the '}' character
+			_ = reader.Read;    // Step over the closing '}' character.
 			return lookup;
 		}
 
-		private static IList FromJsonToSequence(IIndexSerializationDefinition serializationDefinition, string str, ref int index)
+		private static IList FromJsonToSequence(DeserializationState reader)
 		{
-			AdvanceUntil(str, ref index, '[');
-			IList sequence = serializationDefinition.CreateSequenceInstance(0);
-
-			++index;    // Skip over the '[' character
-
-			while (index < str.Length)
+			if (!(reader.definition is IIndexSerializationDefinition))
 			{
-				SkipWhiteSpace(str, ref index);
-				if (str[index].Equals(']'))
+				throw new JsonException("The json data contains a json-array, but the provided serialization definition of type {0} does not support the processing of such data structures.", reader.definition.GetType().Name);
+			}
+
+			IList sequence = (reader.definition as IIndexSerializationDefinition).CreateSequenceInstance(0);
+
+			AdvanceUntil(reader, '[');
+			_ = reader.Read;    // Skip over the starting '[' character.
+
+			while (!reader.IsDone)
+			{
+				SkipWhiteSpace(reader);
+				if (char.Equals(reader.Peek, ']'))
 				{
 					break;
 				}
-				else if (str[index].Equals(','))
+				else if (char.Equals(reader.Peek, ','))
 				{
 					throw new JsonException("Unexpected ',' character.");
 				}
 
-				object value = FromJson(serializationDefinition, str, ref index);
+				object value = FromJson(reader);
 				sequence.Add(value);
 
-				AdvanceUntil(str, ref index, new char[] { ',', ']' });
+				AdvanceUntil(reader, sequenceFollowupSymbols);
 
-				// If we come across the character that denotes that more
-				// values are coming, then we skip the character
-				if (str[index].Equals(','))
+				if (char.Equals(reader.Peek, ','))
 				{
-					index++;
+					_ = reader.Read;    // Skip over this character.
 				}
-				else if (str[index].Equals(']'))
+				else if (char.Equals(reader.Peek, ']'))
 				{
-					break;
+					break;  // End of sequence.
 				}
 			}
 
-			index++;    // Step over the ']' character
+			_ = reader.Read;    // Skip over the closing ']' character.
 			return sequence;
 		}
 
-		private static void SkipWhiteSpace(string str, ref int index)
+		private static void SkipWhiteSpace(DeserializationState reader)
 		{
-			while ((index < str.Length) && char.IsWhiteSpace(str[index]))
+			// While there's data to be read and the character is considered a whitespace character, advance the cursor.
+			while (!reader.IsDone && char.IsWhiteSpace(reader.Peek))
 			{
-				++index;
+				_ = reader.Read;
 			}
 		}
 
-		private static void AdvanceUntil(string str, ref int index, char c)
+		private static void AdvanceUntil(DeserializationState reader, char c)
 		{
-			while (index < str.Length)
+			while (!reader.IsDone)
 			{
-				if (str[index] == c)
+				if (reader.Peek == c)
 				{
 					return;
 				}
 
-				++index;
+				_ = reader.Read;
 			}
 
 			throw new JsonException("Failed to find required '{0}' character.", c);
 		}
 
-		private static void AdvanceUntil(string str, ref int index, char[] cs)
+		private static void AdvanceUntil(DeserializationState reader, char[] cs)
 		{
-			while (index < str.Length)
+			while (!reader.IsDone)
 			{
-				char currentChar = str[index];
-				for (int i = 0; i < cs.Length; ++i)
+				if (IsCharacterValid(cs, reader.Peek))
 				{
-					if (cs[i] == currentChar)
-					{
-						return;
-					}
+					return;
 				}
 
-				++index;
+				_ = reader.Read;
 			}
 
 			string errMsg = "Failed to find any of the following required characters: ";
 			for (int i = 0; i < cs.Length; ++i)
 			{
 				errMsg += "'" + cs[i] + "'";
-				if (i < (cs.Length - 1))
-				{
-					errMsg += ", ";
-				}
-				else
-				{
-					errMsg += ".";
-				}
+				errMsg += (i < (cs.Length - 1)) ? ", " : ".";
 			}
+
 			throw new JsonException(errMsg);
 		}
 
-		private static bool IsCharacterEscaped(string str, int index)
+		/// <summary>
+		/// Checks whether the last characters in the buffer form an even or uneven set of '\' characters.
+		/// An even count of '\' characters denotes the next character is not escaped. Uneven means it is escaped.
+		/// </summary>
+		private static bool IsCharacterEscaped(DeserializationState reader)
 		{
-			// Check how many '\'-characters consecutively precede the current character.
-			// An uneven amount defines that the character is escaped.
-			int i = index;
-			do
+			int escapeCount = 0;
+			for (int i = (reader.buffer.Length - 1); i >= 0; --i)
 			{
-				--i;
-			} while ((i >= 0) && str[i].Equals('\\'));
-			return ((index - i + 1) % 2) == 1;
-		}
-
-		private static bool IsCharacterValid(char[] characters, char c)
-		{
-			for (int i = 0; i < characters.Length; ++i)
-			{
-				if (characters[i] == c)
+				if (char.Equals(reader.buffer[i], '\\'))
 				{
-					return true;
+					escapeCount++;
+				}
+				else
+				{
+					break;
 				}
 			}
 
-			return false;
+			return (escapeCount % 2) == 1;
+		}
+
+		private static void ReadValueOrDie(DeserializationState v, string valueToRead)
+		{
+			foreach (char c in valueToRead)
+			{
+				if (v.Peek != c)
+				{
+					throw new JsonException("Unexpected end of string. Expected a '{0}'-token.", valueToRead);
+				}
+
+				_ = v.Read;
+			}
+		}
+
+		private static bool IsCharacterValid(char[] characters, char character)
+		{
+			return Array.Exists(characters, c => c == character);
 		}
 
 		#endregion // From Json
-
-		private class SerializationSettings
-		{
-			public bool escapeSlashChar = true;
-			public bool compactOutput = true;
-			public ISerializationDefinition serializationDefinition = null;
-			public StringBuilder resultStore = null;
-
-			private int indentLvl = 0;
-			private string indentStr = string.Empty;
-
-			public int IndentationLevel
-			{
-				get => indentLvl;
-				set
-				{
-					indentLvl = Math.Max(0, value);
-					indentStr = (indentLvl > 0) ? new String('\t', value) : string.Empty;
-				}
-			}
-
-			public string IndentString
-			{
-				get => indentStr;
-			}
-
-			public SerializationSettings(StringBuilder resultStore = null)
-			{
-				this.resultStore = (resultStore != null) ? resultStore : new StringBuilder(DefaultResultsCacheCapacity);
-				this.serializationDefinition = defaultSerializationDefinition;
-			}
-
-			public void ApplyOptions(JsonOptions options)
-			{
-				options.ThrowIfNull(nameof(options));
-				escapeSlashChar = options.EscapeSlashCharacter;
-				compactOutput = options.CompactOutput;
-
-				if (options.SerializationDefinition != null)
-				{
-					serializationDefinition = options.SerializationDefinition;
-				}
-			}
-		}
 	}
 }

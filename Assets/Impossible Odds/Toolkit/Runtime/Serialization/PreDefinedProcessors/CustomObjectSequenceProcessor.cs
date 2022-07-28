@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections;
+	using System.Threading.Tasks;
 	using ImpossibleOdds.Serialization.Caching;
 
 	/// <summary>
@@ -12,6 +13,7 @@
 		private readonly bool requiresMarking = false;
 		private readonly IIndexSerializationDefinition definition = null;
 		private readonly IIndexTypeResolveSupport typeResolveDefinition = null;
+		private readonly IParallelProcessingSupport parallelProcessingSupport = null;
 
 		/// <summary>
 		/// Does the serialization definition have support for type resolve parameters?
@@ -22,11 +24,27 @@
 		}
 
 		/// <summary>
+		/// Does the serialization definition have support for processing values in parallel?
+		/// </summary>
+		public bool SupportsParallelProcessing
+		{
+			get => parallelProcessingSupport != null;
+		}
+
+		/// <summary>
 		/// The type resolve serialization definition.
 		/// </summary>
 		public IIndexTypeResolveSupport TypeResolveDefinition
 		{
 			get => typeResolveDefinition;
+		}
+
+		/// <summary>
+		/// The parallel processing serialization definition.
+		/// </summary>
+		public IParallelProcessingSupport ParallelProcessingDefinition
+		{
+			get => parallelProcessingSupport;
 		}
 
 		/// <summary>
@@ -162,10 +180,16 @@
 
 			// Get the members that will be inserted in the collection and order them by their index.
 			ISerializableMember[] sourceMembers = SerializationUtilities.GetTypeMap(sourceType).GetSerializableMembers(definition.IndexBasedFieldAttribute);
-			foreach (ISerializableMember sourceMember in sourceMembers)
+			object parallelLock = null;
+
+			if (SupportsParallelProcessing && ParallelProcessingDefinition.Enabled && (sourceMembers.Length > 1))
 			{
-				object processedValue = Serializer.Serialize(sourceMember.GetValue(source), definition);
-				SerializationUtilities.InsertInSequence(processedValues, collectionInfo, GetIndex(sourceMember), processedValue);
+				parallelLock = new object();
+				Parallel.ForEach(sourceMembers, SerializeMember);
+			}
+			else
+			{
+				Array.ForEach(sourceMembers, SerializeMember);
 			}
 
 			// Add the type resolve value.
@@ -180,13 +204,38 @@
 			}
 
 			return processedValues;
+
+			void SerializeMember(ISerializableMember sourceMember)
+			{
+				object processedValue = Serializer.Serialize(sourceMember.GetValue(source), definition);
+				if (parallelLock != null)
+				{
+					lock (parallelLock) SerializationUtilities.InsertInSequence(processedValues, collectionInfo, GetIndex(sourceMember), processedValue);
+				}
+				else
+				{
+					SerializationUtilities.InsertInSequence(processedValues, collectionInfo, GetIndex(sourceMember), processedValue);
+				}
+			}
 		}
 
 		private void Deserialize(object target, IList source)
 		{
 			// Get all of the fields that would like to get their value filled in
 			ISerializableMember[] targetMembers = SerializationUtilities.GetTypeMap(target.GetType()).GetSerializableMembers(definition.IndexBasedFieldAttribute);
-			foreach (ISerializableMember targetMember in targetMembers)
+			object parallelLock = null;
+
+			if (SupportsParallelProcessing && ParallelProcessingDefinition.Enabled && (source.Count > 1))
+			{
+				parallelLock = new object();
+				Parallel.ForEach(targetMembers, DeserializeMember);
+			}
+			else
+			{
+				Array.ForEach(targetMembers, DeserializeMember);
+			}
+
+			void DeserializeMember(ISerializableMember targetMember)
 			{
 				int index = GetIndex(targetMember);
 
@@ -194,7 +243,7 @@
 				if (source.Count <= index)
 				{
 					Log.Warning("The source does not contain a value at index '{0}' for a target of type {1}.", index, target.GetType().Name);
-					continue;
+					return;
 				}
 
 				object result = Serializer.Deserialize(targetMember.MemberType, source[index], definition);
@@ -205,7 +254,14 @@
 					result = SerializationUtilities.GetDefaultValue(targetMember.MemberType);
 				}
 
-				targetMember.SetValue(target, result);
+				if (parallelLock != null)
+				{
+					lock (parallelLock) targetMember.SetValue(target, result);
+				}
+				else
+				{
+					targetMember.SetValue(target, result);
+				}
 			}
 		}
 
