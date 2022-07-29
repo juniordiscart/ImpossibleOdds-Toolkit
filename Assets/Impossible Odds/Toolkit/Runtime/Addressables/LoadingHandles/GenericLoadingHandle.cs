@@ -12,7 +12,7 @@
 	/// </summary>
 	/// <typeparam name="TObject">Type of asset that should be expected to load by the loading handle.</typeparam>
 	public class GenericLoadingHandle<TObject> : IAddressablesLoadingHandle<TObject>
-	where TObject : UnityEngine.Object
+	// where TObject : UnityEngine.Object
 	{
 		protected readonly AsyncOperationHandle<TObject> loadingHandle;
 		private bool disposed = false;
