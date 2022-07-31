@@ -1,6 +1,7 @@
 ﻿namespace ImpossibleOdds.Xml
 {
 	using System.Text;
+	using System.Xml;
 
 	public class XmlOptions
 	{
@@ -9,7 +10,8 @@
 		/// </summary>
 		public bool CompactOutput
 		{
-			get; set;
+			get;
+			set;
 		}
 
 		/// <summary>
@@ -17,7 +19,8 @@
 		/// </summary>
 		public bool HideHeader
 		{
-			get; set;
+			get;
+			set;
 		}
 
 		/// <summary>
@@ -26,15 +29,26 @@
 		/// </summary>
 		public Encoding Encoding
 		{
-			get; set;
+			get;
+			set;
 		}
 
 		/// <summary>
-		/// A customized serialization definition for processing XML element.
+		/// A customized serialization definition for processing XML elements.
 		/// </summary>
 		public XmlSerializationDefinition SerializationDefinition
 		{
-			get; set;
+			get;
+			set;
+		}
+
+		/// <summary>
+		/// Settings for the XML reader object.
+		/// </summary>
+		public XmlReaderSettings ReaderSettings
+		{
+			get;
+			set;
 		}
 
 		public XmlOptions()

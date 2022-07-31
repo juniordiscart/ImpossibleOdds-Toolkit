@@ -75,7 +75,7 @@
 			xmlBuilder.Clear();
 
 			Stopwatch serializationTimer = Stopwatch.StartNew();
-			XmlProcessor.Serialize(movieDatabase, xmlOptions, xmlBuilder);
+			XmlProcessor.Serialize(movieDatabase, xmlBuilder, xmlOptions);
 			serializationTimer.Stop();
 			logBuilder.AppendLine(string.Format("Serialized the movie database in {0} ms.", serializationTimer.ElapsedMilliseconds));
 

@@ -9,7 +9,8 @@
 		/// </summary>
 		public bool CompactOutput
 		{
-			get; set;
+			get;
+			set;
 		}
 
 		/// <summary>
@@ -17,7 +18,8 @@
 		/// </summary>
 		public bool EscapeSlashCharacter
 		{
-			get; set;
+			get;
+			set;
 		}
 
 		/// <summary>
@@ -25,7 +27,8 @@
 		/// </summary>
 		public ISerializationDefinition SerializationDefinition
 		{
-			get; set;
+			get;
+			set;
 		}
 
 		public JsonOptions()

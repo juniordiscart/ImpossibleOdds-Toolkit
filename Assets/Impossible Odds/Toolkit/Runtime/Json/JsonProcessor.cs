@@ -37,6 +37,15 @@
 		}
 
 		/// <summary>
+		/// Enable the parallel processing of the default serialization definition being used.
+		/// </summary>
+		public static bool ParallelProcessingEnabled
+		{
+			get => defaultSerializationDefinition.ParallelProcessingEnabled;
+			set => defaultSerializationDefinition.ParallelProcessingEnabled = value;
+		}
+
+		/// <summary>
 		/// Serialize the object to a JSON-string.
 		/// </summary>
 		/// <param name="obj">Object to serialize.</param>
@@ -45,7 +54,7 @@
 		public static string Serialize(object obj, JsonOptions options = null)
 		{
 			StringBuilder resultStore = new StringBuilder(DefaultResultsCacheCapacity);
-			Serialize(obj, resultStore);
+			Serialize(obj, resultStore, options);
 			return resultStore.ToString();
 		}
 
@@ -192,7 +201,8 @@
 		public static object Deserialize(Type targetType, TextReader jsonReader, JsonOptions options = null)
 		{
 			ISerializationDefinition sd = (options?.SerializationDefinition != null) ? options.SerializationDefinition : defaultSerializationDefinition;
-			return Serializer.Deserialize(targetType, Deserialize(jsonReader, options), sd);
+			object result = Deserialize(jsonReader, options);
+			return Serializer.Deserialize(targetType, result, sd);
 		}
 
 		/// <summary>
@@ -321,47 +331,47 @@
 
 		#region To Json
 
-		private static void ToJson(object obj, SerializationState options)
+		private static void ToJson(object obj, SerializationState writer)
 		{
 			if (obj == null)
 			{
-				options.writer.Write(NullStr);
+				writer.writer.Write(NullStr);
 			}
 			else if (obj is char)
 			{
-				options.writer.Write('"');
-				CleanStringToJson(new string((char)obj, 1), options);
-				options.writer.Write('"');
+				writer.Write('"');
+				CleanStringToJson(new string((char)obj, 1), writer);
+				writer.Write('"');
 			}
 			else if (obj is string)
 			{
-				options.writer.Write('"');
-				CleanStringToJson((string)obj, options);
-				options.writer.Write('"');
+				writer.Write('"');
+				CleanStringToJson((string)obj, writer);
+				writer.Write('"');
 			}
 			else if (obj is bool)
 			{
-				options.writer.Write((bool)obj ? TrueStr : FalseStr);
+				writer.Write((bool)obj ? TrueStr : FalseStr);
 			}
 			else if (obj.GetType().IsPrimitive)
 			{
-				options.writer.Write(((IConvertible)obj).ToString(options.serializationDefinition.FormatProvider));
+				writer.Write(((IConvertible)obj).ToString(writer.serializationDefinition.FormatProvider));
 			}
 			else if (obj is IDictionary dictionary)
 			{
-				FromLookupToJson(dictionary, options);
+				FromLookupToJson(dictionary, writer);
 			}
 			else if (obj is IList list)
 			{
-				FromSequenceToJson(list, options);
+				FromSequenceToJson(list, writer);
 			}
 			else
 			{
 				try
 				{
 					// If we can't directly process the object, we attempt to deconstruct it to blocks we can handle.
-					object data = Serializer.Serialize(obj, options.serializationDefinition);
-					ToJson(data, options);
+					object data = Serializer.Serialize(obj, writer.serializationDefinition);
+					ToJson(data, writer);
 				}
 				catch (System.Exception e)
 				{
@@ -371,10 +381,10 @@
 			}
 		}
 
-		private static void FromLookupToJson(IDictionary obj, SerializationState options)
+		private static void FromLookupToJson(IDictionary obj, SerializationState writer)
 		{
-			options.writer.Write('{');
-			options.AdvanceLine();
+			writer.Write('{');
+			writer.AdvanceLine();
 
 			if (obj.Count > 0)
 			{
@@ -385,34 +395,34 @@
 				{
 					if (count > 0)
 					{
-						options.writer.Write(',');
-						options.NewLine();
+						writer.Write(',');
+						writer.NewLine();
 					}
 					++count;
 
 					// Key
-					options.writer.Write('"');
-					CleanStringToJson(iterator.Key.ToString(), options);
-					options.writer.Write("\":");
+					writer.Write('"');
+					CleanStringToJson(iterator.Key.ToString(), writer);
+					writer.Write("\":");
 
-					if (!options.compactOutput)
+					if (!writer.compactOutput)
 					{
-						options.writer.Write(' ');
+						writer.Write(' ');
 					}
 
 					// Value
-					ToJson(iterator.Value, options);
+					ToJson(iterator.Value, writer);
 				}
 			}
 
-			options.ReturnLine();
-			options.writer.Write('}');
+			writer.ReturnLine();
+			writer.Write('}');
 		}
 
-		private static void FromSequenceToJson(IList obj, SerializationState options)
+		private static void FromSequenceToJson(IList obj, SerializationState writer)
 		{
-			options.writer.Write('[');
-			options.AdvanceLine();
+			writer.Write('[');
+			writer.AdvanceLine();
 
 			if (obj.Count > 0)
 			{
@@ -423,69 +433,69 @@
 				{
 					if (count > 0)
 					{
-						options.writer.Write(',');
-						options.NewLine();
+						writer.Write(',');
+						writer.NewLine();
 					}
 
 					++count;
-					ToJson(iterator.Current, options);
+					ToJson(iterator.Current, writer);
 				}
 			}
 
-			options.ReturnLine();
-			options.writer.Write(']');
+			writer.ReturnLine();
+			writer.Write(']');
 		}
 
-		private static void CleanStringToJson(string str, SerializationState options)
+		private static void CleanStringToJson(string str, SerializationState writer)
 		{
 			// Regex.Escape is too aggressive in removing characters.
 			// builder.Append(Regex.Escape(str));
 			for (int i = 0; i < str.Length; ++i)
 			{
-				CleanCharToJson(str[i], options);
+				CleanCharToJson(str[i], writer);
 			}
 		}
 
 		// Based on: https://stackoverflow.com/a/17691629
-		private static void CleanCharToJson(char c, SerializationState options)
+		private static void CleanCharToJson(char c, SerializationState writer)
 		{
 			switch (c)
 			{
 				case '\\':
 				case '"':
-					options.writer.Write('\\');
-					options.writer.Write(c);
+					writer.Write('\\');
+					writer.Write(c);
 					break;
 				case '/':
-					if (options.escapeSlashChar)
+					if (writer.escapeSlashChar)
 					{
-						options.writer.Write('\\');
+						writer.Write('\\');
 					}
-					options.writer.Write(c);
+					writer.Write(c);
 					break;
 				case '\b':
-					options.writer.Write("\\b");
+					writer.Write("\\b");
 					break;
 				case '\t':
-					options.writer.Write("\\t");
+					writer.Write("\\t");
 					break;
 				case '\n':
-					options.writer.Write("\\n");
+					writer.Write("\\n");
 					break;
 				case '\f':
-					options.writer.Write("\\f");
+					writer.Write("\\f");
 					break;
 				case '\r':
-					options.writer.Write("\\r");
+					writer.Write("\\r");
 					break;
 				default:
 					if (('\x00' <= c) && (c <= '\x1f'))
 					{
-						options.writer.Write(string.Format("\\u{0:D4}", ((int)c)));
+						writer.Write(string.Format("\\u{0:D4}", ((int)c)));
 					}
 					else
 					{
-						options.writer.Write(c);
+						writer.writer.Write(c);
 					}
 					break;
 			}
@@ -682,7 +692,7 @@
 				SkipWhiteSpace(reader);
 				if (char.Equals(reader.Peek, ']'))
 				{
-					break;
+					break;  // End of sequence reached.
 				}
 				else if (char.Equals(reader.Peek, ','))
 				{
@@ -700,7 +710,7 @@
 				}
 				else if (char.Equals(reader.Peek, ']'))
 				{
-					break;  // End of sequence.
+					break;  // End of sequence reached.
 				}
 			}
 
@@ -776,16 +786,19 @@
 			return (escapeCount % 2) == 1;
 		}
 
-		private static void ReadValueOrDie(DeserializationState v, string valueToRead)
+		/// <summary>
+		/// Reads the value from the reader. If it doesn't match the expected value, an exception is thrown.
+		/// </summary>
+		private static void ReadValueOrDie(DeserializationState reader, string expectedValue)
 		{
-			foreach (char c in valueToRead)
+			foreach (char c in expectedValue)
 			{
-				if (v.Peek != c)
+				if (reader.Peek != c)
 				{
-					throw new JsonException("Unexpected end of string. Expected a '{0}'-token.", valueToRead);
+					throw new JsonException("Unexpected string value. Expected to read '{0}'.", expectedValue);
 				}
 
-				_ = v.Read;
+				_ = reader.Read;
 			}
 		}
 
@@ -793,7 +806,6 @@
 		{
 			return Array.Exists(characters, c => c == character);
 		}
-
 		#endregion // From Json
 	}
 }

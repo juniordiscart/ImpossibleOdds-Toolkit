@@ -14,6 +14,9 @@
 		private int indentLvl;
 		private string indentStr;
 
+		/// <summary>
+		/// The current indentation level of the the writer.
+		/// </summary>
 		public int IndentationLevel
 		{
 			get => indentLvl;
@@ -22,11 +25,6 @@
 				indentLvl = Math.Max(0, value);
 				indentStr = (indentLvl > 0) ? new String('\t', value) : string.Empty;
 			}
-		}
-
-		public string IndentString
-		{
-			get => indentStr;
 		}
 
 		public void ApplyOptions(JsonOptions options)
@@ -41,12 +39,24 @@
 			}
 		}
 
+		public SerializationState Write(string value)
+		{
+			writer.Write(value);
+			return this;
+		}
+
+		public SerializationState Write(char value)
+		{
+			writer.Write(value);
+			return this;
+		}
+
 		public void NewLine()
 		{
 			if (!compactOutput)
 			{
 				writer.WriteLine();
-				writer.Write(IndentString);
+				writer.Write(indentStr);
 			}
 		}
 
