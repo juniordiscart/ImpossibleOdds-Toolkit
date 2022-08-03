@@ -347,6 +347,16 @@ namespace ImpossibleOdds
 		}
 
 		/// <summary>
+		/// Checks whether the queue is null or empty.
+		/// </summary>
+		/// <param name="q">The queue to test.</param>
+		/// <returns>True if the queue is either null, or has 0 elements in it. False otherwise.</returns>
+		public static bool IsNullOrEmpty<TElement>(this Queue<TElement> q)
+		{
+			return (q == null) || (q.Count == 0);
+		}
+
+		/// <summary>
 		/// Checks whether the collection is null or empty.
 		/// </summary>
 		/// <param name="a">The collection to test.</param>
