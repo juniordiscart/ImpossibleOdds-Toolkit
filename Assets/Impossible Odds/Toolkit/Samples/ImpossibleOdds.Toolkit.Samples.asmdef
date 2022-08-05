@@ -1,5 +1,6 @@
 {
-    "name": "ImpossibleOdds.Examples",
+    "name": "ImpossibleOdds.Toolkit.Samples",
+    "rootNamespace": "",
     "references": [
         "ImpossibleOdds.Core",
         "ImpossibleOdds.DependencyInjection",
