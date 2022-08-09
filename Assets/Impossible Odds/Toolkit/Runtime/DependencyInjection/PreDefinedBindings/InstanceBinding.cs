@@ -5,6 +5,32 @@
 	/// <summary>
 	/// A binding that provides the same instance for each request.
 	/// </summary>
+	public class InstanceBinding : IDependencyBinding
+	{
+		private readonly object instance = null;
+
+		public InstanceBinding(object instance)
+		{
+			instance.ThrowIfNull(nameof(instance));
+			this.instance = instance;
+		}
+
+		/// <inheritdoc />
+		public object GetInstance()
+		{
+			return instance;
+		}
+
+		/// <inheritdoc />
+		public Type GetTypeBinding()
+		{
+			return instance.GetType();
+		}
+	}
+
+	/// <summary>
+	/// A binding that provides the same instance for each request.
+	/// </summary>
 	/// <typeparam name="T">The type of the instance that will be provided.</typeparam>
 	public class InstanceBinding<T> : IDependencyBinding
 	{

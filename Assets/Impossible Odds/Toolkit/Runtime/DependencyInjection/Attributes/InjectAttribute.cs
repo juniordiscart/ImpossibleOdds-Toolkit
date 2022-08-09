@@ -37,7 +37,7 @@
 				return (injectionNames == null) || injectionNames.Contains(string.Empty);
 			}
 
-			return injectionNames.Contains(injectionId);
+			return (injectionNames != null) ? injectionNames.Contains(injectionId) : false;
 		}
 	}
 }
