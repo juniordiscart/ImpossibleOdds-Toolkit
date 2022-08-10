@@ -4,6 +4,22 @@ You'll find the full update history of this toolkit below. This might be useful 
 
 **General note about installing updates**: it is recommended that you remove the current installed package first before updating to a newer one. Some files may have been deleted or moved, which may cause conflicts or compilation errors. The default location for this package in your Unity project is at `Assets/Impossible Odds/Toolkit`.
 
+## v1.5.2 - Named Injection Fix
+
+Changelog:
+
+### Fixed
+
+* Fixed issue where injecting resources using an injection identifier would throw a `NullReferenceException`.
+
+## v1.5.1 - Purge Delegates Fix
+
+Changelog:
+
+### Fixed
+
+* Fixed issue where purging the delegates of an object would try to purge non-existing delegates on the object, and throw an exception.
+
 ## v1.5 - State Machines, Dependency Injection Improvements & Optimizations
 
 Changelog:
