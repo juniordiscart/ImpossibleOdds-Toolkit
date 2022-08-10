@@ -3,7 +3,7 @@
 	using System;
 
 	/// <summary>
-	/// Explicitily sets the script execution order to the specified value.
+	/// Explicitly sets the script execution order to the specified value.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 	public sealed class ExecuteAtAttribute : Attribute
