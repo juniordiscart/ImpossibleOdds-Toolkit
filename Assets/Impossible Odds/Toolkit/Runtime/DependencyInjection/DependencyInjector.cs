@@ -54,7 +54,7 @@
 		/// <summary>
 		/// Creates an instance of the target type and injects the newly create object.
 		/// Note: a suitable constructor is necessary to create the instance. Either a constructor marked
-		/// with the 'Inject' attribute, or an accessable default constructor.
+		/// with the 'Inject' attribute, or an accessible default constructor.
 		/// </summary>
 		/// <param name="container">Container with resources to inject.</param>
 		/// <typeparam name="T">The type of object to create an instance of.</typeparam>
@@ -67,7 +67,7 @@
 		/// <summary>
 		/// Creates an instance of the target type and injects the newly create object.
 		/// Note: a suitable constructor is necessary to create the instance. Either a constructor marked
-		/// with the 'Inject' attribute, or an accessable default constructor.
+		/// with the 'Inject' attribute, or an accessible default constructor.
 		/// </summary>
 		/// <param name="targetType">The type of object to create an instance of.</param>
 		/// <param name="container">Container with resources to inject.</param>
@@ -80,7 +80,7 @@
 		/// <summary>
 		/// Creates an instance of the target type and injects the newly create object.
 		/// Note: a suitable constructor is necessary to create the instance. Either a constructor marked
-		/// with the 'Inject' attribute (with matching injection identifier), or an accessable default constructor.
+		/// with the 'Inject' attribute (with matching injection identifier), or an accessible default constructor.
 		/// </summary>
 		/// <param name="container">Container with resources to inject.</param>
 		/// <param name="injectionId">Only injects members with the same injection identifier.</param>
@@ -94,7 +94,7 @@
 		/// <summary>
 		/// Creates an instance of the target type and injects the newly create object.
 		/// Note: a suitable constructor is necessary to create the instance. Either a constructor marked
-		/// with the 'Inject' attribute (with matching injection identifier), or an accessable default constructor.
+		/// with the 'Inject' attribute (with matching injection identifier), or an accessible default constructor.
 		/// </summary>
 		/// <param name="targetType">The type of object to create an instance of.</param>
 		/// <param name="container">Container with resources to inject.</param>
@@ -116,7 +116,7 @@
 				MemberInjectionValue<ConstructorInfo> constructorInfo = typeInfo.InjectableConstructors.First(c => c.Attribute.IsInjectionIdDefined(string.Empty));
 				ParameterInfo[] parameterInfo = constructorInfo.Member.GetParameters();
 				object[] parameters = TypeReflectionUtilities.GetParameterInvokationList(parameterInfo.Length);
-				FillPamaterInjectionList(parameterInfo, parameters, container);
+				FillParameterInjectionList(parameterInfo, parameters, container);
 				instance = constructorInfo.Member.Invoke(parameters);
 				TypeReflectionUtilities.ReturnParameterInvokationList(parameters);
 			}
@@ -131,10 +131,51 @@
 		}
 
 		/// <summary>
-		/// Inject the target object using the bindings found in the container.
+		/// Inject all static members using the resources found in the provided container.
+		/// </summary>
+		/// <param name="container">Container with resources to inject.</param>
+		public static void Inject(IReadOnlyDependencyContainer container)
+		{
+			container.ThrowIfNull(nameof(container));
+
+			foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+			{
+				foreach (Type type in assembly.GetTypes())
+				{
+					if (!rejectedTypes.Contains(type))
+					{
+						ResolveDependenciesForObject(type, container);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Inject all static members using the resources found in the provided container.
+		/// </summary>
+		/// <param name="container">Container with resources to inject.</param>
+		/// <param name="injectionId">Only injects members with this injection identifier defined.</param>
+		public static void Inject(IReadOnlyDependencyContainer container, string injectionId)
+		{
+			container.ThrowIfNull(nameof(container));
+
+			foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+			{
+				foreach (Type type in assembly.GetTypes())
+				{
+					if (!rejectedTypes.Contains(type))
+					{
+						ResolveDependenciesForObject(type, container, injectionId);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Inject the target object using the resources found in the provided container.
 		/// Note: if the target is of type Type, then it's static members will be injected.
 		/// </summary>
-		/// <param name="container">Container with dependency bindings.</param>
+		/// <param name="container">Container with dependency resources.</param>
 		/// <param name="target">Target to be injected.</param>
 		public static void Inject(IReadOnlyDependencyContainer container, object target)
 		{
@@ -145,11 +186,11 @@
 		}
 
 		/// <summary>
-		/// Inject the target object using the bindings found in the container.
+		/// Inject the target object using the resources found in the provided container.
 		/// Note: if the target is of type Type, then it's static members will be injected.
 		/// </summary>
-		/// <param name="container">Container with dependency bindings.</param>
-		/// <param name="injectionId">Only injects members with the injection ID.</param>
+		/// <param name="container">Container with dependency resources.</param>
+		/// <param name="injectionId">Only injects members with the injection identifier.</param>
 		/// <param name="target">Target to be injected.</param>
 		public static void Inject(IReadOnlyDependencyContainer container, string injectionId, object target)
 		{
@@ -161,9 +202,9 @@
 		}
 
 		/// <summary>
-		/// Inject the target objects using the bindings found in the container.
+		/// Inject the target objects using the resources found in the provided container.
 		/// </summary>
-		/// <param name="container">Container with dependency bindings.</param>
+		/// <param name="container">Container with dependency resources.</param>
 		/// <param name="targets">Targets to be injected.</param>
 		public static void Inject(IReadOnlyDependencyContainer container, IEnumerable targets)
 		{
@@ -180,9 +221,9 @@
 		}
 
 		/// <summary>
-		/// Inject the target objects using the bindings found in the container.
+		/// Inject the target objects using the resources found in the provided container.
 		/// </summary>
-		/// <param name="container">Container with dependency bindings.</param>
+		/// <param name="container">Container with dependency resources.</param>
 		/// <param name="injectionId">Only injects members with the injection ID.</param>
 		/// <param name="targets">Targets to be injected.</param>
 		public static void Inject(IReadOnlyDependencyContainer container, string injectionId, IEnumerable targets)
@@ -201,9 +242,9 @@
 		}
 
 		/// <summary>
-		/// Inject the target objects using the bindings found in the container.
+		/// Inject the target objects using the resources found in the provided container.
 		/// </summary>
-		/// <param name="container">Container with dependency bindings.</param>
+		/// <param name="container">Container with dependency resources.</param>
 		/// <param name="targets">Targets to be injected.</param>
 		public static void Inject(IReadOnlyDependencyContainer container, params object[] targets)
 		{
@@ -216,9 +257,9 @@
 		}
 
 		/// <summary>
-		/// Inject the target objects using the bindings found in the container.
+		/// Inject the target objects using the resources found in the provided container.
 		/// </summary>
-		/// <param name="container">Container with dependency bindings.</param>
+		/// <param name="container">Container with dependency resources.</param>
 		/// <param name="injectionId">Only injects members with the injection ID.</param>
 		/// <param name="targets">Targets to be injected.</param>
 		public static void Inject(IReadOnlyDependencyContainer container, string injectionId, params object[] targets)
@@ -328,7 +369,7 @@
 						{
 							ParameterInfo[] parameterInfo = method.Member.GetParameters();
 							object[] parameters = TypeReflectionUtilities.GetParameterInvokationList(parameterInfo.Length);
-							FillPamaterInjectionList(parameterInfo, parameters, container);
+							FillParameterInjectionList(parameterInfo, parameters, container);
 							method.Member.Invoke(null, parameters);
 							TypeReflectionUtilities.ReturnParameterInvokationList(parameters);
 						}
@@ -336,7 +377,7 @@
 						{
 							ParameterInfo[] parameterInfo = method.Member.GetParameters();
 							object[] parameters = TypeReflectionUtilities.GetParameterInvokationList(parameterInfo.Length);
-							FillPamaterInjectionList(parameterInfo, parameters, container);
+							FillParameterInjectionList(parameterInfo, parameters, container);
 							method.Member.Invoke(objToInject, parameters);
 							TypeReflectionUtilities.ReturnParameterInvokationList(parameters);
 						}
@@ -345,7 +386,7 @@
 			}
 		}
 
-		private static void FillPamaterInjectionList(ParameterInfo[] parameterInfo, object[] parameters, IReadOnlyDependencyContainer container)
+		private static void FillParameterInjectionList(ParameterInfo[] parameterInfo, object[] parameters, IReadOnlyDependencyContainer container)
 		{
 			// Resolve the dependencies for the method parameters
 			for (int i = 0; i < parameterInfo.Length; ++i)
