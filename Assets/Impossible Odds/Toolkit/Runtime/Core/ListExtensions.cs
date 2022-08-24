@@ -270,12 +270,48 @@ namespace ImpossibleOdds
 		/// Tries to find the index of the element that matches.
 		/// </summary>
 		/// <returns>True if an element is present that matches, false otherwise.</returns>
+		public static bool TryFindIndex<TElement>(this TElement[] arr, TElement match, out int index)
+		{
+			arr.ThrowIfNull(nameof(arr));
+			for (int i = 0; i < arr.Length; ++i)
+			{
+				if (arr[i].Equals(match))
+				{
+					index = i;
+					return true;
+				}
+			}
+
+			index = -1;
+			return false;
+		}
+
+		/// <summary>
+		/// Tries to find the index of the element that matches.
+		/// </summary>
+		/// <returns>True if an element is present that matches, false otherwise.</returns>
 		public static bool TryFindIndex<TElement>(this IReadOnlyList<TElement> l, Predicate<TElement> match, out int index)
 		{
 			l.ThrowIfNull(nameof(l));
 			for (int i = 0; i < l.Count; ++i)
 			{
 				if (match(l[i]))
+				{
+					index = i;
+					return true;
+				}
+			}
+
+			index = -1;
+			return false;
+		}
+
+		public static bool TryFindIndex<TElement>(this IReadOnlyList<TElement> l, TElement match, out int index)
+		{
+			l.ThrowIfNull(nameof(l));
+			for (int i = 0; i < l.Count; ++i)
+			{
+				if (l[i].Equals(match))
 				{
 					index = i;
 					return true;
