@@ -56,7 +56,7 @@
 		}
 
 		/// <summary>
-		/// The task for awaiting the loading asynchonously.
+		/// The task for awaiting the loading asynchronously.
 		/// </summary>
 		Task Task
 		{
@@ -74,7 +74,7 @@
 	/// </summary>
 	/// <typeparam name="TObject">The type of asset to fetch.</typeparam>
 	public interface IAddressablesLoadingHandle<TObject> : IAddressablesLoadingHandle
-	where TObject : UnityEngine.Object
+	// where TObject : UnityEngine.Object
 	{
 		/// <summary>
 		/// Invoked when the handle has finished loading.
@@ -90,7 +90,7 @@
 		}
 
 		/// <summary>
-		/// The task for awaiting the loading asynchonously.
+		/// The task for awaiting the loading asynchronously.
 		/// </summary>
 		new Task<TObject> Task
 		{
