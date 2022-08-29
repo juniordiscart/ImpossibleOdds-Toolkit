@@ -51,7 +51,7 @@
 				return callbacks;
 			}
 
-			IEnumerable<MemberInfo> callbackMethods = TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, MemberTypes.Method);
+			IEnumerable<MemberInfo> callbackMethods = TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, false, MemberTypes.Method);
 			List<ITargetedCallback> targetedCallbacksForAttr = new List<ITargetedCallback>();
 			foreach (MethodInfo method in TypeReflectionUtilities.FilterBaseMethods(callbackMethods))
 			{

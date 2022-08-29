@@ -8,7 +8,7 @@
 	using UnityEditor;
 
 	[InitializeOnLoad]
-	public class ScriptOrderManager
+	internal class ScriptOrderManager
 	{
 		static ScriptOrderManager()
 		{
@@ -50,18 +50,10 @@
 				Type monoType = monoScript.GetClass();
 				if ((monoType != null) && typeof(MonoBehaviour).IsAssignableFrom(monoType))
 				{
-					if (Attribute.IsDefined(monoType, typeof(ExecuteAtAttribute)))
-					{
-						scripts[monoType] = new ScriptExecutionInfo(monoScript, monoType, monoType.GetCustomAttribute<ExecuteAtAttribute>(false).Order, true);
-					}
-					else
-					{
-						scripts[monoType] = new ScriptExecutionInfo(monoScript, monoType, MonoImporter.GetExecutionOrder(monoScript));
-					}
-
-					{
-						continue;   // When explicitly defining an order, we don't consider other attribute possibilities.
-					}
+					scripts[monoType] =
+						Attribute.IsDefined(monoType, typeof(ExecuteAtAttribute)) ?
+						new ScriptExecutionInfo(monoScript, monoType, monoType.GetCustomAttribute<ExecuteAtAttribute>(false).Order, true) :
+						new ScriptExecutionInfo(monoScript, monoType, MonoImporter.GetExecutionOrder(monoScript));
 				}
 			}
 
@@ -307,19 +299,19 @@
 			public bool IsUnvisited
 			{
 				get => mark == 0;
-				set => mark = value ? 0 : mark;
+				set => mark = (value ? 0 : mark);
 			}
 
-			public bool IsTermporary
+			public bool IsTemporary
 			{
 				get => mark == 1;
-				set => mark = value ? 1 : mark;
+				set => mark = (value ? 1 : mark);
 			}
 
 			public bool IsPermanent
 			{
 				get => mark == 2;
-				set => mark = value ? 2 : mark;
+				set => mark = (value ? 2 : mark);
 			}
 
 			public GraphNode(ScriptExecutionInfo script)
@@ -334,20 +326,20 @@
 				{
 					return;
 				}
-				else if (IsTermporary)
+				else if (IsTemporary)
 				{
 					List<string> cyclicPath = new List<string>();
 					GraphNode errorNode = this;
 					do
 					{
 						cyclicPath.Add(errorNode.node.Type.Name);
-						errorNode = errorNode.edges.First(edge => edge.IsTermporary);
+						errorNode = errorNode.edges.First(edge => edge.IsTemporary);
 					} while (errorNode != this);
 					cyclicPath.Add(errorNode.node.Type.Name);
 					throw new ImpossibleOddsException("Cyclic script execution order dependencies detected: {0}.", string.Join(" -> ", cyclicPath));
 				}
 
-				IsTermporary = true;
+				IsTemporary = true;
 
 				for (int i = 0; i < edges.Count; ++i)
 				{

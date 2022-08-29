@@ -101,7 +101,7 @@
 				return r;
 			}
 
-			Attribute[] attributes = Attribute.GetCustomAttributes(type, attributeType, true);
+			Attribute[] attributes = TypeReflectionUtilities.FindAllTypeDefinedAttributes(type, attributeType, true).ToArray();
 			return typeDefinedAttributes.GetOrAdd(attributeType, !attributes.IsNullOrEmpty() ? attributes : Array.Empty<Attribute>());
 		}
 
@@ -124,7 +124,7 @@
 
 			// Go over the fields and properties that have the desired attribute defined.
 			List<ISerializableMember> serializableMembersForAttr = new List<ISerializableMember>();
-			foreach (MemberInfo member in TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, (MemberTypes.Field | MemberTypes.Property)))
+			foreach (MemberInfo member in TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, false, (MemberTypes.Field | MemberTypes.Property)))
 			{
 				switch (member.MemberType)
 				{
@@ -155,7 +155,7 @@
 
 			// Go over the fields and properties that have the desired attribute defined.
 			List<IRequiredSerializableMember> requiredMembersForAttr = new List<IRequiredSerializableMember>();
-			foreach (MemberInfo member in TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, (MemberTypes.Field | MemberTypes.Property)))
+			foreach (MemberInfo member in TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, false, (MemberTypes.Field | MemberTypes.Property)))
 			{
 				Array.ForEach(
 					Attribute.GetCustomAttributes(member, attributeType, true),
@@ -173,7 +173,7 @@
 			}
 
 			// Go over the methods that have the desired attribute defined.
-			IEnumerable<MemberInfo> callbackMethods = TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, MemberTypes.Method);
+			IEnumerable<MemberInfo> callbackMethods = TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, false, MemberTypes.Method);
 			List<ISerializationCallback> serializationCallbacksForAttr = new List<ISerializationCallback>();
 			foreach (MethodInfo method in TypeReflectionUtilities.FilterBaseMethods(callbackMethods))
 			{

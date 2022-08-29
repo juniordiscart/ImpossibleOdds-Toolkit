@@ -71,7 +71,7 @@
 		{
 			const MemberTypes requestedMembers = MemberTypes.Constructor | MemberTypes.Field | MemberTypes.Property | MemberTypes.Method;
 			const BindingFlags bindingFlags = TypeReflectionUtilities.DefaultBindingFlags | BindingFlags.Static;    // Include static bindings as well.
-			IEnumerable<MemberInfo> injectableMembers = TypeReflectionUtilities.FindAllMembersWithAttribute(Type, typeof(InjectAttribute), requestedMembers, bindingFlags);
+			IEnumerable<MemberInfo> injectableMembers = TypeReflectionUtilities.FindAllMembersWithAttribute(Type, typeof(InjectAttribute), false, requestedMembers, bindingFlags);
 
 			injectableFields =
 				injectableMembers

@@ -343,9 +343,7 @@
 			}
 
 			LookupCollectionTypeInfo sourceCollectionInfo = SerializationUtilities.GetCollectionTypeInfo(source);
-			ITypeResolveParameter[] typeResolveAttrs =
-				SerializationUtilities.GetTypeMap(targetType).
-				GetTypeResolveParameters(typeResolveSupport.TypeResolveAttribute);
+			ITypeResolveParameter[] typeResolveAttrs = SerializationUtilities.GetTypeMap(targetType).GetTypeResolveParameters(typeResolveSupport.TypeResolveAttribute);
 
 			foreach (ITypeResolveParameter typeResolveAttr in typeResolveAttrs)
 			{

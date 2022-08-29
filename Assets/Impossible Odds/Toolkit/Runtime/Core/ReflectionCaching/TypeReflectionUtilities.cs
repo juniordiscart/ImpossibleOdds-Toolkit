@@ -21,29 +21,65 @@
 		private readonly static ConcurrentDictionary<int, ConcurrentBag<object[]>> callbackParameterPool = new ConcurrentDictionary<int, ConcurrentBag<object[]>>();
 
 		/// <summary>
-		/// Finds all members with the given attribute accross the type chain.
+		/// Finds the attributes of the given type defined on the target type. Optionally also includes those defined on the implemented interfaces.
+		/// </summary>
+		/// <param name="targetType">The type on which to search for attributes.</param>
+		/// <param name="attributeType">The attribute that should be present on the members of the type.</param>
+		/// <param name="includeInterfaces">Should implemented interfaces also be searched for the attribute?</param>
+		/// <returns>The set of attributes defined on the type and its implemented interfaces.</returns>
+		public static IEnumerable<Attribute> FindAllTypeDefinedAttributes(Type targetType, Type attributeType, bool includeInterfaces)
+		{
+			IEnumerable<Attribute> typeDefinedAttributes = Attribute.GetCustomAttributes(targetType, attributeType, true);
+
+			if (includeInterfaces)
+			{
+				foreach (Type iType in targetType.GetInterfaces())
+				{
+					typeDefinedAttributes = typeDefinedAttributes.Union(Attribute.GetCustomAttributes(iType, attributeType, true));
+				}
+			}
+
+			return typeDefinedAttributes;
+		}
+
+		/// <summary>
+		/// Finds all members with the given attribute across the type chain.
 		/// </summary>
 		/// <param name="targetType">The type on which to search for members.</param>
 		/// <param name="attributeType">The attribute that should be present on the members of the type.</param>
+		/// <param name="includeInterfaces">Include members found </param>
 		/// <param name="memberFilter">What members should be included in the result.</param>
 		/// <param name="bindingFlags">What binding flags should be used for the members.</param>
 		/// <returns>The set of members that have the attribute defined.</returns>
-		public static IEnumerable<MemberInfo> FindAllMembersWithAttribute(Type targetType, Type attributeType, MemberTypes memberFilter = DefaultMemberTypes, BindingFlags bindingFlags = DefaultBindingFlags)
+		public static IEnumerable<MemberInfo> FindAllMembersWithAttribute(Type targetType, Type attributeType, bool includeInterfaces, MemberTypes memberFilter = DefaultMemberTypes, BindingFlags bindingFlags = DefaultBindingFlags)
 		{
 			IEnumerable<MemberInfo> membersWithAttribute = Enumerable.Empty<MemberInfo>();
 
-			while ((targetType != ObjectType) && (targetType != null))
+			Type itType = targetType;
+			while ((itType != ObjectType) && (itType != null))
 			{
 				membersWithAttribute = membersWithAttribute
-					.Concat(
-						targetType
+					.Union(
+						itType
 						.GetMembers(bindingFlags | BindingFlags.DeclaredOnly)   // Because we're going down the type chain anyway, we only get what is defined on this type.
 						.Where(m => memberFilter.HasMemberFlag(m.MemberType) && Attribute.IsDefined(m, attributeType, true)));
 
-				targetType = targetType.BaseType;
+				itType = itType.BaseType;
 			}
 
-			return membersWithAttribute.Distinct();
+			if (includeInterfaces)
+			{
+				foreach (Type iType in targetType.GetInterfaces())
+				{
+					membersWithAttribute = membersWithAttribute
+						.Union(
+							iType
+							.GetMembers(bindingFlags)
+							.Where(m => memberFilter.HasMemberFlag(m.MemberType) && Attribute.IsDefined(m, attributeType, true)));
+				}
+			}
+
+			return membersWithAttribute;
 		}
 
 		/// <summary>
