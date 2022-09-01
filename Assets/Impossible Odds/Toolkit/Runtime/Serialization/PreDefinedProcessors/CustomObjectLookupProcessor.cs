@@ -376,6 +376,10 @@
 					{
 						return ResolveTypeForDeserialization(resolvedTargetType, source);
 					}
+					else if (targetType.IsSubclassOf(resolvedTargetType))
+					{
+						continue;   // If we came back around to a base type again, then don't bother.
+					}
 					else
 					{
 						throw new SerializationException("The attribute of type {0}, defined on type {1} or its super types, is matched but cannot be assigned from instance of type {2}.", typeResolveAttr.GetType().Name, targetType.Name, typeResolveAttr.Target.Name);
