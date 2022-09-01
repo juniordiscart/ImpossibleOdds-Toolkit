@@ -571,7 +571,13 @@
 				{
 					throw new JsonException("Unexpected end of string. Incomplete string token: '{0}'.", reader.buffer.ToString());
 				}
-				else if (!IsCharacterEscaped(reader))
+
+				bool isEscaped = IsCharacterEscaped(reader);
+				if (isEscaped && char.Equals(reader.Peek, '"'))
+				{
+					reader.buffer.Append(reader.Read);
+				}
+				else if (!isEscaped)
 				{
 					break;
 				}
