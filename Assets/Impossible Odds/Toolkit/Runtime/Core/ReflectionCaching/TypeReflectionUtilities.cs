@@ -142,7 +142,12 @@
 						foreach (MethodInfo m1 in members.Where(m => m is MethodInfo))
 						{
 							// If the declaring type of m0 is a base of declaring type of m1, and m0 is a base definition of m1, then it is a duplicate.
-							if ((m0 != m1) && m0.IsVirtual && m1.IsVirtual && m0.DeclaringType.IsAssignableFrom(m1.DeclaringType) && (m0.GetBaseDefinition() == m1.GetBaseDefinition()))
+							if ((m0 == m1) || !m0.DeclaringType.IsAssignableFrom(m1.DeclaringType))
+							{
+								continue;
+							}
+
+							if (IsMethodDuplicate(m0, m1))
 							{
 								duplicateMembers.Add(m0);
 							}
@@ -152,9 +157,13 @@
 						PropertyInfo p0 = member as PropertyInfo;
 						foreach (PropertyInfo p1 in members.Where(m => m is PropertyInfo))
 						{
-							// Same as for methods, but based on the properties' get-methods.
-							if ((p0 != p1) && p0.DeclaringType.IsAssignableFrom(p1.DeclaringType) && p0.CanRead && p1.CanRead && (p0.CanWrite == p1.CanWrite) &&
-								p0.GetMethod.IsVirtual && p1.GetMethod.IsVirtual && (p0.GetMethod.GetBaseDefinition() == p1.GetMethod.GetBaseDefinition()))
+							// Same as for methods, but based on the properties' backing methods.
+							if ((p0 == p1) || !p0.DeclaringType.IsAssignableFrom(p1.DeclaringType))
+							{
+								continue;
+							}
+
+							if (IsPropertyDuplicate(p0, p1))
 							{
 								duplicateMembers.Add(p0);
 							}
@@ -164,20 +173,74 @@
 						EventInfo e0 = member as EventInfo;
 						foreach (EventInfo e1 in members.Where(m => m is EventInfo))
 						{
-							// Same as for methods, but based on the events' add-methods.
-							if ((e0 != e1) && e0.DeclaringType.IsAssignableFrom(e1.DeclaringType) && e0.AddMethod.IsVirtual && e1.AddMethod.IsVirtual &&
-								(e0.AddMethod.GetBaseDefinition() == e1.AddMethod.GetBaseDefinition()))
+							if ((e0 == e1) || !e0.DeclaringType.IsAssignableFrom(e1.DeclaringType))
+							{
+								continue;
+							}
+
+							// Same as for methods, but based on the events' backing-methods.
+							if (IsEventDuplicate(e0, e1))
 							{
 								duplicateMembers.Add(e0);
 							}
 						}
 						break;
-					default:
-						continue;
 				}
 			}
 
 			return members.Except(duplicateMembers);
+		}
+
+		public static bool IsPropertyDuplicate(PropertyInfo p0, PropertyInfo p1)
+		{
+			p0.ThrowIfNull(nameof(p0));
+			p1.ThrowIfNull(nameof(p1));
+
+			bool gettersDuplicate = false;
+			if (p0.CanRead == p1.CanRead)
+			{
+				if (p0.CanRead && p1.CanRead)
+				{
+					gettersDuplicate = p0.GetMethod.IsVirtual && p1.GetMethod.IsVirtual && (p0.GetMethod.GetBaseDefinition() == p1.GetMethod.GetBaseDefinition());
+				}
+				else
+				{
+					gettersDuplicate = !p0.CanRead && !p1.CanRead;
+				}
+			}
+
+			bool settersDuplicate = false;
+			if (p0.CanWrite == p1.CanWrite)
+			{
+				if (p0.CanWrite && p1.CanWrite)
+				{
+					settersDuplicate = p0.SetMethod.IsVirtual && p1.SetMethod.IsVirtual && (p0.SetMethod.GetBaseDefinition() == p1.SetMethod.GetBaseDefinition());
+				}
+				else
+				{
+					settersDuplicate = !p0.CanWrite && !p1.CanWrite;
+				}
+			}
+
+			return gettersDuplicate && settersDuplicate;
+		}
+
+		public static bool IsEventDuplicate(EventInfo e0, EventInfo e1)
+		{
+			e0.ThrowIfNull(nameof(e0));
+			e1.ThrowIfNull(nameof(e1));
+
+			bool addersDuplicate = e0.AddMethod.IsVirtual && e1.AddMethod.IsVirtual && (e0.AddMethod.GetBaseDefinition() == e1.AddMethod.GetBaseDefinition());
+			bool removersDuplicate = e0.RemoveMethod.IsVirtual && e1.RemoveMethod.IsVirtual && (e0.RemoveMethod.GetBaseDefinition() == e1.RemoveMethod.GetBaseDefinition());
+
+			return addersDuplicate && removersDuplicate;
+		}
+
+		public static bool IsMethodDuplicate(MethodInfo m0, MethodInfo m1)
+		{
+			m0.ThrowIfNull(nameof(m0));
+			m1.ThrowIfNull(nameof(m1));
+			return m0.IsVirtual && m1.IsVirtual && (m0.GetBaseDefinition() == m1.GetBaseDefinition());
 		}
 
 		/// <summary>

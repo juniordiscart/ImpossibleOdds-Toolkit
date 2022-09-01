@@ -124,7 +124,10 @@
 
 			// Go over the fields and properties that have the desired attribute defined.
 			List<ISerializableMember> serializableMembersForAttr = new List<ISerializableMember>();
-			foreach (MemberInfo member in TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, false, (MemberTypes.Field | MemberTypes.Property)))
+			IEnumerable<MemberInfo> membersWithAttr = TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, false, (MemberTypes.Field | MemberTypes.Property));
+			membersWithAttr = TypeReflectionUtilities.FilterBaseMethods(membersWithAttr);   // This filters out virtual/abstract properties with more concrete implementations.
+
+			foreach (MemberInfo member in membersWithAttr)
 			{
 				switch (member.MemberType)
 				{
