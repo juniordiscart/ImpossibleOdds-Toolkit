@@ -280,7 +280,7 @@
 		/// <param name="injectionId">An identifier to restrict to specifically defined scopes.</param>
 		private static void ResolveDependenciesForObject(object objToInject, IReadOnlyDependencyContainer container, string injectionId = null)
 		{
-			Type type = objToInject.GetType();
+			Type type = (objToInject is Type) ? (objToInject as Type) : objToInject.GetType();
 			ResolveFieldDependencies(objToInject, type, container, injectionId);
 			ResolvePropertyDependencies(objToInject, type, container, injectionId);
 			ResolveMethodDependencies(objToInject, type, container, injectionId);
