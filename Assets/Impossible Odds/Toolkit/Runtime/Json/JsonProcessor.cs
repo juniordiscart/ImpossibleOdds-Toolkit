@@ -618,12 +618,12 @@
 
 			if (isFloatingPoint)
 			{
-				double value = double.Parse(numberStr);
+				double value = double.Parse(numberStr, reader.definition.FormatProvider);
 				return ((value < float.MaxValue) && (value > float.MinValue)) ? (float)value : value;
 			}
 			else
 			{
-				long value = long.Parse(numberStr);
+				long value = long.Parse(numberStr, reader.definition.FormatProvider);
 				return ((value < int.MaxValue) && (value > int.MinValue)) ? (int)value : value;
 			}
 		}
