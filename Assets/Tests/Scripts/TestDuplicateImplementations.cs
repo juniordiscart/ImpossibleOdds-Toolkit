@@ -16,7 +16,6 @@ public class TestDuplicateImplementations : MonoBehaviour
 		MemberInfo[] filteredMembers = TypeReflectionUtilities.FilterBaseMethods(allMembers).ToArray();
 
 		JsonProcessor.Deserialize<ConcreteClass>(JsonProcessor.Serialize(new ConcreteClass()));
-		int i = 0;
 	}
 
 	private abstract class AbstractClass

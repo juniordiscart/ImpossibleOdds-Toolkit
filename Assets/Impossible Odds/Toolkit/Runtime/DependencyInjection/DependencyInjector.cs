@@ -131,10 +131,37 @@
 		}
 
 		/// <summary>
+		/// Injects the static members of a type.
+		/// </summary>
+		/// <param name="container">Container with resources to inject.</param>
+		/// <param name="type">The type for which to inject its static members.</param>
+		public static void InjectStatic(IReadOnlyDependencyContainer container, Type type)
+		{
+			container.ThrowIfNull(nameof(container));
+			type.ThrowIfNull(nameof(type));
+
+			ResolveDependenciesForObject(type, container);
+		}
+
+		/// <summary>
+		/// Injects the static members of a type.
+		/// </summary>
+		/// <param name="container">Container with resources to inject.</param>
+		/// <param name="type">The type for which to inject its static members.</param>
+		/// <param name="injectionId">Only injects members with this injection identifier defined.</param>
+		public static void InjectStatic(IReadOnlyDependencyContainer container, string injectionId, Type type)
+		{
+			container.ThrowIfNull(nameof(container));
+			type.ThrowIfNull(nameof(type));
+
+			ResolveDependenciesForObject(type, container, injectionId);
+		}
+
+		/// <summary>
 		/// Inject all static members using the resources found in the provided container.
 		/// </summary>
 		/// <param name="container">Container with resources to inject.</param>
-		public static void Inject(IReadOnlyDependencyContainer container)
+		public static void InjectStaticAll(IReadOnlyDependencyContainer container)
 		{
 			container.ThrowIfNull(nameof(container));
 
@@ -155,7 +182,7 @@
 		/// </summary>
 		/// <param name="container">Container with resources to inject.</param>
 		/// <param name="injectionId">Only injects members with this injection identifier defined.</param>
-		public static void Inject(IReadOnlyDependencyContainer container, string injectionId)
+		public static void InjectStaticAll(IReadOnlyDependencyContainer container, string injectionId)
 		{
 			container.ThrowIfNull(nameof(container));
 

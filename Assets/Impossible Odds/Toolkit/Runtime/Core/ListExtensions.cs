@@ -306,6 +306,10 @@ namespace ImpossibleOdds
 			return false;
 		}
 
+		/// <summary>
+		/// Tries to find the index of the element that matches.
+		/// </summary>
+		/// <returns>True if an element is present that matches, false otherwise.</returns>
 		public static bool TryFindIndex<TElement>(this IReadOnlyList<TElement> l, TElement match, out int index)
 		{
 			l.ThrowIfNull(nameof(l));

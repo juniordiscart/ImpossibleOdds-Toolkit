@@ -4,6 +4,29 @@ You'll find the full update history of this toolkit below. This might be useful 
 
 **General note about installing updates**: it is recommended that you remove the current installed package first before updating to a newer one. Some files may have been deleted or moved, which may cause conflicts or compilation errors. The default location for this package in your Unity project is at `Assets/Impossible Odds/Toolkit`.
 
+## v1.5.3 - Fixes & Small Improvements
+
+Changelog:
+
+### Added
+
+* Added `TryFindIndex` extension methods for lists and arrays.
+* Added `InjectStatic` and `InjectStaticAll` methods to the `DependencyInjector` class, to explicitly allow injection of static members of a type.
+
+### Updated
+
+* Properties that are used for serialization now no longer require both their `get` and `set` methods to be defined. A warning is now displayed whenever a value is trying to write to a getter-only property, and another warning whenever a value is trying to be retrieved when only a setter has been provided.
+* An improved base method filtering is done during (de)serialization of properties. This prevents getting or setting the value multiple times.
+
+### Fixed
+
+* Fixed issue with deserializing a Json string containing the `\"` sequence. This could cause an infinite loop.
+* Fixed issue with deserializing a Json double or long value, where the serialization definition's format provider wasn't used. This could result in formatting exceptions on platforms that have a different notation for floating point numbers.
+* Fixed issue with resolving the proper type during deserialization, where it would return back to a base-type.
+* Fixed issue where the type resolve parameter defined on an interface wouldn't get picked up by the serialization cache.
+* Fixed issue with dependency injection of static members not injecting the correct target.
+* Several typo's in the documentation.
+
 ## v1.5.2 - Named Injection Fix
 
 Changelog:
