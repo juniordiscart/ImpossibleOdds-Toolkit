@@ -287,15 +287,17 @@ namespace ImpossibleOdds
 		}
 
 		/// <summary>
-		/// Tries to find the index of the element that matches.
+		/// Tries to find the index of the element that matches the query.
 		/// </summary>
 		/// <returns>True if an element is present that matches, false otherwise.</returns>
-		public static bool TryFindIndex<TElement>(this IReadOnlyList<TElement> l, Predicate<TElement> match, out int index)
+		public static bool TryFindIndex<TElement>(this IReadOnlyList<TElement> l, Predicate<TElement> query, out int index)
 		{
 			l.ThrowIfNull(nameof(l));
+			query.ThrowIfNull(nameof(query));
+
 			for (int i = 0; i < l.Count; ++i)
 			{
-				if (match(l[i]))
+				if (query(l[i]))
 				{
 					index = i;
 					return true;
@@ -323,6 +325,29 @@ namespace ImpossibleOdds
 			}
 
 			index = -1;
+			return false;
+		}
+
+
+		/// <summary>
+		/// Tries to find the item that matches search query.
+		/// </summary>
+		/// <returns>True if an element is present that matches, false otherwise.</returns>
+		public static bool TryFind<TElement>(this IReadOnlyList<TElement> l, Predicate<TElement> query, out TElement result)
+		{
+			l.ThrowIfNull(nameof(l));
+			query.ThrowIfNull(nameof(query));
+
+			for (int i = 0; i < l.Count; ++i)
+			{
+				if (query(l[i]))
+				{
+					result = l[i];
+					return true;
+				}
+			}
+
+			result = default;
 			return false;
 		}
 
