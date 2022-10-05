@@ -22,22 +22,22 @@
 
 		public AsyncOperationHandle<IList<IResourceLocation>> ResourceLocationLoadingHandle
 		{
-			get { return locationLoadingHandle; }
+			get => locationLoadingHandle;
 		}
 
 		public AsyncOperationHandle<IList<TObject>> AssetsLoadingHandle
 		{
-			get { return assetsLoadingHandle; }
+			get => assetsLoadingHandle;
 		}
 
 		public bool IsDone
 		{
-			get { return isDone; }
+			get => isDone;
 		}
 
 		public float Progress
 		{
-			get { return (locationLoadingHandle.IsDone && assetsLoadingHandle.IsValid()) ? assetsLoadingHandle.PercentComplete : 0f; }
+			get => (locationLoadingHandle.IsDone && assetsLoadingHandle.IsValid()) ? assetsLoadingHandle.PercentComplete : 0f;
 		}
 
 		public bool IsSuccess
