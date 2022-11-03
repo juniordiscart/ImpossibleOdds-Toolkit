@@ -37,24 +37,33 @@
 			{
 				throw new RunnablesException("Couldn't search a {0} for scene {1} because it is invalid.", typeof(SceneRunner).Name, scene.name);
 			}
-			else if (!scene.isLoaded)
+
+			if (sceneRunners.TryGetValue(scene, out SceneRunner runner))
 			{
-				throw new RunnablesException("Could'nt search a {0} for scene {1} because it isn't loaded.", typeof(SceneRunner).Name, scene.name);
+				return runner;
 			}
-
-			return sceneRunners.GetOrAdd(scene, delegate (Scene s)
+			else
 			{
-				GameObject sceneRunnerObj = new GameObject(string.Format("{0}_{1}", nameof(SceneRunner), scene.name));
-				SceneRunner sceneRunner = sceneRunnerObj.AddComponent<SceneRunner>();
-
-				// Move the object to the requested scene, if necessary
-				if (sceneRunnerObj.scene != scene)
+				if (!scene.isLoaded)
 				{
-					SceneManager.MoveGameObjectToScene(sceneRunnerObj, scene);
+					throw new RunnablesException("Couldn't search a {0} for scene {1} because it isn't loaded.", typeof(SceneRunner).Name, scene.name);
 				}
 
-				return sceneRunner;
-			});
+				return sceneRunners.GetOrAdd(scene, delegate (Scene s)
+				{
+					GameObject sceneRunnerObj = new GameObject(string.Format("{0}_{1}", nameof(SceneRunner), scene.name));
+					SceneRunner sceneRunner = sceneRunnerObj.AddComponent<SceneRunner>();
+
+					// Move the object to the requested scene, if necessary
+					if (sceneRunnerObj.scene != scene)
+					{
+						SceneManager.MoveGameObjectToScene(sceneRunnerObj, scene);
+					}
+
+					return sceneRunner;
+				});
+			}
+
 		}
 
 		/// <summary>
