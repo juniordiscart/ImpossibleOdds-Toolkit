@@ -2,7 +2,7 @@
 {
 	using UnityEngine;
 
-	[CreateAssetMenu(menuName = "Impossible Odds/Testing/Dependency Injection/Character Settings", fileName = "newCharactersettings")]
+	// [CreateAssetMenu(menuName = "Impossible Odds/Testing/Dependency Injection/Character Settings", fileName = "newCharactersettings")]
 	public class CharacterSettings : ScriptableObject
 	{
 		[SerializeField]
