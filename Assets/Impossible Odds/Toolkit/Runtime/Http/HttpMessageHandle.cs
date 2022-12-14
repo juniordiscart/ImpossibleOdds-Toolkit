@@ -1,10 +1,11 @@
 ﻿namespace ImpossibleOdds.Http
 {
+	using System;
 	using System.Collections;
 	using UnityEngine.Networking;
 	using ImpossibleOdds.Weblink;
 
-	public class HttpMessageHandle : IWeblinkMessageHandle<IHttpRequest, IHttpResponse>
+	public class HttpMessageHandle : IWeblinkMessageHandle<IHttpRequest, IHttpResponse>, IDisposable
 	{
 		private readonly UnityWebRequest webRequest = null;
 		private readonly IHttpRequest request = null;
@@ -96,6 +97,11 @@
 
 			this.request = request;
 			this.webRequest = webRequest;
+		}
+
+		public void Dispose()
+		{
+			webRequest.DisposeIfNotNull();
 		}
 
 		bool IEnumerator.MoveNext()
