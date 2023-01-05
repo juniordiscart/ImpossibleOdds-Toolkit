@@ -422,6 +422,16 @@ namespace ImpossibleOdds
 		}
 
 		/// <summary>
+		/// Checks whether the stack is null or empty.
+		/// </summary>
+		/// <param name="s">The stack to test.</param>
+		/// <returns>True if the stack is either null, or has 0 elements in it. False otherwise.</returns>
+		public static bool IsNullOrEmpty<TElement>(this Stack<TElement> s)
+		{
+			return (s == null) || (s.Count == 0);
+		}
+
+		/// <summary>
 		/// Checks whether the collection is null or empty.
 		/// </summary>
 		/// <param name="a">The collection to test.</param>
