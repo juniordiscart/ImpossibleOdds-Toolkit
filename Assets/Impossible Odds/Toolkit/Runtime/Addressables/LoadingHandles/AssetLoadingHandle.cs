@@ -31,7 +31,7 @@
 		/// </summary>
 		/// <param name="reference">The asset reference.</param>
 		public AssetLoadingHandle(AssetReferenceT<T> reference)
-		: base(reference.LoadAssetAsync())
+		: this(reference.AssetGUID)
 		{
 			base.onCompleted += OnCompleted;
 		}
