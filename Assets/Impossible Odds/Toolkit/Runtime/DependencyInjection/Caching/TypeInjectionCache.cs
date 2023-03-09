@@ -96,7 +96,7 @@
 
 			injectableConstructors =
 				injectableMembers
-				.Where(m => m is ConstructorInfo)
+				.Where(m => (m is ConstructorInfo c) && (c.DeclaringType == type))
 				.Cast<ConstructorInfo>()
 				.Select(c => new InjectableConstructor(c, c.GetCustomAttribute<InjectAttribute>(true)))
 				.ToArray();
