@@ -314,10 +314,13 @@ namespace ImpossibleOdds
 		/// <returns>True if an element is present that matches, false otherwise.</returns>
 		public static bool TryFindIndex<TElement>(this IReadOnlyList<TElement> l, TElement match, out int index)
 		{
+			bool isValueType = typeof(TElement).IsValueType;
+
 			l.ThrowIfNull(nameof(l));
 			for (int i = 0; i < l.Count; ++i)
 			{
-				if (l[i].Equals(match))
+				if ((isValueType && l[i].Equals(match)) ||
+					(!isValueType && object.Equals(l[i], match)))
 				{
 					index = i;
 					return true;
