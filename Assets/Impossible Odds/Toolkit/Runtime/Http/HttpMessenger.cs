@@ -98,7 +98,11 @@
 			}
 			else if (request is IHttpPostRequest postRequest)
 			{
+#if UNITY_2022_2_OR_NEWER
+				unityWebRequest = UnityWebRequest.PostWwwForm(url, messageConfigurator.GenerateRequestPostBody(postRequest));
+#else
 				unityWebRequest = UnityWebRequest.Post(url, messageConfigurator.GenerateRequestPostBody(postRequest));
+#endif
 			}
 			else if (request is IHttpPutStringRequest putStringRequest)
 			{
