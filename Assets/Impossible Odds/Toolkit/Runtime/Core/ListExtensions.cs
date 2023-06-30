@@ -405,6 +405,16 @@ namespace ImpossibleOdds
 		}
 
 		/// <summary>
+		/// Checks whether the hash set is null or empty.
+		/// </summary>
+		/// <param name="c">The hash set to test.</param>
+		/// <returns>True if the hash set is either null, or has 0 elements in it. False otherwise.</returns>
+		public static bool IsNullOrEmpty<TElement>(this HashSet<TElement> c)
+		{
+			return (c == null) || (c.Count == 0);
+		}
+
+		/// <summary>
 		/// Checks whether the dictionary is null or empty.
 		/// </summary>
 		/// <param name="d">The dictionary to test.</param>
