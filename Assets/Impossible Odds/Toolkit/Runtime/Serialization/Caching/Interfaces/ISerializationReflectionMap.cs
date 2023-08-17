@@ -50,5 +50,10 @@
 		/// <param name="attributeType">The attribute type denoting a callback method.</param>
 		/// <returns>All callback methods decorated with the callback attribute.</returns>
 		ISerializationCallback[] GetSerializationCallbackMethods(Type attributeType);
+
+		/// <summary>
+		/// Clears the entire reflection map of any cached data.
+		/// </summary>
+		void Clear();
 	}
 }

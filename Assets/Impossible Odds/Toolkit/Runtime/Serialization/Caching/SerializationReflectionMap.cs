@@ -14,11 +14,11 @@
 	public class SerializationReflectionMap : ISerializationReflectionMap
 	{
 		private readonly Type type = null;
-		private ConcurrentDictionary<Type, Attribute[]> typeDefinedAttributes = new ConcurrentDictionary<Type, Attribute[]>();
-		private ConcurrentDictionary<Type, ITypeResolveParameter[]> typeResolveParameters = new ConcurrentDictionary<Type, ITypeResolveParameter[]>();
-		private ConcurrentDictionary<Type, ISerializableMember[]> serializableMembers = new ConcurrentDictionary<Type, ISerializableMember[]>();
-		private ConcurrentDictionary<Type, ISerializationCallback[]> serializationCallbacks = new ConcurrentDictionary<Type, ISerializationCallback[]>();
-		private ConcurrentDictionary<Type, IRequiredSerializableMember[]> requiredMembers = new ConcurrentDictionary<Type, IRequiredSerializableMember[]>();
+		private readonly ConcurrentDictionary<Type, Attribute[]> typeDefinedAttributes = new ConcurrentDictionary<Type, Attribute[]>();
+		private readonly ConcurrentDictionary<Type, ITypeResolveParameter[]> typeResolveParameters = new ConcurrentDictionary<Type, ITypeResolveParameter[]>();
+		private readonly ConcurrentDictionary<Type, ISerializableMember[]> serializableMembers = new ConcurrentDictionary<Type, ISerializableMember[]>();
+		private readonly ConcurrentDictionary<Type, ISerializationCallback[]> serializationCallbacks = new ConcurrentDictionary<Type, ISerializationCallback[]>();
+		private readonly ConcurrentDictionary<Type, IRequiredSerializableMember[]> requiredMembers = new ConcurrentDictionary<Type, IRequiredSerializableMember[]>();
 
 		public SerializationReflectionMap(Type type)
 		{
@@ -30,6 +30,15 @@
 		public Type Type
 		{
 			get => type;
+		}
+
+		public void Clear()
+		{
+			typeDefinedAttributes.Clear();
+			typeResolveParameters.Clear();
+			serializableMembers.Clear();
+			serializationCallbacks.Clear();
+			requiredMembers.Clear();
 		}
 
 		/// <inheritdoc />
@@ -87,7 +96,11 @@
 			return false;
 		}
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Retrieve the type defining attributes of a specific attribute type.
+		/// </summary>
+		/// <param name="attributeType">The type of the type-defining attribute.</param>
+		/// <returns>An array of type defining attributes.</returns>
 		public Attribute[] GetTypeDefinedAttributes(Type attributeType)
 		{
 			attributeType.ThrowIfNull(nameof(attributeType));
@@ -101,7 +114,7 @@
 				return r;
 			}
 
-			Attribute[] attributes = TypeReflectionUtilities.FindAllTypeDefinedAttributes(type, attributeType, true).ToArray();
+			Attribute[] attributes = TypeReflectionUtilities.FindAllTypeDefinedAttributes(Type, attributeType, true).ToArray();
 			return typeDefinedAttributes.GetOrAdd(attributeType, !attributes.IsNullOrEmpty() ? attributes : Array.Empty<Attribute>());
 		}
 
@@ -124,7 +137,7 @@
 
 			// Go over the fields and properties that have the desired attribute defined.
 			List<ISerializableMember> serializableMembersForAttr = new List<ISerializableMember>();
-			IEnumerable<MemberInfo> membersWithAttr = TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, false, (MemberTypes.Field | MemberTypes.Property));
+			IEnumerable<MemberInfo> membersWithAttr = TypeReflectionUtilities.FindAllMembersWithAttribute(Type, attributeType, false, (MemberTypes.Field | MemberTypes.Property));
 			membersWithAttr = TypeReflectionUtilities.FilterBaseMethods(membersWithAttr);   // This filters out virtual/abstract properties with more concrete implementations.
 
 			foreach (MemberInfo member in membersWithAttr)
@@ -158,7 +171,7 @@
 
 			// Go over the fields and properties that have the desired attribute defined.
 			List<IRequiredSerializableMember> requiredMembersForAttr = new List<IRequiredSerializableMember>();
-			foreach (MemberInfo member in TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, false, (MemberTypes.Field | MemberTypes.Property)))
+			foreach (MemberInfo member in TypeReflectionUtilities.FindAllMembersWithAttribute(Type, attributeType, false, (MemberTypes.Field | MemberTypes.Property)))
 			{
 				Array.ForEach(
 					Attribute.GetCustomAttributes(member, attributeType, true),
@@ -176,13 +189,16 @@
 			}
 
 			// Go over the methods that have the desired attribute defined.
-			IEnumerable<MemberInfo> callbackMethods = TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, false, MemberTypes.Method);
+			IEnumerable<MemberInfo> callbackMethods = TypeReflectionUtilities.FindAllMembersWithAttribute(Type, attributeType, false, MemberTypes.Method);
 			List<ISerializationCallback> serializationCallbacksForAttr = new List<ISerializationCallback>();
-			foreach (MethodInfo method in TypeReflectionUtilities.FilterBaseMethods(callbackMethods))
+			foreach (MemberInfo member in TypeReflectionUtilities.FilterBaseMethods(callbackMethods))
 			{
-				Array.ForEach(
-					Attribute.GetCustomAttributes(method, attributeType, true),
-					(a) => serializationCallbacksForAttr.Add(new SerializationCallbackMethod(method, a)));
+				if (member is MethodInfo method)
+				{
+					Array.ForEach(
+						Attribute.GetCustomAttributes(method, attributeType, true),
+						(a) => serializationCallbacksForAttr.Add(new SerializationCallbackMethod(method, a)));
+				}
 			}
 
 			return serializationCallbacks.GetOrAdd(attributeType, !serializationCallbacksForAttr.IsNullOrEmpty() ? serializationCallbacksForAttr.ToArray() : Array.Empty<ISerializationCallback>());

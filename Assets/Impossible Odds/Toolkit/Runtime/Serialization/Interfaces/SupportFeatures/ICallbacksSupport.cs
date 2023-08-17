@@ -26,7 +26,7 @@
 		/// <summary>
 		/// Attribute type that denotes deserialization of the object about to start.
 		/// </summary>
-		Type OnDeserializionCallbackType
+		Type OnDeserializationCallbackType
 		{
 			get;
 		}

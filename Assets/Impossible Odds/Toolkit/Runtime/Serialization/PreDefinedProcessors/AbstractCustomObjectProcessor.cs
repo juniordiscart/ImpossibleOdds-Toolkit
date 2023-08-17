@@ -76,7 +76,7 @@
 		{
 			if (SupportsSerializationCallbacks)
 			{
-				InvokeCallback(target, CallbacksSupport.OnDeserializionCallbackType);
+				InvokeCallback(target, CallbacksSupport.OnDeserializationCallbackType);
 			}
 		}
 
