@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace ImpossibleOdds.Xml.Processors
 {
 	using System;
@@ -409,7 +411,7 @@ namespace ImpossibleOdds.Xml.Processors
 				SerializationUtilities.GetTypeMap(targetType).
 				GetTypeResolveParameters(typeof(XmlTypeAttribute));
 
-			foreach (XmlTypeAttribute typeResolveAttr in typeResolveAttrs)
+			foreach (XmlTypeAttribute typeResolveAttr in typeResolveAttrs.Cast<XmlTypeAttribute>())
 			{
 				// Perform this filter as well as a way to stop the recursion.
 				if (typeResolveAttr.Target == targetType)
@@ -417,9 +419,8 @@ namespace ImpossibleOdds.Xml.Processors
 					continue;
 				}
 
-				Type resolvedTargetType = null;
-
 				// Check if an override key type resolve parameter exists, and use it if a match could be made in the source data.
+				Type resolvedTargetType;
 				if (typeResolveAttr.KeyOverride != null)
 				{
 					string processedKey = SerializationUtilities.PostProcessValue<string>(Serializer.Serialize(typeResolveAttr.KeyOverride, Definition));
@@ -437,7 +438,8 @@ namespace ImpossibleOdds.Xml.Processors
 					{
 						return ResolveTypeForDeserialization(resolvedTargetType, element);
 					}
-					else
+
+					if (!targetType.IsSubclassOf(resolvedTargetType))
 					{
 						throw new SerializationException("The attribute of type {0}, defined on type {1} or its super types, is matched but cannot be assigned from instance of type {2}.", typeResolveAttr.GetType().Name, targetType.Name, typeResolveAttr.Target.Name);
 					}
@@ -459,7 +461,7 @@ namespace ImpossibleOdds.Xml.Processors
 				XElement xmlTypeElement = element.Element(processedKey);
 				if (xmlTypeElement != null)
 				{
-					object value = (typeResolveParam.Value != null) ? typeResolveParam.Value : typeResolveParam.Target.Name;
+					object value = typeResolveParam.Value ?? typeResolveParam.Target.Name;
 					string processedValue = SerializationUtilities.PostProcessValue<string>(Serializer.Serialize(value, Definition));
 					if (xmlTypeElement.Value.Equals(processedValue))
 					{
@@ -472,7 +474,7 @@ namespace ImpossibleOdds.Xml.Processors
 				XAttribute xmlTypeAttr = element.Attribute(processedKey);
 				if (xmlTypeAttr != null)
 				{
-					object value = (typeResolveParam.Value != null) ? typeResolveParam.Value : typeResolveParam.Target.Name;
+					object value = typeResolveParam.Value ?? typeResolveParam.Target.Name;
 					string processedValue = SerializationUtilities.PostProcessValue<string>(Serializer.Serialize(value, Definition));
 					if (xmlTypeAttr.Value.Equals(processedValue))
 					{

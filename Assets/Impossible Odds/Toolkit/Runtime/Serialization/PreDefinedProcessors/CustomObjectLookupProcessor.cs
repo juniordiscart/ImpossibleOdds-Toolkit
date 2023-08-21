@@ -210,14 +210,17 @@
 				ITypeResolveParameter typeResolveAttr = ResolveTypeForSerialization(sourceType);
 				if (typeResolveAttr != null)
 				{
-					object typeKey = ((typeResolveAttr is ILookupTypeResolveParameter lookupTypeResolveAttr) && (lookupTypeResolveAttr.KeyOverride != null)) ? lookupTypeResolveAttr.KeyOverride : typeResolveSupport.TypeResolveKey;
+					object typeKey =
+						((typeResolveAttr is ILookupTypeResolveParameter lookupTypeResolveAttr) && (lookupTypeResolveAttr.KeyOverride != null)) ?
+							lookupTypeResolveAttr.KeyOverride :
+							typeResolveSupport.TypeResolveKey;
 					typeKey = Serializer.Serialize(typeKey, definition);
 
 					// If the data already contains a value for the processed key, then the type information is assumed
 					// to be inferred from that value. Otherwise, add the processed type key as well.
 					if (!processedValues.Contains(typeKey))
 					{
-						object typeValue = (typeResolveAttr.Value != null) ? typeResolveAttr.Value : typeResolveAttr.Target.Name;
+						object typeValue = typeResolveAttr.Value ?? typeResolveAttr.Target.Name;
 						typeValue = Serializer.Serialize(typeValue, definition);
 						SerializationUtilities.InsertInLookup(processedValues, collectionInfo, typeKey, typeValue);
 					}
@@ -317,7 +320,7 @@
 		private object GetKey(ISerializableMember member)
 		{
 			ILookupParameter lookupAttribute = member.Attribute as ILookupParameter;
-			return (lookupAttribute.Key != null) ? lookupAttribute.Key : member.Member.Name;
+			return lookupAttribute.Key ?? member.Member.Name;
 		}
 
 		private ITypeResolveParameter ResolveTypeForSerialization(Type sourceType)
@@ -327,10 +330,9 @@
 				return null;
 			}
 
-			ILookupTypeResolveSupport typeResolveImplementation = definition as ILookupTypeResolveSupport;
 			ITypeResolveParameter[] typeResolveParameters = SerializationUtilities.
 				GetTypeMap(sourceType).
-				GetTypeResolveParameters(typeResolveImplementation.TypeResolveAttribute);
+				GetTypeResolveParameters(TypeResolveDefinition.TypeResolveAttribute);
 
 			return Array.Find(typeResolveParameters, tr => tr.Target == sourceType);
 		}
@@ -376,11 +378,8 @@
 					{
 						return ResolveTypeForDeserialization(resolvedTargetType, source);
 					}
-					else if (targetType.IsSubclassOf(resolvedTargetType))
-					{
-						continue;   // If we came back around to a base type again, then don't bother.
-					}
-					else
+
+					if (!targetType.IsSubclassOf(resolvedTargetType))
 					{
 						throw new SerializationException("The attribute of type {0}, defined on type {1} or its super types, is matched but cannot be assigned from instance of type {2}.", typeResolveAttr.GetType().Name, targetType.Name, typeResolveAttr.Target.Name);
 					}
@@ -398,7 +397,7 @@
 			}
 
 			// Attempt to process the override value to the type of the value in the source data.
-			object processedValue = (typeResolveParam.Value != null) ? typeResolveParam.Value : typeResolveParam.Target.Name;
+			object processedValue = typeResolveParam.Value ?? typeResolveParam.Target.Name;
 			processedValue = SerializationUtilities.PostProcessValue(Serializer.Serialize(processedValue, Definition), source[processedKey].GetType());
 			return source[processedKey].Equals(processedValue) ? typeResolveParam.Target : null;
 		}

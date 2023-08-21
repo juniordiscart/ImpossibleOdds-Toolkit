@@ -15,13 +15,13 @@
 		private const string TrueStr = "true";
 		private const string FalseStr = "false";
 
-		private readonly static JsonSerializationDefinition defaultSerializationDefinition = new JsonSerializationDefinition();
-		private readonly static Regex numericalRegex = new Regex(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$");
-		private readonly static char[] numericalSymbols = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '+', 'e', 'E', '.' };
-		private readonly static char[] floatingPointDefiningSymbols = { 'e', 'E', '.' };
-		private readonly static char[] sequenceFollowupSymbols = { ',', ']' };
-		private readonly static char[] lookupKeyOrCloseSymbols = { '"', '}' };
-		private readonly static char[] lookupNextOrCloseSymbols = { ',', '}' };
+		private static readonly JsonSerializationDefinition defaultSerializationDefinition = new JsonSerializationDefinition();
+		private static readonly Regex numericalRegex = new Regex(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$");
+		private static readonly char[] numericalSymbols = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '+', 'e', 'E', '.' };
+		private static readonly char[] floatingPointDefiningSymbols = { 'e', 'E', '.' };
+		private static readonly char[] sequenceFollowupSymbols = { ',', ']' };
+		private static readonly char[] lookupKeyOrCloseSymbols = { '"', '}' };
+		private static readonly char[] lookupNextOrCloseSymbols = { ',', '}' };
 
 		private static SerializationState DefaultSerializationState
 		{

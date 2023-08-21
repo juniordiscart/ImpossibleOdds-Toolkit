@@ -56,12 +56,12 @@
 
 		public bool PassesKeyTypeRestriction(object key)
 		{
-			return isKeyTypeConstrained ? SerializationUtilities.PassesElementTypeRestriction(key, keyType) : true;
+			return !isKeyTypeConstrained || SerializationUtilities.PassesElementTypeRestriction(key, keyType);
 		}
 
 		public bool PassesValueTypeRestriction(object value)
 		{
-			return isValueTypeConstrained ? SerializationUtilities.PassesElementTypeRestriction(value, valueType) : true;
+			return !isValueTypeConstrained || SerializationUtilities.PassesElementTypeRestriction(value, valueType);
 		}
 
 		public object PostProcessKey(object key)
