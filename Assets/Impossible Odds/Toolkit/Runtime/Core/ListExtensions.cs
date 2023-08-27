@@ -314,10 +314,13 @@ namespace ImpossibleOdds
 		/// <returns>True if an element is present that matches, false otherwise.</returns>
 		public static bool TryFindIndex<TElement>(this IReadOnlyList<TElement> l, TElement match, out int index)
 		{
+			bool isValueType = typeof(TElement).IsValueType;
+
 			l.ThrowIfNull(nameof(l));
 			for (int i = 0; i < l.Count; ++i)
 			{
-				if (l[i].Equals(match))
+				if ((isValueType && l[i].Equals(match)) ||
+					(!isValueType && object.Equals(l[i], match)))
 				{
 					index = i;
 					return true;
@@ -397,6 +400,16 @@ namespace ImpossibleOdds
 		/// <param name="c">The list to test.</param>
 		/// <returns>True if the list is either null, or has 0 elements in it. False otherwise.</returns>
 		public static bool IsNullOrEmpty<TElement>(this List<TElement> c)
+		{
+			return (c == null) || (c.Count == 0);
+		}
+
+		/// <summary>
+		/// Checks whether the hash set is null or empty.
+		/// </summary>
+		/// <param name="c">The hash set to test.</param>
+		/// <returns>True if the hash set is either null, or has 0 elements in it. False otherwise.</returns>
+		public static bool IsNullOrEmpty<TElement>(this HashSet<TElement> c)
 		{
 			return (c == null) || (c.Count == 0);
 		}

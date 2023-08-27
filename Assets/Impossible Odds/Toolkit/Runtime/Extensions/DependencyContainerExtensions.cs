@@ -55,4 +55,16 @@ public static partial class DependencyContainerExtensions
 		container.ThrowIfNull(nameof(container));
 		container.RegisterWithInterfaces<T>(new GeneratorBinding<T>(generator));
 	}
+
+	/// <summary>
+	/// Get an instance from the container directly cast to the requested type.
+	/// </summary>
+	/// <param name="container">The container with resources.</param>
+	/// <typeparam name="T"></typeparam>
+	/// <returns>An instance of the requested type, if available.</returns>
+	public static T GetInstance<T>(this IReadOnlyDependencyContainer container)
+	{
+		container.ThrowIfNull(nameof(container));
+		return (T)(container.GetBinding<T>().GetInstance());
+	}
 }

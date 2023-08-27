@@ -36,13 +36,13 @@
 		/// <inheritdoc />
 		public float Progress
 		{
-			get => loadingHandle.PercentComplete;
+			get => loadingHandle.IsValid() ? loadingHandle.PercentComplete : 0f;
 		}
 
 		/// <inheritdoc />
 		public bool IsDone
 		{
-			get => loadingHandle.IsDone;
+			get => loadingHandle.IsValid() && loadingHandle.IsDone;
 		}
 
 		/// <inheritdoc />
@@ -108,7 +108,11 @@
 				return;
 			}
 
-			Addressables.Release(loadingHandle);
+			if (IsDone)
+			{
+				Addressables.Release(loadingHandle);
+			}
+
 			disposed = true;
 		}
 
@@ -139,6 +143,13 @@
 
 		private void OnCompleted(AsyncOperationHandle<TObject> handle)
 		{
+			// If the handle is already disposed off, then unload the handle immediately.
+			if (disposed)
+			{
+				Addressables.Release(loadingHandle);
+				return;
+			}
+
 			onCompleted.InvokeIfNotNull(this);
 		}
 	}
