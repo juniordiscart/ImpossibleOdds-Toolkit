@@ -6,13 +6,26 @@
 
 	public class ColorSequenceProcessor : UnityPrimitiveSequenceProcessor<Color>
 	{
+		private const int Size = 4;
+
 		public ColorSequenceProcessor(IIndexSerializationDefinition definition)
 		: base(definition)
 		{ }
 
+		/// <inheritdoc />
+		public override bool CanDeserialize(Type targetType, object dataToDeserialize)
+		{
+			if (!base.CanDeserialize(targetType, dataToDeserialize))
+			{
+				return false;
+			}
+
+			return (dataToDeserialize is IList list) && (list.Count == Size);
+		}
+
 		protected override IList Serialize(Color value)
 		{
-			IList result = Definition.CreateSequenceInstance(4);
+			IList result = Definition.CreateSequenceInstance(Size);
 			result.Add(Serializer.Serialize(value.r, Definition));
 			result.Add(Serializer.Serialize(value.g, Definition));
 			result.Add(Serializer.Serialize(value.b, Definition));
@@ -32,27 +45,46 @@
 
 	public class ColorLookupProcessor : UnityPrimitiveLookupProcessor<Color>
 	{
+		private const string R = "r";
+		private const string G = "g";
+		private const string B = "b";
+		private const string A = "a";
+
 		public ColorLookupProcessor(ILookupSerializationDefinition definition)
 		: base(definition)
 		{ }
 
+		/// <inheritdoc />
+		public override bool CanDeserialize(Type targetType, object dataToDeserialize)
+		{
+			if (!base.CanDeserialize(targetType, dataToDeserialize))
+			{
+				return false;
+			}
+
+			return
+				(dataToDeserialize is IDictionary lookUp) &&
+				lookUp.Contains(R) && lookUp.Contains(G) &&
+				lookUp.Contains(B) && lookUp.Contains(A);
+		}
+
 		protected override IDictionary Serialize(Color value)
 		{
 			IDictionary result = Definition.CreateLookupInstance(4);
-			result.Add(Serializer.Serialize("r", Definition), Serializer.Serialize(value.r, Definition));
-			result.Add(Serializer.Serialize("g", Definition), Serializer.Serialize(value.g, Definition));
-			result.Add(Serializer.Serialize("b", Definition), Serializer.Serialize(value.b, Definition));
-			result.Add(Serializer.Serialize("a", Definition), Serializer.Serialize(value.a, Definition));
+			result.Add(Serializer.Serialize(R, Definition), Serializer.Serialize(value.r, Definition));
+			result.Add(Serializer.Serialize(G, Definition), Serializer.Serialize(value.g, Definition));
+			result.Add(Serializer.Serialize(B, Definition), Serializer.Serialize(value.b, Definition));
+			result.Add(Serializer.Serialize(A, Definition), Serializer.Serialize(value.a, Definition));
 			return result;
 		}
 
 		protected override Color Deserialize(IDictionary lookupData)
 		{
 			return new Color(
-				Convert.ToSingle(lookupData["r"]),
-				Convert.ToSingle(lookupData["g"]),
-				Convert.ToSingle(lookupData["b"]),
-				Convert.ToSingle(lookupData["a"]));
+				Convert.ToSingle(lookupData[R]),
+				Convert.ToSingle(lookupData[G]),
+				Convert.ToSingle(lookupData[B]),
+				Convert.ToSingle(lookupData[A]));
 		}
 	}
 

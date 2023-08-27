@@ -8,14 +8,12 @@
 	using ImpossibleOdds.Serialization;
 	using ImpossibleOdds.Serialization.Processors;
 
-	public class XmlAttributeSerializationDefinition :
-	ISerializationDefinition,
-	IEnumAliasSupport<XmlEnumStringAttribute, XmlEnumAliasAttribute>
+	public class XmlAttributeSerializationDefinition : ISerializationDefinition
 	{
 		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
-		private ISerializationProcessor[] serializationProcessors = null;
-		private IDeserializationProcessor[] deserializationProcessors = null;
-		private HashSet<Type> supportedTypes = null;
+		private ISerializationProcessor[] serializationProcessors;
+		private IDeserializationProcessor[] deserializationProcessors;
+		private HashSet<Type> supportedTypes;
 
 		/// <inheritdoc />
 		public IEnumerable<ISerializationProcessor> SerializationProcessors
@@ -42,18 +40,6 @@
 			get => supportedTypes;
 		}
 
-		/// <inheritdoc />
-		public Type EnumAsStringAttributeType
-		{
-			get => typeof(XmlEnumStringAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type EnumAliasValueAttributeType
-		{
-			get => typeof(XmlEnumAliasAttribute);
-		}
-
 		public XmlAttributeSerializationDefinition()
 		{
 			supportedTypes = new HashSet<Type>()
@@ -72,7 +58,10 @@
 			{
 				new NullValueProcessor(this),
 				new ExactMatchProcessor(this),
-				new EnumProcessor(this),
+				new EnumProcessor(this)
+				{
+					AliasFeature = new EnumAliasFeature<XmlEnumStringAttribute, XmlEnumAliasAttribute>()
+				},
 				new PrimitiveTypeProcessor(this),
 				new DecimalProcessor(this),
 				new DateTimeProcessor(this),

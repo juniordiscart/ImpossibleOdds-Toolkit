@@ -7,6 +7,7 @@
 	using System.Xml;
 	using System.Xml.Linq;
 	using ImpossibleOdds.Serialization;
+	using ImpossibleOdds.Serialization.Caching;
 
 	public static class XmlProcessor
 	{
@@ -95,41 +96,6 @@
 		public static void Serialize(object obj, XmlOptions options, TextWriter resultStore)
 		{
 			Serialize(obj, resultStore, options);
-		}
-
-		/// <summary>
-		/// Serialize the object async to an XML-string.
-		/// </summary>
-		/// <param name="obj">Object to serialize.</param>
-		/// <param name="options">Options to modify the string output behaviour.</param>
-		/// <returns>An XML representation of the given object.</returns>
-		public static async Task<string> SerializeAsync(object obj, XmlOptions options = null)
-		{
-			Task<string> asyncResult = Task.Run(() => Serialize(obj, options));
-			await asyncResult;
-			return asyncResult.Result;
-		}
-
-		/// <summary>
-		/// Serialize the object async to an XML string and write the result to the result store.
-		/// </summary>
-		/// <param name="obj">Object to serialize.</param>
-		/// <param name="resultStore">Write cache for the XML result.</param>
-		/// <param name="options">Options to modify the string output behaviour.</param>
-		public static async Task SerializeAsync(object obj, StringBuilder resultStore, XmlOptions options = null)
-		{
-			await Task.Run(() => Serialize(obj, resultStore, options));
-		}
-
-		/// <summary>
-		/// Serialize the object async to an XML string and write the result to the text writer.
-		/// </summary>
-		/// <param name="obj">Object to serialize.</param>
-		/// <param name="writer">Text writer for the XML result.</param>
-		/// <param name="options">Options to modify the string output behaviour.</param>
-		public static async Task SerializeAsync(object obj, TextWriter writer, XmlOptions options = null)
-		{
-			await Task.Run(() => Serialize(obj, writer, options));
 		}
 
 		/// <summary>
@@ -262,10 +228,17 @@
 				XmlReader.Create(reader, options.ReaderSettings) :
 				XmlReader.Create(reader);
 
+			XmlSerializationDefinition sd =
+				(options?.SerializationDefinition != null) ?
+				options.SerializationDefinition :
+				defaultOptions.SerializationDefinition;
+
+			ISerializationReflectionMap reflectionMap = SerializationUtilities.GetTypeMap(target.GetType());
+
 			using (xmlReader)
 			{
-				XDocument document = XDocument.Load(xmlReader);
-				Deserialize(target, document);
+				XDocument document = FromXml(new DeserializationState(sd, xmlReader), DataFilterMode.Filter, reflectionMap);
+				FromXml(target, document, sd);
 			}
 		}
 
@@ -279,8 +252,48 @@
 			target.ThrowIfNull(nameof(target));
 			document.ThrowIfNull(nameof(document));
 
-			XmlSerializationDefinition sd = (options?.SerializationDefinition != null) ? options.SerializationDefinition : defaultOptions.SerializationDefinition;
+			XmlSerializationDefinition sd =
+				(options?.SerializationDefinition != null) ?
+				options.SerializationDefinition :
+				defaultOptions.SerializationDefinition;
+
 			FromXml(target, document, sd);
+		}
+
+		#region Async
+		/// <summary>
+		/// Serialize the object async to an XML-string.
+		/// </summary>
+		/// <param name="obj">Object to serialize.</param>
+		/// <param name="options">Options to modify the string output behaviour.</param>
+		/// <returns>An XML representation of the given object.</returns>
+		public static async Task<string> SerializeAsync(object obj, XmlOptions options = null)
+		{
+			Task<string> asyncResult = Task.Run(() => Serialize(obj, options));
+			await asyncResult;
+			return asyncResult.Result;
+		}
+
+		/// <summary>
+		/// Serialize the object async to an XML string and write the result to the result store.
+		/// </summary>
+		/// <param name="obj">Object to serialize.</param>
+		/// <param name="resultStore">Write cache for the XML result.</param>
+		/// <param name="options">Options to modify the string output behaviour.</param>
+		public static async Task SerializeAsync(object obj, StringBuilder resultStore, XmlOptions options = null)
+		{
+			await Task.Run(() => Serialize(obj, resultStore, options));
+		}
+
+		/// <summary>
+		/// Serialize the object async to an XML string and write the result to the text writer.
+		/// </summary>
+		/// <param name="obj">Object to serialize.</param>
+		/// <param name="writer">Text writer for the XML result.</param>
+		/// <param name="options">Options to modify the string output behaviour.</param>
+		public static async Task SerializeAsync(object obj, TextWriter writer, XmlOptions options = null)
+		{
+			await Task.Run(() => Serialize(obj, writer, options));
 		}
 
 		/// <summary>
@@ -415,6 +428,9 @@
 			await Task.Run(() => Deserialize(target, document, options));
 		}
 
+		#endregion
+
+		#region To XML
 		private static XDocument ToXml(object objectToSerialize, XmlSerializationDefinition definition)
 		{
 			definition.ThrowIfNull(nameof(objectToSerialize));
@@ -451,7 +467,9 @@
 
 			return document;
 		}
+		#endregion
 
+		#region From XML
 		private static object FromXml(Type targetType, XDocument document, XmlSerializationDefinition definition)
 		{
 			targetType.ThrowIfNull(nameof(targetType));
@@ -478,5 +496,307 @@
 				Serializer.Deserialize(targetObject, document.Root, definition);
 			}
 		}
+
+		private static XDocument FromXml(DeserializationState reader, DataFilterMode filterMode = DataFilterMode.ProcessAll, ISerializationReflectionMap reflectionMap = null)
+		{
+			reader.ThrowIfNull(nameof(reader));
+
+			XDocument document = new XDocument();
+
+			while (reader.Read())
+			{
+				if (reader.NodeType == XmlNodeType.XmlDeclaration)
+				{
+					document.Declaration = ReadDeclaration(reader);
+				}
+				else
+				{
+					switch(filterMode)
+					{
+						case DataFilterMode.ProcessAll:
+						{
+							if (ReadNext(reader, out XNode childNode))
+							{
+								document.Add(childNode);
+							}
+						}
+							break;
+						case DataFilterMode.Filter:
+						{
+							if (FilterNext(reader, out XNode childNode, reflectionMap))
+							{
+								document.Add(childNode);
+							}
+						}
+							break;
+						case DataFilterMode.Skip:
+							SkipNext(reader);
+							break;
+					}
+				}
+			}
+
+			return document;
+		}
+
+		private static bool ReadNext(DeserializationState reader, out XNode node)
+		{
+			switch (reader.NodeType)
+			{
+				case XmlNodeType.Element:
+					node = ReadElement(reader);
+					break;
+				case XmlNodeType.Text:
+				case XmlNodeType.SignificantWhitespace:
+				case XmlNodeType.Whitespace:
+					node = ReadTextNode(reader);
+					break;
+				case XmlNodeType.CDATA:
+					node = ReadCDataNode(reader);
+					break;
+				case XmlNodeType.Comment:
+					node = ReadComment(reader);
+					break;
+				case XmlNodeType.DocumentType:
+					node = ReadDocumentType(reader);
+					break;
+				case XmlNodeType.ProcessingInstruction:
+					node = ReadProcessingInstruction(reader);
+					break;
+				case XmlNodeType.EndElement:
+					node = null;
+					break;
+				default:
+					Log.Warning("Xml node type {0} is not supported.", reader.NodeType.DisplayName());
+					node = null;
+					break;
+			}
+
+			return node != null;
+		}
+
+		private static bool FilterNext(DeserializationState reader, out XNode node, ISerializationReflectionMap reflectionMap)
+		{
+			// Only elements need to filtered. All other content can be just be read.
+			if (reader.NodeType == XmlNodeType.Element)
+			{
+				node = FilterElement(reader, reflectionMap);
+			}
+			else
+			{
+				ReadNext(reader, out node);
+			}
+
+			return node != null;
+		}
+
+		private static void SkipNext(DeserializationState reader)
+		{
+			if (reader.NodeType == XmlNodeType.Element)
+			{
+				SkipElement(reader);	// The elements still need to be read from the reader to advance.
+			}
+		}
+
+		private static XDeclaration ReadDeclaration(DeserializationState reader)
+		{
+			if (reader.NodeType != XmlNodeType.XmlDeclaration)
+			{
+				throw new XmlException("A declaration node is expected. Received: {0}.", reader.NodeType.DisplayName());
+			}
+
+			string version = reader.MoveToAttribute("version") ? reader.Value : string.Empty;
+			string encoding = reader.MoveToAttribute("encoding") ? reader.Value : string.Empty;
+			string standalone = reader.MoveToAttribute("standalone") ? reader.Value : string.Empty;
+			reader.MoveToElement();
+
+			return new XDeclaration(version, encoding, standalone);
+		}
+
+		private static XElement ReadElement(DeserializationState reader)
+		{
+			if (reader.NodeType != XmlNodeType.Element)
+			{
+				throw new XmlException("An element node is expected. Received: {0}.", reader.NodeType.DisplayName());
+			}
+
+			XElement element = new XElement(reader.Name);
+			if (reader.HasAttributes)
+			{
+				while (reader.MoveToNextAttribute())
+				{
+					element.Add(ReadAttribute(reader));
+				}
+
+				reader.MoveToElement();
+			}
+
+			// Return already if it's empty, e.g. <element />
+			if (reader.IsEmptyElement)
+			{
+				return element;
+			}
+
+			// Keep reading until encountering the end element.
+			while (reader.Read())
+			{
+				if (reader.NodeType == XmlNodeType.EndElement)
+				{
+					break;
+				}
+
+				if (ReadNext(reader, out XNode nextNode))
+				{
+					element.Add(nextNode);
+				}
+			}
+
+			return element;
+		}
+
+		private static XElement FilterElement(DeserializationState reader, ISerializationReflectionMap reflectionMap)
+		{
+			if (reader.NodeType != XmlNodeType.Element)
+			{
+				throw new XmlException("An element node is expected. Received: {0}.", reader.NodeType.DisplayName());
+			}
+
+			XElement element = new XElement(reader.Name);
+			if (reader.HasAttributes)
+			{
+				while (reader.MoveToNextAttribute())
+				{
+					XAttribute attr = FilterAttribute(reader, reflectionMap);
+					if (attr != null)
+					{
+						element.Add(attr);
+					}
+				}
+
+				reader.MoveToElement();
+			}
+
+			// Return already if it's empty, e.g. <element />
+			if (reader.IsEmptyElement)
+			{
+				return element;
+			}
+
+			ISerializableMember[] members = reflectionMap.GetSerializableMembers(typeof(XmlElementAttribute));
+
+			// Keep reading until encountering the end element.
+			while (reader.Read())
+			{
+				if (reader.NodeType == XmlNodeType.EndElement)
+				{
+					break;
+				}
+				else if ((reader.NodeType == XmlNodeType.Element) && !KeyExists<XmlElementAttribute>(members, reader.Name))
+				{
+					SkipNext(reader);
+				}
+				else
+				{
+					if (ReadNext(reader, out XNode nextNode))
+					{
+						element.Add(nextNode);
+					}
+				}
+			}
+
+			return element;
+		}
+
+		private static void SkipElement(DeserializationState reader)
+		{
+			if (reader.NodeType != XmlNodeType.Element)
+			{
+				throw new XmlException("An element node is expected. Received: {0}.", reader.NodeType.DisplayName());
+			}
+
+			// Return already if it's empty, e.g. <element />
+			if (reader.IsEmptyElement)
+			{
+				return;
+			}
+
+			// Keep reading until encountering the end element.
+			while (reader.Read())
+			{
+				if (reader.NodeType == XmlNodeType.EndElement)
+				{
+					break;
+				}
+
+				SkipNext(reader);
+			}
+		}
+
+		private static XText ReadTextNode(DeserializationState reader)
+		{
+			return new XText(reader.Value);
+		}
+
+		private static XCData ReadCDataNode(DeserializationState reader)
+		{
+			return new XCData(reader.Value);
+		}
+
+		private static XComment ReadComment(DeserializationState reader)
+		{
+			return new XComment(reader.Value);
+		}
+
+		private static XDocumentType ReadDocumentType(DeserializationState reader)
+		{
+			return new XDocumentType(
+				reader.Name,
+				reader.GetAttribute("PUBLIC"),
+				reader.GetAttribute("SYSTEM"),
+				reader.Value);
+		}
+
+		private static XProcessingInstruction ReadProcessingInstruction(DeserializationState reader)
+		{
+			return new XProcessingInstruction(reader.Name, reader.Value);
+		}
+
+		private static XAttribute ReadAttribute(DeserializationState reader)
+		{
+			return new XAttribute(reader.Name, reader.Value);
+		}
+
+		private static XAttribute FilterAttribute(DeserializationState reader, ISerializationReflectionMap reflectionMap)
+		{
+			ISerializableMember[] members = reflectionMap.GetSerializableMembers(typeof(XmlAttributeAttribute));
+
+			return KeyExists<XmlAttributeAttribute>(members, reader.Name) ? ReadAttribute(reader) : null;
+		}
+
+		private static bool KeyExists<TAttribute>(ISerializableMember[] members, string key)
+		where TAttribute : ILookupParameter<string>
+		{
+			foreach (ISerializableMember member in members)
+			{
+				if ((member.Attribute is TAttribute parameter))
+				{
+					string memberKey = parameter.Key;
+
+					if (memberKey.IsNullOrEmpty())
+					{
+						memberKey = member.Member.Name;
+					}
+
+					if (string.Equals(key, memberKey))
+					{
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+		#endregion
+
 	}
 }

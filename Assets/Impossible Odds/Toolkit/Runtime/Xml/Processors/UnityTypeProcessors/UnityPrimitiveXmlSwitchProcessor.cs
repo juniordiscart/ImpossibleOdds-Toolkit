@@ -13,12 +13,12 @@
 		private readonly TElementsProcessor elementsProcessor = null;
 		private XmlPrimitiveProcessingMethod processingMethod;
 
-		public TAttributesProcessor SequenceProcessor
+		public TAttributesProcessor AttributesProcessor
 		{
 			get => attributesProcessor;
 		}
 
-		public TElementsProcessor LookupProcessor
+		public TElementsProcessor ElementsProcessor
 		{
 			get => elementsProcessor;
 		}
@@ -35,9 +35,9 @@
 			{
 				switch (processingMethod)
 				{
-					case XmlPrimitiveProcessingMethod.ATTRIBUTES:
+					case XmlPrimitiveProcessingMethod.Attributes:
 						return attributesProcessor.Definition;
-					case XmlPrimitiveProcessingMethod.ELEMENTS:
+					case XmlPrimitiveProcessingMethod.Elements:
 						return elementsProcessor.Definition;
 					default:
 						throw new XmlException("Unsupported processing method ('{0}') to retrieve the serialization definition for.", processingMethod.ToString());
@@ -55,39 +55,75 @@
 			this.processingMethod = preferredProcessingMethod;
 		}
 
-		public bool Serialize(object objectToSerialize, out object serializedResult)
+		/// <inheritdoc />
+		public virtual object Serialize(object objectToSerialize)
 		{
 			switch (processingMethod)
 			{
-				case XmlPrimitiveProcessingMethod.ATTRIBUTES:
-					return attributesProcessor.Serialize(objectToSerialize, out serializedResult);
-				case XmlPrimitiveProcessingMethod.ELEMENTS:
-					return elementsProcessor.Serialize(objectToSerialize, out serializedResult);
+				case XmlPrimitiveProcessingMethod.Attributes:
+					return attributesProcessor.Serialize(objectToSerialize);
+				case XmlPrimitiveProcessingMethod.Elements:
+					return elementsProcessor.Serialize(objectToSerialize);
 				default:
-					throw new SerializationException("Unsupported processsing method ('{0}') to serialize the value.", processingMethod.ToString());
+					throw new SerializationException("Unsupported processing method ('{0}') to serialize the value.", processingMethod.DisplayName());
 			}
 		}
 
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		/// <inheritdoc />
+		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
-			targetType.ThrowIfNull(nameof(targetType));
-
-			if (!(dataToDeserialize is XElement))
-			{
-				deserializedResult = null;
-				return false;
-			}
-
 			// Depending whether the element has any children, decide how to process the data,
 			// regardless of how the data prefers to be serialized.
 			XElement element = dataToDeserialize as XElement;
 			if (element.HasElements)
 			{
-				return elementsProcessor.Deserialize(targetType, dataToDeserialize, out deserializedResult);
+				return elementsProcessor.Deserialize(targetType, dataToDeserialize);
 			}
-			else
+			else if (element.HasAttributes)
 			{
-				return attributesProcessor.Deserialize(targetType, dataToDeserialize, out deserializedResult);
+				return attributesProcessor.Deserialize(targetType, dataToDeserialize);
+			}
+
+			throw new SerializationException("Unsupported data of type {0} to deserialize into an instance of type {1}.", dataToDeserialize.GetType().Name, typeof(TPrimitive).Name);
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanSerialize(object objectToSerialize)
+		{
+			if (!(objectToSerialize is TPrimitive))
+			{
+				return false;
+			}
+
+			switch(processingMethod)
+			{
+				case XmlPrimitiveProcessingMethod.Attributes:
+					return AttributesProcessor.CanSerialize(objectToSerialize);
+				case XmlPrimitiveProcessingMethod.Elements:
+					return ElementsProcessor.CanSerialize(objectToSerialize);
+				default:
+					return false;
+			}
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
+		{
+			targetType.ThrowIfNull(nameof(targetType));
+
+			if (!(dataToDeserialize is XElement))
+			{
+				return false;
+			}
+
+			switch(processingMethod)
+			{
+				case XmlPrimitiveProcessingMethod.Attributes:
+					return AttributesProcessor.CanDeserialize(targetType, dataToDeserialize);
+				case XmlPrimitiveProcessingMethod.Elements:
+					return ElementsProcessor.CanDeserialize(targetType, dataToDeserialize);
+				default:
+					return false;
 			}
 		}
 	}

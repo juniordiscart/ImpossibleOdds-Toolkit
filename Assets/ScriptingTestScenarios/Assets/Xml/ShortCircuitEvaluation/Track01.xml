@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Track xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <gameVersion>0.3.25</gameVersion>
+  <localID>
+    <str>4eb241d3-2d24-4938-9126-396772e17019</str>
+    <version>1</version>
+    <type>TRACK</type>
+  </localID>
+  <name>Balloons 03 (Hidden)</name>
+  <description />
+  <dependencies />
+  <containsCollectableItems>true</containsCollectableItems>
+  <environment>BasketBallCourt_Night</environment>
+  <blueprints>
+    <TrackBlueprint xsi:type="TrackBlueprintFlag">
+      <itemID>CollectableBalloonSingleBlue01</itemID>
+      <instanceID>0</instanceID>
+      <position>
+        <x>-0.03281468</x>
+        <y>0.64</y>
+        <z>11.4811716</z>
+      </position>
+      <rotation>
+        <x>-0</x>
+        <y>0</y>
+        <z>0</z>
+      </rotation>
+      <purpose>Functional</purpose>
+    </TrackBlueprint>
+    <TrackBlueprint xsi:type="TrackBlueprintFlag">
+      <itemID>CollectableBalloonSingleBlue01</itemID>
+      <instanceID>1</instanceID>
+      <position>
+        <x>5.04356861</x>
+        <y>5.35849857</y>
+        <z>-0.117167167</z>
+      </position>
+      <rotation>
+        <x>-0</x>
+        <y>0</y>
+        <z>0</z>
+      </rotation>
+      <purpose>Functional</purpose>
+    </TrackBlueprint>
+    <TrackBlueprint xsi:type="TrackBlueprintFlag">
+      <itemID>CollectableBalloonSingleBlue01</itemID>
+      <instanceID>2</instanceID>
+      <position>
+        <x>18.0649567</x>
+        <y>-0.00140500069</y>
+        <z>-3.82298231</z>
+      </position>
+      <rotation>
+        <x>-0</x>
+        <y>0</y>
+        <z>0</z>
+      </rotation>
+      <purpose>Functional</purpose>
+    </TrackBlueprint>
+    <TrackBlueprint xsi:type="TrackBlueprintFlag">
+      <itemID>CollectableBalloonSingleBlue01</itemID>
+      <instanceID>3</instanceID>
+      <position>
+        <x>-19.9703</x>
+        <y>7.37308359</y>
+        <z>0.0425479859</z>
+      </position>
+      <rotation>
+        <x>-0</x>
+        <y>0</y>
+        <z>0</z>
+      </rotation>
+      <purpose>Functional</purpose>
+    </TrackBlueprint>
+    <TrackBlueprint xsi:type="TrackBlueprintFlag">
+      <itemID>CollectableBalloonSingleBlue01</itemID>
+      <instanceID>4</instanceID>
+      <position>
+        <x>-30.759819</x>
+        <y>0.759397447</y>
+        <z>-12.9922161</z>
+      </position>
+      <rotation>
+        <x>-0</x>
+        <y>0</y>
+        <z>0</z>
+      </rotation>
+      <purpose>Functional</purpose>
+    </TrackBlueprint>
+    <TrackBlueprint xsi:type="TrackBlueprintFlag">
+      <itemID>CollectableBalloonSingleBlue01</itemID>
+      <instanceID>5</instanceID>
+      <position>
+        <x>-0.149476871</x>
+        <y>3.247998</y>
+        <z>-12.4348087</z>
+      </position>
+      <rotation>
+        <x>-0</x>
+        <y>0</y>
+        <z>0</z>
+      </rotation>
+      <purpose>Functional</purpose>
+    </TrackBlueprint>
+    <TrackBlueprint xsi:type="TrackBlueprintFlag">
+      <itemID>CollectableBalloonSingleBlue01</itemID>
+      <instanceID>6</instanceID>
+      <position>
+        <x>13.9241962</x>
+        <y>-0.00140500069</y>
+        <z>-6.130601</z>
+      </position>
+      <rotation>
+        <x>-0</x>
+        <y>0</y>
+        <z>0</z>
+      </rotation>
+      <purpose>Functional</purpose>
+    </TrackBlueprint>
+    <TrackBlueprint xsi:type="TrackBlueprintFlag">
+      <itemID>CollectableBalloonSingleBlue01</itemID>
+      <instanceID>7</instanceID>
+      <position>
+        <x>12.4420557</x>
+        <y>0.8052723</y>
+        <z>9.169776</z>
+      </position>
+      <rotation>
+        <x>-0</x>
+        <y>0</y>
+        <z>0</z>
+      </rotation>
+      <purpose>Functional</purpose>
+    </TrackBlueprint>
+  </blueprints>
+  <lastTrackItemID>7</lastTrackItemID>
+  <hideDefaultSpawnpoint>false</hideDefaultSpawnpoint>
+</Track>

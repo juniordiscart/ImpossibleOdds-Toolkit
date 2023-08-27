@@ -14,73 +14,24 @@
 	/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
 	public class JsonSerializationDefinition :
 		IndexAndLookupDefinition<JsonArrayAttribute, JsonIndexAttribute, ArrayList, JsonObjectAttribute, JsonFieldAttribute, Dictionary<string, object>>,
-		ICallbacksSupport<OnJsonSerializingAttribute, OnJsonSerializedAttribute, OnJsonDeserializingAttribute, OnJsonDeserializedAttribute>,
-		ILookupTypeResolveSupport<JsonTypeAttribute>,
-		IRequiredValueSupport<JsonRequiredAttribute>,
-		IEnumAliasSupport<JsonEnumStringAttribute, JsonEnumAliasAttribute>,
-		IParallelProcessingSupport
+		ILookupTypeResolveSupport<JsonTypeAttribute>
 	{
 		public const string JsonDefaultTypeKey = "jsi:type";
 
-		private readonly ISerializationProcessor[] serializationProcessors = null;
-		private readonly IDeserializationProcessor[] deserializationProcessors = null;
-		private readonly HashSet<Type> supportedTypes = null;
+		private readonly ISerializationProcessor[] serializationProcessors;
+		private readonly IDeserializationProcessor[] deserializationProcessors;
+		private readonly HashSet<Type> supportedTypes;
+		private readonly ParallelProcessingFeature parallelProcessingFeature;
 		private string typeResolveKey = JsonDefaultTypeKey;
-		private bool processInParallel = false;
 
 		/// <inheritdoc />
-		public Type JsonObjectType
-		{
-			get => typeof(Dictionary<string, object>);
-		}
+		public override IEnumerable<ISerializationProcessor> SerializationProcessors => serializationProcessors;
 
 		/// <inheritdoc />
-		public Type JsonArrayType
-		{
-			get => typeof(ArrayList);
-		}
+		public override IEnumerable<IDeserializationProcessor> DeserializationProcessors => deserializationProcessors;
 
 		/// <inheritdoc />
-		public override IEnumerable<ISerializationProcessor> SerializationProcessors
-		{
-			get => serializationProcessors;
-		}
-
-		/// <inheritdoc />
-		public override IEnumerable<IDeserializationProcessor> DeserializationProcessors
-		{
-			get => deserializationProcessors;
-		}
-
-		/// <inheritdoc />
-		public override HashSet<Type> SupportedTypes
-		{
-			get => supportedTypes;
-		}
-
-		/// <inheritdoc />
-		public Type OnSerializationCallbackType
-		{
-			get => typeof(OnJsonSerializingAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type OnSerializedCallbackType
-		{
-			get => typeof(OnJsonSerializedAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type OnDeserializionCallbackType
-		{
-			get => typeof(OnJsonDeserializingAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type OnDeserializedCallbackType
-		{
-			get => typeof(OnJsonDeserializedAttribute);
-		}
+		public override HashSet<Type> SupportedTypes => supportedTypes;
 
 		/// <inheritdoc />
 		public Type TypeResolveAttribute
@@ -105,34 +56,10 @@
 			}
 		}
 
-		/// <inheritdoc />
-		public Type RequiredAttributeType
-		{
-			get => typeof(JsonRequiredAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type EnumAsStringAttributeType
-		{
-			get => typeof(JsonEnumStringAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type EnumAliasValueAttributeType
-		{
-			get => typeof(JsonEnumAliasAttribute);
-		}
-
-		/// <inheritdoc />
-		bool IParallelProcessingSupport.Enabled
-		{
-			get => ParallelProcessingEnabled;
-		}
-
 		public bool ParallelProcessingEnabled
 		{
-			get => processInParallel;
-			set => processInParallel = value;
+			get => parallelProcessingFeature.Enabled;
+			set => parallelProcessingFeature.Enabled = value;
 		}
 
 		public JsonSerializationDefinition()
@@ -141,13 +68,16 @@
 
 		public JsonSerializationDefinition(bool enableParallelProcessing)
 		{
-			this.processInParallel = enableParallelProcessing;
+			parallelProcessingFeature = new ParallelProcessingFeature()
+			{
+				Enabled = enableParallelProcessing
+			};
 
 			PrimitiveProcessingMethod defaultProcessingMethod =
 #if IMPOSSIBLE_ODDS_JSON_UNITY_TYPES_AS_ARRAY
-			PrimitiveProcessingMethod.SEQUENCE;
+			PrimitiveProcessingMethod.Sequence;
 #else
-			PrimitiveProcessingMethod.LOOKUP;
+			PrimitiveProcessingMethod.Lookup;
 #endif
 			supportedTypes = new HashSet<Type>()
 			{
@@ -165,7 +95,10 @@
 			{
 				new NullValueProcessor(this),
 				new ExactMatchProcessor(this),
-				new EnumProcessor(this),
+				new EnumProcessor(this)
+				{
+					AliasFeature = new EnumAliasFeature<JsonEnumStringAttribute, JsonEnumAliasAttribute>()
+				} ,
 				new PrimitiveTypeProcessor(this),
 				new DecimalProcessor(this),
 				new DateTimeProcessor(this),
@@ -180,10 +113,25 @@
 				new QuaternionProcessor(this, this, defaultProcessingMethod),
 				new ColorProcessor(this, this, defaultProcessingMethod),
 				new Color32Processor(this, this, defaultProcessingMethod),
-				new LookupProcessor(this),
-				new SequenceProcessor(this),
-				new CustomObjectSequenceProcessor(this),
-				new CustomObjectLookupProcessor(this),
+				new LookupProcessor(this)
+				{
+					ParallelProcessingFeature = parallelProcessingFeature
+				},
+				new SequenceProcessor(this)
+				{
+					ParallelProcessingFeature = parallelProcessingFeature
+				},
+				new CustomObjectSequenceProcessor(this)
+				{
+					CallbackFeature = new CallBackFeature<OnJsonSerializingAttribute, OnJsonSerializedAttribute, OnJsonDeserializingAttribute, OnJsonDeserializedAttribute>(),
+					ParallelProcessingFeature = parallelProcessingFeature
+				},
+				new CustomObjectLookupProcessor(this)
+				{
+					CallbackFeature = new CallBackFeature<OnJsonSerializingAttribute, OnJsonSerializedAttribute, OnJsonDeserializingAttribute, OnJsonDeserializedAttribute>(),
+					RequiredValueFeature = new RequiredValueFeature<JsonRequiredAttribute>(),
+					ParallelProcessingFeature = parallelProcessingFeature,
+				},
 			};
 
 			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>().ToArray();
@@ -196,7 +144,7 @@
 		/// <param name="preferredProcessingMethod">The preferred processing method.</param>
 		public void UpdateUnityPrimitiveRepresentation(PrimitiveProcessingMethod preferredProcessingMethod)
 		{
-			foreach (IProcessor processor in serializationProcessors)
+			foreach (ISerializationProcessor processor in serializationProcessors)
 			{
 				if (processor is IUnityPrimitiveSwitchProcessor switchProcessor)
 				{
@@ -204,7 +152,7 @@
 				}
 			}
 
-			foreach (IProcessor processor in deserializationProcessors)
+			foreach (IDeserializationProcessor processor in deserializationProcessors)
 			{
 				if (processor is IUnityPrimitiveSwitchProcessor switchProcessor)
 				{

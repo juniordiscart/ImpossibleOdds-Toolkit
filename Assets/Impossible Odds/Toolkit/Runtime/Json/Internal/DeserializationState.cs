@@ -30,8 +30,15 @@
 			get => (char)reader.Read();
 		}
 
-		public ISerializationDefinition definition;
-		public TextReader reader;
-		public StringBuilder buffer;
+		public readonly ISerializationDefinition definition;
+		public readonly TextReader reader;
+		public readonly StringBuilder buffer;
+
+		public DeserializationState(ISerializationDefinition definition, TextReader reader, StringBuilder buffer)
+		{
+			this.definition = definition;
+			this.reader = reader;
+			this.buffer = buffer;
+		}
 	}
 }

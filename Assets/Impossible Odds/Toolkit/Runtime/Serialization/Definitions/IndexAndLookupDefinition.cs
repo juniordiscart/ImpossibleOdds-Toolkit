@@ -8,7 +8,7 @@
 	using ImpossibleOdds.Serialization.Processors;
 
 	/// <summary>
-	/// Abstract generic serialization definiton that implements both index-based and lookup-based (de)serialization.
+	/// Abstract generic serialization definition that implements both index-based and lookup-based (de)serialization.
 	/// </summary>
 	/// <typeparam name="TListObject">Attribute type that defines if an object should be (de)serialized as an index-based data structure.</typeparam>
 	/// <typeparam name="TListField">Attribute type for the index-based attributes.</typeparam>

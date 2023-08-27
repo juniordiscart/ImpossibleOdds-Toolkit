@@ -86,10 +86,10 @@
 			{
 				lock (setMethod)
 				{
-					object[] setValueParams = TypeReflectionUtilities.GetParameterInvokationList(1);
+					object[] setValueParams = TypeReflectionUtilities.GetParameterInvocationList(1);
 					setValueParams[0] = value;
 					setMethod.Invoke(source, setValueParams);
-					TypeReflectionUtilities.ReturnParameterInvokationList(setValueParams);
+					TypeReflectionUtilities.ReturnParameterInvocationList(setValueParams);
 				}
 			}
 			else

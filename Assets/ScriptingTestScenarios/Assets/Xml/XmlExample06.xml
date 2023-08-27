@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<!DOCTYPE address [
+<!ELEMENT address (name, email, phone, birthday)>
+<!ELEMENT name (first, last)>
+<!ELEMENT first (#PCDATA)>
+<!ELEMENT last (#PCDATA)>
+<!ELEMENT email (#PCDATA)>
+<!ELEMENT phone (#PCDATA)>
+<!ELEMENT birthday (year, month, day)>
+<!ELEMENT year (#PCDATA)>
+<!ELEMENT month (#PCDATA)>
+<!ELEMENT day (#PCDATA)>
+]>
+<address>
+	<name>
+		<first>Rohit</first>
+		<last>Sharma</last>
+	</name>
+	<email>sharmarohit@gmail.com</email>
+	<phone>9876543210</phone>
+	<birthday>
+		<year>1987</year>
+		<month>June</month>
+		<day>23</day>
+	</birthday>
+</address>

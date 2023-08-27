@@ -11,23 +11,9 @@
 	public class SequenceProcessor : ISerializationProcessor, IDeserializationProcessor, IDeserializationToTargetProcessor
 	{
 		private readonly IIndexSerializationDefinition definition;
-		private readonly IParallelProcessingSupport parallelProcessingSupport = null;
 
-		/// <summary>
-		/// Does the serialization definition have support for processing values in parallel?
-		/// </summary>
-		public bool SupportsParallelProcessing
-		{
-			get => parallelProcessingSupport != null;
-		}
-
-		/// <summary>
-		/// The parallel processing serialization definition.
-		/// </summary>
-		public IParallelProcessingSupport ParallelProcessingDefinition
-		{
-			get => parallelProcessingSupport;
-		}
+		public bool SupportsParallelProcessing => ParallelProcessingFeature != null;
+		public IParallelProcessingFeature ParallelProcessingFeature { get; set; }
 
 		ISerializationDefinition IProcessor.Definition
 		{
@@ -42,39 +28,26 @@
 		public SequenceProcessor(IIndexSerializationDefinition definition)
 		{
 			this.definition = definition;
-			this.parallelProcessingSupport = (definition is IParallelProcessingSupport parallelProcessingDefinition) ? parallelProcessingDefinition : null;
 		}
 
-		/// <summary>
-		/// Attempts to serialize the object to another sequence in which all individual elements are processed by the serializer.
-		/// </summary>
-		/// <param name="objectToSerialize">The object to serialize.</param>
-		/// <param name="serializedResult">The serialized object.</param>
-		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
-		public bool Serialize(object objectToSerialize, out object serializedResult)
+		/// <inheritdoc />
+		public virtual object Serialize(object objectToSerialize)
 		{
 			// Accept null values.
 			if ((objectToSerialize == null))
 			{
-				serializedResult = null;
-				return true;
-			}
-
-			if (!(objectToSerialize is IList))
-			{
-				serializedResult = null;
-				return false;
+				return null;
 			}
 
 			// Take the values from the original source values and process
 			// them individually to data that is accepted by the serialization definition
 			// and is accepted by the underlying type restrictions of the result collection.
-			IList sourceValues = objectToSerialize as IList;
+			IList sourceValues = (IList)objectToSerialize;
 			IList processedValues = definition.CreateSequenceInstance(sourceValues.Count);
 			SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
 			object parallelLock = null;
 
-			if (SupportsParallelProcessing && ParallelProcessingDefinition.Enabled && (sourceValues.Count > 1))
+			if (SupportsParallelProcessing && ParallelProcessingFeature.Enabled && (sourceValues.Count > 1))
 			{
 				parallelLock = new object();
 				Parallel.For(0, sourceValues.Count, SerializeMember);
@@ -87,8 +60,7 @@
 				}
 			}
 
-			serializedResult = processedValues;
-			return true;
+			return processedValues;
 
 			void SerializeMember(int index)
 			{
@@ -104,81 +76,40 @@
 			}
 		}
 
-		/// <summary>
-		/// Attempts to deserialize the data to a new instance of the target type. Each element of the data is deserialized individually by the deserialized.
-		/// </summary>
-		/// <param name="targetType">The target type to deserialize the given data.</param>
-		/// <param name="dataToDeserialize">The data deserialize and apply to the result.</param>
-		/// <param name="deserializedResult">The result unto which the data is applied.</param>
-		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		/// <inheritdoc />
+		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
-			targetType.ThrowIfNull(nameof(targetType));
-
-			// Check if the target implements the general IList interface, if not, we can just skip it altogether.
-			if (!typeof(IList).IsAssignableFrom(targetType))
-			{
-				deserializedResult = null;
-				return false;
-			}
-
 			// If the value is null, we can just assign it.
 			if (dataToDeserialize == null)
 			{
-				deserializedResult = null;
-				return true;
-			}
-
-			if (!(dataToDeserialize is IList))
-			{
-				throw new SerializationException("The source value is expected to implement the {0} interface to process to target type {1}.", typeof(IList).Name, targetType.Name);
+				return null;
 			}
 
 			// Arrays are treated differently.
 			IList targetCollection =
 				targetType.IsArray ?
-				Array.CreateInstance(targetType.GetElementType(), (dataToDeserialize as IList).Count) :
-				Activator.CreateInstance(targetType, true) as IList;
+				Array.CreateInstance(targetType.GetElementType(), ((IList)dataToDeserialize).Count) :
+				(IList)Activator.CreateInstance(targetType, true);
 
-			if (!Deserialize(targetCollection, dataToDeserialize))
-			{
-				throw new SerializationException("Unexpected failure to process source value of type {0} to target collection of type {1}.", dataToDeserialize.GetType().Name, targetType.Name);
-			}
-
-			deserializedResult = targetCollection;
-			return true;
+			Deserialize(targetCollection, dataToDeserialize);
+			return targetCollection;
 		}
 
-		/// <summary>
-		/// Attempts to deserialize the data onto an existing instance. Each element of the data is deserialized individually by the deserialized.
-		/// </summary>
-		/// <param name="deserializationTarget">The object on which the data should be applied.</param>
-		/// <param name="dataToDeserialize">The data to deserialize.</param>
-		/// <returns>True if the deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(object deserializationTarget, object dataToDeserialize)
+		/// <inheritdoc />
+		public virtual void Deserialize(object deserializationTarget, object dataToDeserialize)
 		{
-			if ((deserializationTarget == null) || !(deserializationTarget is IList))
-			{
-				return false;
-			}
-
 			// If there is nothing to do...
 			if (dataToDeserialize == null)
 			{
-				return true;
+				return;
 			}
 
-			if (!(dataToDeserialize is IList))
-			{
-				throw new SerializationException("The source value is expected to implement the {0} interface to process to target instance of type {1}.", typeof(IList).Name, deserializationTarget.GetType().Name);
-			}
-
-			IList sourceValues = dataToDeserialize as IList;
-			IList targetValues = deserializationTarget as IList;
+			IList sourceValues = (IList)dataToDeserialize;
+			IList targetValues = (IList)deserializationTarget;
 			SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetValues);
 			object parallelLock = null;
 
-			if (SupportsParallelProcessing && ParallelProcessingDefinition.Enabled && (sourceValues.Count > 1))
+			if (SupportsParallelProcessing && ParallelProcessingFeature.Enabled && (sourceValues.Count > 1))
 			{
 				parallelLock = new object();
 				Parallel.For(0, sourceValues.Count, DeserializeMember);
@@ -190,8 +121,6 @@
 					DeserializeMember(i);
 				}
 			}
-
-			return true;
 
 			void DeserializeMember(int index)
 			{
@@ -206,6 +135,25 @@
 					SerializationUtilities.InsertInSequence(targetValues, collectionInfo, index, processedValue);
 				}
 			}
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanSerialize(object objectToSerialize)
+		{
+			return
+				(objectToSerialize == null) ||
+				(objectToSerialize is IList);
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
+		{
+			targetType.ThrowIfNull(nameof(targetType));
+
+			// Check if the target implements the general IList interface, if not, we can just skip it altogether.
+			return
+				typeof(IList).IsAssignableFrom(targetType) &&
+				((dataToDeserialize == null) || (dataToDeserialize is IList));
 		}
 	}
 }

@@ -1,9 +1,10 @@
-﻿namespace ImpossibleOdds.Serialization.Processors
+﻿using System;
+using System.Collections;
+using System.Threading.Tasks;
+using ImpossibleOdds.Serialization.Caching;
+
+namespace ImpossibleOdds.Serialization.Processors
 {
-	using System;
-	using System.Collections;
-	using System.Threading.Tasks;
-	using ImpossibleOdds.Serialization.Caching;
 
 	/// <summary>
 	/// A (de)serialization processor to process custom object to list-like data structures.
@@ -13,39 +14,14 @@
 		private readonly bool requiresMarking = false;
 		private readonly IIndexSerializationDefinition definition = null;
 		private readonly IIndexTypeResolveSupport typeResolveDefinition = null;
-		private readonly IParallelProcessingSupport parallelProcessingSupport = null;
 
-		/// <summary>
-		/// Does the serialization definition have support for type resolve parameters?
-		/// </summary>
-		public bool SupportsTypeResolvement
-		{
-			get => typeResolveDefinition != null;
-		}
+		public bool SupportsTypeResolvement => typeResolveDefinition != null;
 
-		/// <summary>
-		/// Does the serialization definition have support for processing values in parallel?
-		/// </summary>
-		public bool SupportsParallelProcessing
-		{
-			get => parallelProcessingSupport != null;
-		}
+		public bool SupportsParallelProcessing => ParallelProcessingFeature != null;
 
-		/// <summary>
-		/// The type resolve serialization definition.
-		/// </summary>
-		public IIndexTypeResolveSupport TypeResolveDefinition
-		{
-			get => typeResolveDefinition;
-		}
+		public IIndexTypeResolveSupport TypeResolveDefinition => typeResolveDefinition;
 
-		/// <summary>
-		/// The parallel processing serialization definition.
-		/// </summary>
-		public IParallelProcessingSupport ParallelProcessingDefinition
-		{
-			get => parallelProcessingSupport;
-		}
+		public IParallelProcessingFeature ParallelProcessingFeature { get; set; }
 
 		/// <summary>
 		/// The index-based serialization definition.
@@ -71,101 +47,75 @@
 			this.typeResolveDefinition = (definition is IIndexTypeResolveSupport) ? (definition as IIndexTypeResolveSupport) : null;
 		}
 
-		/// <summary>
-		/// Attempts to serialize the object to a list-like data structure.
-		/// </summary>
-		/// <param name="objectToSerialize">The object to serialize.</param>
-		/// <param name="serializedResult">The serialized object.</param>
-		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
-		public override bool Serialize(object objectToSerialize, out object serializedResult)
+		/// <inheritdoc />
+		public override object Serialize(object objectToSerialize)
 		{
 			if (objectToSerialize == null)
 			{
-				serializedResult = objectToSerialize;
-				return true;
-			}
-
-			Type sourceType = objectToSerialize.GetType();
-			if (RequiresMarking && !Attribute.IsDefined(sourceType, definition.IndexBasedClassMarkingAttribute))
-			{
-				serializedResult = null;
-				return false;
+				return null;
 			}
 
 			InvokeOnSerializationCallback(objectToSerialize);
-			serializedResult = Serialize(sourceType, objectToSerialize);
+			object serializedResult = Serialize(objectToSerialize.GetType(), objectToSerialize);
 			InvokeOnSerializedCallback(objectToSerialize);
-			return true;
+			return serializedResult;
 		}
 
-		/// <summary>
-		/// Attempts to deserialize the list-like data to a new instance of the target type.
-		/// </summary>
-		/// <param name="targetType">The target type to deserialize the given data.</param>
-		/// <param name="dataToDeserialize">The data deserialize and apply to the result.</param>
-		/// <param name="deserializedResult">The result unto which the data is applied.</param>
-		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public override bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		/// <inheritdoc />
+		public override object Deserialize(Type targetType, object dataToDeserialize)
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 
-			if (dataToDeserialize == null)
-			{
-				deserializedResult = null;
-				return SerializationUtilities.IsNullableType(targetType);
-			}
-			else if (!(dataToDeserialize is IList))
-			{
-				deserializedResult = null;
-				return false;
-			}
-
-			// Create instance
 			Type instanceType = ResolveTypeFromSequence(targetType, dataToDeserialize as IList);
-			if (RequiresMarking && !Attribute.IsDefined(instanceType, definition.IndexBasedClassMarkingAttribute))
-			{
-				deserializedResult = null;
-				return false;
-			}
-
 			object targetInstance = SerializationUtilities.CreateInstance(instanceType);
-
-			if (Deserialize(targetInstance, dataToDeserialize))
-			{
-				deserializedResult = targetInstance;
-				return true;
-			}
-			else
-			{
-				deserializedResult = null;
-				return false;
-			}
+			Deserialize(targetInstance, dataToDeserialize);
+			return targetInstance;
 		}
 
-		/// <summary>
-		/// Attempts to deserialize the list-like data to the given target.
-		/// </summary>
-		/// <param name="deserializationTarget">The object on which the data should be applied.</param>
-		/// <param name="dataToDeserialize">The data to deserialize.</param>
-		/// <returns>True if the deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(object deserializationTarget, object dataToDeserialize)
+		/// <inheritdoc />
+		public void Deserialize(object deserializationTarget, object dataToDeserialize)
 		{
 			deserializationTarget.ThrowIfNull(nameof(deserializationTarget));
 
 			// If the source value is null, then there is little to do.
 			if (dataToDeserialize == null)
 			{
-				return true;
-			}
-			else if (RequiresMarking && !Attribute.IsDefined(deserializationTarget.GetType(), definition.IndexBasedClassMarkingAttribute))
-			{
-				return false;
+				return;
 			}
 
 			InvokeOnDeserializationCallback(deserializationTarget);
 			Deserialize(deserializationTarget, dataToDeserialize as IList);
 			InvokeOnDeserializedCallback(deserializationTarget);
-			return true;
+		}
+
+		/// <inheritdoc />
+		public override bool CanSerialize(object objectToSerialize)
+		{
+			// Either the object is null - which is accepted,
+			// or the object does not require class marking,
+			// or it requires class marking and it is class marked.
+			return
+				(objectToSerialize == null) ||
+				!RequiresMarking ||
+				Attribute.IsDefined(objectToSerialize.GetType(), definition.IndexBasedClassMarkingAttribute);
+		}
+
+		/// <inheritdoc />
+		public override bool CanDeserialize(Type targetType, object dataToDeserialize)
+		{
+			targetType.ThrowIfNull(nameof(targetType));
+
+			if (dataToDeserialize == null)
+			{
+				return SerializationUtilities.IsNullableType(targetType);
+			}
+			else if (!(dataToDeserialize is IList))
+			{
+				return false;
+			}
+
+			Type instanceType = ResolveTypeFromSequence(targetType, dataToDeserialize as IList);
+			return !RequiresMarking || Attribute.IsDefined(instanceType, definition.IndexBasedClassMarkingAttribute);
 		}
 
 		private IList Serialize(Type sourceType, object source)
@@ -182,7 +132,7 @@
 			ISerializableMember[] sourceMembers = SerializationUtilities.GetTypeMap(sourceType).GetSerializableMembers(definition.IndexBasedFieldAttribute);
 			object parallelLock = null;
 
-			if (SupportsParallelProcessing && ParallelProcessingDefinition.Enabled && (sourceMembers.Length > 1))
+			if (SupportsParallelProcessing && ParallelProcessingFeature.Enabled && (sourceMembers.Length > 1))
 			{
 				parallelLock = new object();
 				Parallel.ForEach(sourceMembers, SerializeMember);
@@ -225,7 +175,7 @@
 			ISerializableMember[] targetMembers = SerializationUtilities.GetTypeMap(target.GetType()).GetSerializableMembers(definition.IndexBasedFieldAttribute);
 			object parallelLock = null;
 
-			if (SupportsParallelProcessing && ParallelProcessingDefinition.Enabled && (source.Count > 1))
+			if (SupportsParallelProcessing && ParallelProcessingFeature.Enabled && (source.Count > 1))
 			{
 				parallelLock = new object();
 				Parallel.ForEach(targetMembers, DeserializeMember);
@@ -246,13 +196,10 @@
 					return;
 				}
 
-				object result = Serializer.Deserialize(targetMember.MemberType, source[index], definition);
-
 				// If the result is null, get the default value for that type.
-				if (result == null)
-				{
-					result = SerializationUtilities.GetDefaultValue(targetMember.MemberType);
-				}
+				object result =
+					Serializer.Deserialize(targetMember.MemberType, source[index], definition) ??
+					SerializationUtilities.GetDefaultValue(targetMember.MemberType);
 
 				if (parallelLock != null)
 				{
@@ -271,25 +218,18 @@
 			{
 				return indexParameter.Index;
 			}
-			else
-			{
-				throw new SerializationException(
-						"Member {0} of type {1} is defined to be serialized using attribute of type {2}, but it does not implement the {3} interface.",
-						member.Member.Name,
-						member.Member.DeclaringType.Name,
-						member.Attribute.GetType().Name,
-						typeof(IIndexParameter).Name);
-			}
+			throw new SerializationException(
+					"Member {0} of type {1} is defined to be serialized using attribute of type {2}, but it does not implement the {3} interface.",
+					member.Member.Name,
+					member.Member.DeclaringType.Name,
+					member.Attribute.GetType().Name,
+					nameof(IIndexParameter));
 		}
 
 		private ITypeResolveParameter ResolveTypeToSequence(Type sourceType)
 		{
-			if (!SupportsTypeResolvement)
-			{
-				return null;
-			}
-
-			return Array.Find(SerializationUtilities.GetTypeMap(sourceType).GetTypeResolveParameters(TypeResolveDefinition.TypeResolveAttribute), tr => tr.Target == sourceType);
+			return
+				SupportsTypeResolvement ? Array.Find(SerializationUtilities.GetTypeMap(sourceType).GetTypeResolveParameters(TypeResolveDefinition.TypeResolveAttribute), tr => tr.Target == sourceType) : null;
 		}
 
 		private Type ResolveTypeFromSequence(Type targetType, IList source)
@@ -326,7 +266,7 @@
 				ISerializableMember[] members = SerializationUtilities.GetTypeMap(type).GetSerializableMembers(definition.IndexBasedFieldAttribute);
 				foreach (ISerializableMember member in members)
 				{
-					maxIndex = Math.Max((member.Attribute as IIndexParameter).Index, maxIndex);
+					maxIndex = Math.Max(((IIndexParameter)member.Attribute).Index, maxIndex);
 				}
 
 				type = type.BaseType;

@@ -11,7 +11,7 @@
 		private const string TrueStringAlternative = "1";
 		private const string FalseStringAlternative = "0";
 
-		private readonly static List<Type> primitiveTypeOrder = new List<Type>()
+		private static readonly List<Type> primitiveTypeOrder = new List<Type>()
 		{
 			typeof(bool),
 			typeof(byte),
@@ -39,27 +39,15 @@
 			this.definition = definition;
 		}
 
-		/// <summary>
-		/// Attempt to serialize the object to a single instance of a primitive type as defined by the serialization definition.
-		/// </summary>
-		/// <param name="objectToSerialize">The object to serialize.</param>
-		/// <param name="serializedResult">The serialized object.</param>
-		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
-		public bool Serialize(object objectToSerialize, out object serializedResult)
+		/// <inheritdoc />
+		public virtual object Serialize(object objectToSerialize)
 		{
-			if ((objectToSerialize == null) || !objectToSerialize.GetType().IsPrimitive)
-			{
-				serializedResult = null;
-				return false;
-			}
-
 			Type sourceType = objectToSerialize.GetType();
 
-			// Check whether the type is supported after all...
+			// Check whether the type is supported at all by the serialization definition...
 			if (definition.SupportedTypes.Contains(sourceType))
 			{
-				serializedResult = objectToSerialize;
-				return true;
+				return objectToSerialize;
 			}
 
 			// Attempt to convert the source value to a supported primitive type that is higher in the chain.
@@ -73,8 +61,7 @@
 						continue;
 					}
 
-					serializedResult = Convert.ChangeType(objectToSerialize, targetType, definition.FormatProvider);
-					return true;
+					return Convert.ChangeType(objectToSerialize, targetType, definition.FormatProvider);
 				}
 			}
 
@@ -83,47 +70,45 @@
 			// Last resort: check whether a string-type is accepted.
 			if (definition.SupportedTypes.Contains(typeof(string)))
 			{
-				serializedResult = ((IConvertible)objectToSerialize).ToString(definition.FormatProvider);
-				return true;
+				return ((IConvertible)objectToSerialize).ToString(definition.FormatProvider);
 			}
 
 			throw new SerializationException("Cannot convert the primitive data type {0} to a data type that is supported by the serialization definition of type {1}.", sourceType.Name, definition.GetType().Name);
 		}
 
-		/// <summary>
-		/// Attempts to deserialize the object to a primitive type.
-		/// </summary>
-		/// <param name="targetType">The target type to deserialize the given data to.</param>
-		/// <param name="dataToDeserialize">The data to deserialize.</param>
-		/// <param name="deserializedResult">The result unto which the data is applied.</param>
-		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		/// <inheritdoc />
+		public virtual object Deserialize(Type targetType, object dataToDeserialize)
+		{
+			// For booleans, we do an additional test.
+			return
+				typeof(bool) == targetType ?
+				ConvertToBoolean(dataToDeserialize) :
+				Convert.ChangeType(dataToDeserialize, targetType, definition.FormatProvider);
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanSerialize(object objectToSerialize)
+		{
+			return
+				(objectToSerialize != null) &&
+				objectToSerialize.GetType().IsPrimitive;
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 
-			if (!targetType.IsPrimitive || (dataToDeserialize == null))
-			{
-				deserializedResult = null;
-				return false;
-			}
-
-			// For booleans, we do an additional test.
-			if (typeof(bool) == targetType)
-			{
-				deserializedResult = ConvertToBoolean(dataToDeserialize);
-			}
-			else
-			{
-				deserializedResult = Convert.ChangeType(dataToDeserialize, targetType, definition.FormatProvider);
-			}
-			return true;
+			return
+				targetType.IsPrimitive &&
+				(dataToDeserialize != null) &&
+				(primitiveTypeOrder.Contains(dataToDeserialize.GetType()) || dataToDeserialize is string);
 		}
 
 		private object ConvertToBoolean(object objToParse)
 		{
-			if (typeof(string).IsAssignableFrom(objToParse.GetType()))
+			if (objToParse is string strValue)
 			{
-				string strValue = (string)objToParse;
 				switch (strValue)
 				{
 					case TrueStringAlternative:

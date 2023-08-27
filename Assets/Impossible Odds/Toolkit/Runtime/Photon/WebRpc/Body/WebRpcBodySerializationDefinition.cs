@@ -11,10 +11,7 @@
 	/// </summary>
 	public class WebRpcBodySerializationDefinition :
 	IndexAndLookupDefinition<WebRpcArrayAttribute, WebRpcIndexAttribute, object[], WebRpcObjectAttribute, WebRpcFieldAttribute, Dictionary<string, object>>,
-	ICallbacksSupport<OnWebRpcSerializingAttribute, OnWebRpcSerializedAttribute, OnWebRpcDeserializingAttribute, OnWebRpcDeserializedAttribute>,
-	ILookupTypeResolveSupport<WebRpcTypeAttribute>,
-	IEnumAliasSupport<WebRpcEnumStringAttribute, WebRpcEnumAliasAttribute>,
-	IRequiredValueSupport<WebRpcRequiredAttribute>
+	ILookupTypeResolveSupport<WebRpcTypeAttribute>
 	{
 		public const string WebRpcDefaultTypeKey = "jsi:type";
 
@@ -42,30 +39,6 @@
 		}
 
 		/// <inheritdoc />
-		public Type OnSerializationCallbackType
-		{
-			get => typeof(OnWebRpcSerializingAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type OnSerializedCallbackType
-		{
-			get => typeof(OnWebRpcSerializedAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type OnDeserializionCallbackType
-		{
-			get => typeof(OnWebRpcDeserializingAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type OnDeserializedCallbackType
-		{
-			get => typeof(OnWebRpcDeserializedAttribute);
-		}
-
-		/// <inheritdoc />
 		public Type TypeResolveAttribute
 		{
 			get => typeof(WebRpcTypeAttribute);
@@ -88,31 +61,13 @@
 			}
 		}
 
-		/// <inheritdoc />
-		public Type EnumAsStringAttributeType
-		{
-			get => typeof(WebRpcEnumStringAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type EnumAliasValueAttributeType
-		{
-			get => typeof(WebRpcEnumAliasAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type RequiredAttributeType
-		{
-			get => typeof(WebRpcRequiredAttribute);
-		}
-
 		public WebRpcBodySerializationDefinition()
 		{
 			PrimitiveProcessingMethod defaultProcessingMethod =
 #if IMPOSSIBLE_ODDS_WEBHOOK_UNITY_TYPES_AS_ARRAY
-			PrimitiveProcessingMethod.SEQUENCE;
+			PrimitiveProcessingMethod.Sequence;
 #else
-			PrimitiveProcessingMethod.LOOKUP;
+			PrimitiveProcessingMethod.Lookup;
 #endif
 
 			// Based on the list of types supported by the Photon serializer
@@ -133,7 +88,10 @@
 			{
 				new NullValueProcessor(this),
 				new ExactMatchProcessor(this),
-				new EnumProcessor(this),
+				new EnumProcessor(this)
+				{
+					AliasFeature = new EnumAliasFeature<WebRpcEnumStringAttribute, WebRpcEnumAliasAttribute>()
+				},
 				new PrimitiveTypeProcessor(this),
 				new DecimalProcessor(this),
 				new DateTimeProcessor(this),
@@ -150,8 +108,15 @@
 				new Color32Processor(this, this, defaultProcessingMethod),
 				new LookupProcessor(this),
 				new SequenceProcessor(this),
-				new CustomObjectSequenceProcessor(this),
-				new CustomObjectLookupProcessor(this),
+				new CustomObjectSequenceProcessor(this)
+				{
+					CallbackFeature = new CallBackFeature<OnWebRpcSerializingAttribute, OnWebRpcSerializedAttribute, OnWebRpcDeserializingAttribute, OnWebRpcDeserializedAttribute>()
+				},
+				new CustomObjectLookupProcessor(this)
+				{
+					CallbackFeature = new CallBackFeature<OnWebRpcSerializingAttribute, OnWebRpcSerializedAttribute, OnWebRpcDeserializingAttribute, OnWebRpcDeserializedAttribute>(),
+					RequiredValueFeature = new RequiredValueFeature<WebRpcRequiredAttribute>()
+				},
 			};
 
 			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>().ToArray();
@@ -164,7 +129,7 @@
 		/// <param name="preferredProcessingMethod">The preferred processing method.</param>
 		public void UpdateUnityPrimitiveRepresentation(PrimitiveProcessingMethod preferredProcessingMethod)
 		{
-			foreach (IProcessor processor in serializationProcessors)
+			foreach (ISerializationProcessor processor in serializationProcessors)
 			{
 				if (processor is IUnityPrimitiveSwitchProcessor switchProcessor)
 				{
@@ -172,7 +137,7 @@
 				}
 			}
 
-			foreach (IProcessor processor in deserializationProcessors)
+			foreach (IDeserializationProcessor processor in deserializationProcessors)
 			{
 				if (processor is IUnityPrimitiveSwitchProcessor switchProcessor)
 				{

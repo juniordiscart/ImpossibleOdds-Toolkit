@@ -11,9 +11,7 @@
 	/// <summary>
 	/// Serialization definition for parameters in the URL of HTTP requests.
 	/// </summary>
-	public class HttpURLSerializationDefinition :
-		ILookupSerializationDefinition,
-		IEnumAliasSupport<HttpEnumStringAttribute, HttpEnumAliasAttribute>
+	public class HttpURLSerializationDefinition : ILookupSerializationDefinition
 	{
 		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
 		private ISerializationProcessor[] serializationProcessors = null;
@@ -65,18 +63,6 @@
 			set => formatProvider = value;
 		}
 
-		/// <inheritdoc />
-		public Type EnumAsStringAttributeType
-		{
-			get => typeof(HttpEnumStringAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type EnumAliasValueAttributeType
-		{
-			get => typeof(HttpEnumAliasAttribute);
-		}
-
 		public HttpURLSerializationDefinition()
 		{
 			// Basic set of types
@@ -98,7 +84,10 @@
 			{
 				new NullValueProcessor(this),
 				new ExactMatchProcessor(this),
-				new EnumProcessor(this),
+				new EnumProcessor(this)
+				{
+					AliasFeature = new EnumAliasFeature<HttpEnumStringAttribute, HttpEnumAliasAttribute>()
+				},
 				new PrimitiveTypeProcessor(this),
 				new DateTimeProcessor(this),
 				new VersionProcessor(this),
@@ -106,6 +95,10 @@
 				new StringProcessor(this),
 				new LookupProcessor(this),
 				new CustomObjectLookupProcessor(this, false)
+				{
+					CallbackFeature = new CallBackFeature<OnHttpURLSerializingAttribute, OnHttpURLSerializedAttribute, OnHttpURLDeserializingAttribute, OnHttpURLDeserializedAttribute>(),
+					RequiredValueFeature = new RequiredValueFeature<HttpURLRequiredAttribute>()
+				}
 			};
 
 			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>().ToArray();

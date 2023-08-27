@@ -7,10 +7,14 @@
 	/// </summary>
 	public enum XmlPrimitiveProcessingMethod
 	{
-		/// Process fields from/to attributes on the XML element.
+#pragma warning disable 0618
+		[System.Obsolete("Use `Attributes` instead.")]
 		ATTRIBUTES,
-		/// Process fields from/to child elements of the XML element.
-		ELEMENTS
+		Attributes = ATTRIBUTES,
+		[System.Obsolete("Use `Elements` instead")]
+		ELEMENTS,
+		Elements = ELEMENTS
+#pragma warning restore 0618
 	}
 
 	/// <summary>

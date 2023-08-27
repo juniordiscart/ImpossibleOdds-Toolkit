@@ -7,42 +7,35 @@
 
 	public abstract class AbstractCustomObjectProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
-		private readonly ISerializationDefinition definition = null;
-		private readonly ICallbacksSupport callbacksDefinition = null;
-
 		public AbstractCustomObjectProcessor(ISerializationDefinition definition)
 		{
-			this.definition = definition;
-			this.callbacksDefinition = (definition is ICallbacksSupport) ? definition as ICallbacksSupport : null;
+			Definition = definition;
 		}
 
 		/// <inheritdoc />
-		public ISerializationDefinition Definition
-		{
-			get => definition;
-		}
+		public ISerializationDefinition Definition { get; }
 
 		/// <summary>
 		/// Does the serialization definition supports callbacks?
 		/// </summary>
-		public bool SupportsSerializationCallbacks
-		{
-			get => callbacksDefinition != null;
-		}
+		public bool SupportsSerializationCallbacks => CallbackFeature != null;
 
 		/// <summary>
 		/// The callbacks support feature of the current serialization definition.
 		/// </summary>
-		public ICallbacksSupport CallbacksSupport
-		{
-			get => callbacksDefinition;
-		}
+		public ICallbackFeature CallbackFeature { get; set; }
 
 		/// <inheritdoc />
-		public abstract bool Serialize(object objectToSerialize, out object serializedResult);
+		public abstract object Serialize(object objectToSerialize);
 
 		/// <inheritdoc />
-		public abstract bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult);
+		public abstract object Deserialize(Type targetType, object dataToDeserialize);
+
+		/// <inheritdoc />
+		public abstract bool CanSerialize(object objectToSerialize);
+
+		/// <inheritdoc />
+		public abstract bool CanDeserialize(Type targetType, object dataToDeserialize);
 
 		/// <summary>
 		/// Let the target object know that serialization will start.
@@ -52,7 +45,7 @@
 		{
 			if (SupportsSerializationCallbacks)
 			{
-				InvokeCallback(target, CallbacksSupport.OnSerializationCallbackType);
+				InvokeCallback(target, CallbackFeature.OnSerializationAttributeType);
 			}
 		}
 
@@ -64,7 +57,7 @@
 		{
 			if (SupportsSerializationCallbacks)
 			{
-				InvokeCallback(target, CallbacksSupport.OnSerializedCallbackType);
+				InvokeCallback(target, CallbackFeature.OnSerializedAttributeType);
 			}
 		}
 
@@ -76,7 +69,7 @@
 		{
 			if (SupportsSerializationCallbacks)
 			{
-				InvokeCallback(target, CallbacksSupport.OnDeserializionCallbackType);
+				InvokeCallback(target, CallbackFeature.OnDeserializationAttributeType);
 			}
 		}
 
@@ -88,7 +81,7 @@
 		{
 			if (SupportsSerializationCallbacks)
 			{
-				InvokeCallback(target, CallbacksSupport.OnDeserializedCallbackType);
+				InvokeCallback(target, CallbackFeature.OnDeserializedAttributeType);
 			}
 		}
 
@@ -108,7 +101,7 @@
 				{
 					Type processorType = this.GetType();
 					ParameterInfo[] callbackParameters = callback.Parameters;
-					object[] callbackParams = TypeReflectionUtilities.GetParameterInvokationList(callbackParameters.Length);
+					object[] callbackParams = TypeReflectionUtilities.GetParameterInvocationList(callbackParameters.Length);
 					for (int i = 0; i < callbackParameters.Length; ++i)
 					{
 						Type parameterType = callbackParameters[i].ParameterType;
@@ -119,7 +112,7 @@
 					}
 
 					callback.Method.Invoke(target, callbackParameters);
-					TypeReflectionUtilities.ReturnParameterInvokationList(callbackParams);
+					TypeReflectionUtilities.ReturnParameterInvocationList(callbackParams);
 				}
 				else
 				{

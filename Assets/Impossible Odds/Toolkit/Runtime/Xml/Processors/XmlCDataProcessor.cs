@@ -28,12 +28,12 @@
 			binaryFormatter = new BinaryFormatter();
 		}
 
-		public bool Serialize(object objectToSerialize, out object serializedResult)
+		/// <inheritdoc />
+		public virtual object Serialize(object objectToSerialize)
 		{
 			if ((objectToSerialize == null) || (objectToSerialize is string))
 			{
-				serializedResult = objectToSerialize;
-				return true;
+				return objectToSerialize;
 			}
 
 			byte[] binaryResult = null;
@@ -53,28 +53,18 @@
 				}
 			}
 
-			serializedResult = Convert.ToBase64String(binaryResult);
-			return true;
+			return Convert.ToBase64String(binaryResult);
 		}
 
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		/// <inheritdoc />
+		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
-			targetType.ThrowIfNull(nameof(targetType));
-
-			// When the data is null and it can accept null-values, then don't bother.
-			if ((dataToDeserialize == null) && SerializationUtilities.IsNullableType(targetType))
-			{
-				deserializedResult = dataToDeserialize;
-				return true;
-			}
-
 			// If the data is a string, then either assign it directly, or convert it to a binary string.
 			if ((dataToDeserialize is string stringData))
 			{
 				if (typeof(string) == targetType)
 				{
-					deserializedResult = stringData;
-					return true;
+					return stringData;
 				}
 
 				dataToDeserialize = Convert.FromBase64String(stringData);
@@ -85,10 +75,10 @@
 			{
 				if (typeof(byte[]) == targetType)
 				{
-					deserializedResult = binaryData;
-					return true;
+					return binaryData;
 				}
 
+				object deserializedResult = null;
 				using (MemoryStream ms = new MemoryStream(binaryData))
 				{
 					lock (binaryFormatter)
@@ -102,12 +92,28 @@
 					throw new XmlException("The transformed result of type {0} could not be assigned to target type {1}.", deserializedResult.GetType().Name, targetType.Name);
 				}
 
-				return true;
+				return deserializedResult;
 			}
 			else
 			{
 				throw new XmlException("The CDATA value could not be transformed to a valid instance of type {0} for further processing.", typeof(byte[]).Name);
 			}
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanSerialize(object objectToSerialize)
+		{
+			return true;
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
+		{
+			targetType.ThrowIfNull(nameof(targetType));
+
+			return
+				((dataToDeserialize != null) || !SerializationUtilities.IsNullableType(targetType)) &&
+				((dataToDeserialize is string) || (dataToDeserialize is byte[]));
 		}
 	}
 }

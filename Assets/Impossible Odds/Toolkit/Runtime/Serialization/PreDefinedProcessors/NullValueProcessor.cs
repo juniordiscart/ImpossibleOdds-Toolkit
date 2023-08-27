@@ -22,26 +22,25 @@
 			this.definition = definition;
 		}
 
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		/// <inheritdoc />
+		public virtual object Deserialize(Type targetType, object dataToDeserialize)
+		{
+			if (!CanDeserialize(targetType, dataToDeserialize))
+			{
+				throw new SerializationException("The provided data cannot be deserialized by this processor of type {0}.", nameof(NullValueProcessor));
+			}
+
+			return
+				targetType.IsValueType ?
+				Activator.CreateInstance(targetType) :
+				null;
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
 		{
 			targetType.ThrowIfNull(nameof(targetType));
-
-			if (dataToDeserialize != null)
-			{
-				deserializedResult = null;
-				return false;
-			}
-
-			if (targetType.IsValueType)
-			{
-				deserializedResult = Activator.CreateInstance(targetType);
-			}
-			else
-			{
-				deserializedResult = null;
-			}
-
-			return true;
+			return (dataToDeserialize == null);
 		}
 	}
 }

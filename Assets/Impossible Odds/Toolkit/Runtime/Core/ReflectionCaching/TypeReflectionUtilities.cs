@@ -87,7 +87,7 @@
 		/// </summary>
 		/// <param name="length">The length of the parameter list to retrieve.</param>
 		/// <returns>An array with the required amount of slots to invoke a method.</returns>
-		public static object[] GetParameterInvokationList(int length)
+		public static object[] GetParameterInvocationList(int length)
 		{
 			if (length < 0)
 			{
@@ -110,7 +110,7 @@
 		/// Note: the parameter list will be cleared of values.
 		/// </summary>
 		/// <param name="parameterList">The parameter list to return to the pool.</param>
-		public static void ReturnParameterInvokationList(object[] parameterList)
+		public static void ReturnParameterInvocationList(object[] parameterList)
 		{
 			parameterList.ThrowIfNull(nameof(parameterList));
 

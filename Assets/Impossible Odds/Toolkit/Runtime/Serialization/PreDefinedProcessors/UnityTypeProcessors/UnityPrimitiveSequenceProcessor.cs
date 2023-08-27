@@ -22,43 +22,34 @@
 			this.definition = definition;
 		}
 
-		/// <summary>
-		/// Serializes a Unity primitive of type T to a sequence data structure.
-		/// </summary>
-		/// <param name="objectToSerialize">The object to serialize.</param>
-		/// <param name="serializedResult">The serialized result.</param>
-		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
-		public bool Serialize(object objectToSerialize, out object serializedResult)
+		/// <inheritdoc />
+		public virtual object Serialize(object objectToSerialize)
 		{
-			if ((objectToSerialize == null) || !(objectToSerialize is T dataToSerialize))
-			{
-				serializedResult = null;
-				return false;
-			}
-
-			serializedResult = Serialize(dataToSerialize);
-			return true;
+			return Serialize((T)objectToSerialize);
 		}
 
-		/// <summary>
-		/// Attempts to deserialize the object as a Unity primitive object of type T.
-		/// </summary>
-		/// <param name="targetType">The target type to deserialize the given data to.</param>
-		/// <param name="dataToDeserialize">The data to deserialize.</param>
-		/// <param name="deserializedResult">The result unto which the data is applied.</param>
-		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		/// <inheritdoc />
+		public virtual object Deserialize(Type targetType, object dataToDeserialize)
+		{
+			return Deserialize(dataToDeserialize as IList);
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanSerialize(object objectToSerialize)
+		{
+			return
+				(objectToSerialize != null) &&
+				(objectToSerialize is T);
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 
-			if ((typeof(T) != targetType) || !(dataToDeserialize is IList sequenceData))
-			{
-				deserializedResult = null;
-				return false;
-			}
-
-			deserializedResult = Deserialize(sequenceData);
-			return true;
+			return
+				(typeof(T) == targetType) &&    // Don't use AssignableFrom here, as it may trigger implicit conversions for certain types, e.g. Vector2 -> Vector3, ect.
+				(dataToDeserialize is IList);
 		}
 
 		protected abstract IList Serialize(T value);

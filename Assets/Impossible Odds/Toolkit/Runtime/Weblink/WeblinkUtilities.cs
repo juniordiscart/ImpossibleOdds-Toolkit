@@ -86,7 +86,7 @@
 
 				if (!callback.Parameters.IsNullOrEmpty())
 				{
-					object[] parameters = TypeReflectionUtilities.GetParameterInvokationList(callback.Parameters.Length);
+					object[] parameters = TypeReflectionUtilities.GetParameterInvocationList(callback.Parameters.Length);
 					for (int i = 0; i < parameters.Length; ++i)
 					{
 						Type parameterType = callback.Parameters[i].ParameterType;
@@ -109,7 +109,7 @@
 					}
 
 					callback.Method.Invoke(target, parameters);
-					TypeReflectionUtilities.ReturnParameterInvokationList(parameters);
+					TypeReflectionUtilities.ReturnParameterInvocationList(parameters);
 				}
 				else
 				{

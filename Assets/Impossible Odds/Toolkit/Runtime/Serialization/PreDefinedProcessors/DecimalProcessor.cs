@@ -19,68 +19,63 @@
 			this.definition = definition;
 		}
 
-		/// <summary>
-		/// Attempts to serialize the object as a Decimal to a supported type as defined by serialization definition.
-		/// </summary>
-		/// <param name="objectToSerialize">The object to serialize.</param>
-		/// <param name="serializedResult">The serialized object.</param>
-		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
-		public bool Serialize(object objectToSerialize, out object serializedResult)
+		/// <inheritdoc />
+		public virtual object Serialize(object objectToSerialize)
 		{
-			if ((objectToSerialize == null) || !typeof(decimal).IsAssignableFrom(objectToSerialize.GetType()))
+			if (!CanSerialize(objectToSerialize))
 			{
-				serializedResult = null;
-				return false;
+				throw new SerializationException("The provided data cannot be serialized by this processor of type {0}.", this.GetType().Name);
 			}
 
-			if (definition.SupportedTypes.Contains(typeof(decimal)))
+			// If the serialization definition supports the decimal-type, then just return already.
+			// Otherwise, try to convert it to a string value.
+			if (Definition.SupportedTypes.Contains(typeof(decimal)))
 			{
-				serializedResult = objectToSerialize;
-				return true;
+				return objectToSerialize;
 			}
-
-			string strValue = ((decimal)objectToSerialize).ToString(definition.FormatProvider);
-			if (!definition.SupportedTypes.Contains(strValue.GetType()))
+			else
 			{
-				throw new SerializationException("The converted type of a {0} type is not supported.", typeof(decimal).Name);
+				decimal value = (decimal)objectToSerialize;
+				return value.ToString();
 			}
-
-			serializedResult = strValue;
-			return true;
 		}
 
-		/// <summary>
-		/// Attempts to deserialize the object to an instance of type Decimal, if the target type is a Decimal.
-		/// </summary>
-		/// <param name="targetType">The target type to deserialize the given data.</param>
-		/// <param name="dataToDeserialize">The data deserialize and apply to the result.</param>
-		/// <param name="deserializedResult">The result unto which the data is applied.</param>
-		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		/// <inheritdoc />
+		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
-			targetType.ThrowIfNull(nameof(targetType));
-
-			if ((dataToDeserialize == null) || !typeof(decimal).IsAssignableFrom(targetType))
+			if (!CanDeserialize(targetType, dataToDeserialize))
 			{
-				deserializedResult = null;
-				return false;
+				throw new SerializationException("The provided data cannot be deserialized by this processor of type {0}.", this.GetType().Name);
 			}
 
 			if (dataToDeserialize is decimal)
 			{
-				deserializedResult = dataToDeserialize;
-				return true;
+				return dataToDeserialize;
 			}
-
-			// At this point, a conversion is needed, but all types other than string will throw an exception.
-			if (!(dataToDeserialize is string))
+			else
 			{
-				throw new SerializationException("Only values of type {0} can be used to convert to a {1} value.", typeof(string).Name, typeof(DateTime).Name);
+				return decimal.Parse(dataToDeserialize as string);
 			}
-
-			deserializedResult = decimal.Parse(dataToDeserialize as string);
-			return true;
 		}
 
+		/// <inheritdoc />
+		public virtual bool CanSerialize(object objectToSerialize)
+		{
+			return
+				(objectToSerialize != null) &&
+				(objectToSerialize is decimal) &&
+				(definition.SupportedTypes.Contains(typeof(decimal)) || definition.SupportedTypes.Contains(typeof(string)));
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
+		{
+			targetType.ThrowIfNull(nameof(targetType));
+
+			return
+				(dataToDeserialize != null) &&
+				typeof(decimal).IsAssignableFrom(targetType) &&
+				((dataToDeserialize is decimal) || (dataToDeserialize is string));
+		}
 	}
 }

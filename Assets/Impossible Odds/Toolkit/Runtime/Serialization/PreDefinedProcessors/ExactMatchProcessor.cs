@@ -19,45 +19,44 @@
 			this.definition = definition;
 		}
 
-		/// <summary>
-		/// Attempts to serialize the object to a directly supported type by the definition.
-		/// </summary>
-		/// <param name="objectToSerialize">The object to serialize.</param>
-		/// <param name="serializedResult">The serialized object.</param>
-		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
-		public bool Serialize(object objectToSerialize, out object serializedResult)
+		/// <inheritdoc />
+		public virtual object Serialize(object objectToSerialize)
 		{
-			if ((objectToSerialize == null) || !definition.SupportedTypes.Contains(objectToSerialize.GetType()))
+			if (!CanSerialize(objectToSerialize))
 			{
-				serializedResult = null;
-				return false;
+				throw new SerializationException("The provided data cannot be serialized by this processor of type {0}.", nameof(ExactMatchProcessor));
 			}
 
-			serializedResult = objectToSerialize;
-			return true;
+			return objectToSerialize;
 		}
 
-		/// <summary>
-		/// Attempts to directly assign if the target type is a match with the type of the deserialization data.
-		/// </summary>
-		/// <param name="targetType">The target type to deserialize the given data.</param>
-		/// <param name="dataToDeserialize">The data deserialize and apply to the result.</param>
-		/// <param name="deserializedResult">The result unto which the data is applied.</param>
-		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		/// <inheritdoc />
+		public virtual object Deserialize(Type targetType, object dataToDeserialize)
+		{
+			if (!CanDeserialize(targetType, dataToDeserialize))
+			{
+				throw new SerializationException("The provided data cannot be deserialized by this processor of type {0}.", nameof(ExactMatchProcessor));
+			}
+
+			return dataToDeserialize;
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanSerialize(object objectToSerialize)
+		{
+			return
+				(objectToSerialize != null) &&
+				definition.SupportedTypes.Contains(objectToSerialize.GetType());
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 
-			// If the data is null and the type can't accept nullable types, or the target type is not assignable from, then quit.
-			if (((dataToDeserialize == null) && !SerializationUtilities.IsNullableType(targetType)) ||
-				!targetType.IsAssignableFrom(dataToDeserialize.GetType()))
-			{
-				deserializedResult = null;
-				return false;
-			}
-
-			deserializedResult = dataToDeserialize;
-			return true;
+			return
+				((dataToDeserialize != null) && targetType.IsInstanceOfType(dataToDeserialize)) ||
+				((dataToDeserialize == null) && SerializationUtilities.IsNullableType(targetType));
 		}
 	}
 }

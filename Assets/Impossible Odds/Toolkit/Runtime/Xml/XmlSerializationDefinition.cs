@@ -12,142 +12,56 @@
 
 	public class XmlSerializationDefinition :
 		ISerializationDefinition,
-		ICallbacksSupport<OnXmlSerializingAttribute, OnXmlSerializedAttribute, OnXmlDeserializingAttribute, OnXmlDeserializedAttribute>,
-		ILookupTypeResolveSupport<XmlTypeAttribute>,
-		IRequiredValueSupport<XmlRequiredAttribute>,
-		IParallelProcessingSupport,
-		IEnumAliasSupport<XmlEnumStringAttribute, XmlEnumAliasAttribute>
+		ILookupTypeResolveSupport<XmlTypeAttribute>
 	{
 		public const string XmlSchemaURL = "http://www.w3.org/2001/XMLSchema-instance";
 		public const string XmlSchemaPrefix = "xsi";
 		public const string XmlTypeKey = "type";
 
-		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
-		private ISerializationProcessor[] serializationProcessors = null;
-		private IDeserializationProcessor[] deserializationProcessors = null;
-		private HashSet<Type> supportedTypes = null;
+		private readonly ISerializationProcessor[] serializationProcessors;
+		private readonly IDeserializationProcessor[] deserializationProcessors;
+		private readonly ParallelProcessingFeature parallelProcessingFeature;
 		private BinaryFormatter binaryFormatter = new BinaryFormatter();
-		private ISerializationDefinition attributeDefinition = null;
-		private ISerializationDefinition cdataDefinition = null;
-		private bool processInParallel = false;
+		private XName xmlTypeKey;
 
-		private XName xmlTypeKey = null;
 
 		/// <inheritdoc />
-		public IEnumerable<ISerializationProcessor> SerializationProcessors
-		{
-			get => serializationProcessors;
-		}
+		public IEnumerable<ISerializationProcessor> SerializationProcessors => serializationProcessors;
 
 		/// <inheritdoc />
-		public IEnumerable<IDeserializationProcessor> DeserializationProcessors
-		{
-			get => deserializationProcessors;
-		}
+		public IEnumerable<IDeserializationProcessor> DeserializationProcessors => deserializationProcessors;
 
 		/// <inheritdoc />
-		public IFormatProvider FormatProvider
-		{
-			get => formatProvider;
-			set => formatProvider = value;
-		}
+		public IFormatProvider FormatProvider { get; set; } = CultureInfo.InvariantCulture;
 
 		/// <inheritdoc />
-		public HashSet<Type> SupportedTypes
-		{
-			get => supportedTypes;
-		}
+		public HashSet<Type> SupportedTypes { get; }
 
 		/// <inheritdoc />
-		public Type OnSerializationCallbackType
-		{
-			get => typeof(OnXmlSerializingAttribute);
-		}
+		public Type TypeResolveAttribute => typeof(XmlTypeAttribute);
 
 		/// <inheritdoc />
-		public Type OnSerializedCallbackType
-		{
-			get => typeof(OnXmlSerializedAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type OnDeserializionCallbackType
-		{
-			get => typeof(OnXmlDeserializingAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type OnDeserializedCallbackType
-		{
-			get => typeof(OnXmlDeserializedAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type TypeResolveAttribute
-		{
-			get => typeof(XmlTypeAttribute);
-		}
-
-		/// <inheritdoc />
-		object ILookupTypeResolveSupport.TypeResolveKey
-		{
-			get => TypeResolveKey;
-		}
+		object ILookupTypeResolveSupport.TypeResolveKey => TypeResolveKey;
 
 		/// <summary>
 		/// The attribute name used for storing type information.
 		/// </summary>
-		public XName TypeResolveKey
-		{
-			get => xmlTypeKey;
-		}
-
-		/// <inheritdoc />
-		public Type RequiredAttributeType
-		{
-			get => typeof(XmlRequiredAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type EnumAsStringAttributeType
-		{
-			get => typeof(XmlEnumStringAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type EnumAliasValueAttributeType
-		{
-			get => typeof(XmlEnumAliasAttribute);
-		}
+		public XName TypeResolveKey => xmlTypeKey;
 
 		/// <summary>
 		/// The serialization definition used specifically for processing XML attributes.
 		/// </summary>
-		public ISerializationDefinition AttributeSerializationDefinition
-		{
-			get => attributeDefinition;
-			set => attributeDefinition = value;
-		}
+		public ISerializationDefinition AttributeSerializationDefinition { get; set; }
 
 		/// <summary>
 		/// The serialization definition used specifically for processing XML CDATA sections.
 		/// </summary>
-		public ISerializationDefinition CDataSerializationDefinition
-		{
-			get => cdataDefinition;
-			set => cdataDefinition = value;
-		}
-
-		/// <inheritdoc />
-		bool IParallelProcessingSupport.Enabled
-		{
-			get => ParallelProcessingEnabled;
-		}
+		public ISerializationDefinition CDataSerializationDefinition { get; set; }
 
 		public bool ParallelProcessingEnabled
 		{
-			get => processInParallel;
-			set => processInParallel = value;
+			get => parallelProcessingFeature.Enabled;
+			set => parallelProcessingFeature.Enabled = value;
 		}
 
 		public XmlSerializationDefinition()
@@ -156,16 +70,19 @@
 
 		public XmlSerializationDefinition(bool enableParallelProcessing)
 		{
-			this.processInParallel = enableParallelProcessing;
+			parallelProcessingFeature = new ParallelProcessingFeature()
+			{
+				Enabled = enableParallelProcessing
+			};
 
 			XmlPrimitiveProcessingMethod defaultProcessingMethod =
 #if IMPOSSIBLE_ODDS_XML_UNITY_TYPES_AS_ATTRIBUTES
-				XmlPrimitiveProcessingMethod.ATTRIBUTES;
+				XmlPrimitiveProcessingMethod.Attributes;
 #else
-				XmlPrimitiveProcessingMethod.ELEMENTS;
+				XmlPrimitiveProcessingMethod.Elements;
 #endif
 
-			supportedTypes = new HashSet<Type>()
+			SupportedTypes = new HashSet<Type>()
 			{
 				typeof(byte),
 				typeof(short),
@@ -182,7 +99,10 @@
 			{
 				new NullValueProcessor(this),
 				new ExactMatchProcessor(this),
-				new EnumProcessor(this),
+				new EnumProcessor(this)
+				{
+					AliasFeature = new EnumAliasFeature<XmlEnumStringAttribute, XmlEnumAliasAttribute>()
+				},
 				new PrimitiveTypeProcessor(this),
 				new DecimalProcessor(this),
 				new DateTimeProcessor(this),
@@ -197,9 +117,20 @@
 				new XmlQuaternionProcessor(this, defaultProcessingMethod),
 				new XmlColorProcessor(this, defaultProcessingMethod),
 				new XmlColor32Processor(this, defaultProcessingMethod),
-				new XmlLookupProcessor(this),
-				new XmlSequenceProcessor(this),
-				new XmlCustomObjectProcessor(this),
+				new XmlLookupProcessor(this)
+				{
+					ParallelProcessingFeature = parallelProcessingFeature
+				},
+				new XmlSequenceProcessor(this)
+				{
+					ParallelProcessingFeature = parallelProcessingFeature
+				},
+				new XmlCustomObjectProcessor(this)
+				{
+					CallbackFeature = new CallBackFeature<OnXmlSerializingAttribute, OnXmlSerializedAttribute, OnXmlDeserializingAttribute, OnXmlDeserializedAttribute>(),
+					RequiredValueFeature = new RequiredValueFeature<XmlRequiredAttribute>(),
+					ParallelProcessingFeature = parallelProcessingFeature
+				},
 			};
 
 			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>().ToArray();
@@ -207,8 +138,8 @@
 
 			xmlTypeKey = XNamespace.Get(XmlSchemaURL) + XmlTypeKey;
 
-			attributeDefinition = new XmlAttributeSerializationDefinition();
-			cdataDefinition = new XmlCDataSerializationDefinition();
+			AttributeSerializationDefinition = new XmlAttributeSerializationDefinition();
+			CDataSerializationDefinition = new XmlCDataSerializationDefinition();
 		}
 
 		/// <summary>
@@ -217,7 +148,7 @@
 		/// <param name="preferredProcessingMethod">The preferred processing method.</param>
 		public void UpdateUnityPrimitiveRepresentation(XmlPrimitiveProcessingMethod preferredProcessingMethod)
 		{
-			foreach (IProcessor processor in serializationProcessors)
+			foreach (ISerializationProcessor processor in serializationProcessors)
 			{
 				if (processor is IUnityPrimitiveXmlSwitchProcessor switchProcessor)
 				{
@@ -225,7 +156,7 @@
 				}
 			}
 
-			foreach (IProcessor processor in deserializationProcessors)
+			foreach (IDeserializationProcessor processor in deserializationProcessors)
 			{
 				if (processor is IUnityPrimitiveXmlSwitchProcessor switchProcessor)
 				{

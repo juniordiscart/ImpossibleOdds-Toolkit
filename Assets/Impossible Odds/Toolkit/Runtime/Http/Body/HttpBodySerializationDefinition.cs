@@ -13,9 +13,7 @@
 	/// </summary>
 	public class HttpBodySerializationDefinition :
 		IndexAndLookupDefinition<HttpBodyArrayAttribute, HttpBodyIndexAttribute, ArrayList, HttpBodyObjectAttribute, HttpBodyFieldAttribute, Dictionary<string, object>>,
-		IEnumAliasSupport<HttpEnumStringAttribute, HttpEnumAliasAttribute>,
-		ILookupTypeResolveSupport<HttpTypeAttribute>,
-		IRequiredValueSupport<HttpBodyRequiredAttribute>
+		ILookupTypeResolveSupport<HttpTypeAttribute>
 	{
 		private readonly ISerializationProcessor[] serializationProcessors = null;
 		private readonly IDeserializationProcessor[] deserializationProcessors = null;
@@ -63,31 +61,13 @@
 			}
 		}
 
-		/// <inheritdoc />
-		public Type EnumAsStringAttributeType
-		{
-			get => typeof(HttpEnumStringAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type EnumAliasValueAttributeType
-		{
-			get => typeof(HttpEnumAliasAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type RequiredAttributeType
-		{
-			get => typeof(HttpBodyRequiredAttribute);
-		}
-
 		public HttpBodySerializationDefinition()
 		{
 			PrimitiveProcessingMethod defaultProcessingMethod =
 #if IMPOSSIBLE_ODDS_JSON_UNITY_TYPES_AS_ARRAY
-			PrimitiveProcessingMethod.SEQUENCE;
+			PrimitiveProcessingMethod.Sequence;
 #else
-			PrimitiveProcessingMethod.LOOKUP;
+			PrimitiveProcessingMethod.Lookup;
 #endif
 
 			// Basic set of types
@@ -109,7 +89,10 @@
 			{
 				new NullValueProcessor(this),
 				new ExactMatchProcessor(this),
-				new EnumProcessor(this),
+				new EnumProcessor(this)
+				{
+					AliasFeature = new EnumAliasFeature<HttpEnumStringAttribute, HttpEnumAliasAttribute>()
+				},
 				new PrimitiveTypeProcessor(this),
 				new DateTimeProcessor(this),
 				new VersionProcessor(this),
@@ -125,8 +108,15 @@
 				new Color32Processor(this, this, defaultProcessingMethod),
 				new LookupProcessor(this),
 				new SequenceProcessor(this),
-				new CustomObjectSequenceProcessor(this),
-				new CustomObjectLookupProcessor(this),
+				new CustomObjectSequenceProcessor(this)
+				{
+					CallbackFeature = new CallBackFeature<OnHttpBodySerializingAttribute, OnHttpBodySerializedAttribute, OnHttpBodyDeserializingAttribute, OnHttpBodyDeserializedAttribute>()
+				},
+				new CustomObjectLookupProcessor(this)
+				{
+					CallbackFeature = new CallBackFeature<OnHttpBodySerializingAttribute, OnHttpBodySerializedAttribute, OnHttpBodyDeserializingAttribute, OnHttpBodyDeserializedAttribute>(),
+					RequiredValueFeature = new RequiredValueFeature<HttpBodyRequiredAttribute>()
+				}
 			};
 
 			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>().ToArray();
@@ -151,7 +141,7 @@
 		/// <param name="preferredProcessingMethod">The preferred processing method.</param>
 		public void UpdateUnityPrimitiveRepresentation(PrimitiveProcessingMethod preferredProcessingMethod)
 		{
-			foreach (IProcessor processor in serializationProcessors)
+			foreach (ISerializationProcessor processor in serializationProcessors)
 			{
 				if (processor is IUnityPrimitiveSwitchProcessor switchProcessor)
 				{
@@ -159,7 +149,7 @@
 				}
 			}
 
-			foreach (IProcessor processor in deserializationProcessors)
+			foreach (IDeserializationProcessor processor in deserializationProcessors)
 			{
 				if (processor is IUnityPrimitiveSwitchProcessor switchProcessor)
 				{

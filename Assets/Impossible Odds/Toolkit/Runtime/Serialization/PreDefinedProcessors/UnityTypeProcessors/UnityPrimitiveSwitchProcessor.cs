@@ -33,9 +33,9 @@
 			{
 				switch (processingMethod)
 				{
-					case PrimitiveProcessingMethod.SEQUENCE:
+					case PrimitiveProcessingMethod.Sequence:
 						return sequenceProcessor.Definition;
-					case PrimitiveProcessingMethod.LOOKUP:
+					case PrimitiveProcessingMethod.Lookup:
 						return lookupProcessor.Definition;
 					default:
 						throw new SerializationException("Unsupported processing method ('{0}') to retrieve the serialization definition for.", processingMethod.ToString());
@@ -53,34 +53,71 @@
 			this.processingMethod = preferredProcessingMethod;
 		}
 
-		public bool Serialize(object objectToSerialize, out object serializedResult)
+		/// <inheritdoc />
+		public virtual object Serialize(object objectToSerialize)
 		{
 			switch (processingMethod)
 			{
-				case PrimitiveProcessingMethod.SEQUENCE:
-					return sequenceProcessor.Serialize(objectToSerialize, out serializedResult);
-				case PrimitiveProcessingMethod.LOOKUP:
-					return lookupProcessor.Serialize(objectToSerialize, out serializedResult);
+				case PrimitiveProcessingMethod.Sequence:
+					return sequenceProcessor.Serialize(objectToSerialize);
+				case PrimitiveProcessingMethod.Lookup:
+					return lookupProcessor.Serialize(objectToSerialize);
 				default:
-					throw new SerializationException("Unsupported processsing method ('{0}') to serialize the value.", processingMethod.ToString());
+					throw new SerializationException("Unsupported processing method ('{0}') to serialize the value.", processingMethod.ToString());
 			}
 		}
 
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		/// <inheritdoc />
+		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
+			// Deserialization does not depend on the processing method, but will pick the
+			// appropriate method for the provided data type.
 			if (dataToDeserialize is IDictionary)
 			{
-				return lookupProcessor.Deserialize(targetType, dataToDeserialize, out deserializedResult);
+				return lookupProcessor.Deserialize(targetType, dataToDeserialize);
 			}
 			else if (dataToDeserialize is IList)
 			{
-				return sequenceProcessor.Deserialize(targetType, dataToDeserialize, out deserializedResult);
+				return sequenceProcessor.Deserialize(targetType, dataToDeserialize);
 			}
-			else
+
+			throw new SerializationException("Unsupported data of type {0} to deserialize into an instance of type {1}.", dataToDeserialize.GetType().Name, typeof(TPrimitive).Name);
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanSerialize(object objectToSerialize)
+		{
+			switch(processingMethod)
 			{
-				deserializedResult = null;
+				case PrimitiveProcessingMethod.Sequence:
+					return SequenceProcessor.CanSerialize(objectToSerialize);
+				case PrimitiveProcessingMethod.Lookup:
+					return LookupProcessor.CanSerialize(objectToSerialize);
+				default:
+					return false;
+			}
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
+		{
+			targetType.ThrowIfNull(nameof(targetType));
+
+			if (dataToDeserialize == null)
+			{
 				return false;
 			}
+
+			switch(processingMethod)
+			{
+				case PrimitiveProcessingMethod.Sequence:
+					return SequenceProcessor.CanDeserialize(targetType, dataToDeserialize);
+				case PrimitiveProcessingMethod.Lookup:
+					return LookupProcessor.CanDeserialize(targetType, dataToDeserialize);
+				default:
+					return false;
+			}
+
 		}
 	}
 }

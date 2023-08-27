@@ -5,6 +5,10 @@
 
 	public class XmlVector3AttributesProcessor : UnityPrimitiveXmlAttributesProcessor<Vector3>
 	{
+		private const string X = "x";
+		private const string Y = "y";
+		private const string Z = "z";
+
 		public XmlVector3AttributesProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
@@ -12,24 +16,41 @@
 		protected override XElement Serialize(Vector3 value)
 		{
 			XElement xmlElement = new XElement(string.Empty);
-			xmlElement.SetAttributeValue("x", value.x);
-			xmlElement.SetAttributeValue("y", value.y);
-			xmlElement.SetAttributeValue("z", value.z);
+			xmlElement.SetAttributeValue(X, value.x);
+			xmlElement.SetAttributeValue(Y, value.y);
+			xmlElement.SetAttributeValue(Z, value.z);
 			return xmlElement;
 		}
 
 		protected override Vector3 Deserialize(XElement xmlData)
 		{
 			return new Vector3(
-				float.Parse(xmlData.Attribute("x").Value),
-				float.Parse(xmlData.Attribute("y").Value),
-				float.Parse(xmlData.Attribute("z").Value)
+				float.Parse(xmlData.Attribute(X).Value),
+				float.Parse(xmlData.Attribute(Y).Value),
+				float.Parse(xmlData.Attribute(Z).Value)
 			);
+		}
+
+		protected override bool CanSerialize(Vector3 primitive)
+		{
+			return true;
+		}
+
+		protected override bool CanDeserialize(XElement element)
+		{
+			return
+				(element.Attribute(X) != null) &&
+				(element.Attribute(Y) != null) &&
+				(element.Attribute(Z) != null);
 		}
 	}
 
 	public class XmlVector3ElementsProcessor : UnityPrimitiveXmlElementsProcessor<Vector3>
 	{
+		private const string X = "x";
+		private const string Y = "y";
+		private const string Z = "z";
+
 		public XmlVector3ElementsProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
@@ -37,9 +58,9 @@
 		protected override XElement Serialize(Vector3 value)
 		{
 			XElement xElement = new XElement(string.Empty);
-			xElement.Add(new XElement("x", value.x));
-			xElement.Add(new XElement("y", value.y));
-			xElement.Add(new XElement("z", value.z));
+			xElement.Add(new XElement(X, value.x));
+			xElement.Add(new XElement(Y, value.y));
+			xElement.Add(new XElement(Z, value.z));
 
 			return xElement;
 		}
@@ -47,10 +68,23 @@
 		protected override Vector3 Deserialize(XElement xmlData)
 		{
 			return new Vector3(
-				float.Parse(xmlData.Element("x").Value),
-				float.Parse(xmlData.Element("y").Value),
-				float.Parse(xmlData.Element("z").Value)
+				float.Parse(xmlData.Element(X).Value),
+				float.Parse(xmlData.Element(Y).Value),
+				float.Parse(xmlData.Element(Z).Value)
 			);
+		}
+
+		protected override bool CanSerialize(Vector3 primitive)
+		{
+			return true;
+		}
+
+		protected override bool CanDeserialize(XElement element)
+		{
+			return
+				(element.Element(X) != null) &&
+				(element.Element(Y) != null) &&
+				(element.Element(Z) != null);
 		}
 	}
 

@@ -115,10 +115,10 @@
 			{
 				MemberInjectionValue<ConstructorInfo> constructorInfo = typeInfo.InjectableConstructors.First(c => c.Attribute.IsInjectionIdDefined(string.Empty));
 				ParameterInfo[] parameterInfo = constructorInfo.Member.GetParameters();
-				object[] parameters = TypeReflectionUtilities.GetParameterInvokationList(parameterInfo.Length);
+				object[] parameters = TypeReflectionUtilities.GetParameterInvocationList(parameterInfo.Length);
 				FillParameterInjectionList(parameterInfo, parameters, container);
 				instance = constructorInfo.Member.Invoke(parameters);
-				TypeReflectionUtilities.ReturnParameterInvokationList(parameters);
+				TypeReflectionUtilities.ReturnParameterInvocationList(parameters);
 			}
 			else
 			{
@@ -395,18 +395,18 @@
 						if (isStaticInjection && method.Member.IsStatic)
 						{
 							ParameterInfo[] parameterInfo = method.Member.GetParameters();
-							object[] parameters = TypeReflectionUtilities.GetParameterInvokationList(parameterInfo.Length);
+							object[] parameters = TypeReflectionUtilities.GetParameterInvocationList(parameterInfo.Length);
 							FillParameterInjectionList(parameterInfo, parameters, container);
 							method.Member.Invoke(null, parameters);
-							TypeReflectionUtilities.ReturnParameterInvokationList(parameters);
+							TypeReflectionUtilities.ReturnParameterInvocationList(parameters);
 						}
 						else if (!isStaticInjection && !method.Member.IsStatic)
 						{
 							ParameterInfo[] parameterInfo = method.Member.GetParameters();
-							object[] parameters = TypeReflectionUtilities.GetParameterInvokationList(parameterInfo.Length);
+							object[] parameters = TypeReflectionUtilities.GetParameterInvocationList(parameterInfo.Length);
 							FillParameterInjectionList(parameterInfo, parameters, container);
 							method.Member.Invoke(objToInject, parameters);
-							TypeReflectionUtilities.ReturnParameterInvokationList(parameters);
+							TypeReflectionUtilities.ReturnParameterInvocationList(parameters);
 						}
 					}
 				}

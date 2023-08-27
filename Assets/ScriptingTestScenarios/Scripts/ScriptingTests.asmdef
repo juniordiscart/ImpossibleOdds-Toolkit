@@ -1,0 +1,26 @@
+{
+    "name": "ScriptingTests",
+    "references": [
+        "ImpossibleOdds.Toolkit.Runtime",
+        "ImpossibleOdds.Addressables",
+        "ImpossibleOdds.Core",
+        "ImpossibleOdds.DependencyInjection",
+        "ImpossibleOdds.Http",
+        "ImpossibleOdds.Json",
+        "ImpossibleOdds.Photon.WebRpc",
+        "ImpossibleOdds.Runnables",
+        "ImpossibleOdds.Serialization",
+        "ImpossibleOdds.StateMachines",
+        "ImpossibleOdds.Weblink",
+        "ImpossibleOdds.Xml"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

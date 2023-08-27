@@ -19,31 +19,28 @@
 			this.definition = definition;
 		}
 
-		/// <summary>
-		/// Attempts to deserialize a string value to a string or to a system supported type using the System.Convert method.
-		/// </summary>
-		/// <param name="targetType">The target type to deserialize the given data.</param>
-		/// <param name="dataToDeserialize">The data deserialize and apply to the result.</param>
-		/// <param name="deserializedResult">The result unto which the data is applied.</param>
-		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		/// <inheritdoc />
+		public virtual object Deserialize(Type targetType, object dataToDeserialize)
+		{
+			if (!CanDeserialize(targetType, dataToDeserialize))
+			{
+				throw new SerializationException("The provided data cannot be deserialized by this processor of type {0}.", nameof(StringProcessor));
+			}
+
+			return
+				dataToDeserialize is string ?
+					dataToDeserialize :
+					Convert.ChangeType(dataToDeserialize, targetType, definition.FormatProvider);
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 
-			if (!typeof(string).IsAssignableFrom(targetType))
-			{
-				deserializedResult = null;
-				return false;
-			}
-
-			if (dataToDeserialize is string)
-			{
-				deserializedResult = dataToDeserialize;
-				return true;
-			}
-
-			deserializedResult = Convert.ChangeType(dataToDeserialize, targetType, definition.FormatProvider);
-			return true;
+			return
+				typeof(string).IsAssignableFrom(targetType) &&
+				((dataToDeserialize is string) || (dataToDeserialize is IConvertible));
 		}
 	}
 }

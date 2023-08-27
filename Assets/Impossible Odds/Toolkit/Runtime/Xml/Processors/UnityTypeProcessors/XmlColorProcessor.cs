@@ -5,6 +5,11 @@
 
 	public class XmlColorAttributesProcessor : UnityPrimitiveXmlAttributesProcessor<Color>
 	{
+		private const string R = "r";
+		private const string G = "g";
+		private const string B = "b";
+		private const string A = "a";
+
 		public XmlColorAttributesProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
@@ -12,26 +17,45 @@
 		protected override XElement Serialize(Color value)
 		{
 			XElement xmlElement = new XElement(string.Empty);
-			xmlElement.SetAttributeValue("r", value.r);
-			xmlElement.SetAttributeValue("g", value.g);
-			xmlElement.SetAttributeValue("b", value.b);
-			xmlElement.SetAttributeValue("a", value.a);
+			xmlElement.SetAttributeValue(R, value.r);
+			xmlElement.SetAttributeValue(G, value.g);
+			xmlElement.SetAttributeValue(B, value.b);
+			xmlElement.SetAttributeValue(A, value.a);
 			return xmlElement;
 		}
 
 		protected override Color Deserialize(XElement xmlData)
 		{
 			return new Color(
-				float.Parse(xmlData.Attribute("r").Value),
-				float.Parse(xmlData.Attribute("g").Value),
-				float.Parse(xmlData.Attribute("b").Value),
-				float.Parse(xmlData.Attribute("a").Value)
+				float.Parse(xmlData.Attribute(R).Value),
+				float.Parse(xmlData.Attribute(G).Value),
+				float.Parse(xmlData.Attribute(B).Value),
+				float.Parse(xmlData.Attribute(A).Value)
 			);
+		}
+
+		protected override bool CanSerialize(Color primitive)
+		{
+			return true;
+		}
+
+		protected override bool CanDeserialize(XElement element)
+		{
+			return
+				(element.Attribute(R) != null) &&
+				(element.Attribute(G) != null) &&
+				(element.Attribute(B) != null) &&
+				(element.Attribute(A) != null);
 		}
 	}
 
 	public class XmlColorElementsProcessor : UnityPrimitiveXmlElementsProcessor<Color>
 	{
+		private const string R = "r";
+		private const string G = "g";
+		private const string B = "b";
+		private const string A = "a";
+
 		public XmlColorElementsProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
@@ -39,10 +63,10 @@
 		protected override XElement Serialize(Color value)
 		{
 			XElement xElement = new XElement(string.Empty);
-			xElement.Add(new XElement("r", value.r));
-			xElement.Add(new XElement("g", value.g));
-			xElement.Add(new XElement("b", value.b));
-			xElement.Add(new XElement("a", value.a));
+			xElement.Add(new XElement(R, value.r));
+			xElement.Add(new XElement(G, value.g));
+			xElement.Add(new XElement(B, value.b));
+			xElement.Add(new XElement(A, value.a));
 
 			return xElement;
 		}
@@ -50,11 +74,25 @@
 		protected override Color Deserialize(XElement xmlData)
 		{
 			return new Color(
-				float.Parse(xmlData.Element("r").Value),
-				float.Parse(xmlData.Element("g").Value),
-				float.Parse(xmlData.Element("b").Value),
-				float.Parse(xmlData.Element("a").Value)
+				float.Parse(xmlData.Element(R).Value),
+				float.Parse(xmlData.Element(G).Value),
+				float.Parse(xmlData.Element(B).Value),
+				float.Parse(xmlData.Element(A).Value)
 			);
+		}
+
+		protected override bool CanSerialize(Color primitive)
+		{
+			return true;
+		}
+
+		protected override bool CanDeserialize(XElement element)
+		{
+			return
+				(element.Element(R) != null) &&
+				(element.Element(G) != null) &&
+				(element.Element(B) != null) &&
+				(element.Element(A) != null);
 		}
 	}
 

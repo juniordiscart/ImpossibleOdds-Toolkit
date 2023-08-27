@@ -20,69 +20,56 @@ namespace ImpossibleOdds.Serialization.Processors
 			this.definition = definition;
 		}
 
-		/// <summary>
-		/// Attempt to serialize the object as a Version value.
-		/// </summary>
-		/// <param name="objectToSerialize">The object to serialize.</param>
-		/// <param name="serializedResult">The serialized object.</param>
-		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
-		public bool Serialize(object objectToSerialize, out object serializedResult)
+		/// <inheritdoc />
+		public virtual object Serialize(object objectToSerialize)
 		{
-			if ((objectToSerialize == null) || !typeof(Version).IsAssignableFrom(objectToSerialize.GetType()))
+			if (!CanSerialize(objectToSerialize))
 			{
-				serializedResult = null;
-				return false;
+				throw new SerializationException("The provided data cannot be serialized by this processor of type {0}.", nameof(VersionProcessor));
 			}
 
+			// If the serialization definition supports the Version-type, then just return already.
+			// Otherwise, try to convert it to a string value.
 			if (Definition.SupportedTypes.Contains(typeof(Version)))
 			{
-				serializedResult = objectToSerialize;
-				return true;
+				return objectToSerialize;
 			}
-
-			if (!Definition.SupportedTypes.Contains(typeof(string)))
+			else
 			{
-				throw new SerializationException("The converted type of a {0} type is not supported.", typeof(Version).Name);
+				Version value = (Version)objectToSerialize;
+				return value.ToString();
 			}
-
-			Version value = (Version)objectToSerialize;
-			string strVersion = value.ToString();
-
-			serializedResult = strVersion;
-			return true;
 		}
 
-		/// <summary>
-		/// Attempt to deserialize the object to a Version value.
-		/// </summary>
-		/// <param name="targetType">The target type to deserialize the given data.</param>
-		/// <param name="dataToDeserialize">The data deserialize and apply to the result.</param>
-		/// <param name="deserializedResult">The result unto which the data is applied.</param>
-		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		/// <inheritdoc />
+		public virtual object Deserialize(Type targetType, object dataToDeserialize)
+		{
+			if (!CanDeserialize(targetType, dataToDeserialize))
+			{
+				throw new SerializationException("The provided data cannot be deserialized by this processor of type {0}.", nameof(VersionProcessor));
+			}
+
+			return dataToDeserialize is Version ? dataToDeserialize : Version.Parse(dataToDeserialize as string);
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanSerialize(object objectToSerialize)
+		{
+			return
+				(objectToSerialize != null) &&
+				(objectToSerialize is Version) &&
+				(definition.SupportedTypes.Contains(typeof(Version)) || definition.SupportedTypes.Contains(typeof(string)));
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 
-			if ((dataToDeserialize == null) || !typeof(Version).IsAssignableFrom(targetType))
-			{
-				deserializedResult = null;
-				return false;
-			}
-
-			if (dataToDeserialize is Version)
-			{
-				deserializedResult = dataToDeserialize;
-				return true;
-			}
-
-			// At this point, a conversion is needed, but all types other than string will throw an exception.
-			if (!(dataToDeserialize is string))
-			{
-				throw new SerializationException("Only values of type {0} can be used to convert to a {1} value.", typeof(string).Name, typeof(Version).Name);
-			}
-
-			deserializedResult = Version.Parse(dataToDeserialize as string);
-			return true;
+			return
+				(dataToDeserialize != null) &&
+				typeof(Version).IsAssignableFrom(targetType) &&
+				((dataToDeserialize is Version) || (dataToDeserialize is string));
 		}
 	}
 }

@@ -36,67 +36,62 @@ namespace ImpossibleOdds.Serialization.Processors
 			Format = format;
 		}
 
-		/// <summary>
-		/// Attempt to serialize the object as a Guid value.
-		/// </summary>
-		/// <param name="objectToSerialize">The object to serialize.</param>
-		/// <param name="serializedResult">The serialized object.</param>
-		/// <returns>True if the serialization is compatible and accepted, false otherwise.</returns>
-		public bool Serialize(object objectToSerialize, out object serializedResult)
+		/// <inheritdoc />
+		public virtual object Serialize(object objectToSerialize)
 		{
-			if ((objectToSerialize == null) || !typeof(Guid).IsAssignableFrom(objectToSerialize.GetType()))
+			if (!CanSerialize(objectToSerialize))
 			{
-				serializedResult = null;
-				return false;
+				throw new SerializationException("The provided data cannot be serialized by this processor of type {0}.", this.GetType().Name);
 			}
 
+			// If the serialization definition supports the Guid-type, then just return already.
+			// Otherwise, try to convert it to a string value.
 			if (Definition.SupportedTypes.Contains(typeof(Guid)))
 			{
-				serializedResult = objectToSerialize;
-				return true;
+				return objectToSerialize;
 			}
-
-			if (!Definition.SupportedTypes.Contains(typeof(string)))
+			else
 			{
-				throw new SerializationException("The converted type of a {0} type is not supported.", typeof(Guid).Name);
+				return ((Guid)objectToSerialize).ToString(Format);
 			}
-
-			Guid guid = (Guid)objectToSerialize;
-			serializedResult = guid.ToString(Format);
-			return true;
 		}
 
-		/// <summary>
-		/// Attempt to deserialize the object to a Guid value.
-		/// </summary>
-		/// <param name="targetType">The target type to deserialize the given data.</param>
-		/// <param name="dataToDeserialize">The data deserialize and apply to the result.</param>
-		/// <param name="deserializedResult">The result unto which the data is applied.</param>
-		/// <returns>True if deserialization is compatible and accepted, false otherwise.</returns>
-		public bool Deserialize(Type targetType, object dataToDeserialize, out object deserializedResult)
+		/// <inheritdoc />
+		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
-			targetType.ThrowIfNull(nameof(targetType));
-
-			if ((dataToDeserialize == null) || !typeof(Guid).IsAssignableFrom(targetType))
+			if (!CanDeserialize(targetType, dataToDeserialize))
 			{
-				deserializedResult = null;
-				return false;
+				throw new SerializationException("The provided data cannot be deserialized by this processor of type {0}.", this.GetType().Name);
 			}
 
 			if (dataToDeserialize is Guid)
 			{
-				deserializedResult = dataToDeserialize;
-				return true;
+				return dataToDeserialize;
 			}
-
-			// At this point, a conversion is needed, but all types other than string will throw an exception.
-			if (!(dataToDeserialize is string))
+			else
 			{
-				throw new SerializationException("Only values of type {0} can be used to convert to a {1} value.", typeof(string).Name, typeof(Guid).Name);
+				return Guid.Parse(dataToDeserialize as string);
 			}
+		}
 
-			deserializedResult = Guid.Parse(dataToDeserialize as string);
-			return true;
+		/// <inheritdoc />
+		public virtual bool CanSerialize(object objectToSerialize)
+		{
+			return
+				(objectToSerialize != null) &&
+				(objectToSerialize is Guid) &&
+				(definition.SupportedTypes.Contains(typeof(Guid)) || definition.SupportedTypes.Contains(typeof(string)));
+		}
+
+		/// <inheritdoc />
+		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
+		{
+			targetType.ThrowIfNull(nameof(targetType));
+			
+			return
+				(dataToDeserialize != null) &&
+				typeof(Guid).IsAssignableFrom(targetType) &&
+				((dataToDeserialize is Guid) || (dataToDeserialize is string));
 		}
 	}
 }

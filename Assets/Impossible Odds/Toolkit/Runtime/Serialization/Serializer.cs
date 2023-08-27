@@ -162,8 +162,9 @@
 		{
 			foreach (ISerializationProcessor processor in processors)
 			{
-				if (processor.Serialize(objectToSerialize, out result))
+				if (processor.CanSerialize(objectToSerialize))
 				{
+					result = processor.Serialize(objectToSerialize);
 					return true;
 				}
 			}
@@ -176,8 +177,9 @@
 		{
 			foreach (ISerializationProcessor processor in processors)
 			{
-				if (processor.Serialize(objectToSerialize, out result))
+				if (processor.CanSerialize(objectToSerialize))
 				{
+					result = processor.Serialize(objectToSerialize);
 					return true;
 				}
 			}
@@ -190,8 +192,9 @@
 		{
 			foreach (ISerializationProcessor processor in processors)
 			{
-				if (processor.Serialize(objectToSerialize, out result))
+				if (processor.CanSerialize(objectToSerialize))
 				{
+					result = processor.Serialize(objectToSerialize);
 					return true;
 				}
 			}
@@ -204,8 +207,9 @@
 		{
 			foreach (IDeserializationProcessor processor in processors)
 			{
-				if (processor.Deserialize(targetType, dataToDeserialize, out result))
+				if (processor.CanDeserialize(targetType, dataToDeserialize))
 				{
+					result = processor.Deserialize(targetType, dataToDeserialize);
 					return true;
 				}
 			}
@@ -218,8 +222,9 @@
 		{
 			foreach (IDeserializationProcessor processor in processors)
 			{
-				if (processor.Deserialize(targetType, dataToDeserialize, out result))
+				if (processor.CanDeserialize(targetType, dataToDeserialize))
 				{
+					result = processor.Deserialize(targetType, dataToDeserialize);
 					return true;
 				}
 			}
@@ -232,8 +237,9 @@
 		{
 			foreach (IDeserializationProcessor processor in processors)
 			{
-				if (processor.Deserialize(targetType, dataToDeserialize, out result))
+				if (processor.CanDeserialize(targetType, dataToDeserialize))
 				{
+					result = processor.Deserialize(targetType, dataToDeserialize);
 					return true;
 				}
 			}
@@ -247,8 +253,9 @@
 			foreach (IDeserializationProcessor processor in processors)
 			{
 				if ((processor is IDeserializationToTargetProcessor toTargetProcessor) &&
-					toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize))
+					toTargetProcessor.CanDeserialize(deserializationTarget.GetType(), dataToDeserialize))
 				{
+					toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize);
 					return true;
 				}
 			}
@@ -261,8 +268,9 @@
 			foreach (IDeserializationProcessor processor in processors)
 			{
 				if ((processor is IDeserializationToTargetProcessor toTargetProcessor) &&
-					toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize))
+					toTargetProcessor.CanDeserialize(deserializationTarget.GetType(), dataToDeserialize))
 				{
+					toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize);
 					return true;
 				}
 			}
@@ -275,8 +283,9 @@
 			foreach (IDeserializationProcessor processor in processors)
 			{
 				if ((processor is IDeserializationToTargetProcessor toTargetProcessor) &&
-					toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize))
+					toTargetProcessor.CanDeserialize(deserializationTarget.GetType(), dataToDeserialize))
 				{
+					toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize);
 					return true;
 				}
 			}

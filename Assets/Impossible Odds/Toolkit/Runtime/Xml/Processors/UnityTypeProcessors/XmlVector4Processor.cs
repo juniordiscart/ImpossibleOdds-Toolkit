@@ -5,6 +5,11 @@
 
 	public class XmlVector4AttributesProcessor : UnityPrimitiveXmlAttributesProcessor<Vector4>
 	{
+		private const string X = "x";
+		private const string Y = "y";
+		private const string Z = "z";
+		private const string W = "w";
+
 		public XmlVector4AttributesProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
@@ -12,26 +17,45 @@
 		protected override XElement Serialize(Vector4 value)
 		{
 			XElement xmlElement = new XElement(string.Empty);
-			xmlElement.SetAttributeValue("x", value.x);
-			xmlElement.SetAttributeValue("y", value.y);
-			xmlElement.SetAttributeValue("z", value.z);
-			xmlElement.SetAttributeValue("w", value.w);
+			xmlElement.SetAttributeValue(X, value.x);
+			xmlElement.SetAttributeValue(Y, value.y);
+			xmlElement.SetAttributeValue(Z, value.z);
+			xmlElement.SetAttributeValue(W, value.w);
 			return xmlElement;
 		}
 
 		protected override Vector4 Deserialize(XElement xmlData)
 		{
 			return new Vector4(
-				float.Parse(xmlData.Attribute("x").Value),
-				float.Parse(xmlData.Attribute("y").Value),
-				float.Parse(xmlData.Attribute("z").Value),
-				float.Parse(xmlData.Attribute("w").Value)
+				float.Parse(xmlData.Attribute(X).Value),
+				float.Parse(xmlData.Attribute(Y).Value),
+				float.Parse(xmlData.Attribute(Z).Value),
+				float.Parse(xmlData.Attribute(W).Value)
 			);
+		}
+
+		protected override bool CanSerialize(Vector4 primitive)
+		{
+			return true;
+		}
+
+		protected override bool CanDeserialize(XElement element)
+		{
+			return
+				(element.Attribute(X) != null) &&
+				(element.Attribute(Y) != null) &&
+				(element.Attribute(Z) != null) &&
+				(element.Attribute(W) != null);
 		}
 	}
 
 	public class XmlVector4ElementsProcessor : UnityPrimitiveXmlElementsProcessor<Vector4>
 	{
+		private const string X = "x";
+		private const string Y = "y";
+		private const string Z = "z";
+		private const string W = "w";
+
 		public XmlVector4ElementsProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
@@ -39,10 +63,10 @@
 		protected override XElement Serialize(Vector4 value)
 		{
 			XElement xElement = new XElement(string.Empty);
-			xElement.Add(new XElement("x", value.x));
-			xElement.Add(new XElement("y", value.y));
-			xElement.Add(new XElement("z", value.z));
-			xElement.Add(new XElement("w", value.w));
+			xElement.Add(new XElement(X, value.x));
+			xElement.Add(new XElement(Y, value.y));
+			xElement.Add(new XElement(Z, value.z));
+			xElement.Add(new XElement(W, value.w));
 
 			return xElement;
 		}
@@ -50,11 +74,25 @@
 		protected override Vector4 Deserialize(XElement xmlData)
 		{
 			return new Vector4(
-				float.Parse(xmlData.Element("x").Value),
-				float.Parse(xmlData.Element("y").Value),
-				float.Parse(xmlData.Element("z").Value),
-				float.Parse(xmlData.Element("w").Value)
+				float.Parse(xmlData.Element(X).Value),
+				float.Parse(xmlData.Element(Y).Value),
+				float.Parse(xmlData.Element(Z).Value),
+				float.Parse(xmlData.Element(W).Value)
 			);
+		}
+
+		protected override bool CanSerialize(Vector4 primitive)
+		{
+			return true;
+		}
+
+		protected override bool CanDeserialize(XElement element)
+		{
+			return
+				(element.Element(X) != null) &&
+				(element.Element(Y) != null) &&
+				(element.Element(Z) != null) &&
+				(element.Element(W) != null);
 		}
 	}
 

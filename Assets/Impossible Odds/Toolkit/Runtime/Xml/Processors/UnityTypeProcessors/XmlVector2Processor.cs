@@ -5,6 +5,9 @@
 
 	public class XmlVector2AttributesProcessor : UnityPrimitiveXmlAttributesProcessor<Vector2>
 	{
+		private const string X = "x";
+		private const string Y = "y";
+
 		public XmlVector2AttributesProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
@@ -12,22 +15,37 @@
 		protected override XElement Serialize(Vector2 value)
 		{
 			XElement xmlElement = new XElement(string.Empty);
-			xmlElement.SetAttributeValue("x", value.x);
-			xmlElement.SetAttributeValue("y", value.y);
+			xmlElement.SetAttributeValue(X, value.x);
+			xmlElement.SetAttributeValue(Y, value.y);
 			return xmlElement;
 		}
 
 		protected override Vector2 Deserialize(XElement xmlData)
 		{
 			return new Vector2(
-				float.Parse(xmlData.Attribute("x").Value),
-				float.Parse(xmlData.Attribute("y").Value)
+				float.Parse(xmlData.Attribute(X).Value),
+				float.Parse(xmlData.Attribute(Y).Value)
 			);
+		}
+
+		protected override bool CanSerialize(Vector2 primitive)
+		{
+			return true;
+		}
+
+		protected override bool CanDeserialize(XElement element)
+		{
+			return
+				(element.Attribute(X) != null) &&
+				(element.Attribute(Y) != null);
 		}
 	}
 
 	public class XmlVector2ElementsProcessor : UnityPrimitiveXmlElementsProcessor<Vector2>
 	{
+		private const string X = "x";
+		private const string Y = "y";
+
 		public XmlVector2ElementsProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
@@ -35,8 +53,8 @@
 		protected override XElement Serialize(Vector2 value)
 		{
 			XElement xElement = new XElement(string.Empty);
-			xElement.Add(new XElement("x", value.x));
-			xElement.Add(new XElement("y", value.y));
+			xElement.Add(new XElement(X, value.x));
+			xElement.Add(new XElement(Y, value.y));
 
 			return xElement;
 		}
@@ -44,9 +62,21 @@
 		protected override Vector2 Deserialize(XElement xmlData)
 		{
 			return new Vector2(
-				float.Parse(xmlData.Element("x").Value),
-				float.Parse(xmlData.Element("y").Value)
+				float.Parse(xmlData.Element(X).Value),
+				float.Parse(xmlData.Element(Y).Value)
 			);
+		}
+
+		protected override bool CanSerialize(Vector2 primitive)
+		{
+			return true;
+		}
+
+		protected override bool CanDeserialize(XElement element)
+		{
+			return
+				(element.Element(X) != null) &&
+				(element.Element(Y) != null);
 		}
 	}
 
