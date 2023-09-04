@@ -234,6 +234,21 @@
 				object processedKey = Serializer.Serialize(GetKey(sourceMember), definition);
 				object processedValue = Serializer.Serialize(sourceMember.GetValue(source), definition);
 
+				// If the processed value is null and the value is not required by the data, then just skip it.
+				if (processedValue is null)
+				{
+					if (!SupportsRequiredValues)
+					{
+						return;
+					}
+
+					ISerializationReflectionMap typeMap = SerializationUtilities.GetTypeMap(sourceType);
+					if (!typeMap.IsMemberRequired(sourceMember.Member, requiredValueSupport.RequiredAttributeType))
+					{
+						return;
+					}
+				}
+
 				if (parallelLock != null)
 				{
 					lock (parallelLock)

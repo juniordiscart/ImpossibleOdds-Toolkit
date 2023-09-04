@@ -1,4 +1,10 @@
-﻿namespace ImpossibleOdds
+﻿#if UNITY_2021_3 || UNITY_2022_3_OR_NEWER
+#define HIDE_IN_CALLSTACK
+#endif
+
+using UnityEngine;
+
+namespace ImpossibleOdds
 {
 	using System;
 	using System.Diagnostics;
@@ -13,6 +19,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO")]
 #else
@@ -29,6 +38,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO")]
 #else
@@ -45,6 +57,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO")]
 #else
@@ -61,6 +76,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO")]
 #else
@@ -77,6 +95,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO")]
 #else
@@ -94,6 +115,9 @@
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
 		/// <param name="additionalParams">Additional values to be formatted in the message.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO")]
 #else
@@ -109,6 +133,9 @@
 		/// Log an information message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO")]
 #else
@@ -123,6 +150,9 @@
 		/// Log an information message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO")]
 #else
@@ -137,6 +167,9 @@
 		/// Log an information message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO")]
 #else
@@ -151,6 +184,9 @@
 		/// Log an information message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO")]
 #else
@@ -165,6 +201,9 @@
 		/// Log an information message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO")]
 #else
@@ -180,6 +219,9 @@
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
 		/// <param name="additionalParams">Additional values to be formatted in the message.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO")]
 #else
@@ -195,6 +237,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING")]
@@ -213,6 +258,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING")]
@@ -231,6 +279,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING")]
@@ -249,6 +300,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING")]
@@ -267,6 +321,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+		[HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING")]
@@ -286,6 +343,9 @@
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
 		/// <param name="additionalParams">Additional values to be formatted in the message.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING")]
@@ -303,6 +363,9 @@
 		/// Log a warning message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING")]
@@ -319,6 +382,9 @@
 		/// Log a warning message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING")]
@@ -335,6 +401,9 @@
 		/// Log a warning message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING")]
@@ -351,6 +420,9 @@
 		/// Log a warning message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING")]
@@ -367,6 +439,9 @@
 		/// Log a warning message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING")]
@@ -384,6 +459,9 @@
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
 		/// <param name="additionalParams">Additional values to be formatted in the message.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING")]
@@ -401,6 +479,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING"),
@@ -421,6 +502,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING"),
@@ -441,6 +525,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING"),
@@ -461,6 +548,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING"),
@@ -481,6 +571,9 @@
 		/// </summary>
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING"),
@@ -502,6 +595,9 @@
 		/// <param name="context">The Unity object context for this message.</param>
 		/// <param name="message">The message to log to console.</param>
 		/// <param name="additionalParams">Additional values to be formatted in the message.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING"),
@@ -521,6 +617,9 @@
 		/// Log an error message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING"),
@@ -539,6 +638,9 @@
 		/// Log an error message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING"),
@@ -557,6 +659,9 @@
 		/// Log an error message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING"),
@@ -575,6 +680,9 @@
 		/// Log an error message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING"),
@@ -593,6 +701,9 @@
 		/// Log an error message to the Unity console.
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING"),
@@ -612,6 +723,9 @@
 		/// </summary>
 		/// <param name="message">The message to log to console.</param>
 		/// <param name="additionalParams">Additional values to be formatted in the message.</param>
+#if HIDE_IN_CALLSTACK
+        [HideInCallstack]
+#endif
 #if UNITY_EDITOR
 		[Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_INFO"),
 		Conditional("IMPOSSIBLE_ODDS_LOGGING_EDITOR_WARNING"),

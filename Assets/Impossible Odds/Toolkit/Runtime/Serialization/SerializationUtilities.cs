@@ -1,21 +1,20 @@
-﻿namespace ImpossibleOdds.Serialization
-{
-	using System;
-	using System.Collections;
-	// using System.Collections.Generic;
-	using System.Collections.Concurrent;
-	using System.Runtime.Serialization;
-	using ImpossibleOdds.Serialization.Caching;
+﻿using System;
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Runtime.Serialization;
+using ImpossibleOdds.Serialization.Caching;
 
+namespace ImpossibleOdds.Serialization
+{
 	public static class SerializationUtilities
 	{
-		private static readonly ConcurrentDictionary<Type, object> defaultValueCache = new ConcurrentDictionary<Type, object>();
-		private static readonly ConcurrentDictionary<Type, LookupCollectionTypeInfo> lookupTypeInfoCache = new ConcurrentDictionary<Type, LookupCollectionTypeInfo>();
-		private static readonly ConcurrentDictionary<Type, SequenceCollectionTypeInfo> sequenceTypeInfoCache = new ConcurrentDictionary<Type, SequenceCollectionTypeInfo>();
-		private static readonly ConcurrentDictionary<Type, ISerializationReflectionMap> typeMapCache = new ConcurrentDictionary<Type, ISerializationReflectionMap>();
+		private static readonly ConcurrentDictionary<Type, object> DefaultValueCache = new ConcurrentDictionary<Type, object>();
+		private static readonly ConcurrentDictionary<Type, LookupCollectionTypeInfo> LookupTypeInfoCache = new ConcurrentDictionary<Type, LookupCollectionTypeInfo>();
+		private static readonly ConcurrentDictionary<Type, SequenceCollectionTypeInfo> SequenceTypeInfoCache = new ConcurrentDictionary<Type, SequenceCollectionTypeInfo>();
+		private static readonly ConcurrentDictionary<Type, ISerializationReflectionMap> TypeMapCache = new ConcurrentDictionary<Type, ISerializationReflectionMap>();
 
 		/// <summary>
-		/// Test wether a type is truely nullable.
+		/// Test whether a type is truly nullable.
 		/// </summary>
 		/// <param name="type">Type to test.</param>
 		/// <returns>True if the type is nullable, false otherwise.</returns>
@@ -80,7 +79,10 @@
 		{
 			if (type.IsValueType)
 			{
-				return defaultValueCache.ContainsKey(type) ? defaultValueCache[type] : defaultValueCache.GetOrAdd(type, Activator.CreateInstance(type));
+				return
+					DefaultValueCache.TryGetValue(type, out object value) ?
+						value :
+						DefaultValueCache.GetOrAdd(type, Activator.CreateInstance(type));
 			}
 			else
 			{
@@ -102,7 +104,7 @@
 			{
 				if (instanceType.IsInterface)
 				{
-					throw new SerializationException("Cannot create instane of type {0} because it is an interface.", instanceType.Name);
+					throw new SerializationException("Cannot create instance of type {0} because it is an interface.", instanceType.Name);
 				}
 				else if (instanceType.IsAbstract)
 				{
@@ -134,7 +136,7 @@
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 
-			if ((value == null) || targetType.IsAssignableFrom(value.GetType()))
+			if ((value == null) || targetType.IsInstanceOfType(value))
 			{
 				return value;
 			}
@@ -146,7 +148,7 @@
 			}
 			else
 			{
-				Log.Warning("Target type {0} does not implement the {1} interface to post-process a value of type {2}.", targetType.Name, typeof(IConvertible).Name, value.GetType().Name);
+				Log.Warning("Target type {0} does not implement the {1} interface to post-process a value of type {2}.", targetType.Name, nameof(IConvertible), value.GetType().Name);
 				return value;
 			}
 		}
@@ -161,7 +163,7 @@
 		{
 			return
 				((value == null) && IsNullableType(elementType)) ||
-				((value != null) && elementType.IsAssignableFrom(value.GetType()));
+				((value != null) && elementType.IsInstanceOfType(value));
 		}
 
 		/// <summary>
@@ -248,7 +250,7 @@
 		public static LookupCollectionTypeInfo GetCollectionTypeInfo(IDictionary instance)
 		{
 			instance.ThrowIfNull(nameof(instance));
-			return lookupTypeInfoCache.GetOrAdd(instance.GetType(), (type) => new LookupCollectionTypeInfo(type));
+			return LookupTypeInfoCache.GetOrAdd(instance.GetType(), (type) => new LookupCollectionTypeInfo(type));
 		}
 
 		/// <summary>
@@ -259,18 +261,18 @@
 		public static SequenceCollectionTypeInfo GetCollectionTypeInfo(IList instance)
 		{
 			instance.ThrowIfNull(nameof(instance));
-			return sequenceTypeInfoCache.GetOrAdd(instance.GetType(), (type) => new SequenceCollectionTypeInfo(type));
+			return SequenceTypeInfoCache.GetOrAdd(instance.GetType(), (type) => new SequenceCollectionTypeInfo(type));
 		}
 
 		/// <summary>
 		/// Retrieve the cached information about a type.
 		/// </summary>
-		/// <param name="type">The type for which to retrieve the cached information.</param>
+		/// <param name="target">The type for which to retrieve the cached information.</param>
 		/// <returns>The type cache associated with the given type.</returns>
 		public static ISerializationReflectionMap GetTypeMap(Type target)
 		{
 			target.ThrowIfNull(nameof(target));
-			return typeMapCache.GetOrAdd(target, (type) => new SerializationReflectionMap(type));
+			return TypeMapCache.GetOrAdd(target, (type) => new SerializationReflectionMap(type));
 		}
 	}
 }
