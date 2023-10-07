@@ -1,12 +1,12 @@
 ﻿/// <summary>
 /// Sorted list extensions found on: https://www.jacksondunstan.com/articles/3189
 /// </summary>
+using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace ImpossibleOdds
 {
-	using System;
-	using System.Collections;
-	using System.Collections.Generic;
 
 	/// <summary>
 	/// List extensions.
@@ -67,16 +67,14 @@ namespace ImpossibleOdds
 
 			if ((i < 0) || (i >= list.Count))
 			{
-				throw new ArgumentOutOfRangeException(string.Format("Parameter {0} has value {1}, while the list has size {2}.", nameof(i), i, list.Count));
+				throw new ArgumentOutOfRangeException($"Parameter {nameof(i)} has value {i}, while the list has size {list.Count}.");
 			}
 			else if ((j < 0) || (j >= list.Count))
 			{
-				throw new ArgumentOutOfRangeException(string.Format("Parameter {0} has value {1}, while the list has size {2}.", nameof(j), j, list.Count));
+				throw new ArgumentOutOfRangeException($"Parameter {nameof(j)} has value {j}, while the list has size {list.Count}.");
 			}
 
-			T temp = list[i];
-			list[i] = list[j];
-			list[j] = temp;
+			(list[i], list[j]) = (list[j], list[i]);
 		}
 
 		/// <summary>
@@ -275,11 +273,13 @@ namespace ImpossibleOdds
 			arr.ThrowIfNull(nameof(arr));
 			for (int i = 0; i < arr.Length; ++i)
 			{
-				if (arr[i].Equals(match))
+				if (!arr[i].Equals(match))
 				{
-					index = i;
-					return true;
+					continue;
 				}
+
+				index = i;
+				return true;
 			}
 
 			index = -1;
@@ -297,11 +297,13 @@ namespace ImpossibleOdds
 
 			for (int i = 0; i < l.Count; ++i)
 			{
-				if (query(l[i]))
+				if (!query(l[i]))
 				{
-					index = i;
-					return true;
+					continue;
 				}
+
+				index = i;
+				return true;
 			}
 
 			index = -1;
@@ -319,12 +321,13 @@ namespace ImpossibleOdds
 			l.ThrowIfNull(nameof(l));
 			for (int i = 0; i < l.Count; ++i)
 			{
-				if ((isValueType && l[i].Equals(match)) ||
-					(!isValueType && object.Equals(l[i], match)))
+				if ((!isValueType || !l[i].Equals(match)) && (isValueType || !Equals(l[i], match)))
 				{
-					index = i;
-					return true;
+					continue;
 				}
+
+				index = i;
+				return true;
 			}
 
 			index = -1;
@@ -343,11 +346,13 @@ namespace ImpossibleOdds
 
 			for (int i = 0; i < l.Count; ++i)
 			{
-				if (query(l[i]))
+				if (!query(l[i]))
 				{
-					result = l[i];
-					return true;
+					continue;
 				}
+
+				result = l[i];
+				return true;
 			}
 
 			result = default;

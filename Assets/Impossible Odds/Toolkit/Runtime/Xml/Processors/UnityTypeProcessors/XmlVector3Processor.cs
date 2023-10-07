@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Xml.Processors
-{
-	using System.Xml.Linq;
-	using UnityEngine;
+﻿using System.Xml.Linq;
+using UnityEngine;
 
+namespace ImpossibleOdds.Xml.Processors
+{
 	public class XmlVector3AttributesProcessor : UnityPrimitiveXmlAttributesProcessor<Vector3>
 	{
 		private const string X = "x";

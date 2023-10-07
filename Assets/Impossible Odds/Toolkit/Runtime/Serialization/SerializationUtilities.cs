@@ -1,20 +1,22 @@
-﻿namespace ImpossibleOdds.Serialization
-{
-	using System;
-	using System.Collections;
-	using System.Collections.Concurrent;
-	using System.Runtime.Serialization;
-	using ImpossibleOdds.Serialization.Caching;
+﻿using System;
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
+using ImpossibleOdds.Serialization.Caching;
 
+namespace ImpossibleOdds.Serialization
+{
 	public static class SerializationUtilities
 	{
-		private static readonly ConcurrentDictionary<Type, object> defaultValueCache = new ConcurrentDictionary<Type, object>();
-		private static readonly ConcurrentDictionary<Type, LookupCollectionTypeInfo> lookupTypeInfoCache = new ConcurrentDictionary<Type, LookupCollectionTypeInfo>();
-		private static readonly ConcurrentDictionary<Type, SequenceCollectionTypeInfo> sequenceTypeInfoCache = new ConcurrentDictionary<Type, SequenceCollectionTypeInfo>();
-		private static readonly ConcurrentDictionary<Type, ISerializationReflectionMap> typeMapCache = new ConcurrentDictionary<Type, ISerializationReflectionMap>();
+		private static readonly ConcurrentDictionary<Type, object> DefaultValueCache = new ConcurrentDictionary<Type, object>();
+		private static readonly ConcurrentDictionary<Type, LookupCollectionTypeInfo> LookupTypeInfoCache = new ConcurrentDictionary<Type, LookupCollectionTypeInfo>();
+		private static readonly ConcurrentDictionary<Type, SequenceCollectionTypeInfo> SequenceTypeInfoCache = new ConcurrentDictionary<Type, SequenceCollectionTypeInfo>();
+		private static readonly ConcurrentDictionary<Type, ISerializationReflectionMap> TypeMapCache = new ConcurrentDictionary<Type, ISerializationReflectionMap>();
+		private static readonly HashSet<Type> IntegralTypes = new HashSet<Type>() { typeof(sbyte), typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(char) };
 
 		/// <summary>
-		/// Test wether a type is truely nullable.
+		/// Test whether a type is truly nullable.
 		/// </summary>
 		/// <param name="type">Type to test.</param>
 		/// <returns>True if the type is nullable, false otherwise.</returns>
@@ -22,6 +24,17 @@
 		{
 			type.ThrowIfNull(nameof(type));
 			return !type.IsValueType || (Nullable.GetUnderlyingType(type) != null);
+		}
+
+		/// <summary>
+		/// Checks whether the provided type is a known numeric integral type.
+		/// </summary>
+		/// <param name="type">The type to be checked.</param>
+		/// <returns>True if the type was found to a numeric integral type, false otherwise.</returns>
+		public static bool IsNumericIntegralType(Type type)
+		{
+			type.ThrowIfNull(nameof(type));
+			return IntegralTypes.Contains(type);
 		}
 
 		/// <summary>
@@ -79,12 +92,13 @@
 		{
 			if (type.IsValueType)
 			{
-				return defaultValueCache.ContainsKey(type) ? defaultValueCache[type] : defaultValueCache.GetOrAdd(type, Activator.CreateInstance(type));
+				return
+					DefaultValueCache.TryGetValue(type, out object value) ?
+						value :
+						DefaultValueCache.GetOrAdd(type, Activator.CreateInstance(type));
 			}
-			else
-			{
-				return null;
-			}
+
+			return null;
 		}
 
 		/// <summary>
@@ -97,19 +111,18 @@
 			{
 				return Activator.CreateInstance(instanceType, true);
 			}
-			else
-			{
-				if (instanceType.IsInterface)
-				{
-					throw new SerializationException("Cannot create instane of type {0} because it is an interface.", instanceType.Name);
-				}
-				else if (instanceType.IsAbstract)
-				{
-					throw new SerializationException("Cannot create instance of type {0} because it is abstract.", instanceType.Name);
-				}
 
-				return FormatterServices.GetUninitializedObject(instanceType);
+			if (instanceType.IsInterface)
+			{
+				throw new SerializationException($"Cannot create instance of type {instanceType.Name} because it is an interface.");
 			}
+
+			if (instanceType.IsAbstract)
+			{
+				throw new SerializationException($"Cannot create instance of type {instanceType.Name} because it is abstract.");
+			}
+
+			return FormatterServices.GetUninitializedObject(instanceType);
 		}
 
 		/// <summary>
@@ -133,7 +146,7 @@
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 
-			if ((value == null) || targetType.IsAssignableFrom(value.GetType()))
+			if ((value == null) || targetType.IsInstanceOfType(value))
 			{
 				return value;
 			}
@@ -145,7 +158,7 @@
 			}
 			else
 			{
-				Log.Warning("Target type {0} does not implement the {1} interface to post-process a value of type {2}.", targetType.Name, typeof(IConvertible).Name, value.GetType().Name);
+				Log.Warning("Target type {0} does not implement the {1} interface to post-process a value of type {2}.", targetType.Name, nameof(IConvertible), value.GetType().Name);
 				return value;
 			}
 		}
@@ -160,7 +173,7 @@
 		{
 			return
 				((value == null) && IsNullableType(elementType)) ||
-				((value != null) && elementType.IsAssignableFrom(value.GetType()));
+				((value != null) && elementType.IsInstanceOfType(value));
 		}
 
 		/// <summary>
@@ -178,7 +191,7 @@
 
 			if (collection.IsReadOnly)
 			{
-				throw new SerializationException("The collection of type {0} is read-only. No elements can be inserted.", collection.GetType().Name);
+				throw new SerializationException($"The collection of type {collection.GetType().Name} is read-only. No elements can be inserted.");
 			}
 
 			// Arrays are treated differently compared to lists.
@@ -197,11 +210,11 @@
 				{
 					if (collection.IsFixedSize)
 					{
-						throw new SerializationException("The collection of type {0} has a fixed size ({1}). An element was requested to be inserted at index {2}.", collection.GetType().Name, collection.Count, index);
+						throw new SerializationException($"The collection of type {collection.GetType().Name} has a fixed size ({collection.Count}). An element was requested to be inserted at index {index}.");
 					}
 
 					// Grow the collection until the value can be inserted.
-					object defaultValue = SerializationUtilities.GetDefaultValue(collectionInfo.elementType);
+					object defaultValue = GetDefaultValue(collectionInfo.elementType);
 					do
 					{
 						collection.Add(defaultValue);
@@ -227,16 +240,15 @@
 
 			if (collection.IsReadOnly)
 			{
-				throw new SerializationException("The collection of type {0} is read-only. No elements can be inserted.", collection.GetType().Name);
+				throw new SerializationException($"The collection of type {collection.GetType().Name} is read-only. No elements can be inserted.");
 			}
-			else if (collection.IsFixedSize)
+
+			if (collection.IsFixedSize)
 			{
-				throw new SerializationException("The collection of type {0} has a fixed size. No elements can be inserted.", collection.GetType().Name);
+				throw new SerializationException($"The collection of type {collection.GetType().Name} has a fixed size. No elements can be inserted.");
 			}
-			else
-			{
-				collection[key] = value;
-			}
+
+			collection[key] = value;
 		}
 
 		/// <summary>
@@ -247,7 +259,7 @@
 		public static LookupCollectionTypeInfo GetCollectionTypeInfo(IDictionary instance)
 		{
 			instance.ThrowIfNull(nameof(instance));
-			return lookupTypeInfoCache.GetOrAdd(instance.GetType(), (type) => new LookupCollectionTypeInfo(type));
+			return LookupTypeInfoCache.GetOrAdd(instance.GetType(), (type) => new LookupCollectionTypeInfo(type));
 		}
 
 		/// <summary>
@@ -258,18 +270,48 @@
 		public static SequenceCollectionTypeInfo GetCollectionTypeInfo(IList instance)
 		{
 			instance.ThrowIfNull(nameof(instance));
-			return sequenceTypeInfoCache.GetOrAdd(instance.GetType(), (type) => new SequenceCollectionTypeInfo(type));
+			return SequenceTypeInfoCache.GetOrAdd(instance.GetType(), (type) => new SequenceCollectionTypeInfo(type));
 		}
 
 		/// <summary>
 		/// Retrieve the cached information about a type.
 		/// </summary>
-		/// <param name="type">The type for which to retrieve the cached information.</param>
+		/// <param name="target">The type for which to retrieve the cached information.</param>
 		/// <returns>The type cache associated with the given type.</returns>
 		public static ISerializationReflectionMap GetTypeMap(Type target)
 		{
 			target.ThrowIfNull(nameof(target));
-			return typeMapCache.GetOrAdd(target, (type) => new SerializationReflectionMap(type));
+			return TypeMapCache.GetOrAdd(target, (type) => new SerializationReflectionMap(type));
+		}
+
+		/// <summary>
+		/// Attempts to check on whether two serializable members match in terms of whether they will write to the same location.
+		/// More specifically, for lookup parameters, it will check whether the designated keys for the data match. It will use
+		/// the more generic Attribute.Match otherwise to check.
+		/// </summary>
+		/// <returns>True if the two serializable members match. False otherwise.</returns>
+		public static bool IsMatch(ISerializableMember a, ISerializableMember b)
+		{
+			a.ThrowIfNull(nameof(a));
+			b.ThrowIfNull(nameof(b));
+
+			if (a.Attribute.GetType() != b.Attribute.GetType())
+			{
+				return a.Attribute.Match(b.Attribute);
+			}
+
+			if ((a.Attribute is ILookupParameter aLookup) && (b.Attribute is ILookupParameter bLookup))
+			{
+				object aKey = aLookup.Key ?? a.Member.Name;
+				object bKey = bLookup.Key ?? b.Member.Name;
+				return Equals(aKey, bKey);
+			}
+			// else if ((a.Attribute is ISequenceParameter aSequence) && (b.Attribute is ISequenceParameter bSequence))
+			// {
+			//
+			// }
+
+			return a.Attribute.Match(b.Attribute);
 		}
 	}
 }

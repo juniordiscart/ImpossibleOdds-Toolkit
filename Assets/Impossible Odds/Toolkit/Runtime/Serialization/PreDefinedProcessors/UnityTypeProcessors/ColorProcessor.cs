@@ -1,15 +1,15 @@
-﻿namespace ImpossibleOdds.Serialization.Processors
-{
-	using System;
-	using System.Collections;
-	using UnityEngine;
+﻿using System;
+using System.Collections;
+using UnityEngine;
 
+namespace ImpossibleOdds.Serialization.Processors
+{
 	public class ColorSequenceProcessor : UnityPrimitiveSequenceProcessor<Color>
 	{
 		private const int Size = 4;
 
-		public ColorSequenceProcessor(IIndexSerializationDefinition definition)
-		: base(definition)
+		public ColorSequenceProcessor(ISerializationDefinition definition, ISequenceSerializationConfiguration configuration)
+		: base(definition, configuration)
 		{ }
 
 		/// <inheritdoc />
@@ -20,12 +20,12 @@
 				return false;
 			}
 
-			return (dataToDeserialize is IList list) && (list.Count == Size);
+			return (dataToDeserialize is IList { Count: Size });
 		}
 
 		protected override IList Serialize(Color value)
 		{
-			IList result = Definition.CreateSequenceInstance(Size);
+			IList result = Configuration.CreateSequenceInstance(Size);
 			result.Add(Serializer.Serialize(value.r, Definition));
 			result.Add(Serializer.Serialize(value.g, Definition));
 			result.Add(Serializer.Serialize(value.b, Definition));
@@ -50,8 +50,8 @@
 		private const string B = "b";
 		private const string A = "a";
 
-		public ColorLookupProcessor(ILookupSerializationDefinition definition)
-		: base(definition)
+		public ColorLookupProcessor(ISerializationDefinition definition, ILookupSerializationConfiguration configuration)
+		: base(definition, configuration)
 		{ }
 
 		/// <inheritdoc />
@@ -70,7 +70,7 @@
 
 		protected override IDictionary Serialize(Color value)
 		{
-			IDictionary result = Definition.CreateLookupInstance(4);
+			IDictionary result = Configuration.CreateLookupInstance(4);
 			result.Add(Serializer.Serialize(R, Definition), Serializer.Serialize(value.r, Definition));
 			result.Add(Serializer.Serialize(G, Definition), Serializer.Serialize(value.g, Definition));
 			result.Add(Serializer.Serialize(B, Definition), Serializer.Serialize(value.b, Definition));
@@ -90,8 +90,8 @@
 
 	public class ColorProcessor : UnityPrimitiveSwitchProcessor<ColorSequenceProcessor, ColorLookupProcessor, Color>
 	{
-		public ColorProcessor(IIndexSerializationDefinition sequenceDefinition, ILookupSerializationDefinition lookupDefinition, PrimitiveProcessingMethod preferredProcessingMethod)
-		: this(new ColorSequenceProcessor(sequenceDefinition), new ColorLookupProcessor(lookupDefinition), preferredProcessingMethod)
+		public ColorProcessor(ISerializationDefinition definition, ISequenceSerializationConfiguration sequenceConfiguration, ILookupSerializationConfiguration lookupConfiguration, PrimitiveProcessingMethod preferredProcessingMethod)
+		: this(new ColorSequenceProcessor(definition, sequenceConfiguration), new ColorLookupProcessor(definition, lookupConfiguration), preferredProcessingMethod)
 		{ }
 
 		public ColorProcessor(ColorSequenceProcessor sequenceProcessor, ColorLookupProcessor lookupProcessor, PrimitiveProcessingMethod preferredProcessingMethod)

@@ -1,9 +1,9 @@
-﻿namespace ImpossibleOdds.Http
-{
-	using System;
-	using ImpossibleOdds.Serialization;
+﻿using System;
+using ImpossibleOdds.Serialization;
 
-	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false)]
+namespace ImpossibleOdds.Http
+{
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
 	public sealed class HttpBodyObjectAttribute : Attribute, ILookupTypeObject
 	{ }
 }

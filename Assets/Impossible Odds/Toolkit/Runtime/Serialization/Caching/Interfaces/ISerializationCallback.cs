@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.Serialization.Caching
-{
-	using System.Reflection;
+﻿using System.Reflection;
 
+namespace ImpossibleOdds.Serialization.Caching
+{
 	/// <summary>
 	/// Interface for caching common info of a callback method of an object.
 	/// </summary>

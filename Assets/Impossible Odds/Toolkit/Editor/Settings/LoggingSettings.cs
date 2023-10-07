@@ -1,10 +1,10 @@
-﻿namespace ImpossibleOdds.Settings
-{
-	using System.Collections.Generic;
-	using System.Linq;
-	using UnityEditor;
-	using UnityEngine;
+﻿using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
 
+namespace ImpossibleOdds.Settings
+{
 	public class LoggingSettings : IProjectSetting
 	{
 		private static readonly string[] EditorLoggingLevelSymbols = new string[]
@@ -58,13 +58,13 @@
 			List<string> currentSymbols = new List<string>(PlayerSettings.GetScriptingDefineSymbolsForGroup(currentTargetGroup).Split(';'));
 
 			// Check the editor logging level
-			if (EditorLoggingLevelSymbols.Join(currentSymbols, key1 => key1, key2 => key2, (key1, key2) => key1).Count() == 0)
+			if (!EditorLoggingLevelSymbols.Join(currentSymbols, key1 => key1, key2 => key2, (key1, key2) => key1).Any())
 			{
 				currentSymbols.Add(EditorLoggingLevelSymbols[0]);
 			}
 
 			// Check the player logging level
-			if (PlayerLoggingLevelSymbols.Join(currentSymbols, key1 => key1, key2 => key2, (key1, key2) => key1).Count() == 0)
+			if (!PlayerLoggingLevelSymbols.Join(currentSymbols, key1 => key1, key2 => key2, (key1, key2) => key1).Any())
 			{
 				currentSymbols.Add(PlayerLoggingLevelSymbols[0]);
 			}
@@ -72,15 +72,12 @@
 			PlayerSettings.SetScriptingDefineSymbolsForGroup(currentTargetGroup, string.Join(";", currentSymbols));
 		}
 
-		private HashSet<string> loadedSymbols = null;
+		private readonly HashSet<string> loadedSymbols;
 
 		private int currentBuildLogLevel = 0;
 		private int currentEditorLogLevel = 0;
 
-		public bool IsChanged
-		{
-			get => IsEditorSymbolChanged || IsBuildSymbolChanged;
-		}
+		public bool IsChanged => IsEditorSymbolChanged || IsBuildSymbolChanged;
 
 		public bool IsEditorSymbolChanged
 		{
@@ -90,18 +87,8 @@
 				{
 					return !loadedSymbols.Contains(EditorLoggingLevelSymbols[currentEditorLogLevel]);
 				}
-				else
-				{
-					foreach (string editorLoggingSymbol in EditorLoggingLevelSymbols)
-					{
-						if (loadedSymbols.Contains(editorLoggingSymbol))
-						{
-							return true;
-						}
-					}
 
-					return false;
-				}
+				return EditorLoggingLevelSymbols.Any(editorLoggingSymbol => loadedSymbols.Contains(editorLoggingSymbol));
 			}
 		}
 
@@ -113,25 +100,12 @@
 				{
 					return !loadedSymbols.Contains(PlayerLoggingLevelSymbols[currentBuildLogLevel]);
 				}
-				else
-				{
-					foreach (string buildLoggingSymbol in PlayerLoggingLevelSymbols)
-					{
-						if (loadedSymbols.Contains(buildLoggingSymbol))
-						{
-							return true;
-						}
-					}
 
-					return false;
-				}
+				return PlayerLoggingLevelSymbols.Any(buildLoggingSymbol => loadedSymbols.Contains(buildLoggingSymbol));
 			}
 		}
 
-		public string SettingName
-		{
-			get => "Logging Settings";
-		}
+		public string SettingName => "Logging Settings";
 
 		public LoggingSettings(HashSet<string> loadedSymbols)
 		{

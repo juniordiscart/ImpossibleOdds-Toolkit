@@ -1,9 +1,9 @@
-﻿namespace ImpossibleOdds.Json
-{
-	using System;
-	using System.IO;
-	using ImpossibleOdds.Serialization;
+﻿using System;
+using System.IO;
+using ImpossibleOdds.Serialization;
 
+namespace ImpossibleOdds.Json
+{
 	internal struct SerializationState
 	{
 		public bool escapeSlashChar;
@@ -23,7 +23,7 @@
 			set
 			{
 				indentLvl = Math.Max(0, value);
-				indentStr = (indentLvl > 0) ? new String('\t', value) : string.Empty;
+				indentStr = (indentLvl > 0) ? new string('\t', value) : string.Empty;
 			}
 		}
 

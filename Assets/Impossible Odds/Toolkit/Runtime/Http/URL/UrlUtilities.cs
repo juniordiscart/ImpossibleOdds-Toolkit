@@ -1,13 +1,13 @@
-﻿namespace ImpossibleOdds.Http
-{
-	using System.Collections;
-	using System.Collections.Generic;
-	using UnityEngine.Networking;
-	using ImpossibleOdds.Serialization;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine.Networking;
+using ImpossibleOdds.Serialization;
 
+namespace ImpossibleOdds.Http
+{
 	public static class UrlUtilities
 	{
-		private readonly static char[] QueryParamSplit = new char[] { '&' };
+		private static readonly char[] QueryParamSplit = { '&' };
 
 		/// <summary>
 		/// Appends the parameters to the base URL. The base URL is allowed to have parameters defined already.
@@ -53,7 +53,7 @@
 		{
 			paramKey.ThrowIfNullOrWhitespace(nameof(paramKey));
 			paramValue.ThrowIfNullOrWhitespace(nameof(paramValue));
-			return AppendUrlParam(baseUrl, string.Format("{0}={1}", UnityWebRequest.EscapeURL(paramKey), UnityWebRequest.EscapeURL(paramValue)));
+			return AppendUrlParam(baseUrl, $"{UnityWebRequest.EscapeURL(paramKey)}={UnityWebRequest.EscapeURL(paramValue)}");
 		}
 
 		/// <summary>
@@ -72,10 +72,8 @@
 			{
 				return string.Format(baseUrl.EndsWith("&") ? "{0}{1}" : "{0}&{1}", baseUrl, paramKeyValue);
 			}
-			else
-			{
-				return string.Format("{0}?{1}", baseUrl, paramKeyValue);
-			}
+
+			return $"{baseUrl}?{paramKeyValue}";
 		}
 
 		/// <summary>

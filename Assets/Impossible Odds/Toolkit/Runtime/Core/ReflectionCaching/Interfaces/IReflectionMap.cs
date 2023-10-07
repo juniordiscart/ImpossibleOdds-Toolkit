@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.ReflectionCaching
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds.ReflectionCaching
+{
 	public interface IReflectionMap
 	{
 		/// <summary>

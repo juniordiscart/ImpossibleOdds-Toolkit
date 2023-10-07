@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Weblink.Caching
-{
-	using System;
-	using ImpossibleOdds.ReflectionCaching;
+﻿using System;
+using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds.Weblink.Caching
+{
 	public interface IWeblinkReflectionMap : IReflectionMap
 	{
 		/// <summary>

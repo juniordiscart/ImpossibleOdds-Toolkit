@@ -1,30 +1,25 @@
-﻿namespace ImpossibleOdds.Xml.Processors
-{
-	using System;
-	using System.IO;
-	using System.Runtime.Serialization.Formatters.Binary;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Serialization.Processors;
+﻿using System;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Serialization.Processors;
 
+namespace ImpossibleOdds.Xml.Processors
+{
 	/// <summary>
 	/// Processor for (de)serializing CDATA sections in an XML document. It uses a binary formatter in combination with formatting the binary result as a Base64 string.
 	/// Note: the use of the BinaryFormatter is discouraged for safety purposes. However, there's no (built-in) alternative for transforming data to a stream of bytes.
 	/// </summary>
 	public class XmlCDataProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
-		private readonly ISerializationDefinition definition = null;
-		private readonly BinaryFormatter binaryFormatter = null;
+		private readonly BinaryFormatter binaryFormatter;
 
-		public ISerializationDefinition Definition
-		{
-			get => definition;
-		}
+		public ISerializationDefinition Definition { get; }
 
 		public XmlCDataProcessor(ISerializationDefinition definition)
 		{
 			definition.ThrowIfNull(nameof(definition));
-			this.definition = definition;
-
+			Definition = definition;
 			binaryFormatter = new BinaryFormatter();
 		}
 
@@ -37,20 +32,18 @@
 			}
 
 			byte[] binaryResult = null;
-			if (objectToSerialize is byte[])
+			if (objectToSerialize is byte[] bytes)
 			{
-				binaryResult = objectToSerialize as byte[];
+				binaryResult = bytes;
 			}
 			else
 			{
-				using (MemoryStream ms = new MemoryStream())
+				using MemoryStream ms = new MemoryStream();
+				lock (binaryFormatter)
 				{
-					lock (binaryFormatter)
-					{
-						binaryFormatter.Serialize(ms, objectToSerialize);
-					}
-					binaryResult = ms.ToArray();
+					binaryFormatter.Serialize(ms, objectToSerialize);
 				}
+				binaryResult = ms.ToArray();
 			}
 
 			return Convert.ToBase64String(binaryResult);
@@ -71,33 +64,32 @@
 			}
 
 			// When the data is binary, then try to reconstruct it.
-			if (dataToDeserialize is byte[] binaryData)
-			{
-				if (typeof(byte[]) == targetType)
-				{
-					return binaryData;
-				}
-
-				object deserializedResult = null;
-				using (MemoryStream ms = new MemoryStream(binaryData))
-				{
-					lock (binaryFormatter)
-					{
-						deserializedResult = binaryFormatter.Deserialize(ms);
-					}
-				}
-
-				if (!targetType.IsAssignableFrom(deserializedResult.GetType()))
-				{
-					throw new XmlException("The transformed result of type {0} could not be assigned to target type {1}.", deserializedResult.GetType().Name, targetType.Name);
-				}
-
-				return deserializedResult;
-			}
-			else
+			if (!(dataToDeserialize is byte[] binaryData))
 			{
 				throw new XmlException("The CDATA value could not be transformed to a valid instance of type {0} for further processing.", typeof(byte[]).Name);
 			}
+
+			if (typeof(byte[]) == targetType)
+			{
+				return binaryData;
+			}
+
+			object deserializedResult;
+			using (MemoryStream ms = new MemoryStream(binaryData))
+			{
+				lock (binaryFormatter)
+				{
+					deserializedResult = binaryFormatter.Deserialize(ms);
+				}
+			}
+
+			if (!targetType.IsInstanceOfType(deserializedResult))
+			{
+				throw new XmlException("The transformed result of type {0} could not be assigned to target type {1}.", deserializedResult.GetType().Name, targetType.Name);
+			}
+
+			return deserializedResult;
+
 		}
 
 		/// <inheritdoc />

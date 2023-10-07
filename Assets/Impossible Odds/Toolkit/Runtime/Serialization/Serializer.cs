@@ -1,13 +1,13 @@
-﻿namespace ImpossibleOdds.Serialization
-{
-	using System;
-	using System.Collections.Generic;
-	using ImpossibleOdds.Serialization.Processors;
+﻿using System;
+using System.Collections.Generic;
+using ImpossibleOdds.Serialization.Processors;
 
+namespace ImpossibleOdds.Serialization
+{
 	public static class Serializer
 	{
 		/// <summary>
-		/// Attempt to serialize the object based on the defined serialziation processors found in the definition.
+		/// Attempt to serialize the object based on the defined serialization processors found in the definition.
 		/// </summary>
 		/// <param name="objectToSerialize">Object to serialize.</param>
 		/// <param name="serializationDefinition">Serialization definition to guide the serialization process.</param>
@@ -18,7 +18,7 @@
 
 			if (serializationDefinition.SerializationProcessors == null)
 			{
-				throw new SerializationException("No serialization processors defined in the definition of type {0}.", serializationDefinition.GetType().Name);
+				throw new SerializationException($"No serialization processors defined in the definition of type {serializationDefinition.GetType().Name}.");
 			}
 
 			// Pick a specific implementation to reduce memory allocations.
@@ -45,14 +45,12 @@
 			{
 				throw new SerializationException("Failed to process null value.");
 			}
-			else
-			{
-				throw new SerializationException("Failed to process value of type {0}.", objectToSerialize.GetType().Name);
-			}
+
+			throw new SerializationException($"Failed to process value of type {objectToSerialize.GetType().Name}.");
 		}
 
 		/// <summary>
-		/// Attempt to serialize the object based on the defined serialziation processors found in the definition and return it as the requested type TTarget.
+		/// Attempt to serialize the object based on the defined serialization processors found in the definition and return it as the requested type TTarget.
 		/// </summary>
 		/// <param name="objectToSerialize">Object to serialize.</param>
 		/// <param name="serializationDefinition">Serialization definition to guide the serialization process.</param>
@@ -62,14 +60,12 @@
 		{
 			object serializedObject = Serialize(objectToSerialize, serializationDefinition);
 
-			if (serializedObject is TTarget)
+			if (serializedObject is TTarget target)
 			{
-				return (TTarget)serializedObject;
+				return target;
 			}
-			else
-			{
-				throw new SerializationException("The serialized result is not of type {0}.", typeof(TTarget).Name);
-			}
+
+			throw new SerializationException($"The serialized result is not of type {typeof(TTarget).Name}.");
 		}
 
 		/// <summary>
@@ -96,32 +92,41 @@
 			targetType.ThrowIfNull(nameof(targetType));
 			deserializationDefinition.ThrowIfNull(nameof(deserializationDefinition));
 
-			if (deserializationDefinition.DeserializationProcessors == null)
+			switch (deserializationDefinition.DeserializationProcessors)
 			{
-				throw new SerializationException("No deserialization processors are defined in the definition of type {0}.", deserializationDefinition.GetType().Name);
-			}
-
-			// Pick a specific implementation to reduce memory allocations.
-			if (deserializationDefinition.DeserializationProcessors is IDeserializationProcessor[] dspArray)
-			{
-				if (DeserializeObject(dspArray, targetType, dataToDeserialize, out object result))
+				case null:
+					throw new SerializationException($"No deserialization processors are defined in the definition of type {deserializationDefinition.GetType().Name}.");
+				// Pick a specific implementation to reduce memory allocations.
+				case IDeserializationProcessor[] dspArray:
 				{
-					return result;
+					if (DeserializeObject(dspArray, targetType, dataToDeserialize, out object result))
+					{
+						return result;
+					}
+
+					break;
+				}
+				case List<IDeserializationProcessor> dspList:
+				{
+					if (DeserializeObject(dspList, targetType, dataToDeserialize, out object result))
+					{
+						return result;
+					}
+
+					break;
+				}
+				default:
+				{
+					if (DeserializeObject(deserializationDefinition.DeserializationProcessors, targetType, dataToDeserialize, out object result))
+					{
+						return result;
+					}
+
+					break;
 				}
 			}
-			else if (deserializationDefinition.DeserializationProcessors is List<IDeserializationProcessor> dspList)
-			{
-				if (DeserializeObject(dspList, targetType, dataToDeserialize, out object result))
-				{
-					return result;
-				}
-			}
-			else if (DeserializeObject(deserializationDefinition.DeserializationProcessors, targetType, dataToDeserialize, out object result))
-			{
-				return result;
-			}
 
-			throw new SerializationException("Failed to deserialize a source value to target type {0}.", targetType.Name);
+			throw new SerializationException($"Failed to deserialize a source value to target type {targetType.Name}.");
 		}
 
 		/// <summary>
@@ -135,38 +140,52 @@
 			deserializationTarget.ThrowIfNull(nameof(deserializationTarget));
 			deserializationDefinition.ThrowIfNull(nameof(deserializationTarget));
 
-			// Pick a specific implementation to reduce memory allocations.
-			if (deserializationDefinition.DeserializationProcessors is IDeserializationProcessor[] dspArray)
+			switch (deserializationDefinition.DeserializationProcessors)
 			{
-				if (DeserializeObjectDirectly(dspArray, deserializationTarget, dataToDeserialize))
+				// Pick a specific implementation to reduce memory allocations.
+				case IDeserializationProcessor[] dspArray:
 				{
-					return;
+					if (DeserializeObjectDirectly(dspArray, deserializationTarget, dataToDeserialize))
+					{
+						return;
+					}
+
+					break;
 				}
-			}
-			else if (deserializationDefinition.DeserializationProcessors is List<IDeserializationProcessor> dspList)
-			{
-				if (DeserializeObjectDirectly(dspList, deserializationTarget, dataToDeserialize))
+				case List<IDeserializationProcessor> dspList:
 				{
-					return;
+					if (DeserializeObjectDirectly(dspList, deserializationTarget, dataToDeserialize))
+					{
+						return;
+					}
+
+					break;
 				}
-			}
-			else if (DeserializeObjectDirectly(deserializationDefinition.DeserializationProcessors, deserializationTarget, dataToDeserialize))
-			{
-				return;
+				default:
+				{
+					if (DeserializeObjectDirectly(deserializationDefinition.DeserializationProcessors, deserializationTarget, dataToDeserialize))
+					{
+						return;
+					}
+
+					break;
+				}
 			}
 
-			throw new SerializationException("Failed to deserialize a source value to a target instance of type {0}.", deserializationTarget.GetType().Name);
+			throw new SerializationException($"Failed to deserialize a source value to a target instance of type {deserializationTarget.GetType().Name}.");
 		}
 
 		private static bool SerializeObject(ISerializationProcessor[] processors, object objectToSerialize, out object result)
 		{
 			foreach (ISerializationProcessor processor in processors)
 			{
-				if (processor.CanSerialize(objectToSerialize))
+				if (!processor.CanSerialize(objectToSerialize))
 				{
-					result = processor.Serialize(objectToSerialize);
-					return true;
+					continue;
 				}
+
+				result = processor.Serialize(objectToSerialize);
+				return true;
 			}
 
 			result = null;
@@ -177,11 +196,13 @@
 		{
 			foreach (ISerializationProcessor processor in processors)
 			{
-				if (processor.CanSerialize(objectToSerialize))
+				if (!processor.CanSerialize(objectToSerialize))
 				{
-					result = processor.Serialize(objectToSerialize);
-					return true;
+					continue;
 				}
+
+				result = processor.Serialize(objectToSerialize);
+				return true;
 			}
 
 			result = null;
@@ -192,11 +213,13 @@
 		{
 			foreach (ISerializationProcessor processor in processors)
 			{
-				if (processor.CanSerialize(objectToSerialize))
+				if (!processor.CanSerialize(objectToSerialize))
 				{
-					result = processor.Serialize(objectToSerialize);
-					return true;
+					continue;
 				}
+
+				result = processor.Serialize(objectToSerialize);
+				return true;
 			}
 
 			result = null;
@@ -207,11 +230,13 @@
 		{
 			foreach (IDeserializationProcessor processor in processors)
 			{
-				if (processor.CanDeserialize(targetType, dataToDeserialize))
+				if (!processor.CanDeserialize(targetType, dataToDeserialize))
 				{
-					result = processor.Deserialize(targetType, dataToDeserialize);
-					return true;
+					continue;
 				}
+
+				result = processor.Deserialize(targetType, dataToDeserialize);
+				return true;
 			}
 
 			result = null;
@@ -222,11 +247,13 @@
 		{
 			foreach (IDeserializationProcessor processor in processors)
 			{
-				if (processor.CanDeserialize(targetType, dataToDeserialize))
+				if (!processor.CanDeserialize(targetType, dataToDeserialize))
 				{
-					result = processor.Deserialize(targetType, dataToDeserialize);
-					return true;
+					continue;
 				}
+
+				result = processor.Deserialize(targetType, dataToDeserialize);
+				return true;
 			}
 
 			result = null;
@@ -237,11 +264,13 @@
 		{
 			foreach (IDeserializationProcessor processor in processors)
 			{
-				if (processor.CanDeserialize(targetType, dataToDeserialize))
+				if (!processor.CanDeserialize(targetType, dataToDeserialize))
 				{
-					result = processor.Deserialize(targetType, dataToDeserialize);
-					return true;
+					continue;
 				}
+
+				result = processor.Deserialize(targetType, dataToDeserialize);
+				return true;
 			}
 
 			result = null;
@@ -252,12 +281,14 @@
 		{
 			foreach (IDeserializationProcessor processor in processors)
 			{
-				if ((processor is IDeserializationToTargetProcessor toTargetProcessor) &&
-					toTargetProcessor.CanDeserialize(deserializationTarget.GetType(), dataToDeserialize))
+				if ((!(processor is IDeserializationToTargetProcessor toTargetProcessor)) ||
+				    !toTargetProcessor.CanDeserialize(deserializationTarget.GetType(), dataToDeserialize))
 				{
-					toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize);
-					return true;
+					continue;
 				}
+
+				toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize);
+				return true;
 			}
 
 			return false;
@@ -267,12 +298,14 @@
 		{
 			foreach (IDeserializationProcessor processor in processors)
 			{
-				if ((processor is IDeserializationToTargetProcessor toTargetProcessor) &&
-					toTargetProcessor.CanDeserialize(deserializationTarget.GetType(), dataToDeserialize))
+				if ((!(processor is IDeserializationToTargetProcessor toTargetProcessor)) ||
+				    !toTargetProcessor.CanDeserialize(deserializationTarget.GetType(), dataToDeserialize))
 				{
-					toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize);
-					return true;
+					continue;
 				}
+
+				toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize);
+				return true;
 			}
 
 			return false;
@@ -282,12 +315,14 @@
 		{
 			foreach (IDeserializationProcessor processor in processors)
 			{
-				if ((processor is IDeserializationToTargetProcessor toTargetProcessor) &&
-					toTargetProcessor.CanDeserialize(deserializationTarget.GetType(), dataToDeserialize))
+				if ((!(processor is IDeserializationToTargetProcessor toTargetProcessor)) ||
+				    !toTargetProcessor.CanDeserialize(deserializationTarget.GetType(), dataToDeserialize))
 				{
-					toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize);
-					return true;
+					continue;
 				}
+
+				toTargetProcessor.Deserialize(deserializationTarget, dataToDeserialize);
+				return true;
 			}
 
 			return false;

@@ -1,72 +1,43 @@
-﻿namespace ImpossibleOdds.Photon.WebRpc
-{
-	using ImpossibleOdds.Weblink;
+﻿using ImpossibleOdds.Weblink;
 
+namespace ImpossibleOdds.Photon.WebRpc
+{
 	public class WebRpcMessageHandle : IWeblinkMessageHandle<IWebRpcRequest, IWebRpcResponse>
 	{
-		private readonly object requestId = null;
-		private readonly IWebRpcRequest request = null;
-		private IWebRpcResponse response = null;
-		private string debugMessage = null;
-
 		/// <summary>
 		/// The ID given by the WebRpcMessenger to uniquely identify a returned response by the server.
 		/// </summary>
-		public object RequestId
-		{
-			get => requestId;
-		}
+		public object RequestId { get; }
 
 		/// <inheritdoc />
-		public IWebRpcRequest Request
-		{
-			get => request;
-		}
+		public IWebRpcRequest Request { get; }
 
 		/// <inheritdoc />
-		public IWebRpcResponse Response
-		{
-			get => response;
-		}
+		public IWebRpcResponse Response { get; private set; }
 
 		/// <summary>
 		/// The debug message returned by the server, if any.
 		/// </summary>
-		public string DebugMessage
-		{
-			get => debugMessage;
-		}
+		public string DebugMessage { get; private set; }
 
 		/// <inheritdoc />
-		public bool IsDone
-		{
-			get => response != null;
-		}
+		public bool IsDone => Response != null;
 
 		/// <inheritdoc />
-		public object Current
-		{
-			get => null;
-		}
+		public object Current => null;
 
 		/// <inheritdoc />
-		IWeblinkRequest IWeblinkMessageHandle.Request
-		{
-			get => Request;
-		}
+		IWeblinkRequest IWeblinkMessageHandle.Request => Request;
 
 		/// <inheritdoc />
-		IWeblinkResponse IWeblinkMessageHandle.Response
-		{
-			get => Response;
-		}
+		IWeblinkResponse IWeblinkMessageHandle.Response => Response;
 
 		public WebRpcMessageHandle(IWebRpcRequest request, object requestId)
 		{
 			request.ThrowIfNull(nameof(request));
 			requestId.ThrowIfNull(nameof(requestId));
-			this.request = request;
-			this.requestId = requestId;
+			Request = request;
+			RequestId = requestId;
 		}
 
 		/// <inheritdoc />
@@ -90,8 +61,8 @@
 		{
 			response.ThrowIfNull(nameof(response));
 
-			this.response = response;
-			this.debugMessage = debugMessage;
+			Response = response;
+			DebugMessage = debugMessage;
 		}
 	}
 }

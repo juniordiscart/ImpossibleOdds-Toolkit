@@ -1,13 +1,11 @@
-﻿namespace ImpossibleOdds.Serialization.Caching
-{
-	using System;
-	using System.Reflection;
-	using ImpossibleOdds.ReflectionCaching;
+﻿using System;
+using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds.Serialization.Caching
+{
 	public class SerializableProperty : ISerializableProperty
 	{
-		private readonly PropertyInfo property;
-		private readonly Attribute attribute;
 		private readonly MethodInfo getMethod;
 		private readonly MethodInfo setMethod;
 
@@ -21,49 +19,34 @@
 			// 	throw new SerializationException("The property {0} declared on type {1} does not implement the required get and set methods.", property.Name, property.DeclaringType.Name);
 			// }
 
-			this.property = property;
-			this.attribute = serializationAttribute;
+			Property = property;
+			Attribute = serializationAttribute;
 
 			if (property.CanRead)
 			{
-				this.getMethod = property.GetGetMethod(true);
+				getMethod = property.GetGetMethod(true);
 			}
 
 			if (property.CanWrite)
 			{
-				this.setMethod = property.GetSetMethod(true);
+				setMethod = property.GetSetMethod(true);
 			}
 		}
 
 		/// <inheritdoc />
-		public PropertyInfo Property
-		{
-			get => property;
-		}
+		public PropertyInfo Property { get; }
 
 		/// <inheritdoc />
-		public Type MemberType
-		{
-			get => property.PropertyType;
-		}
+		public Type MemberType => Property.PropertyType;
 
 		/// <inheritdoc />
-		public Attribute Attribute
-		{
-			get => attribute;
-		}
+		public Attribute Attribute { get; }
 
 		/// <inheritdoc />
-		public Type AttributeType
-		{
-			get => attribute.GetType();
-		}
+		public Type AttributeType => Attribute.GetType();
 
 		/// <inheritdoc />
-		MemberInfo IMemberAttributePair.Member
-		{
-			get => property;
-		}
+		MemberInfo IMemberAttributePair.Member => Property;
 
 		/// <inheritdoc />
 		public object GetValue(object source)
@@ -72,11 +55,9 @@
 			{
 				return getMethod.Invoke(source, null);
 			}
-			else
-			{
-				Log.Warning("No getter has been defined for property {0} of type {1}. The value cannot retrieved. A default value is returned instead.", property.Name, property.DeclaringType.Name);
-				return SerializationUtilities.GetDefaultValue(MemberType);
-			}
+
+			Log.Warning("No getter has been defined for property {0} of type {1}. The value cannot retrieved. A default value is returned instead.", Property.Name, Property.DeclaringType.Name);
+			return SerializationUtilities.GetDefaultValue(MemberType);
 		}
 
 		/// <inheritdoc />
@@ -94,7 +75,7 @@
 			}
 			else
 			{
-				Log.Warning("No setter has been defined for property {0} of type {1}. No value will be set.", property.Name, property.DeclaringType.Name);
+				Log.Warning("No setter has been defined for property {0} of type {1}. No value will be set.", Property.Name, Property.DeclaringType.Name);
 			}
 		}
 	}

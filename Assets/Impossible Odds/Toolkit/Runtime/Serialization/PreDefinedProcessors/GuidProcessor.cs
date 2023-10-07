@@ -1,38 +1,24 @@
+using System;
+
 namespace ImpossibleOdds.Serialization.Processors
 {
-	using System;
-
 	/// <summary>
 	/// A (de)serialization processor specifically to process Guid values.
 	/// </summary>
 	public class GuidProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
-		private string format = string.Empty;
-		private readonly ISerializationDefinition definition = null;
-
-		public ISerializationDefinition Definition
-		{
-			get => definition;
-		}
+		public ISerializationDefinition Definition { get; }
 
 		/// <summary>
 		/// The format to serialize Guid values.
 		/// Default format is 'D'.
 		/// </summary>
-		public string Format
-		{
-			get => format;
-			set => format = value;
-		}
+		public string Format { get; set; }
 
-		public GuidProcessor(ISerializationDefinition definition)
-		: this(definition, "D")
-		{ }
-
-		public GuidProcessor(ISerializationDefinition definition, string format)
+		public GuidProcessor(ISerializationDefinition definition, string format = "D")
 		{
 			definition.ThrowIfNull(nameof(definition));
-			this.definition = definition;
+			Definition = definition;
 			Format = format;
 		}
 
@@ -41,19 +27,15 @@ namespace ImpossibleOdds.Serialization.Processors
 		{
 			if (!CanSerialize(objectToSerialize))
 			{
-				throw new SerializationException("The provided data cannot be serialized by this processor of type {0}.", this.GetType().Name);
+				throw new SerializationException($"The provided data cannot be serialized by this processor of type {nameof(GuidProcessor)}.");
 			}
 
 			// If the serialization definition supports the Guid-type, then just return already.
 			// Otherwise, try to convert it to a string value.
-			if (Definition.SupportedTypes.Contains(typeof(Guid)))
-			{
-				return objectToSerialize;
-			}
-			else
-			{
-				return ((Guid)objectToSerialize).ToString(Format);
-			}
+			return
+				Definition.SupportedTypes.Contains(typeof(Guid)) ?
+					objectToSerialize :
+					((Guid)objectToSerialize).ToString(Format);
 		}
 
 		/// <inheritdoc />
@@ -61,16 +43,24 @@ namespace ImpossibleOdds.Serialization.Processors
 		{
 			if (!CanDeserialize(targetType, dataToDeserialize))
 			{
-				throw new SerializationException("The provided data cannot be deserialized by this processor of type {0}.", this.GetType().Name);
+				throw new SerializationException($"The provided data cannot be deserialized by this processor of type {nameof(GuidProcessor)}.");
 			}
 
-			if (dataToDeserialize is Guid)
+			switch (dataToDeserialize)
 			{
-				return dataToDeserialize;
-			}
-			else
-			{
-				return Guid.Parse(dataToDeserialize as string);
+				case Guid _:
+					return dataToDeserialize;
+				case string guidStr:
+					try
+					{
+						return Guid.Parse(guidStr);
+					}
+					catch (Exception e)
+					{
+						throw new SerializationException($"Failed to parse the string value to a value of type {nameof(Guid)}.", e);
+					}
+				default:
+					throw new SerializationException($"Failed to deserialize to a value of type {nameof(Decimal)}.");
 			}
 		}
 
@@ -78,9 +68,8 @@ namespace ImpossibleOdds.Serialization.Processors
 		public virtual bool CanSerialize(object objectToSerialize)
 		{
 			return
-				(objectToSerialize != null) &&
-				(objectToSerialize is Guid) &&
-				(definition.SupportedTypes.Contains(typeof(Guid)) || definition.SupportedTypes.Contains(typeof(string)));
+				objectToSerialize is Guid &&
+				(Definition.SupportedTypes.Contains(typeof(Guid)) || Definition.SupportedTypes.Contains(typeof(string)));
 		}
 
 		/// <inheritdoc />

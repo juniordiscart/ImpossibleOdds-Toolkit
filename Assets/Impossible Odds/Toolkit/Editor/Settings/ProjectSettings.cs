@@ -1,10 +1,10 @@
-﻿namespace ImpossibleOdds.Settings
-{
-	using System.Collections.Generic;
-	using System.Linq;
-	using UnityEditor;
-	using UnityEngine;
+﻿using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
 
+namespace ImpossibleOdds.Settings
+{
 	public class ProjectSettings : SettingsProvider
 	{
 		[SettingsProvider]

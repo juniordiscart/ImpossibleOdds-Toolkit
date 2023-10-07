@@ -1,9 +1,9 @@
-﻿namespace ImpossibleOdds.Json
-{
-	using System;
-	using ImpossibleOdds.Serialization;
+﻿using System;
+using ImpossibleOdds.Serialization;
 
-	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false)]
-	public sealed class JsonArrayAttribute : Attribute, IIndexTypeObject
+namespace ImpossibleOdds.Json
+{
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
+	public sealed class JsonArrayAttribute : Attribute, ISequenceTypeObject
 	{ }
 }

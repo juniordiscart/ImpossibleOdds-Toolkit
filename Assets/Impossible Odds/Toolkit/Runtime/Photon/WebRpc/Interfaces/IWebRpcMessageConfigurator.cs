@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.Photon.WebRpc
-{
-	using System.Collections;
+﻿using System.Collections;
 
+namespace ImpossibleOdds.Photon.WebRpc
+{
 	/// <summary>
 	/// Interface for preparing and configuring WebRPC requests and responses.
 	/// </summary>

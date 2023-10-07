@@ -17,7 +17,7 @@
 	/// <summary>
 	/// Defines a generic field-based parameter during the (de)serialization process.
 	/// </summary>
-	public interface ILookupParameter<TKey> : ILookupParameter
+	public interface ILookupParameter<out TKey> : ILookupParameter
 	{
 		/// <summary>
 		/// The key used in the lookup data structure.

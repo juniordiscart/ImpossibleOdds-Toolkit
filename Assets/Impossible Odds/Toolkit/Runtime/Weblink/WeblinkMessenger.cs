@@ -1,14 +1,14 @@
-﻿namespace ImpossibleOdds.Weblink
-{
-	using System;
-	using System.Collections.Generic;
-	using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 
+namespace ImpossibleOdds.Weblink
+{
 	/// <summary>
 	/// An abstract messenger framework for matching outgoing requests with a single incoming response.
 	/// </summary>
 	/// <typeparam name="TRequest">Type of requests.</typeparam>
-	/// <typeparam name="TResponse">Type of responeses.</typeparam>
+	/// <typeparam name="TResponse">Type of responses.</typeparam>
 	/// <typeparam name="THandle">Type of handles.</typeparam>
 	/// <typeparam name="TResponseAssoc">Type of the attribute that associates a request type with a response type.</typeparam>
 	/// <typeparam name="TResponseCallback">Type of the attribute for invoking targeted callbacks.</typeparam>
@@ -24,8 +24,8 @@
 		/// <inheritdoc />
 		public event Action<THandle> onMessageFailed;
 
-		private ConcurrentDictionary<TRequest, THandle> pendingRequests = new ConcurrentDictionary<TRequest, THandle>();
-		private List<object> responseCallbacks = new List<object>();
+		private readonly ConcurrentDictionary<TRequest, THandle> pendingRequests = new ConcurrentDictionary<TRequest, THandle>();
+		private readonly List<object> responseCallbacks = new List<object>();
 
 		/// <inheritdoc />
 		event Action<IWeblinkMessageHandle> IWeblinkMessenger.onMessageCompleted
@@ -88,10 +88,7 @@
 		/// <summary>
 		/// The amount of pending registered requests.
 		/// </summary>
-		public int Count
-		{
-			get => pendingRequests.Count;
-		}
+		public int Count => pendingRequests.Count;
 
 		/// <inheritdoc />
 		public abstract THandle SendRequest(TRequest request);

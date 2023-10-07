@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.Json
-{
-	using ImpossibleOdds.Serialization;
+﻿using ImpossibleOdds.Serialization;
 
+namespace ImpossibleOdds.Json
+{
 	public class JsonOptions
 	{
 		/// <summary>
@@ -11,7 +11,7 @@
 		{
 			get;
 			set;
-		}
+		} = true;
 
 		/// <summary>
 		/// Enable/disable escaping the '/' character in the output.
@@ -20,7 +20,7 @@
 		{
 			get;
 			set;
-		}
+		} = true;
 
 		/// <summary>
 		/// Serialization definition to alter the default behaviour of the JSON processor.
@@ -31,11 +31,22 @@
 			set;
 		}
 
-		public JsonOptions()
+		/// <summary>
+		/// Optional serialization configuration for lookup objects.
+		/// </summary>
+		public ILookupSerializationConfiguration LookupSerializationConfiguration
 		{
-			CompactOutput = true;
-			EscapeSlashCharacter = true;
-			SerializationDefinition = null;
+			get;
+			set;
+		}
+
+		/// <summary>
+		/// Optional serialization configuration for sequence objects.
+		/// </summary>
+		public ISequenceSerializationConfiguration SequenceSerializationConfiguration
+		{
+			get;
+			set;
 		}
 	}
 }

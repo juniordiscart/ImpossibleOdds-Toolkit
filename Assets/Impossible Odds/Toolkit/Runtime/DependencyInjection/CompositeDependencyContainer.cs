@@ -1,15 +1,16 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace ImpossibleOdds.DependencyInjection
 {
-	using System;
-	using System.Collections;
-	using System.Collections.Generic;
-
 	/// <summary>
 	/// A composite resource container that combines the resources of multiple others in one.
 	/// </summary>
 	public class CompositeDependencyContainer : IReadOnlyDependencyContainer, IEnumerable<IReadOnlyDependencyContainer>
 	{
-		private List<IReadOnlyDependencyContainer> containers = null;
+		private readonly List<IReadOnlyDependencyContainer> containers = null;
 
 		public CompositeDependencyContainer()
 		{
@@ -73,9 +74,9 @@ namespace ImpossibleOdds.DependencyInjection
 		}
 
 		/// <inheritdoc />
-		public bool BindingExists<TypeKey>()
+		public bool BindingExists<TTypeKey>()
 		{
-			return BindingExists(typeof(TypeKey));
+			return BindingExists(typeof(TTypeKey));
 		}
 
 		/// <inheritdoc />
@@ -94,9 +95,9 @@ namespace ImpossibleOdds.DependencyInjection
 		}
 
 		/// <inheritdoc />
-		public IDependencyBinding GetBinding<TypeKey>()
+		public IDependencyBinding GetBinding<TTypeKey>()
 		{
-			return GetBinding(typeof(TypeKey));
+			return GetBinding(typeof(TTypeKey));
 		}
 
 		/// <inheritdoc />
@@ -125,13 +126,7 @@ namespace ImpossibleOdds.DependencyInjection
 
 		IEnumerator<KeyValuePair<Type, IDependencyBinding>> IEnumerable<KeyValuePair<Type, IDependencyBinding>>.GetEnumerator()
 		{
-			foreach (IReadOnlyDependencyContainer container in containers)
-			{
-				foreach (KeyValuePair<Type, IDependencyBinding> bindingPair in container)
-				{
-					yield return bindingPair;
-				}
-			}
+			return containers.SelectMany(container => container).GetEnumerator();
 		}
 	}
 }

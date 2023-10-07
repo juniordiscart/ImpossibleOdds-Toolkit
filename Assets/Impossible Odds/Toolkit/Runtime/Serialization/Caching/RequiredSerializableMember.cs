@@ -1,45 +1,29 @@
-﻿
+﻿using System;
+using System.Reflection;
+
 namespace ImpossibleOdds.Serialization.Caching
 {
-	using System;
-	using System.Reflection;
-
 	public class RequiredSerializableMember : IRequiredSerializableMember
 	{
-		private readonly MemberInfo member;
-		private readonly Attribute attribute;
-
 		public RequiredSerializableMember(MemberInfo member, Attribute requiredAttribute)
 		{
 			member.ThrowIfNull(nameof(member));
 			requiredAttribute.ThrowIfNull(nameof(requiredAttribute));
 
-			this.member = member;
-			this.attribute = requiredAttribute;
+			Member = member;
+			Attribute = requiredAttribute;
 		}
 
 		/// <inheritdoc />
-		public MemberInfo Member
-		{
-			get => member;
-		}
+		public MemberInfo Member { get; }
 
 		/// <inheritdoc />
-		public Attribute Attribute
-		{
-			get => attribute;
-		}
+		public Attribute Attribute { get; }
 
 		/// <inheritdoc />
-		public Type AttributeType
-		{
-			get => attribute.GetType();
-		}
+		public Type AttributeType => Attribute.GetType();
 
 		/// <inheritdoc />
-		public IRequiredParameter RequiredParameterAttribute
-		{
-			get => attribute as IRequiredParameter;
-		}
+		public IRequiredParameter RequiredParameterAttribute => Attribute as IRequiredParameter;
 	}
 }

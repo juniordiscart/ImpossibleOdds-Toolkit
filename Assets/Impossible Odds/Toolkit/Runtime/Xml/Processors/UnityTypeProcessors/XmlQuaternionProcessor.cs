@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Xml.Processors
-{
-	using System.Xml.Linq;
-	using UnityEngine;
+﻿using System.Xml.Linq;
+using UnityEngine;
 
+namespace ImpossibleOdds.Xml.Processors
+{
 	public class XmlQuaternionAttributesProcessor : UnityPrimitiveXmlAttributesProcessor<Quaternion>
 	{
 		private const string X = "x";

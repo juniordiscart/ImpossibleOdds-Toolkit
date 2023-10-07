@@ -1,15 +1,15 @@
-﻿namespace ImpossibleOdds.Serialization.Processors
-{
-	using System;
-	using System.Collections;
-	using UnityEngine;
+﻿using System;
+using System.Collections;
+using UnityEngine;
 
+namespace ImpossibleOdds.Serialization.Processors
+{
 	public class Vector3IntSequenceProcessor : UnityPrimitiveSequenceProcessor<Vector3Int>
 	{
 		private const int Size = 3;
 
-		public Vector3IntSequenceProcessor(IIndexSerializationDefinition definition)
-		: base(definition)
+		public Vector3IntSequenceProcessor(ISerializationDefinition definition, ISequenceSerializationConfiguration configuration)
+		: base(definition, configuration)
 		{ }
 
 		/// <inheritdoc />
@@ -20,7 +20,7 @@
 				return false;
 			}
 
-			return (dataToDeserialize is IList list) && (list.Count == Size);
+			return (dataToDeserialize is IList { Count: Size });
 		}
 
 		protected override Vector3Int Deserialize(IList sequenceData)
@@ -33,7 +33,7 @@
 
 		protected override IList Serialize(Vector3Int value)
 		{
-			IList result = Definition.CreateSequenceInstance(Size);
+			IList result = Configuration.CreateSequenceInstance(Size);
 			result.Add(Serializer.Serialize(value.x, Definition));
 			result.Add(Serializer.Serialize(value.y, Definition));
 			result.Add(Serializer.Serialize(value.z, Definition));
@@ -47,8 +47,8 @@
 		private const string Y = "y";
 		private const string Z = "z";
 
-		public Vector3IntLookupProcessor(ILookupSerializationDefinition definition)
-		: base(definition)
+		public Vector3IntLookupProcessor(ISerializationDefinition definition, ILookupSerializationConfiguration configuration)
+		: base(definition, configuration)
 		{ }
 
 		/// <inheritdoc />
@@ -74,7 +74,7 @@
 
 		protected override IDictionary Serialize(Vector3Int value)
 		{
-			IDictionary result = Definition.CreateLookupInstance(3);
+			IDictionary result = Configuration.CreateLookupInstance(3);
 			result.Add(Serializer.Serialize(X, Definition), Serializer.Serialize(value.x, Definition));
 			result.Add(Serializer.Serialize(Y, Definition), Serializer.Serialize(value.y, Definition));
 			result.Add(Serializer.Serialize(Z, Definition), Serializer.Serialize(value.z, Definition));
@@ -84,8 +84,8 @@
 
 	public class Vector3IntProcessor : UnityPrimitiveSwitchProcessor<Vector3IntSequenceProcessor, Vector3IntLookupProcessor, Vector3Int>
 	{
-		public Vector3IntProcessor(IIndexSerializationDefinition sequenceDefinition, ILookupSerializationDefinition lookupDefinition, PrimitiveProcessingMethod preferredProcessingMethod)
-		: this(new Vector3IntSequenceProcessor(sequenceDefinition), new Vector3IntLookupProcessor(lookupDefinition), preferredProcessingMethod)
+		public Vector3IntProcessor(ISerializationDefinition definition, ISequenceSerializationConfiguration sequenceConfiguration, ILookupSerializationConfiguration lookupConfiguration, PrimitiveProcessingMethod preferredProcessingMethod)
+		: this(new Vector3IntSequenceProcessor(definition, sequenceConfiguration), new Vector3IntLookupProcessor(definition, lookupConfiguration), preferredProcessingMethod)
 		{ }
 
 		public Vector3IntProcessor(Vector3IntSequenceProcessor sequenceProcessor, Vector3IntLookupProcessor lookupProcessor, PrimitiveProcessingMethod preferredProcessingMethod)

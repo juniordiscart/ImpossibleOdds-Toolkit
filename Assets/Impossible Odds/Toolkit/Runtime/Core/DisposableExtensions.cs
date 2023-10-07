@@ -1,13 +1,13 @@
-﻿namespace ImpossibleOdds
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds
+{
 	public static class DisposableExtensions
 	{
 		/// <summary>
 		/// Disposes of the object, if it isn't null.
 		/// </summary>
-		/// <param name="disposable"></param>
+		/// <param name="argument"></param>
 		public static void DisposeIfNotNull(this IDisposable argument)
 		{
 			if (argument != null)

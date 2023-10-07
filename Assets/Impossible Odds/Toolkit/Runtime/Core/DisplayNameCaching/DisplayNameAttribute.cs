@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds
+{
 	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
 	public sealed class DisplayNameAttribute : Attribute
 	{

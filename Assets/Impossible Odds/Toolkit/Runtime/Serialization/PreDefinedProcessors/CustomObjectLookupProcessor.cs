@@ -1,59 +1,43 @@
-﻿namespace ImpossibleOdds.Serialization.Processors
-{
-	using System;
-	using System.Collections;
-	using System.Threading.Tasks;
-	using ImpossibleOdds.Serialization.Caching;
+﻿using System;
+using System.Collections;
+using System.Threading.Tasks;
+using ImpossibleOdds.Serialization.Caching;
 
+namespace ImpossibleOdds.Serialization.Processors
+{
 	/// <summary>
 	/// A (de)serialization processor to process custom object to dictionary-like data structures.
 	/// </summary>
 	public class CustomObjectLookupProcessor : AbstractCustomObjectProcessor, IDeserializationToTargetProcessor
 	{
-		private readonly bool requiresMarking = false;
-		private readonly ILookupSerializationDefinition definition = null;
-		private readonly ILookupTypeResolveSupport typeResolveSupport = null;
-
-		public bool SupportsTypeResolvement => typeResolveSupport != null;
+		public bool SupportsTypeResolution => TypeResolutionFeature != null;
 
 		public bool SupportsRequiredValues => RequiredValueFeature != null;
 
-		public bool SupportsParallelProcessing => ParallelProcessingFeature != null;
-
-		/// <summary>
-		/// The lookup serialization definition.
-		/// </summary>
-		public new ILookupSerializationDefinition Definition
-		{
-			get => definition;
-		}
-
-		/// <summary>
-		/// The type resolve serialization definition.
-		/// </summary>
-		public ILookupTypeResolveSupport TypeResolveDefinition
-		{
-			get => typeResolveSupport;
-		}
+		public bool ParallelProcessingEnabled => ParallelProcessingFeature is { Enabled: true };
 
 		public IRequiredValueFeature RequiredValueFeature { get; set; }
 
 		public IParallelProcessingFeature ParallelProcessingFeature { get; set; }
 
+		public ILookupTypeResolutionFeature TypeResolutionFeature { get; set; }
+
+		public ILookupSerializationConfiguration Configuration { get; }
+
+
 		/// <summary>
 		/// Are objects being processed required to be marked with a processing attribute?
 		/// </summary>
-		public bool RequiresMarking
-		{
-			get => requiresMarking;
-		}
+		public bool RequiresMarking { get; }
 
-		public CustomObjectLookupProcessor(ILookupSerializationDefinition definition, bool requiresObjectMarking = true)
+		public CustomObjectLookupProcessor(ISerializationDefinition definition, ILookupSerializationConfiguration configuration, bool requiresObjectMarking = true)
 		: base(definition)
 		{
-			this.requiresMarking = requiresObjectMarking;
-			this.definition = definition;
-			this.typeResolveSupport = (definition is ILookupTypeResolveSupport typeResolveDefinition) ? typeResolveDefinition : null;
+			definition.ThrowIfNull(nameof(definition));
+			configuration.ThrowIfNull(nameof(configuration));
+
+			RequiresMarking = requiresObjectMarking;
+			Configuration = configuration;
 		}
 
 		/// <inheritdoc />
@@ -75,7 +59,10 @@
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 
-			Type instanceType = ResolveTypeForDeserialization(targetType, dataToDeserialize as IDictionary);
+			Type instanceType =
+				SupportsTypeResolution ?
+					TypeResolutionFeature.FindTypeInSourceData(targetType, (IDictionary)dataToDeserialize, Definition) :
+					targetType;
 			object targetInstance = SerializationUtilities.CreateInstance(instanceType);
 			Deserialize(targetInstance, dataToDeserialize);
 			return targetInstance;
@@ -93,7 +80,7 @@
 			}
 
 			InvokeOnDeserializationCallback(deserializationTarget);
-			Deserialize(deserializationTarget, dataToDeserialize as IDictionary);
+			Deserialize(deserializationTarget, (IDictionary)dataToDeserialize);
 			InvokeOnDeserializedCallback(deserializationTarget);
 		}
 
@@ -106,7 +93,7 @@
 			return
 				(objectToSerialize == null) ||
 				!RequiresMarking ||
-				Attribute.IsDefined(objectToSerialize.GetType(), definition.LookupBasedClassMarkingAttribute);
+				Attribute.IsDefined(objectToSerialize.GetType(), Configuration.TypeMarkingAttribute);
 		}
 
 		/// <inheritdoc />
@@ -114,73 +101,38 @@
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 
-			if (dataToDeserialize == null)
+			switch (dataToDeserialize)
 			{
-				return SerializationUtilities.IsNullableType(targetType);
-			}
+				case null:
+					return SerializationUtilities.IsNullableType(targetType);
+				case IDictionary dictionary:
+				{
+					Type instanceType =
+						SupportsTypeResolution ?
+							TypeResolutionFeature.FindTypeInSourceData(targetType, dictionary, Definition) :
+							targetType;
 
-			if (!(dataToDeserialize is IDictionary))
-			{
-				return false;
+					return !RequiresMarking || Attribute.IsDefined(instanceType, Configuration.TypeMarkingAttribute);
+				}
+				default:
+					return false;
 			}
-
-			Type instanceType = ResolveTypeForDeserialization(targetType, (IDictionary)dataToDeserialize);
-			return !RequiresMarking || Attribute.IsDefined(instanceType, definition.LookupBasedClassMarkingAttribute);
 		}
 
 		private IDictionary Serialize(Type sourceType, object source)
 		{
-			ISerializableMember[] sourceMembers = SerializationUtilities.GetTypeMap(sourceType).GetSerializableMembers(definition.LookupBasedFieldAttribute);
-			IDictionary processedValues = definition.CreateLookupInstance(sourceMembers.Length + 1); // Include capacity for type information.
+			ISerializableMember[] sourceMembers = SerializationUtilities.GetTypeMap(sourceType).GetUniqueSerializableMembers(Configuration.MemberAttribute);
+			IDictionary processedValues = Configuration.CreateLookupInstance(sourceMembers.Length + 1); // Include capacity for type information.
 			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
-			object parallelLock = null;
 
 			// Process the source key and value pairs.
-			if (SupportsParallelProcessing && ParallelProcessingFeature.Enabled && (sourceMembers.Length > 1))
+			if (ParallelProcessingEnabled && (sourceMembers.Length > 1))
 			{
-				parallelLock = new object();
-				Parallel.ForEach(sourceMembers, SerializeMember);
-			}
-			else
-			{
-				Array.ForEach(sourceMembers, SerializeMember);
-			}
-
-			// Include type information, if available.
-			if (!SupportsTypeResolvement)
-			{
-				return processedValues;
-			}
-
-			// If no type resolve parameters exist, then don't include it and quit early.
-			ITypeResolveParameter typeResolveAttr = ResolveTypeForSerialization(sourceType);
-			if (typeResolveAttr == null)
-			{
-				return processedValues;
-			}
-
-			object typeKey = ((typeResolveAttr is ILookupTypeResolveParameter lookupTypeResolveAttr) && (lookupTypeResolveAttr.KeyOverride != null)) ? lookupTypeResolveAttr.KeyOverride : typeResolveSupport.TypeResolveKey;
-			typeKey = Serializer.Serialize(typeKey, definition);
-
-			// If the data already contains a value for the processed key, then the type information is assumed
-			// to be inferred from that value. Otherwise, add the processed type key as well.
-			if (processedValues.Contains(typeKey))
-			{
-				return processedValues;
-			}
-
-			object typeValue = typeResolveAttr.Value ?? typeResolveAttr.Target.Name;
-			typeValue = Serializer.Serialize(typeValue, definition);
-			SerializationUtilities.InsertInLookup(processedValues, collectionInfo, typeKey, typeValue);
-			return processedValues;
-
-			void SerializeMember(ISerializableMember sourceMember)
-			{
-				object processedKey = Serializer.Serialize(GetKey(sourceMember), definition);
-				object processedValue = Serializer.Serialize(sourceMember.GetValue(source), definition);
-
-				if (parallelLock != null)
+				object parallelLock = new object();
+				Parallel.ForEach(sourceMembers, sourceMember =>
 				{
+					object processedKey = Serializer.Serialize(Configuration.GetLookupKey(sourceMember), Definition);
+					object processedValue = Serializer.Serialize(sourceMember.GetValue(source), Definition);
 					lock (parallelLock)
 					{
 						if (!processedValues.Contains(processedKey))
@@ -188,167 +140,103 @@
 							SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
 						}
 					}
-				}
-				else
+				});
+			}
+			else
+			{
+				Array.ForEach(sourceMembers, sourceMember =>
 				{
+					object processedKey = Serializer.Serialize(Configuration.GetLookupKey(sourceMember), Definition);
+					object processedValue = Serializer.Serialize(sourceMember.GetValue(source), Definition);
 					if (!processedValues.Contains(processedKey))
 					{
 						SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
 					}
-				}
+				});
 			}
+
+			// Include type information, if available.
+			if (SupportsTypeResolution)
+			{
+				TypeResolutionFeature.InsertTypeInData(sourceType, processedValues, Definition);
+			}
+
+			return processedValues;
 		}
 
 		private void Deserialize(object target, IDictionary source)
 		{
 			// Get all of the fields that would like to get their value filled in.
-			ISerializationReflectionMap typeMap = SerializationUtilities.GetTypeMap(target.GetType());
-			ISerializableMember[] targetMembers = typeMap.GetSerializableMembers(definition.LookupBasedFieldAttribute);
-			object parallelLock = null;
+			Type targetType = target.GetType();
+			ISerializationReflectionMap typeMap = SerializationUtilities.GetTypeMap(targetType);
+			ISerializableMember[] targetMembers = typeMap.GetSerializableMembers(Configuration.MemberAttribute);
 
-			if (SupportsParallelProcessing && ParallelProcessingFeature.Enabled && (source.Count > 1))
+			if (ParallelProcessingEnabled)
 			{
-				parallelLock = new object();
-				Parallel.ForEach(targetMembers, DeserializeMember);
+				object parallelLock = new object();
+				Parallel.ForEach(targetMembers, targetMember =>
+				{
+					if (!ContainsKey(targetMember))
+					{
+						return;
+					}
+
+					lock (parallelLock) targetMember.SetValue(target, DeserializeMember(targetMember));
+				});
 			}
 			else
 			{
-				Array.ForEach(targetMembers, DeserializeMember);
-			}
-
-			void DeserializeMember(ISerializableMember targetMember)
-			{
-				object key = GetKey(targetMember);
-
-				// See whether the source contains a value for this field.
-				if (!source.Contains(key))
+				Array.ForEach(targetMembers, targetMember =>
 				{
-					// Check whether this field is marked as required.
-					if (SupportsRequiredValues && typeMap.IsMemberRequired(targetMember.Member, RequiredValueFeature.RequiredValueAttributeType))
+					if (!ContainsKey(targetMember))
 					{
-						throw new SerializationException("The member '{0}' is marked as required on type {1} but is not present in the source.", targetMember.Member.Name, targetMember.Member.DeclaringType.Name);
-					}
-					else
-					{
-						Log.Warning("The source does not contain a value associated with key '{0}' for a target of type {1}.", key, target.GetType().Name);
 						return;
 					}
-				}
 
-				object result = Serializer.Deserialize(targetMember.MemberType, source[key], definition);
-
-				if (result == null)
-				{
-					// If the value is not allowed to be null, then quit.
-					if (SupportsRequiredValues &&
-						typeMap.TryGetRequiredMemberInfo(targetMember.Member, RequiredValueFeature.RequiredValueAttributeType, out IRequiredSerializableMember requiredAttrInfo) &&
-						requiredAttrInfo.RequiredParameterAttribute.NullCheck)
-					{
-						throw new SerializationException("The member '{0}' is marked as required on type {1} but the value is null in the source.", targetMember.Member.Name, targetMember.Member.DeclaringType.Name);
-					}
-
-					Type memberType = targetMember.MemberType;
-					result = memberType.IsValueType ? Activator.CreateInstance(memberType, true) : null;
-				}
-
-				if (parallelLock != null)
-				{
-					lock (parallelLock) targetMember.SetValue(target, result);
-				}
-				else
-				{
-					targetMember.SetValue(target, result);
-				}
+					targetMember.SetValue(target, DeserializeMember(targetMember));
+				});
 			}
-		}
 
-		private object GetKey(ISerializableMember member)
-		{
-			ILookupParameter lookupAttribute = member.Attribute as ILookupParameter;
-			return lookupAttribute.Key ?? member.Member.Name;
-		}
+			return;
 
-		private ITypeResolveParameter ResolveTypeForSerialization(Type sourceType)
-		{
-			if (!SupportsTypeResolvement)
+			bool ContainsKey(ISerializableMember targetMember)
 			{
-				return null;
+				object key = Configuration.GetLookupKey(targetMember);
+
+				// See whether the source contains a value for this field.
+				if (source.Contains(key))
+				{
+					return true;
+				}
+
+				// Check whether this field is marked as required.
+				if (SupportsRequiredValues && RequiredValueFeature.IsMemberRequired(targetType, targetMember))
+				{
+					throw new SerializationException($"The member '{targetMember.Member.Name}' is marked as required on type {targetMember.Member.DeclaringType.Name} but is not present in the source.");
+				}
+
+				Log.Warning("The source does not contain a value associated with key '{0}' for a target of type {1}.", key, target.GetType().Name);
+				return false;
 			}
 
-			ILookupTypeResolveSupport typeResolveImplementation = definition as ILookupTypeResolveSupport;
-			ITypeResolveParameter[] typeResolveParameters = SerializationUtilities.
-				GetTypeMap(sourceType).
-				GetTypeResolveParameters(typeResolveImplementation.TypeResolveAttribute);
-
-			return Array.Find(typeResolveParameters, tr => tr.Target == sourceType);
-		}
-
-		private Type ResolveTypeForDeserialization(Type targetType, IDictionary source)
-		{
-			if (!SupportsTypeResolvement)
+			object DeserializeMember(ISerializableMember targetMember)
 			{
-				return targetType;
+				object result = Serializer.Deserialize(targetMember.MemberType, source[Configuration.GetLookupKey(targetMember)], Definition);
+
+				if (result != null)
+				{
+					return result;
+				}
+
+				// If the value is not allowed to be null, then quit.
+				if (SupportsRequiredValues && !RequiredValueFeature.IsValueValid(targetType, targetMember, result))
+				{
+					throw new SerializationException($"The member '{targetMember.Member.Name}' is marked as required on type {targetMember.Member.DeclaringType.Name} but the value is null in the source.");
+				}
+
+				Type memberType = targetMember.MemberType;
+				return memberType.IsValueType ? Activator.CreateInstance(memberType, true) : null;
 			}
-
-			LookupCollectionTypeInfo sourceCollectionInfo = SerializationUtilities.GetCollectionTypeInfo(source);
-			ITypeResolveParameter[] typeResolveAttrs = SerializationUtilities.GetTypeMap(targetType).GetTypeResolveParameters(typeResolveSupport.TypeResolveAttribute);
-
-			foreach (ITypeResolveParameter typeResolveAttr in typeResolveAttrs)
-			{
-				// Perform this filter as well as a way to stop the recursion.
-				if (typeResolveAttr.Target == targetType)
-				{
-					continue;
-				}
-
-				Type resolvedTargetType = null;
-
-				// Check if an override key type resolve parameter exists, and use it if a match could be made in the source data.
-				if ((typeResolveAttr is ILookupTypeResolveParameter lookupTypeResolveAttr) && (lookupTypeResolveAttr.KeyOverride != null))
-				{
-					object processedKey = sourceCollectionInfo.PostProcessKey(Serializer.Serialize(lookupTypeResolveAttr.KeyOverride, Definition));
-					resolvedTargetType = ResolveTypeForDeserialization(source, typeResolveAttr, processedKey);
-				}
-
-				// If no resolve type was found yet, attempt to find it using the regular attributes.
-				if (resolvedTargetType == null)
-				{
-					object processedKey = sourceCollectionInfo.PostProcessKey(Serializer.Serialize(typeResolveSupport.TypeResolveKey, Definition));
-					resolvedTargetType = ResolveTypeForDeserialization(source, typeResolveAttr, processedKey);
-				}
-
-				// Recursively find a more concrete type, if any.
-				if (resolvedTargetType != null)
-				{
-					if (targetType.IsAssignableFrom(resolvedTargetType))
-					{
-						return ResolveTypeForDeserialization(resolvedTargetType, source);
-					}
-					else if (targetType.IsSubclassOf(resolvedTargetType))
-					{
-						continue;   // If we came back around to a base type again, then don't bother.
-					}
-					else
-					{
-						throw new SerializationException("The attribute of type {0}, defined on type {1} or its super types, is matched but cannot be assigned from instance of type {2}.", typeResolveAttr.GetType().Name, targetType.Name, typeResolveAttr.Target.Name);
-					}
-				}
-			}
-
-			return targetType;
-		}
-
-		private Type ResolveTypeForDeserialization(IDictionary source, ITypeResolveParameter typeResolveParam, object processedKey)
-		{
-			if ((processedKey == null) || !source.Contains(processedKey) || (source[processedKey] == null))
-			{
-				return null;
-			}
-
-			// Attempt to process the override value to the type of the value in the source data.
-			object processedValue = typeResolveParam.Value ?? typeResolveParam.Target.Name;
-			processedValue = SerializationUtilities.PostProcessValue(Serializer.Serialize(processedValue, Definition), source[processedKey].GetType());
-			return source[processedKey].Equals(processedValue) ? typeResolveParam.Target : null;
 		}
 	}
 }

@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.Serialization.Processors
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds.Serialization.Processors
+{
 	/// <summary>
 	/// Interface for deserialization processors.
 	/// </summary>

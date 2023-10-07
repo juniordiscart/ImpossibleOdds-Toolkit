@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Xml
-{
-	using System;
+﻿using System;
 
-	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+namespace ImpossibleOdds.Xml
+{
+	[AttributeUsage(AttributeTargets.Method)]
 	public sealed class OnXmlSerializingAttribute : Attribute
 	{ }
 }

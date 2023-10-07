@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds
-{
-	using System;
-	using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
+namespace ImpossibleOdds
+{
 	/// <summary>
 	/// Adds conditional logging and pipes them through to Unity's Debug functions.
 	/// </summary>

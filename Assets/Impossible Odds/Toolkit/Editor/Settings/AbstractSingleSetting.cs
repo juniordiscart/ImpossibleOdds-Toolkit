@@ -4,8 +4,8 @@
 
 	public abstract class AbstractSingleSetting : IProjectSetting
 	{
-		protected HashSet<string> loadedSymbols;
-		protected bool isSet = false;
+		protected readonly HashSet<string> loadedSymbols;
+		protected bool isSet;
 
 		public AbstractSingleSetting(HashSet<string> loadedSymbols)
 		{
@@ -13,10 +13,7 @@
 			isSet = loadedSymbols.Contains(Symbol);
 		}
 
-		public bool IsChanged
-		{
-			get => isSet != loadedSymbols.Contains(Symbol);
-		}
+		public bool IsChanged => isSet != loadedSymbols.Contains(Symbol);
 
 		public bool IsSet
 		{
@@ -43,13 +40,14 @@
 				return;
 			}
 
-			if (isSet && !loadedSymbols.Contains(Symbol))
+			switch (isSet)
 			{
-				loadedSymbols.Add(Symbol);
-			}
-			else if (!isSet && loadedSymbols.Contains(Symbol))
-			{
-				loadedSymbols.Remove(Symbol);
+				case true when !loadedSymbols.Contains(Symbol):
+					loadedSymbols.Add(Symbol);
+					break;
+				case false when loadedSymbols.Contains(Symbol):
+					loadedSymbols.Remove(Symbol);
+					break;
 			}
 		}
 	}

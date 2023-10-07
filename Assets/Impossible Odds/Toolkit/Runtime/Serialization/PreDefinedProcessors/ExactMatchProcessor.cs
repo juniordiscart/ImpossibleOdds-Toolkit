@@ -1,22 +1,18 @@
-﻿namespace ImpossibleOdds.Serialization.Processors
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds.Serialization.Processors
+{
 	/// <summary>
 	/// Simple (de)serialization processor that checks if the type and data are an exact match and can directly be applied.
 	/// </summary>
 	public class ExactMatchProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
-		private readonly ISerializationDefinition definition = null;
-
-		public ISerializationDefinition Definition
-		{
-			get => definition;
-		}
+		public ISerializationDefinition Definition { get; }
 
 		public ExactMatchProcessor(ISerializationDefinition definition)
 		{
-			this.definition = definition;
+			definition.ThrowIfNull(nameof(definition));
+			Definition = definition;
 		}
 
 		/// <inheritdoc />
@@ -24,7 +20,7 @@
 		{
 			if (!CanSerialize(objectToSerialize))
 			{
-				throw new SerializationException("The provided data cannot be serialized by this processor of type {0}.", nameof(ExactMatchProcessor));
+				throw new SerializationException($"The provided data cannot be serialized by this processor of type {nameof(ExactMatchProcessor)}.");
 			}
 
 			return objectToSerialize;
@@ -35,7 +31,7 @@
 		{
 			if (!CanDeserialize(targetType, dataToDeserialize))
 			{
-				throw new SerializationException("The provided data cannot be deserialized by this processor of type {0}.", nameof(ExactMatchProcessor));
+				throw new SerializationException($"The provided data cannot be deserialized by this processor of type {nameof(ExactMatchProcessor)}.");
 			}
 
 			return dataToDeserialize;
@@ -46,7 +42,7 @@
 		{
 			return
 				(objectToSerialize != null) &&
-				definition.SupportedTypes.Contains(objectToSerialize.GetType());
+				Definition.SupportedTypes.Contains(objectToSerialize.GetType());
 		}
 
 		/// <inheritdoc />

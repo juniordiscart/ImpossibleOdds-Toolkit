@@ -1,10 +1,11 @@
-﻿namespace ImpossibleOdds.DependencyInjection
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
+
+namespace ImpossibleOdds.DependencyInjection
 {
-	using System;
-	using System.Collections.Generic;
-	using System.Linq;
-	using System.Reflection;
-	using ImpossibleOdds.ReflectionCaching;
 
 	using InjectableField = MemberInjectionValue<System.Reflection.FieldInfo>;
 	using InjectableProperty = MemberInjectionValue<System.Reflection.PropertyInfo>;
@@ -16,56 +17,35 @@
 	/// </summary>
 	internal class TypeInjectionCache : IReflectionMap
 	{
-		private readonly Type type;
-		private InjectableField[] injectableFields = null;
-		private InjectableProperty[] injectableProperties = null;
-		private InjectableMethod[] injectableMethods = null;
-		private InjectableConstructor[] injectableConstructors = null;
-
 		public TypeInjectionCache(Type type)
 		{
 			type.ThrowIfNull(nameof(type));
-			this.type = type;
+			Type = type;
 			ScanType();
 		}
 
 		/// <inheritdoc />
-		public Type Type
-		{
-			get => type;
-		}
+		public Type Type { get; }
 
 		/// <summary>
 		/// Injectable constructors.
 		/// </summary>
-		public InjectableConstructor[] InjectableConstructors
-		{
-			get => injectableConstructors;
-		}
+		public InjectableConstructor[] InjectableConstructors { get; private set; }
 
 		/// <summary>
 		/// Injectable fields.
 		/// </summary>
-		public InjectableField[] InjectableFields
-		{
-			get => injectableFields;
-		}
+		public InjectableField[] InjectableFields { get; private set; }
 
 		/// <summary>
 		/// Injectable properties.
 		/// </summary>
-		public InjectableProperty[] InjectableProperties
-		{
-			get => injectableProperties;
-		}
+		public InjectableProperty[] InjectableProperties { get; private set; }
 
 		/// <summary>
 		/// Injectable methods.
 		/// </summary>
-		public InjectableMethod[] InjectableMethods
-		{
-			get => injectableMethods;
-		}
+		public InjectableMethod[] InjectableMethods { get; private set; }
 
 		private void ScanType()
 		{
@@ -73,30 +53,30 @@
 			const BindingFlags bindingFlags = TypeReflectionUtilities.DefaultBindingFlags | BindingFlags.Static;    // Include static bindings as well.
 			IEnumerable<MemberInfo> injectableMembers = TypeReflectionUtilities.FindAllMembersWithAttribute(Type, typeof(InjectAttribute), false, requestedMembers, bindingFlags);
 
-			injectableFields =
+			InjectableFields =
 				injectableMembers
-				.Where(m => m is FieldInfo f && !f.IsLiteral)   // Exclude constants.
+				.Where(m => m is FieldInfo { IsLiteral: false })   // Exclude constants.
 				.Cast<FieldInfo>()
 				.Select(f => new InjectableField(f, f.GetCustomAttribute<InjectAttribute>(true)))
 				.ToArray();
 
-			injectableProperties =
+			InjectableProperties =
 				injectableMembers
-				.Where(m => m is PropertyInfo p && p.CanWrite)  // Exclude properties we can't write to.
+				.Where(m => m is PropertyInfo { CanWrite: true })  // Exclude properties we can't write to.
 				.Cast<PropertyInfo>()
 				.Select(p => new InjectableProperty(p, p.GetCustomAttribute<InjectAttribute>(true)))
 				.ToArray();
 
-			injectableMethods =
+			InjectableMethods =
 				injectableMembers
 				.Where(m => m is MethodInfo)
 				.Cast<MethodInfo>()
 				.Select(m => new InjectableMethod(m, m.GetCustomAttribute<InjectAttribute>(true)))
 				.ToArray();
 
-			injectableConstructors =
+			InjectableConstructors =
 				injectableMembers
-				.Where(m => (m is ConstructorInfo c) && (c.DeclaringType == type))
+				.Where(m => (m is ConstructorInfo c) && (c.DeclaringType == Type))
 				.Cast<ConstructorInfo>()
 				.Select(c => new InjectableConstructor(c, c.GetCustomAttribute<InjectAttribute>(true)))
 				.ToArray();

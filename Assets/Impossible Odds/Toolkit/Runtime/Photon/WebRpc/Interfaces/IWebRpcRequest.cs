@@ -1,6 +1,7 @@
-﻿namespace ImpossibleOdds.Photon.WebRpc
+﻿using ImpossibleOdds.Weblink;
+
+namespace ImpossibleOdds.Photon.WebRpc
 {
-	using ImpossibleOdds.Weblink;
 
 	/// <summary>
 	/// Interface that defines a WebRPC request.

@@ -1,18 +1,15 @@
-﻿namespace ImpossibleOdds.Xml
-{
-	using System;
-	using System.Collections.Generic;
-	using System.Globalization;
-	using System.Linq;
-	using System.Runtime.Serialization.Formatters.Binary;
-	using System.Xml.Linq;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Serialization.Processors;
-	using ImpossibleOdds.Xml.Processors;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Xml.Linq;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Serialization.Processors;
+using ImpossibleOdds.Xml.Processors;
 
-	public class XmlSerializationDefinition :
-		ISerializationDefinition,
-		ILookupTypeResolveSupport<XmlTypeAttribute>
+namespace ImpossibleOdds.Xml
+{
+	public class XmlSerializationDefinition : IXmlSerializationDefinition
 	{
 		public const string XmlSchemaURL = "http://www.w3.org/2001/XMLSchema-instance";
 		public const string XmlSchemaPrefix = "xsi";
@@ -21,9 +18,6 @@
 		private readonly ISerializationProcessor[] serializationProcessors;
 		private readonly IDeserializationProcessor[] deserializationProcessors;
 		private readonly ParallelProcessingFeature parallelProcessingFeature;
-		private BinaryFormatter binaryFormatter = new BinaryFormatter();
-		private XName xmlTypeKey;
-
 
 		/// <inheritdoc />
 		public IEnumerable<ISerializationProcessor> SerializationProcessors => serializationProcessors;
@@ -38,24 +32,9 @@
 		public HashSet<Type> SupportedTypes { get; }
 
 		/// <inheritdoc />
-		public Type TypeResolveAttribute => typeof(XmlTypeAttribute);
-
-		/// <inheritdoc />
-		object ILookupTypeResolveSupport.TypeResolveKey => TypeResolveKey;
-
-		/// <summary>
-		/// The attribute name used for storing type information.
-		/// </summary>
-		public XName TypeResolveKey => xmlTypeKey;
-
-		/// <summary>
-		/// The serialization definition used specifically for processing XML attributes.
-		/// </summary>
 		public ISerializationDefinition AttributeSerializationDefinition { get; set; }
 
-		/// <summary>
-		/// The serialization definition used specifically for processing XML CDATA sections.
-		/// </summary>
+		/// <inheritdoc />
 		public ISerializationDefinition CDataSerializationDefinition { get; set; }
 
 		public bool ParallelProcessingEnabled
@@ -125,7 +104,7 @@
 				{
 					ParallelProcessingFeature = parallelProcessingFeature
 				},
-				new XmlCustomObjectProcessor(this)
+				new XmlCustomObjectProcessor(this, new XmlTypeResolutionFeature())
 				{
 					CallbackFeature = new CallBackFeature<OnXmlSerializingAttribute, OnXmlSerializedAttribute, OnXmlDeserializingAttribute, OnXmlDeserializedAttribute>(),
 					RequiredValueFeature = new RequiredValueFeature<XmlRequiredAttribute>(),
@@ -135,8 +114,6 @@
 
 			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>().ToArray();
 			deserializationProcessors = processors.Where(p => p is IDeserializationProcessor).Cast<IDeserializationProcessor>().ToArray();
-
-			xmlTypeKey = XNamespace.Get(XmlSchemaURL) + XmlTypeKey;
 
 			AttributeSerializationDefinition = new XmlAttributeSerializationDefinition();
 			CDataSerializationDefinition = new XmlCDataSerializationDefinition();

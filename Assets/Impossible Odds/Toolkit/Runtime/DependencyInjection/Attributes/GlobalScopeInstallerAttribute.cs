@@ -1,26 +1,21 @@
-﻿namespace ImpossibleOdds.DependencyInjection
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds.DependencyInjection
+{
 	/// <summary>
 	/// Defines a static method as a global dependency scope installer.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 	public sealed class GlobalScopeInstallerAttribute : Attribute
 	{
-		private readonly int installPriority = 0;
-
-		public int InstallPriority
-		{
-			get => installPriority;
-		}
+		public int InstallPriority { get; }
 
 		public GlobalScopeInstallerAttribute()
 		{ }
 
 		public GlobalScopeInstallerAttribute(int installPriority)
 		{
-			this.installPriority = installPriority;
+			InstallPriority = installPriority;
 		}
 	}
 }

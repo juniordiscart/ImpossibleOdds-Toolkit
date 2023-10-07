@@ -13,9 +13,9 @@ namespace ImpossibleOdds.Serialization
     where TAlias : Attribute, IEnumAliasParameter
     {
         /// <inheritdoc />
-        public Type AsStringAttributeType => typeof(TAsString);
+        public Type AsStringAttribute => typeof(TAsString);
 
         /// <inheritdoc />
-        public Type AliasValueAttributeType => typeof(TAlias);
+        public Type AliasValueAttribute => typeof(TAlias);
     }
 }

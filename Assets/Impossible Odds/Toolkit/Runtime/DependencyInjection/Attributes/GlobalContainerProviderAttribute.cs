@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.DependencyInjection
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds.DependencyInjection
+{
 	/// <summary>
 	/// Defines a static method as a global dependency container provider.
 	/// Only The scope container provider with the highest priority value will
@@ -10,19 +10,14 @@
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 	public sealed class GlobalContainerProviderAttribute : Attribute
 	{
-		private readonly int priority = 0;
-
-		public int Priority
-		{
-			get => priority;
-		}
+		public int Priority { get; }
 
 		public GlobalContainerProviderAttribute()
 		{ }
 
 		public GlobalContainerProviderAttribute(int priority)
 		{
-			this.priority = priority;
+			Priority = priority;
 		}
 	}
 }

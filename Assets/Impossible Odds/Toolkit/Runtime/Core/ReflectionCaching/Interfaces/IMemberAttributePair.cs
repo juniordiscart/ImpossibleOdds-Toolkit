@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.ReflectionCaching
-{
-	using System;
-	using System.Reflection;
+﻿using System;
+using System.Reflection;
 
+namespace ImpossibleOdds.ReflectionCaching
+{
 	public interface IMemberAttributePair
 	{
 		/// <summary>

@@ -1,17 +1,22 @@
-﻿namespace ImpossibleOdds.Serialization.Processors
-{
-	using System;
-	using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
+namespace ImpossibleOdds.Serialization.Processors
+{
 	/// <summary>
 	/// A (de)serialization processor for primitive types, i.e. int, bool, float, ...
+	/// If a primitive type is not supported by the serialization definition, it will
+	/// attempt to promote it to a type with a larger value range that is supported.
+	/// Note: this may not be suitable with binary serializers that will attempt to directly
+	/// match the the type to the value's binary representation. The type is recommended to
+	/// be directly supported by the serialization definition instead.
 	/// </summary>
 	public class PrimitiveTypeProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
 		private const string TrueStringAlternative = "1";
 		private const string FalseStringAlternative = "0";
 
-		private static readonly List<Type> primitiveTypeOrder = new List<Type>()
+		private static readonly List<Type> PrimitiveTypeOrder = new List<Type>()
 		{
 			typeof(bool),
 			typeof(byte),
@@ -27,16 +32,11 @@
 			typeof(double)
 		};
 
-		private readonly ISerializationDefinition definition = null;
-
-		public ISerializationDefinition Definition
-		{
-			get => definition;
-		}
+		public ISerializationDefinition Definition { get; }
 
 		public PrimitiveTypeProcessor(ISerializationDefinition definition)
 		{
-			this.definition = definition;
+			Definition = definition;
 		}
 
 		/// <inheritdoc />
@@ -45,35 +45,27 @@
 			Type sourceType = objectToSerialize.GetType();
 
 			// Check whether the type is supported at all by the serialization definition...
-			if (definition.SupportedTypes.Contains(sourceType))
+			if (Definition.SupportedTypes.Contains(sourceType))
 			{
 				return objectToSerialize;
 			}
 
 			// Attempt to convert the source value to a supported primitive type that is higher in the chain.
-			if (primitiveTypeOrder.Contains(sourceType))
+			if (PrimitiveTypeOrder.TryFindIndex(sourceType, out int index))
 			{
-				for (int i = primitiveTypeOrder.IndexOf(sourceType); i < primitiveTypeOrder.Count; ++i)
+				for (int i = index; i < PrimitiveTypeOrder.Count; ++i)
 				{
-					Type targetType = primitiveTypeOrder[i];
-					if (!definition.SupportedTypes.Contains(targetType))
+					Type targetType = PrimitiveTypeOrder[i];
+					if (!Definition.SupportedTypes.Contains(targetType))
 					{
 						continue;
 					}
 
-					return Convert.ChangeType(objectToSerialize, targetType, definition.FormatProvider);
+					return Convert.ChangeType(objectToSerialize, targetType, Definition.FormatProvider);
 				}
 			}
 
-			// TODO: check whether an implicit or explicit type conversion exists that may have been defined by the user.
-
-			// Last resort: check whether a string-type is accepted.
-			if (definition.SupportedTypes.Contains(typeof(string)))
-			{
-				return ((IConvertible)objectToSerialize).ToString(definition.FormatProvider);
-			}
-
-			throw new SerializationException("Cannot convert the primitive data type {0} to a data type that is supported by the serialization definition of type {1}.", sourceType.Name, definition.GetType().Name);
+			throw new SerializationException($"Cannot convert the primitive data type {sourceType.Name} to a data type that is supported by the serialization definition of type {Definition.GetType().Name}.");
 		}
 
 		/// <inheritdoc />
@@ -83,7 +75,7 @@
 			return
 				typeof(bool) == targetType ?
 				ConvertToBoolean(dataToDeserialize) :
-				Convert.ChangeType(dataToDeserialize, targetType, definition.FormatProvider);
+				Convert.ChangeType(dataToDeserialize, targetType, Definition.FormatProvider);
 		}
 
 		/// <inheritdoc />
@@ -102,25 +94,22 @@
 			return
 				targetType.IsPrimitive &&
 				(dataToDeserialize != null) &&
-				(primitiveTypeOrder.Contains(dataToDeserialize.GetType()) || dataToDeserialize is string);
+				(PrimitiveTypeOrder.Contains(dataToDeserialize.GetType()) || dataToDeserialize is string);
 		}
 
 		private object ConvertToBoolean(object objToParse)
 		{
 			if (objToParse is string strValue)
 			{
-				switch (strValue)
+				return strValue switch
 				{
-					case TrueStringAlternative:
-						return true;
-					case FalseStringAlternative:
-						return false;
-					default:
-						return Convert.ChangeType(objToParse, typeof(bool), definition.FormatProvider);
-				}
+					TrueStringAlternative => true,
+					FalseStringAlternative => false,
+					_ => Convert.ChangeType(objToParse, typeof(bool), Definition.FormatProvider)
+				};
 			}
 
-			return Convert.ChangeType(objToParse, typeof(bool), definition.FormatProvider);
+			return Convert.ChangeType(objToParse, typeof(bool), Definition.FormatProvider);
 		}
 	}
 }

@@ -1,20 +1,15 @@
-﻿namespace ImpossibleOdds
-{
-	using System;
-	using UnityEngine;
+﻿using System;
+using UnityEngine;
 
+namespace ImpossibleOdds
+{
 	/// <summary>
 	/// Defines that a MonoBehaviour's script execution should happen after other scripts.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 	public sealed class ExecuteAfterAttribute : Attribute
 	{
-		private readonly Type[] executeAfter = null;
-
-		public Type[] ExecuteAfter
-		{
-			get => executeAfter;
-		}
+		public Type[] ExecuteAfter { get; }
 
 		public ExecuteAfterAttribute(params Type[] executeAfter)
 		{
@@ -24,11 +19,11 @@
 				type.ThrowIfNull(nameof(type));
 				if (!typeof(MonoBehaviour).IsAssignableFrom(type))
 				{
-					throw new ImpossibleOddsException("The type '{0}' is not assignable from a {1}.", type.Name, typeof(MonoBehaviour).Name);
+					throw new ImpossibleOddsException("The type '{0}' is not assignable from a {1}.", type.Name, nameof(MonoBehaviour));
 				}
 			}
 
-			this.executeAfter = executeAfter;
+			ExecuteAfter = executeAfter;
 		}
 	}
 }

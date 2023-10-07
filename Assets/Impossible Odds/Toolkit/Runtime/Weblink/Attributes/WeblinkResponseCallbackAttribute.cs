@@ -1,16 +1,11 @@
-﻿namespace ImpossibleOdds.Weblink
-{
-	using System;
+﻿using System;
 
-	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+namespace ImpossibleOdds.Weblink
+{
+	[AttributeUsage(AttributeTargets.Method)]
 	public abstract class WeblinkResponseCallbackAttribute : Attribute, IWeblinkResponseTypeAssociation
 	{
-		private readonly Type responseType;
-
-		public Type ResponseType
-		{
-			get => responseType;
-		}
+		public Type ResponseType { get; }
 
 		public WeblinkResponseCallbackAttribute(Type responseType)
 		{
@@ -18,10 +13,10 @@
 
 			if (!typeof(IWeblinkResponse).IsAssignableFrom(responseType))
 			{
-				throw new WeblinkException("Type {0} does not implement interface {1}.", responseType.Name, typeof(IWeblinkResponse).Name);
+				throw new WeblinkException("Type {0} does not implement interface {1}.", responseType.Name, nameof(IWeblinkResponse));
 			}
 
-			this.responseType = responseType;
+			ResponseType = responseType;
 		}
 	}
 }

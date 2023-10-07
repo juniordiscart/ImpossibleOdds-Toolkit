@@ -1,22 +1,17 @@
-﻿namespace ImpossibleOdds.Photon.WebRpc
-{
-	using System;
-	using ImpossibleOdds.Serialization;
+﻿using System;
+using ImpossibleOdds.Serialization;
 
-	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+namespace ImpossibleOdds.Photon.WebRpc
+{
+	[AttributeUsage(AttributeTargets.Field)]
 	public sealed class WebRpcEnumAliasAttribute : Attribute, IEnumAliasParameter
 	{
-		private readonly string alias = null;
-
-		public string Alias
-		{
-			get => alias;
-		}
+		public string Alias { get; }
 
 		public WebRpcEnumAliasAttribute(string alias)
 		{
 			alias.ThrowIfNullOrEmpty(nameof(alias));
-			this.alias = alias;
+			Alias = alias;
 		}
 	}
 }

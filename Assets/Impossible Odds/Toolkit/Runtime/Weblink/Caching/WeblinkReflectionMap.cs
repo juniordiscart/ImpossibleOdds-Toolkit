@@ -1,29 +1,24 @@
-﻿namespace ImpossibleOdds.Weblink.Caching
-{
-	using System;
-	using System.Collections.Generic;
-	using System.Collections.Concurrent;
-	using System.Reflection;
-	using ImpossibleOdds.ReflectionCaching;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds.Weblink.Caching
+{
 	public class WeblinkReflectionMap : IWeblinkReflectionMap
 	{
-		private readonly Type type = null;
-
-		private ConcurrentDictionary<Type, Attribute[]> typeDefinedAttributes = new ConcurrentDictionary<Type, Attribute[]>();
-		private ConcurrentDictionary<Type, ITargetedCallback[]> targetedCallbacks = new ConcurrentDictionary<Type, ITargetedCallback[]>();
+		private readonly ConcurrentDictionary<Type, Attribute[]> typeDefinedAttributes = new ConcurrentDictionary<Type, Attribute[]>();
+		private readonly ConcurrentDictionary<Type, ITargetedCallback[]> targetedCallbacks = new ConcurrentDictionary<Type, ITargetedCallback[]>();
 
 		public WeblinkReflectionMap(Type type)
 		{
 			type.ThrowIfNull(nameof(type));
-			this.type = type;
+			Type = type;
 		}
 
 		/// <inheritdoc />
-		public Type Type
-		{
-			get => type;
-		}
+		public Type Type { get; }
 
 		/// <inheritdoc />
 		public ITargetedCallback[] GetTargetedCallbacks(Type attributeType)
@@ -41,7 +36,7 @@
 
 		private Attribute[] FindTypeDefinedAttributes(Type attributeType)
 		{
-			return typeDefinedAttributes.GetOrAdd(attributeType, (_) => Attribute.GetCustomAttributes(type, attributeType, true));
+			return typeDefinedAttributes.GetOrAdd(attributeType, (_) => Attribute.GetCustomAttributes(Type, attributeType, true));
 		}
 
 		private ITargetedCallback[] FindTargetedCallbacks(Type attributeType)
@@ -51,7 +46,7 @@
 				return callbacks;
 			}
 
-			IEnumerable<MemberInfo> callbackMethods = TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, false, MemberTypes.Method);
+			IEnumerable<MemberInfo> callbackMethods = TypeReflectionUtilities.FindAllMembersWithAttribute(Type, attributeType, false, MemberTypes.Method);
 			List<ITargetedCallback> targetedCallbacksForAttr = new List<ITargetedCallback>();
 			foreach (MethodInfo method in TypeReflectionUtilities.FilterBaseMethods(callbackMethods))
 			{

@@ -1,15 +1,15 @@
-﻿namespace ImpossibleOdds.Runnables
-{
-	using System.Collections;
-	using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
+namespace ImpossibleOdds.Runnables
+{
 	/// <summary>
 	/// Interface for supporting starting a coroutine in a runner.
 	/// </summary>
 	public interface IRoutineRunner
 	{
 		/// <summary>
-		/// Start running a corouting.
+		/// Start running a coroutine.
 		/// </summary>
 		/// <param name="routineHandle">Handle to start the coroutine.</param>
 		/// <returns></returns>

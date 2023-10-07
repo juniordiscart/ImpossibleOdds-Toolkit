@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.Weblink
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds.Weblink
+{
 	/// <summary>
 	/// A messenger interface for managing outgoing requests and incoming responses.
 	/// </summary>
@@ -56,12 +56,12 @@
 	}
 
 	/// <summary>
-	/// Generic variant that provides thighther control over the types that can be used.
+	/// Generic variant that provides tighter control over the types that can be used.
 	/// </summary>
 	/// <typeparam name="TRequest">Type of requests that will get sent.</typeparam>
 	/// <typeparam name="TResponse">Type of response that will be received.</typeparam>
 	/// <typeparam name="TMessageHandle">Type of the handle per request-response pair.</typeparam>
-	public interface IWeblinkMessenger<TRequest, TResponse, TMessageHandle> : IWeblinkMessenger
+	public interface IWeblinkMessenger<in TRequest, TResponse, out TMessageHandle> : IWeblinkMessenger
 	where TRequest : IWeblinkRequest
 	where TResponse : IWeblinkResponse
 	where TMessageHandle : IWeblinkMessageHandle<TRequest, TResponse>

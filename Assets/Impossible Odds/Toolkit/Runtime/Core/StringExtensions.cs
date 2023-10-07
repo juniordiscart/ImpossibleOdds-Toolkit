@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds
+{
 	public static class StringExtensions
 	{
 		/// <summary>
@@ -44,13 +44,13 @@
 		/// <returns>True if an error was logged/the argument is null or empty. False otherwise.</returns>
 		public static bool LogErrorIfNullOrEmpty(this string argument, string argumentName)
 		{
-			if (string.IsNullOrEmpty(argument))
+			if (!string.IsNullOrEmpty(argument))
 			{
-				Log.Error("Agurment '{0}' is {1}.", argumentName, ((argument == null) ? "null" : "empty"));
-				return true;
+				return false;
 			}
 
-			return false;
+			Log.Error("Argument '{0}' is {1}.", argumentName, ((argument == null) ? "null" : "empty"));
+			return true;
 		}
 
 		/// <summary>
@@ -61,13 +61,14 @@
 		/// <returns>True if an error was logged/the argument is null or whitespace. False otherwise.</returns>
 		public static bool LogErrorIfNullOrWhitespace(this string argument, string argumentName)
 		{
-			if (string.IsNullOrWhiteSpace(argument))
+			if (!string.IsNullOrWhiteSpace(argument))
 			{
-				Log.Error("Agurment '{0}' is {1}.", argumentName, ((argument == null) ? "null" : "whitespace"));
-				return true;
+				return false;
 			}
 
-			return false;
+			Log.Error("Argument '{0}' is {1}.", argumentName, ((argument == null) ? "null" : "whitespace"));
+			return true;
+
 		}
 
 		/// <summary>

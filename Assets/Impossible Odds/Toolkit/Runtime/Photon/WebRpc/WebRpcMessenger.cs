@@ -1,14 +1,15 @@
-﻿namespace ImpossibleOdds.Photon.WebRpc
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using ExitGames.Client.Photon;
+using ImpossibleOdds.Http;
+using ImpossibleOdds.Weblink;
+using ImpossibleOdds.Serialization;
+using Photon.Realtime;
+
+namespace ImpossibleOdds.Photon.WebRpc
 {
-	using System;
-	using System.Collections;
-	using System.Collections.Generic;
-	using System.Collections.Concurrent;
-	using ImpossibleOdds.Http;
-	using ImpossibleOdds.Weblink;
-	using ImpossibleOdds.Serialization;
-	using global::Photon.Realtime;
-	using ExitGames.Client.Photon;
 
 	/// <summary>
 	/// A messenger for WebRPC calls sent over the Photon multiplayer package.
@@ -18,9 +19,9 @@
 		IWebRpcCallback,
 		IDisposable
 	{
-		private readonly LoadBalancingClient photonClient = null;
-		private IWebRpcMessageConfigurator messageConfigurator = null;
-		private ConcurrentDictionary<object, WebRpcMessageHandle> pendingCalls = null;
+		private IWebRpcMessageConfigurator messageConfigurator;
+		private readonly LoadBalancingClient photonClient;
+		private readonly ConcurrentDictionary<object, WebRpcMessageHandle> pendingCalls;
 
 		/// <summary>
 		/// The configurator used by the messenger for handling the URL and body of the requests and incoming responses.
@@ -129,15 +130,17 @@
 			uri.ThrowIfNullOrWhitespace(nameof(uri));
 
 			// Generate the request identifier to identify the response.
-			object requestId = string.Empty;
+			object requestId;
 			do
 			{
 				requestId = messageConfigurator.GenerateAndApplyId(webRpcParams);
 			} while (pendingCalls.ContainsKey(requestId));
 
-			Dictionary<byte, object> opParameters = new Dictionary<byte, object>();
-			opParameters.Add(ParameterCode.UriPath, uri);
-			opParameters.Add(ParameterCode.WebRpcParameters, webRpcParams);
+			Dictionary<byte, object> opParameters = new Dictionary<byte, object>
+			{
+				{ ParameterCode.UriPath, uri },
+				{ ParameterCode.WebRpcParameters, webRpcParams }
+			};
 
 			if (request.UseAuthCookie)
 			{
@@ -216,10 +219,10 @@
 			public const string DefaultResponseIdKey = "ResponseId";
 			protected const string IdGenerationPool = "ABCDEFGHIJKLMNPQRSTUVWXYabcdefghjklmnopqrstuvwxyz0123456789_-";
 
-			protected readonly ISerializationDefinition bodyDefinition = null;
-			protected readonly ISerializationDefinition urlDefinition = null;
-			protected readonly string requestIdKey = DefaultRequestIdKey;
-			protected readonly string responseIdKey = DefaultResponseIdKey;
+			protected readonly ISerializationDefinition bodyDefinition;
+			protected readonly ISerializationDefinition urlDefinition;
+			protected readonly string requestIdKey;
+			protected readonly string responseIdKey;
 			private int generatedIdLength = DefaultIdLength;
 
 			/// <summary>
@@ -233,7 +236,7 @@
 				{
 					if (value < MinimumIdLength)
 					{
-						throw new ArgumentOutOfRangeException(string.Format("The length of identifiers should at least be {0} long as to prevent collision.", MinimumIdLength));
+						throw new ArgumentOutOfRangeException($"The length of identifiers should at least be {MinimumIdLength} long as to prevent collision.");
 					}
 
 					generatedIdLength = value;
@@ -245,15 +248,6 @@
 			/// </summary>
 			public DefaultMessageConfigurator()
 			: this(new WebRpcBodySerializationDefinition(), new WebRpcUrlSerializationDefinition(), DefaultRequestIdKey, DefaultResponseIdKey)
-			{ }
-
-			/// <summary>
-			/// Configurator with customized serialization definitions, but with default request and response identifier keys.
-			/// </summary>
-			/// <param name="bodyDefinition">The serialization definition used for processing the body of the requests and responses.</param>
-			/// <param name="urlDefinition">The serialization definition used for processing the URI parameters of the request.</param>
-			public DefaultMessageConfigurator(ISerializationDefinition bodyDefinition, ISerializationDefinition urlDefinition)
-			: this(bodyDefinition, urlDefinition, DefaultRequestIdKey, DefaultResponseIdKey)
 			{ }
 
 			/// <summary>
@@ -272,7 +266,7 @@
 			/// <param name="urlDefinition">The serialization definition used for processing the URI parameters of the request.</param>
 			/// <param name="requestIdKey">The identifier key used for setting the identifier in outgoing requests.</param>
 			/// <param name="responseIdKey">The identifier key used for searching in incoming response data.</param>
-			public DefaultMessageConfigurator(ISerializationDefinition bodyDefinition, ISerializationDefinition urlDefinition, string requestIdKey, string responseIdKey)
+			public DefaultMessageConfigurator(ISerializationDefinition bodyDefinition, ISerializationDefinition urlDefinition, string requestIdKey = DefaultRequestIdKey, string responseIdKey = DefaultResponseIdKey)
 			{
 				bodyDefinition.ThrowIfNull(nameof(bodyDefinition));
 				urlDefinition.ThrowIfNull(nameof(urlDefinition));
@@ -312,11 +306,7 @@
 				request.ThrowIfNull(nameof(request));
 
 				// Generate the WebRPC parameters, and if none were generated, create one.
-				IDictionary webRpcParams = Serializer.Serialize<IDictionary>(request, bodyDefinition);
-				if (webRpcParams == null)
-				{
-					webRpcParams = new Dictionary<string, object>(1);   // At least one, because the request ID will be appended still.
-				}
+				IDictionary webRpcParams = Serializer.Serialize<IDictionary>(request, bodyDefinition) ?? new Dictionary<string, object>(1); // At least one, because the request ID will be appended still.
 
 				return webRpcParams;
 			}

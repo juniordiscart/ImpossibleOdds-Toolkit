@@ -11,7 +11,7 @@ namespace ImpossibleOdds.Serialization
         /// <summary>
         /// Type of the attribute to be defined on methods that should be called when serialization begins on the object.
         /// </summary>
-        Type OnSerializationAttributeType
+        Type OnSerializationAttribute
         {
             get;
         }
@@ -19,7 +19,7 @@ namespace ImpossibleOdds.Serialization
         /// <summary>
         /// Type of the attribute to be defined on methods that should be called when serialization has ended on the object.
         /// </summary>
-        Type OnSerializedAttributeType
+        Type OnSerializedAttribute
         {
             get;
         }
@@ -27,7 +27,7 @@ namespace ImpossibleOdds.Serialization
         /// <summary>
         /// Type of the attribute to be defined on methods that should be called when deserialization begins on the object.
         /// </summary>
-        Type OnDeserializationAttributeType
+        Type OnDeserializationAttribute
         {
             get;
         }
@@ -35,7 +35,7 @@ namespace ImpossibleOdds.Serialization
         /// <summary>
         /// Type of the attribute to be define don methods that should be called when deserialization has ended on the object.
         /// </summary>
-        Type OnDeserializedAttributeType
+        Type OnDeserializedAttribute
         {
             get;
         }

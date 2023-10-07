@@ -1,68 +1,57 @@
-﻿namespace ImpossibleOdds.Photon.WebRpc
-{
-	using System;
-	using System.Collections.Generic;
-	using System.Linq;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Serialization.Processors;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using ImpossibleOdds.Json;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Serialization.Processors;
 
+namespace ImpossibleOdds.Photon.WebRpc
+{
 	/// <summary>
 	/// A default implementation to handle (de)serialization of Photon-based webhook calls.
 	/// </summary>
-	public class WebRpcBodySerializationDefinition :
-	IndexAndLookupDefinition<WebRpcArrayAttribute, WebRpcIndexAttribute, object[], WebRpcObjectAttribute, WebRpcFieldAttribute, Dictionary<string, object>>,
-	ILookupTypeResolveSupport<WebRpcTypeAttribute>
+	public class WebRpcBodySerializationDefinition : ISerializationDefinition
 	{
-		public const string WebRpcDefaultTypeKey = "jsi:type";
-
-		private readonly ISerializationProcessor[] serializationProcessors = null;
-		private readonly IDeserializationProcessor[] deserializationProcessors = null;
-		private readonly HashSet<Type> supportedTypes = null;
-		private string typeResolveKey = WebRpcDefaultTypeKey;
+		private readonly ISerializationProcessor[] serializationProcessors;
+		private readonly IDeserializationProcessor[] deserializationProcessors;
+		private readonly ParallelProcessingFeature parallelProcessingFeature;
 
 		/// <inheritdoc />
-		public override IEnumerable<ISerializationProcessor> SerializationProcessors
-		{
-			get => serializationProcessors;
-		}
+		public IEnumerable<ISerializationProcessor> SerializationProcessors => serializationProcessors;
 
 		/// <inheritdoc />
-		public override IEnumerable<IDeserializationProcessor> DeserializationProcessors
-		{
-			get => deserializationProcessors;
-		}
+		public IEnumerable<IDeserializationProcessor> DeserializationProcessors => deserializationProcessors;
 
 		/// <inheritdoc />
-		public override HashSet<Type> SupportedTypes
-		{
-			get => supportedTypes;
-		}
+		public HashSet<Type> SupportedTypes { get; }
 
 		/// <inheritdoc />
-		public Type TypeResolveAttribute
-		{
-			get => typeof(WebRpcTypeAttribute);
-		}
+		public IFormatProvider FormatProvider { get; set; } = CultureInfo.InvariantCulture;
 
-		/// <inheritdoc />
-		object ILookupTypeResolveSupport.TypeResolveKey
+		/// <summary>
+		/// Enable or disable the parallel processing of data across the data processors.
+		/// </summary>
+		public bool ParallelProcessingEnabled
 		{
-			get => typeResolveKey;
-		}
-
-		/// <inheritdoc />
-		public string TypeResolveKey
-		{
-			get => typeResolveKey;
-			set
-			{
-				value.ThrowIfNullOrEmpty(nameof(value));
-				typeResolveKey = value;
-			}
+			get => parallelProcessingFeature.Enabled;
+			set => parallelProcessingFeature.Enabled = value;
 		}
 
 		public WebRpcBodySerializationDefinition()
+			:this (false)
+		{ }
+
+		public WebRpcBodySerializationDefinition(bool enableParallelProcessing)
 		{
+			parallelProcessingFeature = new ParallelProcessingFeature()
+			{
+				Enabled = enableParallelProcessing
+			};
+
+			ILookupSerializationConfiguration lookupConfiguration = new WebRpcBodyLookupConfiguration();
+			ISequenceSerializationConfiguration sequenceConfiguration = new WebRpcBodySequenceConfiguration();
+
 			PrimitiveProcessingMethod defaultProcessingMethod =
 #if IMPOSSIBLE_ODDS_WEBHOOK_UNITY_TYPES_AS_ARRAY
 			PrimitiveProcessingMethod.Sequence;
@@ -72,7 +61,7 @@
 
 			// Based on the list of types supported by the Photon serializer
 			// https://doc.photonengine.com/en-us/realtime/current/reference/webrpc#data_types_conversion
-			supportedTypes = new HashSet<Type>()
+			SupportedTypes = new HashSet<Type>()
 			{
 				typeof(byte),
 				typeof(short),
@@ -98,24 +87,34 @@
 				new VersionProcessor(this),
 				new GuidProcessor(this),
 				new StringProcessor(this),
-				new Vector2Processor(this, this, defaultProcessingMethod),
-				new Vector2IntProcessor(this, this, defaultProcessingMethod),
-				new Vector3Processor(this, this, defaultProcessingMethod),
-				new Vector3IntProcessor(this, this, defaultProcessingMethod),
-				new Vector4Processor(this, this, defaultProcessingMethod),
-				new QuaternionProcessor(this, this, defaultProcessingMethod),
-				new ColorProcessor(this, this, defaultProcessingMethod),
-				new Color32Processor(this, this, defaultProcessingMethod),
-				new LookupProcessor(this),
-				new SequenceProcessor(this),
-				new CustomObjectSequenceProcessor(this)
+				new Vector2Processor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Vector2IntProcessor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Vector3Processor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Vector3IntProcessor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Vector4Processor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new QuaternionProcessor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new ColorProcessor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Color32Processor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new LookupProcessor(this, lookupConfiguration)
 				{
-					CallbackFeature = new CallBackFeature<OnWebRpcSerializingAttribute, OnWebRpcSerializedAttribute, OnWebRpcDeserializingAttribute, OnWebRpcDeserializedAttribute>()
+					ParallelProcessingFeature = parallelProcessingFeature
 				},
-				new CustomObjectLookupProcessor(this)
+				new SequenceProcessor(this, sequenceConfiguration)
 				{
+					ParallelProcessingFeature = parallelProcessingFeature
+				},
+				new CustomObjectSequenceProcessor(this, sequenceConfiguration)
+				{
+					TypeResolutionFeature = new SequenceTypeResolutionFeature<WebRpcTypeIndexAttribute>(0),
 					CallbackFeature = new CallBackFeature<OnWebRpcSerializingAttribute, OnWebRpcSerializedAttribute, OnWebRpcDeserializingAttribute, OnWebRpcDeserializedAttribute>(),
-					RequiredValueFeature = new RequiredValueFeature<WebRpcRequiredAttribute>()
+					ParallelProcessingFeature = parallelProcessingFeature,
+				},
+				new CustomObjectLookupProcessor(this, lookupConfiguration)
+				{
+					TypeResolutionFeature = new LookupTypeResolutionFeature<WebRpcTypeAttribute>(JsonSerializationDefinition.JsonDefaultTypeKey),
+					CallbackFeature = new CallBackFeature<OnWebRpcSerializingAttribute, OnWebRpcSerializedAttribute, OnWebRpcDeserializingAttribute, OnWebRpcDeserializedAttribute>(),
+					RequiredValueFeature = new RequiredValueFeature<WebRpcRequiredAttribute>(),
+					ParallelProcessingFeature = parallelProcessingFeature,
 				},
 			};
 
@@ -144,18 +143,6 @@
 					switchProcessor.ProcessingMethod = preferredProcessingMethod;
 				}
 			}
-		}
-
-		/// <inheritdoc />
-		public override object[] CreateSequenceInstance(int capacity)
-		{
-			return new object[capacity];
-		}
-
-		/// <inheritdoc />
-		public override Dictionary<string, object> CreateLookupInstance(int capacity)
-		{
-			return new Dictionary<string, object>(capacity);
 		}
 	}
 }

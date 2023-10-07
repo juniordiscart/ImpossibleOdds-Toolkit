@@ -1,15 +1,15 @@
-﻿namespace ImpossibleOdds.Weblink
-{
-	using System;
-	using System.Collections.Concurrent;
-	using System.Reflection;
-	using ImpossibleOdds.ReflectionCaching;
-	using ImpossibleOdds.Weblink.Caching;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
+using ImpossibleOdds.Weblink.Caching;
 
+namespace ImpossibleOdds.Weblink
+{
 	public static class WeblinkUtilities
 	{
-		private readonly static ConcurrentDictionary<Type, Type> requestResponseMapping = new ConcurrentDictionary<Type, Type>();
-		private readonly static ConcurrentDictionary<Type, IWeblinkReflectionMap> typeMapCache = new ConcurrentDictionary<Type, IWeblinkReflectionMap>();
+		private static readonly ConcurrentDictionary<Type, Type> RequestResponseMapping = new ConcurrentDictionary<Type, Type>();
+		private static readonly ConcurrentDictionary<Type, IWeblinkReflectionMap> TypeMapCache = new ConcurrentDictionary<Type, IWeblinkReflectionMap>();
 
 		/// <summary>
 		/// Retrieve the associated response type for the given request type.
@@ -21,7 +21,7 @@
 		where TResponseAssocAttr : WeblinkResponseAttribute
 		{
 			requestType.ThrowIfNull(nameof(requestType));
-			return requestResponseMapping.GetOrAdd(requestType, (t) => t.GetCustomAttribute<TResponseAssocAttr>(false)?.ResponseType);
+			return RequestResponseMapping.GetOrAdd(requestType, (t) => t.GetCustomAttribute<TResponseAssocAttr>(false)?.ResponseType);
 		}
 
 		/// <summary>
@@ -51,7 +51,7 @@
 
 		/// <summary>
 		/// Invoke any methods found on the target object that have been marked as being response callbacks.
-		/// The method can define parameters in any order refering to the handle, request and/or response.
+		/// The method can define parameters in any order referring to the handle, request and/or response.
 		/// The message handle's request is required to assigned. The response may be null.
 		/// </summary>
 		/// <param name="target">The object on which to invoke response callback methods</param>
@@ -121,7 +121,7 @@
 		private static IWeblinkReflectionMap GetWeblinkReflectionMap(Type target)
 		{
 			target.ThrowIfNull(nameof(target));
-			return typeMapCache.GetOrAdd(target, (t) => new WeblinkReflectionMap(t));
+			return TypeMapCache.GetOrAdd(target, (t) => new WeblinkReflectionMap(t));
 		}
 	}
 }

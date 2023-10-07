@@ -5,11 +5,11 @@
 	[HttpBodyArray]
 	public class LeaderboardEntry
 	{
-		[HttpBodyIndex(0)]
+		[HttpBodySequence(0)]
 		private int rank = 0;
-		[HttpBodyIndex(1)]
+		[HttpBodySequence(1)]
 		private int playerId = 0;
-		[HttpBodyIndex(2)]
+		[HttpBodySequence(2)]
 		private int score = 0;
 
 		public int Rank

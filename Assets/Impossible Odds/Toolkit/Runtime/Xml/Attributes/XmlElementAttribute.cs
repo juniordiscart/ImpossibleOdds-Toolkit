@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Xml
-{
-	using System;
+﻿using System;
 
-	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
+namespace ImpossibleOdds.Xml
+{
+	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 	public sealed class XmlElementAttribute : AbstractXmlMemberAttribute
 	{
 		public XmlElementAttribute()

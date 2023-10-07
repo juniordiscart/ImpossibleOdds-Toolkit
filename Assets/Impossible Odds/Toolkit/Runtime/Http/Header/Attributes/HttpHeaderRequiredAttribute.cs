@@ -3,15 +3,9 @@ using ImpossibleOdds.Serialization;
 
 namespace ImpossibleOdds.Http
 {
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class HttpHeaderRequiredAttribute : Attribute, IRequiredParameter
     {
-        private bool performNullCheck = false;
-
-        public bool NullCheck
-        {
-            get => performNullCheck;
-            set => performNullCheck = value;
-        }
+        public bool NullCheck { get; set; }
     }
 }

@@ -1,53 +1,38 @@
-﻿namespace ImpossibleOdds.Xml
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Xml.Linq;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Serialization.Processors;
+using ImpossibleOdds.Xml.Processors;
+
+namespace ImpossibleOdds.Xml
 {
-	using System;
-	using System.Collections.Generic;
-	using System.Globalization;
-	using System.Linq;
-	using System.Xml.Linq;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Serialization.Processors;
-	using ImpossibleOdds.Xml.Processors;
 
 	/// <summary>
 	/// Serialization definition for dealing with CDATA sections in the XML document.
 	/// </summary>
-	public class XmlCDataSerializationDefinition :
-	ISerializationDefinition
+	public class XmlCDataSerializationDefinition : ISerializationDefinition
 	{
-		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
-		private ISerializationProcessor[] serializationProcessors = null;
-		private IDeserializationProcessor[] deserializationProcessors = null;
-		private HashSet<Type> supportedTypes = null;
+		private readonly ISerializationProcessor[] serializationProcessors;
+		private readonly IDeserializationProcessor[] deserializationProcessors;
 
 		/// <inheritdoc />
-		public IEnumerable<ISerializationProcessor> SerializationProcessors
-		{
-			get => serializationProcessors;
-		}
+		public IEnumerable<ISerializationProcessor> SerializationProcessors => serializationProcessors;
 
 		/// <inheritdoc />
-		public IEnumerable<IDeserializationProcessor> DeserializationProcessors
-		{
-			get => deserializationProcessors;
-		}
+		public IEnumerable<IDeserializationProcessor> DeserializationProcessors => deserializationProcessors;
 
 		/// <inheritdoc />
-		public IFormatProvider FormatProvider
-		{
-			get => formatProvider;
-			set => formatProvider = value;
-		}
+		public IFormatProvider FormatProvider { get; set; } = CultureInfo.InvariantCulture;
 
 		/// <inheritdoc />
-		public HashSet<Type> SupportedTypes
-		{
-			get => supportedTypes;
-		}
+		public HashSet<Type> SupportedTypes { get; }
 
 		public XmlCDataSerializationDefinition()
 		{
-			supportedTypes = new HashSet<Type>()
+			SupportedTypes = new HashSet<Type>()
 			{
 				typeof(string),
 				typeof(XCData)

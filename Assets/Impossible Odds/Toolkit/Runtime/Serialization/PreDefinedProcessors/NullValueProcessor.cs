@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.Serialization.Processors
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds.Serialization.Processors
+{
 	/// <summary>
 	/// A deserialization processor that handles null values.
 	/// If the target is a nullable type, null will be returned, otherwise, if the target
@@ -9,17 +9,12 @@
 	/// </summary>
 	public class NullValueProcessor : IDeserializationProcessor
 	{
-		private readonly ISerializationDefinition definition = null;
-
-		public ISerializationDefinition Definition
-		{
-			get => definition;
-		}
+		public ISerializationDefinition Definition { get; }
 
 		public NullValueProcessor(ISerializationDefinition definition)
 		{
 			definition.ThrowIfNull(nameof(definition));
-			this.definition = definition;
+			Definition = definition;
 		}
 
 		/// <inheritdoc />
@@ -27,7 +22,7 @@
 		{
 			if (!CanDeserialize(targetType, dataToDeserialize))
 			{
-				throw new SerializationException("The provided data cannot be deserialized by this processor of type {0}.", nameof(NullValueProcessor));
+				throw new SerializationException($"The provided data cannot be deserialized by this processor of type {nameof(NullValueProcessor)}.");
 			}
 
 			return

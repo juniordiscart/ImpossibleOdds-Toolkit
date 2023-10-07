@@ -1,40 +1,26 @@
-﻿namespace ImpossibleOdds.Http
-{
-	using System;
-	using System.Collections;
-	using UnityEngine.Networking;
-	using ImpossibleOdds.Weblink;
+﻿using System;
+using System.Collections;
+using UnityEngine.Networking;
+using ImpossibleOdds.Weblink;
 
+namespace ImpossibleOdds.Http
+{
 	public class HttpMessageHandle : IWeblinkMessageHandle<IHttpRequest, IHttpResponse>, IDisposable
 	{
-		private readonly UnityWebRequest webRequest = null;
-		private readonly IHttpRequest request = null;
-		private IHttpResponse response = null;
-
 		/// <summary>
 		/// The request data.
 		/// </summary>
-		public IHttpRequest Request
-		{
-			get => request;
-		}
+		public IHttpRequest Request { get; }
 
 		/// <summary>
 		/// The actual web request that was sent out.
 		/// </summary>
-		public UnityWebRequest WebRequest
-		{
-			get => webRequest;
-		}
+		public UnityWebRequest WebRequest { get; }
 
 		/// <summary>
 		/// The response received.
 		/// </summary>
-		public IHttpResponse Response
-		{
-			get => response;
-			set => response = value;
-		}
+		public IHttpResponse Response { get; set; }
 
 		/// <summary>
 		/// True when a response has been received.
@@ -42,9 +28,9 @@
 		public bool IsDone
 		{
 #if UNITY_2020_2_OR_NEWER
-			get => (response != null) || IsError;
+			get => (Response != null) || IsError;
 #else
-			get => ((webRequest != null) && (webRequest.isNetworkError || webRequest.isHttpError)) || (response != null);
+			get => ((WebRequest != null) && (WebRequest.isNetworkError || WebRequest.isHttpError)) || (Response != null);
 #endif
 		}
 
@@ -56,7 +42,7 @@
 #if UNITY_2020_2_OR_NEWER
 			get
 			{
-				switch (webRequest.result)
+				switch (WebRequest.result)
 				{
 					case UnityWebRequest.Result.ConnectionError:
 					case UnityWebRequest.Result.ProtocolError:
@@ -68,40 +54,31 @@
 			}
 #else
 
-			get => (webRequest != null) && (webRequest.isNetworkError || webRequest.isHttpError);
+			get => (WebRequest != null) && (WebRequest.isNetworkError || WebRequest.isHttpError);
 #endif
 		}
 
 		/// <summary>
 		/// Not implemented.
 		/// </summary>
-		object IEnumerator.Current
-		{
-			get => null;
-		}
+		object IEnumerator.Current => null;
 
-		IWeblinkRequest IWeblinkMessageHandle.Request
-		{
-			get => Request;
-		}
+		IWeblinkRequest IWeblinkMessageHandle.Request => Request;
 
-		IWeblinkResponse IWeblinkMessageHandle.Response
-		{
-			get => Response;
-		}
+		IWeblinkResponse IWeblinkMessageHandle.Response => Response;
 
 		public HttpMessageHandle(IHttpRequest request, UnityWebRequest webRequest)
 		{
 			request.ThrowIfNull(nameof(request));
 			webRequest.ThrowIfNull(nameof(webRequest));
 
-			this.request = request;
-			this.webRequest = webRequest;
+			Request = request;
+			WebRequest = webRequest;
 		}
 
 		public void Dispose()
 		{
-			webRequest.DisposeIfNotNull();
+			WebRequest.DisposeIfNotNull();
 		}
 
 		bool IEnumerator.MoveNext()

@@ -1,10 +1,11 @@
-﻿namespace ImpossibleOdds.Addressables
+﻿using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.ResourceManagement.ResourceLocations;
+
+namespace ImpossibleOdds.Addressables
 {
-	using System.Collections.Generic;
-	using UnityEngine;
-	using UnityEngine.AddressableAssets;
-	using UnityEngine.ResourceManagement.AsyncOperations;
-	using UnityEngine.ResourceManagement.ResourceLocations;
+	using Addressables = UnityEngine.AddressableAssets.Addressables;
 
 	/// <summary>
 	/// A loading handle for loading in multiple GameObjects with a specific type of component on it.

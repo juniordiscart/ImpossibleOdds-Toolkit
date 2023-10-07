@@ -1,30 +1,21 @@
-﻿namespace ImpossibleOdds.Photon.WebRpc
-{
-	using System;
-	using ImpossibleOdds.Serialization;
+﻿using System;
+using ImpossibleOdds.Serialization;
 
-	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+namespace ImpossibleOdds.Photon.WebRpc
+{
+	[AttributeUsage(AttributeTargets.Field)]
 	public sealed class WebRpcUrlFieldAttribute : Attribute, ILookupParameter<string>
 	{
-		private string key = null;
+		object ILookupParameter.Key => Key;
 
-		object ILookupParameter.Key
-		{
-			get => Key;
-		}
-
-		public string Key
-		{
-			get => key;
-			set => key = value;
-		}
+		public string Key { get; set; }
 
 		public WebRpcUrlFieldAttribute()
 		{ }
 
 		public WebRpcUrlFieldAttribute(string key)
 		{
-			this.key = key;
+			Key = key;
 		}
 	}
 }

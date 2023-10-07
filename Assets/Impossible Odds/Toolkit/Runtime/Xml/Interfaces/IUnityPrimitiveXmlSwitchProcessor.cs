@@ -1,20 +1,14 @@
-﻿namespace ImpossibleOdds.Xml.Processors
-{
-	using ImpossibleOdds.Serialization.Processors;
+﻿using ImpossibleOdds.Serialization.Processors;
 
+namespace ImpossibleOdds.Xml.Processors
+{
 	/// <summary>
 	/// Processing methods for displaying Unity primitive types.
 	/// </summary>
 	public enum XmlPrimitiveProcessingMethod
 	{
-#pragma warning disable 0618
-		[System.Obsolete("Use `Attributes` instead.")]
-		ATTRIBUTES,
-		Attributes = ATTRIBUTES,
-		[System.Obsolete("Use `Elements` instead")]
-		ELEMENTS,
-		Elements = ELEMENTS
-#pragma warning restore 0618
+		Attributes,
+		Elements
 	}
 
 	/// <summary>

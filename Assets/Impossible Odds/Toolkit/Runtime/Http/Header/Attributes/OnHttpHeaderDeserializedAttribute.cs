@@ -2,7 +2,7 @@ using System;
 
 namespace ImpossibleOdds.Http
 {
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Method)]
     public sealed class OnHttpHeaderDeserializedAttribute : Attribute
     { }
 }

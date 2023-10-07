@@ -1,9 +1,9 @@
-﻿namespace ImpossibleOdds.Xml.Processors
-{
-	using System;
-	using System.Xml.Linq;
-	using ImpossibleOdds.Serialization.Processors;
+﻿using System;
+using System.Xml.Linq;
+using ImpossibleOdds.Serialization.Processors;
 
+namespace ImpossibleOdds.Xml.Processors
+{
 	public class XmlEnumProcessor : EnumProcessor
 	{
 		public XmlEnumProcessor(XmlSerializationDefinition definition)

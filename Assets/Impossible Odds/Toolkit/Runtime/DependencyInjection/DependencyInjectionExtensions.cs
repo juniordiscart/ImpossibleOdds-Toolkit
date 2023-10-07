@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.DependencyInjection
-{
-	using System.Collections.Generic;
-	using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
+namespace ImpossibleOdds.DependencyInjection
+{
 	public static class DependencyInjectionExtensions
 	{
 		/// <summary>
@@ -95,7 +95,7 @@
 		}
 
 		/// <summary>
-		/// Inject the entire colletion of components with the resources found in the dependency container.
+		/// Inject the entire collection of components with the resources found in the dependency container.
 		/// </summary>
 		/// <param name="components">Components to be injected.</param>
 		/// <param name="container">Container containing resources that can be injected.</param>
@@ -107,7 +107,7 @@
 		}
 
 		/// <summary>
-		/// Inject the entire colletion of components with named resources found in the dependency container.
+		/// Inject the entire collection of components with named resources found in the dependency container.
 		/// </summary>
 		/// <param name="components">Components to be injected.</param>
 		/// <param name="container">Container containing resources that can be injected.</param>

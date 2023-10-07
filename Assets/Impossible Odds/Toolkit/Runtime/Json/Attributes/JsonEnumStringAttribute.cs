@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Json
-{
-	using System;
+﻿using System;
 
-	[AttributeUsage(AttributeTargets.Enum, AllowMultiple = false)]
+namespace ImpossibleOdds.Json
+{
+	[AttributeUsage(AttributeTargets.Enum)]
 	public sealed class JsonEnumStringAttribute : Attribute
 	{ }
 }

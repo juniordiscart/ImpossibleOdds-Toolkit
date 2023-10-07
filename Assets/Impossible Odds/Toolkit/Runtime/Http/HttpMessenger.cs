@@ -1,16 +1,16 @@
-﻿namespace ImpossibleOdds.Http
-{
-	using System;
-	using System.Text;
-	using System.Collections;
-	using UnityEngine.Networking;
-	using ImpossibleOdds.Weblink;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Json;
+﻿using System;
+using System.Text;
+using System.Collections;
+using UnityEngine.Networking;
+using ImpossibleOdds.Weblink;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Json;
 
+namespace ImpossibleOdds.Http
+{
 	public class HttpMessenger : WeblinkMessenger<IHttpRequest, IHttpResponse, HttpMessageHandle, HttpResponseTypeAttribute, HttpResponseCallbackAttribute>
 	{
-		private IHttpMessageConfigurator messageConfigurator = null;
+		private IHttpMessageConfigurator messageConfigurator;
 
 		/// <summary>
 		/// The configurator being used for handling the URL, header and POST-body data.
@@ -38,7 +38,7 @@
 		public HttpMessenger(IHttpMessageConfigurator configurator)
 		{
 			configurator.ThrowIfNull(nameof(configurator));
-			this.messageConfigurator = configurator;
+			messageConfigurator = configurator;
 		}
 
 		/// <inheritdoc />
@@ -56,11 +56,11 @@
 			HttpMessageHandle messageHandle = new HttpMessageHandle(request, unityRequest);
 			AddPendingRequest(messageHandle);
 
-			UnityWebRequestAsyncOperation webOP = unityRequest.SendWebRequest();
+			UnityWebRequestAsyncOperation webOp = unityRequest.SendWebRequest();
 
-			if (!webOP.isDone)
+			if (!webOp.isDone)
 			{
-				webOP.completed += (op) => OnRequestCompleted(messageHandle);
+				webOp.completed += (op) => OnRequestCompleted(messageHandle);
 			}
 			else
 			{
@@ -74,58 +74,51 @@
 		private UnityWebRequest GenerateWebRequest(IHttpRequest request)
 		{
 			string url = messageConfigurator.GenerateRequestUrl(request);
-			UnityWebRequest unityWebRequest = null;
+			UnityWebRequest unityWebRequest;
 
-			if (request is IHttpGetRequest getRequest)
+			switch (request)
 			{
 				// Check whether the get request has a further specified type, e.g. texture or audio clip.
-				if (getRequest is IHttpGetAudioClipRequest audioClipRequest)
-				{
+				case IHttpGetRequest getRequest when getRequest is IHttpGetAudioClipRequest audioClipRequest:
 					unityWebRequest = UnityWebRequestMultimedia.GetAudioClip(url, audioClipRequest.AudioType);
-				}
-				else if (getRequest is IHttpGetTextureRequest textureRequest)
-				{
+					break;
+				case IHttpGetRequest getRequest when getRequest is IHttpGetTextureRequest:
 					unityWebRequest = UnityWebRequestTexture.GetTexture(url);
-				}
-				else if (getRequest is IHttpGetAssetBundleRequest assetBundleRequest)
-				{
+					break;
+				case IHttpGetRequest getRequest when getRequest is IHttpGetAssetBundleRequest:
 					unityWebRequest = UnityWebRequestAssetBundle.GetAssetBundle(url);
-				}
-				else
-				{
+					break;
+				case IHttpGetRequest _:
 					unityWebRequest = UnityWebRequest.Get(url);
-				}
-			}
-			else if (request is IHttpPostRequest postRequest)
-			{
+					break;
+				case IHttpPostRequest postRequest:
 #if UNITY_2022_2_OR_NEWER
-				unityWebRequest = UnityWebRequest.PostWwwForm(url, messageConfigurator.GenerateRequestPostBody(postRequest));
+					unityWebRequest = UnityWebRequest.PostWwwForm(url, messageConfigurator.GenerateRequestPostBody(postRequest));
 #else
-				unityWebRequest = UnityWebRequest.Post(url, messageConfigurator.GenerateRequestPostBody(postRequest));
+					unityWebRequest = UnityWebRequest.Post(url, messageConfigurator.GenerateRequestPostBody(postRequest));
 #endif
-			}
-			else if (request is IHttpPutStringRequest putStringRequest)
-			{
-				unityWebRequest = UnityWebRequest.Put(url, putStringRequest.PutData);
-			}
-			else if (request is IHttpPutBinaryRequest putBinaryRequest)
-			{
-				unityWebRequest = UnityWebRequest.Put(url, putBinaryRequest.PutData);
-			}
-			else
-			{
-				throw new HttpException("Request of type {0} could not be mapped to a supported type of {1}.", request.GetType().Name, typeof(UnityWebRequest).Name);
+					break;
+				case IHttpPutStringRequest putStringRequest:
+					unityWebRequest = UnityWebRequest.Put(url, putStringRequest.PutData);
+					break;
+				case IHttpPutBinaryRequest putBinaryRequest:
+					unityWebRequest = UnityWebRequest.Put(url, putBinaryRequest.PutData);
+					break;
+				default:
+					throw new HttpException("Request of type {0} could not be mapped to a supported type of {1}.", request.GetType().Name, nameof(UnityWebRequest));
 			}
 
 			IDictionary headerData = messageConfigurator.GenerateRequestHeaders(request);
-			if (headerData != null)
+			if (headerData == null)
 			{
-				foreach (DictionaryEntry header in headerData)
-				{
-					unityWebRequest.SetRequestHeader(
-						SerializationUtilities.PostProcessValue<string>(header.Key),
-						SerializationUtilities.PostProcessValue<string>(header.Value));
-				}
+				return unityWebRequest;
+			}
+
+			foreach (DictionaryEntry header in headerData)
+			{
+				unityWebRequest.SetRequestHeader(
+					SerializationUtilities.PostProcessValue<string>(header.Key),
+					SerializationUtilities.PostProcessValue<string>(header.Value));
 			}
 
 			return unityWebRequest;
@@ -146,38 +139,38 @@
 				return;
 			}
 
-			UnityWebRequest webOP = handle.WebRequest;
+			IHttpResponse response;
+			using (UnityWebRequest webOp = handle.WebRequest)
+			{
+				response = InstantiateResponse(handle);
+				messageConfigurator.ProcessResponseHeaders(response, webOp.GetResponseHeaders());
 
-			// Create the response and process the returned headers
-			IHttpResponse response = InstantiateResponse(handle);
-			messageConfigurator.ProcessResponseHeaders(response, webOP.GetResponseHeaders());
+				switch (response)
+				{
+					// If the response expects structured data to be returned,
+					case IHttpStructuredResponse structuredResponse when !string.IsNullOrWhiteSpace(webOp.downloadHandler.text):
+						messageConfigurator.ProcessResponsePostBody(structuredResponse, webOp.downloadHandler.text);
+						break;
+					case IHttpAudioClipResponse audioClipResponse:
+						audioClipResponse.AudioClip = DownloadHandlerAudioClip.GetContent(webOp);
+						break;
+					case IHttpTextureResponse textureResponse:
+						textureResponse.Texture = DownloadHandlerTexture.GetContent(webOp);
+						break;
+					case IHttpAssetBundleResponse assetBundleResponse:
+						assetBundleResponse.AssetBundle = DownloadHandlerAssetBundle.GetContent(webOp);
+						break;
+					case IHttpCustomResponse customResponse:
+						try
+						{
+							customResponse.ProcessResponse(handle.WebRequest);
+						}
+						catch (Exception e)
+						{
+							Log.Exception(e);
+						}
 
-			// If the response expects structured data to be returned,
-			if ((response is IHttpStructuredResponse structuredResponse) && !string.IsNullOrWhiteSpace(webOP.downloadHandler.text))
-			{
-				messageConfigurator.ProcessResponsePostBody(structuredResponse, webOP.downloadHandler.text);
-			}
-			else if (response is IHttpAudioClipResponse audioClipResponse)
-			{
-				audioClipResponse.AudioClip = DownloadHandlerAudioClip.GetContent(webOP);
-			}
-			else if (response is IHttpTextureResponse textureResponse)
-			{
-				textureResponse.Texture = DownloadHandlerTexture.GetContent(webOP);
-			}
-			else if (response is IHttpAssetBundleResponse assetBundleResponse)
-			{
-				assetBundleResponse.AssetBundle = DownloadHandlerAssetBundle.GetContent(webOP);
-			}
-			else if (response is IHttpCustomResponse customResponse)
-			{
-				try
-				{
-					customResponse.ProcessResponse(handle.WebRequest);
-				}
-				catch (Exception e)
-				{
-					Log.Exception(e);
+						break;
 				}
 			}
 
@@ -191,11 +184,11 @@
 		/// </summary>
 		public class DefaultMessageConfigurator : IHttpMessageConfigurator
 		{
-			protected readonly ISerializationDefinition urlDefinition = null;
-			protected readonly ISerializationDefinition headerDefinition = null;
-			protected readonly ISerializationDefinition bodyDefinition = null;
+			protected readonly ISerializationDefinition urlDefinition;
+			protected readonly ISerializationDefinition headerDefinition;
+			protected readonly ISerializationDefinition bodyDefinition;
 			protected readonly StringBuilder processingCache = new StringBuilder();
-			protected readonly JsonOptions jsonOptions = null;
+			protected readonly JsonOptions jsonOptions;
 
 			/// <summary>
 			/// Configurator with default serialization definitions for the URL, headers and body of the requests and responses.
@@ -222,9 +215,11 @@
 
 				// Configure the JSON processing to use the Http Body serialization definition
 				// instead of the default JSON serialization definition.
-				jsonOptions = new JsonOptions();
-				jsonOptions.CompactOutput = true;
-				jsonOptions.SerializationDefinition = bodyDefinition;
+				jsonOptions = new JsonOptions
+				{
+					CompactOutput = true,
+					SerializationDefinition = bodyDefinition
+				};
 			}
 
 			/// <inheritdoc />

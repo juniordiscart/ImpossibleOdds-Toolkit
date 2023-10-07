@@ -1,61 +1,38 @@
-﻿namespace ImpossibleOdds.Json
-{
-	using System;
-	using System.Collections;
-	using System.Collections.Generic;
-	using System.Linq;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Serialization.Processors;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Serialization.Processors;
 
+namespace ImpossibleOdds.Json
+{
 	/// <summary>
 	/// A serialization definition base with custom JSON object and array type definitions.
 	/// </summary>
-	/// <typeparam name="TJsonObject">Custom JSON object type.</typeparam>
-	/// <typeparam name="TJsonArray">Custom JSON array type.</typeparam>
-	public class JsonSerializationDefinition :
-		IndexAndLookupDefinition<JsonArrayAttribute, JsonIndexAttribute, ArrayList, JsonObjectAttribute, JsonFieldAttribute, Dictionary<string, object>>,
-		ILookupTypeResolveSupport<JsonTypeAttribute>
+	public class JsonSerializationDefinition : ISerializationDefinition
 	{
 		public const string JsonDefaultTypeKey = "jsi:type";
 
 		private readonly ISerializationProcessor[] serializationProcessors;
 		private readonly IDeserializationProcessor[] deserializationProcessors;
-		private readonly HashSet<Type> supportedTypes;
 		private readonly ParallelProcessingFeature parallelProcessingFeature;
-		private string typeResolveKey = JsonDefaultTypeKey;
 
 		/// <inheritdoc />
-		public override IEnumerable<ISerializationProcessor> SerializationProcessors => serializationProcessors;
+		public IEnumerable<ISerializationProcessor> SerializationProcessors => serializationProcessors;
 
 		/// <inheritdoc />
-		public override IEnumerable<IDeserializationProcessor> DeserializationProcessors => deserializationProcessors;
+		public IEnumerable<IDeserializationProcessor> DeserializationProcessors => deserializationProcessors;
 
 		/// <inheritdoc />
-		public override HashSet<Type> SupportedTypes => supportedTypes;
+		public HashSet<Type> SupportedTypes { get; }
 
 		/// <inheritdoc />
-		public Type TypeResolveAttribute
-		{
-			get => typeof(JsonTypeAttribute);
-		}
+		public IFormatProvider FormatProvider { get; set; } = CultureInfo.InvariantCulture;
 
-		/// <inheritdoc />
-		object ILookupTypeResolveSupport.TypeResolveKey
-		{
-			get => typeResolveKey;
-		}
-
-		/// <inheritdoc />
-		public string TypeResolveKey
-		{
-			get => typeResolveKey;
-			set
-			{
-				value.ThrowIfNullOrEmpty(nameof(value));
-				typeResolveKey = value;
-			}
-		}
-
+		/// <summary>
+		/// Enable or disable the parallel processing of data across the data processors.
+		/// </summary>
 		public bool ParallelProcessingEnabled
 		{
 			get => parallelProcessingFeature.Enabled;
@@ -73,13 +50,17 @@
 				Enabled = enableParallelProcessing
 			};
 
+			ILookupSerializationConfiguration lookupConfiguration = new JsonLookupConfiguration();
+			ISequenceSerializationConfiguration sequenceConfiguration = new JsonSequenceConfiguration();
+			ICallbackFeature callbackFeature = new CallBackFeature<OnJsonSerializingAttribute, OnJsonSerializedAttribute, OnJsonDeserializingAttribute, OnJsonDeserializedAttribute>();
+
 			PrimitiveProcessingMethod defaultProcessingMethod =
 #if IMPOSSIBLE_ODDS_JSON_UNITY_TYPES_AS_ARRAY
 			PrimitiveProcessingMethod.Sequence;
 #else
 			PrimitiveProcessingMethod.Lookup;
 #endif
-			supportedTypes = new HashSet<Type>()
+			SupportedTypes = new HashSet<Type>()
 			{
 				typeof(byte),
 				typeof(short),
@@ -105,31 +86,33 @@
 				new VersionProcessor(this),
 				new GuidProcessor(this),
 				new StringProcessor(this),
-				new Vector2Processor(this, this, defaultProcessingMethod),
-				new Vector2IntProcessor(this, this, defaultProcessingMethod),
-				new Vector3Processor(this, this, defaultProcessingMethod),
-				new Vector3IntProcessor(this, this, defaultProcessingMethod),
-				new Vector4Processor(this, this, defaultProcessingMethod),
-				new QuaternionProcessor(this, this, defaultProcessingMethod),
-				new ColorProcessor(this, this, defaultProcessingMethod),
-				new Color32Processor(this, this, defaultProcessingMethod),
-				new LookupProcessor(this)
+				new Vector2Processor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Vector2IntProcessor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Vector3Processor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Vector3IntProcessor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Vector4Processor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new QuaternionProcessor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new ColorProcessor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Color32Processor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new LookupProcessor(this, lookupConfiguration)
 				{
 					ParallelProcessingFeature = parallelProcessingFeature
 				},
-				new SequenceProcessor(this)
+				new SequenceProcessor(this, sequenceConfiguration)
 				{
 					ParallelProcessingFeature = parallelProcessingFeature
 				},
-				new CustomObjectSequenceProcessor(this)
+				new CustomObjectSequenceProcessor(this, sequenceConfiguration)
 				{
-					CallbackFeature = new CallBackFeature<OnJsonSerializingAttribute, OnJsonSerializedAttribute, OnJsonDeserializingAttribute, OnJsonDeserializedAttribute>(),
-					ParallelProcessingFeature = parallelProcessingFeature
+					TypeResolutionFeature = new SequenceTypeResolutionFeature<JsonTypeIndexAttribute>(0),
+					CallbackFeature = callbackFeature,
+					ParallelProcessingFeature = parallelProcessingFeature,
 				},
-				new CustomObjectLookupProcessor(this)
+				new CustomObjectLookupProcessor(this, lookupConfiguration)
 				{
-					CallbackFeature = new CallBackFeature<OnJsonSerializingAttribute, OnJsonSerializedAttribute, OnJsonDeserializingAttribute, OnJsonDeserializedAttribute>(),
+					TypeResolutionFeature = new LookupTypeResolutionFeature<JsonTypeAttribute>(JsonDefaultTypeKey),
 					RequiredValueFeature = new RequiredValueFeature<JsonRequiredAttribute>(),
+					CallbackFeature = callbackFeature,
 					ParallelProcessingFeature = parallelProcessingFeature,
 				},
 			};
@@ -159,18 +142,6 @@
 					switchProcessor.ProcessingMethod = preferredProcessingMethod;
 				}
 			}
-		}
-
-		/// <inheritdoc />
-		public override ArrayList CreateSequenceInstance(int capacity)
-		{
-			return new ArrayList(capacity);
-		}
-
-		/// <inheritdoc />
-		public override Dictionary<string, object> CreateLookupInstance(int capacity)
-		{
-			return new Dictionary<string, object>(capacity);
 		}
 	}
 }

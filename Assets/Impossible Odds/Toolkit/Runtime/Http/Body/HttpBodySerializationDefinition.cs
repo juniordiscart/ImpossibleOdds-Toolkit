@@ -1,68 +1,57 @@
-﻿namespace ImpossibleOdds.Http
-{
-	using System;
-	using System.Collections;
-	using System.Collections.Generic;
-	using System.Linq;
-	using ImpossibleOdds.Json;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Serialization.Processors;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using ImpossibleOdds.Json;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Serialization.Processors;
 
+namespace ImpossibleOdds.Http
+{
 	/// <summary>
 	/// Serialization definition for the body of HTTP requests.
 	/// </summary>
-	public class HttpBodySerializationDefinition :
-		IndexAndLookupDefinition<HttpBodyArrayAttribute, HttpBodyIndexAttribute, ArrayList, HttpBodyObjectAttribute, HttpBodyFieldAttribute, Dictionary<string, object>>,
-		ILookupTypeResolveSupport<HttpTypeAttribute>
+	public class HttpBodySerializationDefinition : ISerializationDefinition
 	{
-		private readonly ISerializationProcessor[] serializationProcessors = null;
-		private readonly IDeserializationProcessor[] deserializationProcessors = null;
-		private readonly HashSet<Type> supportedTypes = null;
-		private string typeResolveKey = JsonSerializationDefinition.JsonDefaultTypeKey;
+		private readonly ISerializationProcessor[] serializationProcessors;
+		private readonly IDeserializationProcessor[] deserializationProcessors;
+		private readonly ParallelProcessingFeature parallelProcessingFeature;
 
 		/// <inheritdoc />
-		public override IEnumerable<ISerializationProcessor> SerializationProcessors
-		{
-			get => serializationProcessors;
-		}
+		public IEnumerable<ISerializationProcessor> SerializationProcessors => serializationProcessors;
 
 		/// <inheritdoc />
-		public override IEnumerable<IDeserializationProcessor> DeserializationProcessors
-		{
-			get => deserializationProcessors;
-		}
+		public IEnumerable<IDeserializationProcessor> DeserializationProcessors => deserializationProcessors;
 
 		/// <inheritdoc />
-		public override HashSet<Type> SupportedTypes
-		{
-			get => supportedTypes;
-		}
+		public HashSet<Type> SupportedTypes { get; }
 
 		/// <inheritdoc />
-		public Type TypeResolveAttribute
-		{
-			get => typeof(HttpTypeAttribute);
-		}
+		public IFormatProvider FormatProvider { get; set; } = CultureInfo.InvariantCulture;
 
-		/// <inheritdoc />
-		object ILookupTypeResolveSupport.TypeResolveKey
+		/// <summary>
+		/// Enable or disable the parallel processing of data across the data processors.
+		/// </summary>
+		public bool ParallelProcessingEnabled
 		{
-			get => typeResolveKey;
-		}
-
-		/// <inheritdoc />
-		public string TypeResolveKey
-		{
-			get => typeResolveKey;
-			set
-			{
-				value.ThrowIfNullOrEmpty(nameof(value));
-				typeResolveKey = value;
-			}
+			get => parallelProcessingFeature.Enabled;
+			set => parallelProcessingFeature.Enabled = value;
 		}
 
 		public HttpBodySerializationDefinition()
+			:this (false)
+		{ }
+
+		public HttpBodySerializationDefinition(bool enableParallelProcessing)
 		{
+			parallelProcessingFeature = new ParallelProcessingFeature()
+			{
+				Enabled = enableParallelProcessing
+			};
+
+			ILookupSerializationConfiguration lookupConfiguration = new HttpBodyLookupConfiguration();
+			ISequenceSerializationConfiguration sequenceConfiguration = new HttpBodySequenceConfiguration();
+
 			PrimitiveProcessingMethod defaultProcessingMethod =
 #if IMPOSSIBLE_ODDS_JSON_UNITY_TYPES_AS_ARRAY
 			PrimitiveProcessingMethod.Sequence;
@@ -71,7 +60,7 @@
 #endif
 
 			// Basic set of types
-			supportedTypes = new HashSet<Type>()
+			SupportedTypes = new HashSet<Type>()
 			{
 				typeof(short),
 				typeof(ushort),
@@ -98,41 +87,39 @@
 				new VersionProcessor(this),
 				new GuidProcessor(this),
 				new StringProcessor(this),
-				new Vector2Processor(this, this, defaultProcessingMethod),
-				new Vector2IntProcessor(this, this, defaultProcessingMethod),
-				new Vector3Processor(this, this, defaultProcessingMethod),
-				new Vector3IntProcessor(this, this, defaultProcessingMethod),
-				new Vector4Processor(this, this, defaultProcessingMethod),
-				new QuaternionProcessor(this, this, defaultProcessingMethod),
-				new ColorProcessor(this, this, defaultProcessingMethod),
-				new Color32Processor(this, this, defaultProcessingMethod),
-				new LookupProcessor(this),
-				new SequenceProcessor(this),
-				new CustomObjectSequenceProcessor(this)
+				new Vector2Processor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Vector2IntProcessor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Vector3Processor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Vector3IntProcessor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Vector4Processor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new QuaternionProcessor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new ColorProcessor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new Color32Processor(this, sequenceConfiguration, lookupConfiguration, defaultProcessingMethod),
+				new LookupProcessor(this, lookupConfiguration)
 				{
-					CallbackFeature = new CallBackFeature<OnHttpBodySerializingAttribute, OnHttpBodySerializedAttribute, OnHttpBodyDeserializingAttribute, OnHttpBodyDeserializedAttribute>()
+					ParallelProcessingFeature = parallelProcessingFeature
 				},
-				new CustomObjectLookupProcessor(this)
+				new SequenceProcessor(this, sequenceConfiguration)
 				{
+					ParallelProcessingFeature = parallelProcessingFeature
+				},
+				new CustomObjectSequenceProcessor(this, sequenceConfiguration)
+				{
+					TypeResolutionFeature = new SequenceTypeResolutionFeature<HttpTypeIndexAttribute>(0),
 					CallbackFeature = new CallBackFeature<OnHttpBodySerializingAttribute, OnHttpBodySerializedAttribute, OnHttpBodyDeserializingAttribute, OnHttpBodyDeserializedAttribute>(),
-					RequiredValueFeature = new RequiredValueFeature<HttpBodyRequiredAttribute>()
-				}
+					ParallelProcessingFeature = parallelProcessingFeature,
+				},
+				new CustomObjectLookupProcessor(this, lookupConfiguration)
+				{
+					TypeResolutionFeature = new LookupTypeResolutionFeature<HttpTypeAttribute>(JsonSerializationDefinition.JsonDefaultTypeKey),
+					CallbackFeature = new CallBackFeature<OnHttpBodySerializingAttribute, OnHttpBodySerializedAttribute, OnHttpBodyDeserializingAttribute, OnHttpBodyDeserializedAttribute>(),
+					RequiredValueFeature = new RequiredValueFeature<HttpBodyRequiredAttribute>(),
+					ParallelProcessingFeature = parallelProcessingFeature,
+				},
 			};
 
 			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>().ToArray();
 			deserializationProcessors = processors.Where(p => p is IDeserializationProcessor).Cast<IDeserializationProcessor>().ToArray();
-		}
-
-		/// <inheritdoc />
-		public override ArrayList CreateSequenceInstance(int capacity)
-		{
-			return new ArrayList(capacity);
-		}
-
-		/// <inheritdoc />
-		public override Dictionary<string, object> CreateLookupInstance(int capacity)
-		{
-			return new Dictionary<string, object>(capacity);
 		}
 
 		/// <summary>

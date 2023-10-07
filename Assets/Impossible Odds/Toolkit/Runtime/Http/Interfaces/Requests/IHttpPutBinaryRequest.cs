@@ -5,6 +5,9 @@
 	/// </summary>
 	public interface IHttpPutBinaryRequest : IHttpRequest
 	{
+		/// <summary>
+		/// The binary data that should be sent to the server.
+		/// </summary>
 		byte[] PutData
 		{
 			get;

@@ -1,19 +1,16 @@
-﻿namespace ImpossibleOdds.DependencyInjection
-{
-	using System;
-	using System.Collections;
-	using System.Collections.Generic;
-	using System.Collections.Concurrent;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 
+namespace ImpossibleOdds.DependencyInjection
+{
 	public class DependencyContainer : IDependencyContainer
 	{
-		private ConcurrentDictionary<Type, IDependencyBinding> bindings = new ConcurrentDictionary<Type, IDependencyBinding>();
+		private readonly ConcurrentDictionary<Type, IDependencyBinding> bindings = new ConcurrentDictionary<Type, IDependencyBinding>();
 
 		/// <inheritdoc />
-		public IDictionary<Type, IDependencyBinding> Bindings
-		{
-			get => bindings;
-		}
+		public IDictionary<Type, IDependencyBinding> Bindings => bindings;
 
 		/// <inheritdoc />
 		public IEnumerator<KeyValuePair<Type, IDependencyBinding>> GetEnumerator()
@@ -35,9 +32,9 @@
 		}
 
 		/// <inheritdoc />
-		public void Register<TypeKey>(IDependencyBinding binding)
+		public void Register<TTypeKey>(IDependencyBinding binding)
 		{
-			Register(typeof(TypeKey), binding);
+			Register(typeof(TTypeKey), binding);
 		}
 
 		/// <inheritdoc />
@@ -81,9 +78,9 @@
 		}
 
 		/// <inheritdoc />
-		public bool BindingExists<TypeKey>()
+		public bool BindingExists<TTypeKey>()
 		{
-			return BindingExists(typeof(TypeKey));
+			return BindingExists(typeof(TTypeKey));
 		}
 
 		/// <inheritdoc />
@@ -94,9 +91,9 @@
 		}
 
 		/// <inheritdoc />
-		public IDependencyBinding GetBinding<TypeKey>()
+		public IDependencyBinding GetBinding<TTypeKey>()
 		{
-			return GetBinding(typeof(TypeKey));
+			return GetBinding(typeof(TTypeKey));
 		}
 
 		/// <inheritdoc />
@@ -107,9 +104,9 @@
 		}
 
 		/// <inheritdoc />
-		public bool Remove<TypeKey>()
+		public bool Remove<TTypeKey>()
 		{
-			return Remove(typeof(TypeKey));
+			return Remove(typeof(TTypeKey));
 		}
 
 		/// <inheritdoc />
@@ -132,11 +129,11 @@
 		/// <summary>
 		/// Get an instance of the requested type from a registered binding.
 		/// </summary>
-		/// <typeparam name="TypeKey">Type of object to look for in the resources container.</typeparam>
+		/// <typeparam name="TTypeKey">Type of object to look for in the resources container.</typeparam>
 		/// <returns>An instance of the requested type if a binding exists, null otherwise.</returns>
-		public TypeKey GetInstance<TypeKey>()
+		public TTypeKey GetInstance<TTypeKey>()
 		{
-			return (TypeKey)GetInstance(typeof(TypeKey));
+			return (TTypeKey)GetInstance(typeof(TTypeKey));
 		}
 	}
 }

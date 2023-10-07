@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.StateMachines
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds.StateMachines
+{
 	/// <summary>
 	/// Base interface for defining a transition between states in a state machine.
 	/// </summary>
@@ -42,7 +42,7 @@
 	/// <summary>
 	/// Base interface for defining a transition between states in a state machine.
 	/// </summary>
-	public interface IStateTransition<TStateKey> : IStateTransition
+	public interface IStateTransition<out TStateKey> : IStateTransition
 	{
 		/// <summary>
 		/// The origin state of this transition.

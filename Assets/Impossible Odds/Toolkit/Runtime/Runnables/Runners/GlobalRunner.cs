@@ -1,10 +1,10 @@
-﻿namespace ImpossibleOdds.Runnables
-{
-	using UnityEngine;
+﻿using UnityEngine;
 
+namespace ImpossibleOdds.Runnables
+{
 	public class GlobalRunner : Runner
 	{
-		private static GlobalRunner globalRunner = null;
+		private static GlobalRunner globalRunner;
 
 		public static GlobalRunner Get
 		{

@@ -1,25 +1,20 @@
-﻿namespace ImpossibleOdds.Serialization.Processors
-{
-	using System;
-	using System.Collections;
+﻿using System;
+using System.Collections;
 
+namespace ImpossibleOdds.Serialization.Processors
+{
 	public abstract class UnityPrimitiveSequenceProcessor<T> : ISerializationProcessor, IDeserializationProcessor
 	{
-		private readonly IIndexSerializationDefinition definition = null;
+		public ISerializationDefinition Definition { get; }
 
-		public IIndexSerializationDefinition Definition
-		{
-			get => definition;
-		}
+		public ISequenceSerializationConfiguration Configuration { get; }
 
-		ISerializationDefinition IProcessor.Definition
+		protected UnityPrimitiveSequenceProcessor(ISerializationDefinition definition, ISequenceSerializationConfiguration configuration)
 		{
-			get => Definition;
-		}
-
-		public UnityPrimitiveSequenceProcessor(IIndexSerializationDefinition definition)
-		{
-			this.definition = definition;
+			definition.ThrowIfNull(nameof(definition));
+			configuration.ThrowIfNull(nameof(configuration));
+			Definition = definition;
+			Configuration = configuration;
 		}
 
 		/// <inheritdoc />
@@ -37,9 +32,7 @@
 		/// <inheritdoc />
 		public virtual bool CanSerialize(object objectToSerialize)
 		{
-			return
-				(objectToSerialize != null) &&
-				(objectToSerialize is T);
+			return objectToSerialize is T;
 		}
 
 		/// <inheritdoc />

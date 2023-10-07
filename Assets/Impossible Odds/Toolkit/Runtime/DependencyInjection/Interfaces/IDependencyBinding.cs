@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.DependencyInjection
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds.DependencyInjection
+{
 	/// <summary>
 	/// Interface to bind a type to instances of that type.
 	/// </summary>

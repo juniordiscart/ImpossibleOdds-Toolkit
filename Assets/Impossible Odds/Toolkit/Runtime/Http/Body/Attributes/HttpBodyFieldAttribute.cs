@@ -1,30 +1,21 @@
-﻿namespace ImpossibleOdds.Http
-{
-	using System;
-	using ImpossibleOdds.Serialization;
+﻿using System;
+using ImpossibleOdds.Serialization;
 
-	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+namespace ImpossibleOdds.Http
+{
+	[AttributeUsage(AttributeTargets.Field)]
 	public sealed class HttpBodyFieldAttribute : Attribute, ILookupParameter<string>
 	{
-		private string key = null;
+		object ILookupParameter.Key => Key;
 
-		object ILookupParameter.Key
-		{
-			get => Key;
-		}
-
-		public string Key
-		{
-			get => key;
-			set => key = value;
-		}
+		public string Key { get; }
 
 		public HttpBodyFieldAttribute()
 		{ }
 
 		public HttpBodyFieldAttribute(string key)
 		{
-			this.key = key;
+			Key = key;
 		}
 	}
 }

@@ -1,47 +1,30 @@
-﻿namespace ImpossibleOdds.Xml.Processors
-{
-	using System;
-	using System.Xml.Linq;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Serialization.Processors;
+﻿using System;
+using System.Xml.Linq;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Serialization.Processors;
 
+namespace ImpossibleOdds.Xml.Processors
+{
 	public abstract class UnityPrimitiveXmlSwitchProcessor<TAttributesProcessor, TElementsProcessor, TPrimitive> : IUnityPrimitiveXmlSwitchProcessor, ISerializationProcessor, IDeserializationProcessor
 	where TAttributesProcessor : UnityPrimitiveXmlAttributesProcessor<TPrimitive>
 	where TElementsProcessor : UnityPrimitiveXmlElementsProcessor<TPrimitive>
 	{
-		private readonly TAttributesProcessor attributesProcessor = null;
-		private readonly TElementsProcessor elementsProcessor = null;
-		private XmlPrimitiveProcessingMethod processingMethod;
+		public TAttributesProcessor AttributesProcessor { get; }
 
-		public TAttributesProcessor AttributesProcessor
-		{
-			get => attributesProcessor;
-		}
+		public TElementsProcessor ElementsProcessor { get; }
 
-		public TElementsProcessor ElementsProcessor
-		{
-			get => elementsProcessor;
-		}
-
-		public XmlPrimitiveProcessingMethod ProcessingMethod
-		{
-			get => processingMethod;
-			set => processingMethod = value;
-		}
+		public XmlPrimitiveProcessingMethod ProcessingMethod { get; set; }
 
 		ISerializationDefinition IProcessor.Definition
 		{
 			get
 			{
-				switch (processingMethod)
+				return ProcessingMethod switch
 				{
-					case XmlPrimitiveProcessingMethod.Attributes:
-						return attributesProcessor.Definition;
-					case XmlPrimitiveProcessingMethod.Elements:
-						return elementsProcessor.Definition;
-					default:
-						throw new XmlException("Unsupported processing method ('{0}') to retrieve the serialization definition for.", processingMethod.ToString());
-				}
+					XmlPrimitiveProcessingMethod.Attributes => AttributesProcessor.Definition,
+					XmlPrimitiveProcessingMethod.Elements => ElementsProcessor.Definition,
+					_ => throw new XmlException("Unsupported processing method ('{0}') to retrieve the serialization definition for.", ProcessingMethod.ToString())
+				};
 			}
 		}
 
@@ -50,23 +33,20 @@
 			attributesProcessor.ThrowIfNull(nameof(attributesProcessor));
 			elementsProcessor.ThrowIfNull(nameof(elementsProcessor));
 
-			this.attributesProcessor = attributesProcessor;
-			this.elementsProcessor = elementsProcessor;
-			this.processingMethod = preferredProcessingMethod;
+			AttributesProcessor = attributesProcessor;
+			ElementsProcessor = elementsProcessor;
+			ProcessingMethod = preferredProcessingMethod;
 		}
 
 		/// <inheritdoc />
 		public virtual object Serialize(object objectToSerialize)
 		{
-			switch (processingMethod)
+			return ProcessingMethod switch
 			{
-				case XmlPrimitiveProcessingMethod.Attributes:
-					return attributesProcessor.Serialize(objectToSerialize);
-				case XmlPrimitiveProcessingMethod.Elements:
-					return elementsProcessor.Serialize(objectToSerialize);
-				default:
-					throw new SerializationException("Unsupported processing method ('{0}') to serialize the value.", processingMethod.DisplayName());
-			}
+				XmlPrimitiveProcessingMethod.Attributes => AttributesProcessor.Serialize(objectToSerialize),
+				XmlPrimitiveProcessingMethod.Elements => ElementsProcessor.Serialize(objectToSerialize),
+				_ => throw new SerializationException($"Unsupported processing method ('{ProcessingMethod.DisplayName()}') to serialize the value.")
+			};
 		}
 
 		/// <inheritdoc />
@@ -74,17 +54,18 @@
 		{
 			// Depending whether the element has any children, decide how to process the data,
 			// regardless of how the data prefers to be serialized.
-			XElement element = dataToDeserialize as XElement;
+			XElement element = (XElement)dataToDeserialize;
 			if (element.HasElements)
 			{
-				return elementsProcessor.Deserialize(targetType, dataToDeserialize);
-			}
-			else if (element.HasAttributes)
-			{
-				return attributesProcessor.Deserialize(targetType, dataToDeserialize);
+				return ElementsProcessor.Deserialize(targetType, dataToDeserialize);
 			}
 
-			throw new SerializationException("Unsupported data of type {0} to deserialize into an instance of type {1}.", dataToDeserialize.GetType().Name, typeof(TPrimitive).Name);
+			if (element.HasAttributes)
+			{
+				return AttributesProcessor.Deserialize(targetType, dataToDeserialize);
+			}
+
+			throw new SerializationException($"Unsupported data of type {dataToDeserialize.GetType().Name} to deserialize into an instance of type {typeof(TPrimitive).Name}.");
 		}
 
 		/// <inheritdoc />
@@ -95,15 +76,12 @@
 				return false;
 			}
 
-			switch(processingMethod)
+			return ProcessingMethod switch
 			{
-				case XmlPrimitiveProcessingMethod.Attributes:
-					return AttributesProcessor.CanSerialize(objectToSerialize);
-				case XmlPrimitiveProcessingMethod.Elements:
-					return ElementsProcessor.CanSerialize(objectToSerialize);
-				default:
-					return false;
-			}
+				XmlPrimitiveProcessingMethod.Attributes => AttributesProcessor.CanSerialize(objectToSerialize),
+				XmlPrimitiveProcessingMethod.Elements => ElementsProcessor.CanSerialize(objectToSerialize),
+				_ => false
+			};
 		}
 
 		/// <inheritdoc />
@@ -116,15 +94,12 @@
 				return false;
 			}
 
-			switch(processingMethod)
+			return ProcessingMethod switch
 			{
-				case XmlPrimitiveProcessingMethod.Attributes:
-					return AttributesProcessor.CanDeserialize(targetType, dataToDeserialize);
-				case XmlPrimitiveProcessingMethod.Elements:
-					return ElementsProcessor.CanDeserialize(targetType, dataToDeserialize);
-				default:
-					return false;
-			}
+				XmlPrimitiveProcessingMethod.Attributes => AttributesProcessor.CanDeserialize(targetType, dataToDeserialize),
+				XmlPrimitiveProcessingMethod.Elements => ElementsProcessor.CanDeserialize(targetType, dataToDeserialize),
+				_ => false
+			};
 		}
 	}
 }

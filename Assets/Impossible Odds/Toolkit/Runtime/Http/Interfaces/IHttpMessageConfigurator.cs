@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.Http
-{
-	using System.Collections;
+﻿using System.Collections;
 
+namespace ImpossibleOdds.Http
+{
 	/// <summary>
 	/// Interface for preparing and configuring Http requests and responses.
 	/// </summary>

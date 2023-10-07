@@ -1,36 +1,21 @@
-﻿namespace ImpossibleOdds.Xml
-{
-	using System.Xml;
+﻿using System.Xml;
 
+namespace ImpossibleOdds.Xml
+{
 	internal struct DeserializationState
 	{
 		public readonly XmlSerializationDefinition definition;
 		public readonly XmlReader reader;
 
-		public XmlNodeType NodeType
-		{
-			get => reader.NodeType;
-		}
+		public XmlNodeType NodeType => reader.NodeType;
 
-		public string Name
-		{
-			get => reader.Name;
-		}
+		public string Name => reader.Name;
 
-		public string Value
-		{
-			get => reader.Value;
-		}
+		public string Value => reader.Value;
 
-		public bool HasAttributes
-		{
-			get => reader.HasAttributes;
-		}
+		public bool HasAttributes => reader.HasAttributes;
 
-		public bool IsEmptyElement
-		{
-			get => reader.IsEmptyElement;
-		}
+		public bool IsEmptyElement => reader.IsEmptyElement;
 
 		public bool Read()
 		{

@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Serialization.Caching
-{
-	using System.Reflection;
-	using ImpossibleOdds.ReflectionCaching;
+﻿using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds.Serialization.Caching
+{
 	public interface ISerializableMethod : IMemberAttributePair
 	{
 		/// <summary>

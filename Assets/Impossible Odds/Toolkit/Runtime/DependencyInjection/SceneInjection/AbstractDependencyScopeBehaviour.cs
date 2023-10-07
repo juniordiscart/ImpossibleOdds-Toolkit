@@ -1,21 +1,15 @@
-﻿namespace ImpossibleOdds.DependencyInjection
-{
-	using System.Collections.Generic;
-	using System.Linq;
-	using UnityEngine;
+﻿using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
+namespace ImpossibleOdds.DependencyInjection
+{
 	public abstract class AbstractDependencyScopeBehaviour : MonoBehaviour, IDependencyScope
 	{
 		[SerializeField, Tooltip("Perform the injection process on Start.")]
 		private bool injectOnStart = true;
 
-		private IDependencyContainer container = null;
-
-		public IDependencyContainer DependencyContainer
-		{
-			get => container;
-			protected set => container = value;
-		}
+		public IDependencyContainer DependencyContainer { get; protected set; } = null;
 
 		public abstract void Inject();
 
@@ -23,7 +17,7 @@
 		{
 			InstallContainer();
 
-			if (container != null)
+			if (DependencyContainer != null)
 			{
 				InstallBindings();
 			}
@@ -31,7 +25,7 @@
 
 		protected virtual void Start()
 		{
-			if (injectOnStart && (container != null))
+			if (injectOnStart && (DependencyContainer != null))
 			{
 				Inject();
 			}
@@ -44,11 +38,11 @@
 			{
 				providers = providers.OrderByDescending(p => p.Priority);
 				IDependencyContainerProvider provider = providers.First();
-				container = provider.GetContainer();
+				DependencyContainer = provider.GetContainer();
 			}
 			else
 			{
-				container = new DependencyContainer();
+				DependencyContainer = new DependencyContainer();
 			}
 		}
 
@@ -57,7 +51,7 @@
 			IDependencyScopeInstaller[] installers = GetComponentsInChildren<IDependencyScopeInstaller>(false);
 			foreach (IDependencyScopeInstaller installer in installers)
 			{
-				installer.Install(container);
+				installer.Install(DependencyContainer);
 			}
 		}
 	}

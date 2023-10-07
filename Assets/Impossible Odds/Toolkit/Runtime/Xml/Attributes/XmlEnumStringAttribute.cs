@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Xml
-{
-	using System;
+﻿using System;
 
-	[AttributeUsage(AttributeTargets.Enum, AllowMultiple = false)]
+namespace ImpossibleOdds.Xml
+{
+	[AttributeUsage(AttributeTargets.Enum)]
 	public sealed class XmlEnumStringAttribute : Attribute
 	{ }
 }

@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Xml.Processors
-{
-	using System.Xml.Linq;
-	using UnityEngine;
+﻿using System.Xml.Linq;
+using UnityEngine;
 
+namespace ImpossibleOdds.Xml.Processors
+{
 	public class XmlColor32AttributesProcessor : UnityPrimitiveXmlAttributesProcessor<Color32>
 	{
 		private const string R = "r";

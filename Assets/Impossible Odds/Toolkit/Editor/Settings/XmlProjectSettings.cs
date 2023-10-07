@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Settings
-{
-	using System.Collections.Generic;
-	using UnityEditor;
+﻿using System.Collections.Generic;
+using UnityEditor;
 
+namespace ImpossibleOdds.Settings
+{
 	public class XmlProjectSettings : AbstractSingleSetting
 	{
 		private const string XmlUnityTypesAsAttributes = "IMPOSSIBLE_ODDS_XML_UNITY_TYPES_AS_ATTRIBUTES";
@@ -11,15 +11,9 @@
 		: base(loadedSymbols)
 		{ }
 
-		public override string SettingName
-		{
-			get => "XML Serialization Settings";
-		}
+		public override string SettingName => "XML Serialization Settings";
 
-		public override string Symbol
-		{
-			get => XmlUnityTypesAsAttributes;
-		}
+		public override string Symbol => XmlUnityTypesAsAttributes;
 
 		public override void DisplayGUI(string searchContext)
 		{

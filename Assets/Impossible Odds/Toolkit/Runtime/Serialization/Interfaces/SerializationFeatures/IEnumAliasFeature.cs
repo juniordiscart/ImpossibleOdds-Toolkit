@@ -12,7 +12,7 @@ namespace ImpossibleOdds.Serialization
         /// <summary>
         /// Type of the attribute to be defined atop of the enum definition.
         /// </summary>
-        Type AsStringAttributeType
+        Type AsStringAttribute
         {
             get;
         }
@@ -20,7 +20,7 @@ namespace ImpossibleOdds.Serialization
         /// <summary>
         /// Type of the attribute to be defined on a single enum field that provides an alias for that enum value.
         /// </summary>
-        Type AliasValueAttributeType
+        Type AliasValueAttribute
         {
             get;
         }

@@ -1,31 +1,31 @@
-﻿namespace ImpossibleOdds.DependencyInjection
-{
-	using System;
-	using System.Collections;
-	using System.Collections.Generic;
-	using System.Collections.Concurrent;
-	using System.Linq;
-	using System.Reflection;
-	using ImpossibleOdds.ReflectionCaching;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds.DependencyInjection
+{
 	public static class DependencyInjector
 	{
-		private readonly static HashSet<Type> rejectedTypes = null;
-		private readonly static ConcurrentDictionary<Type, TypeInjectionCache> typeInjectionCache = null;
+		private static readonly HashSet<Type> RejectedTypes;
+		private static readonly ConcurrentDictionary<Type, TypeInjectionCache> TypeInjectionCache;
 
 		static DependencyInjector()
 		{
 			int count = 0;
-			rejectedTypes = new HashSet<Type>();
+			RejectedTypes = new HashSet<Type>();
 			foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
 			{
 				foreach (Type type in assembly.GetTypes())
 				{
 					if (!Attribute.IsDefined(type, typeof(InjectableAttribute), true))
 					{
-						lock (rejectedTypes)
+						lock (RejectedTypes)
 						{
-							rejectedTypes.Add(type);
+							RejectedTypes.Add(type);
 						}
 					}
 					else
@@ -36,7 +36,7 @@
 			}
 
 			// Set a concurrency level of 4. No real reason why this was chosen.
-			typeInjectionCache = new ConcurrentDictionary<Type, TypeInjectionCache>(4, count);
+			TypeInjectionCache = new ConcurrentDictionary<Type, TypeInjectionCache>(4, count);
 		}
 
 		/// <summary>
@@ -44,7 +44,7 @@
 		/// </summary>
 		public static void ClearCaches()
 		{
-			typeInjectionCache.Clear();
+			TypeInjectionCache.Clear();
 
 			// Don't clear this one, as it's statically filled once, and will not work properly anymore otherwise.
 			// This is a performance optimization.
@@ -169,7 +169,7 @@
 			{
 				foreach (Type type in assembly.GetTypes())
 				{
-					if (!rejectedTypes.Contains(type))
+					if (!RejectedTypes.Contains(type))
 					{
 						ResolveDependenciesForObject(type, container);
 					}
@@ -190,7 +190,7 @@
 			{
 				foreach (Type type in assembly.GetTypes())
 				{
-					if (!rejectedTypes.Contains(type))
+					if (!RejectedTypes.Contains(type))
 					{
 						ResolveDependenciesForObject(type, container, injectionId);
 					}
@@ -275,12 +275,20 @@
 		/// <param name="targets">Targets to be injected.</param>
 		public static void Inject(IReadOnlyDependencyContainer container, params object[] targets)
 		{
-			if (targets.Length == 0)
+			container.ThrowIfNull(nameof(container));
+
+			if (targets.IsNullOrEmpty())
 			{
 				return;
 			}
 
-			Inject(container, targets);
+			foreach (object target in targets)
+			{
+				if (target != null)
+				{
+					ResolveDependenciesForObject(target, container);
+				}
+			}
 		}
 
 		/// <summary>
@@ -291,12 +299,21 @@
 		/// <param name="targets">Targets to be injected.</param>
 		public static void Inject(IReadOnlyDependencyContainer container, string injectionId, params object[] targets)
 		{
-			if (targets.Length == 0)
+			container.ThrowIfNull(nameof(container));
+			injectionId.ThrowIfNullOrWhitespace(nameof(injectionId));
+
+			if (targets.IsNullOrEmpty())
 			{
 				return;
 			}
 
-			Inject(container, targets, injectionId);
+			foreach (object target in targets)
+			{
+				if (target != null)
+				{
+					ResolveDependenciesForObject(target, container, injectionId);
+				}
+			}
 		}
 
 		/// <summary>
@@ -307,7 +324,7 @@
 		/// <param name="injectionId">An identifier to restrict to specifically defined scopes.</param>
 		private static void ResolveDependenciesForObject(object objToInject, IReadOnlyDependencyContainer container, string injectionId = null)
 		{
-			Type type = (objToInject is Type) ? (objToInject as Type) : objToInject.GetType();
+			Type type = (objToInject is Type injectType) ? injectType : objToInject.GetType();
 			ResolveFieldDependencies(objToInject, type, container, injectionId);
 			ResolvePropertyDependencies(objToInject, type, container, injectionId);
 			ResolveMethodDependencies(objToInject, type, container, injectionId);
@@ -322,24 +339,29 @@
 		/// <param name="injectionId">An identifier to restrict to specifically defined scopes.</param>
 		private static void ResolveFieldDependencies(object objToInject, Type currentType, IReadOnlyDependencyContainer container, string injectionId = null)
 		{
-			if (TryGetTypeInjectionInfo(currentType, out TypeInjectionCache cache))
+			if (!TryGetTypeInjectionInfo(currentType, out TypeInjectionCache cache))
 			{
-				bool isStaticInjection = objToInject is Type;
+				return;
+			}
+			
+			bool isStaticInjection = objToInject is Type;
 
-				foreach (MemberInjectionValue<FieldInfo> field in cache.InjectableFields)
+			foreach (MemberInjectionValue<FieldInfo> field in cache.InjectableFields)
+			{
+				Type fieldType = field.Member.FieldType;
+				if (!field.Attribute.IsInjectionIdDefined(injectionId) || !container.BindingExists(fieldType))
 				{
-					Type fieldType = field.Member.FieldType;
-					if (field.Attribute.IsInjectionIdDefined(injectionId) && container.BindingExists(fieldType))
-					{
-						if (isStaticInjection && field.Member.IsStatic)
-						{
-							field.Member.SetValue(null, container.GetBinding(fieldType).GetInstance());
-						}
-						else if (!isStaticInjection && !field.Member.IsStatic)
-						{
-							field.Member.SetValue(objToInject, container.GetBinding(fieldType).GetInstance());
-						}
-					}
+					continue;
+				}
+				
+				switch (isStaticInjection)
+				{
+					case true when field.Member.IsStatic:
+						field.Member.SetValue(null, container.GetBinding(fieldType).GetInstance());
+						break;
+					case false when !field.Member.IsStatic:
+						field.Member.SetValue(objToInject, container.GetBinding(fieldType).GetInstance());
+						break;
 				}
 			}
 		}
@@ -429,14 +451,14 @@
 
 		private static bool TryGetTypeInjectionInfo(Type type, out TypeInjectionCache typeInjection)
 		{
-			if (rejectedTypes.Contains(type))
+			if (RejectedTypes.Contains(type))
 			{
 				typeInjection = null;
 				return false;
 			}
 			else
 			{
-				typeInjection = typeInjectionCache.GetOrAdd(type, (t) => new TypeInjectionCache(t));
+				typeInjection = TypeInjectionCache.GetOrAdd(type, (t) => new TypeInjectionCache(t));
 				return true;
 			}
 		}

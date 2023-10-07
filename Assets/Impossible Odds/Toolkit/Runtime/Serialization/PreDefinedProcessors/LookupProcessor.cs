@@ -6,25 +6,25 @@ using ImpossibleOdds.Serialization.Caching;
 
 namespace ImpossibleOdds.Serialization.Processors
 {
-
 	/// <summary>
 	/// A (de)serialization processor for dictionary-like data structures.
 	/// </summary>
 	public class LookupProcessor : ISerializationProcessor, IDeserializationToTargetProcessor
 	{
-		private readonly ILookupSerializationDefinition definition;
-
-		public bool SupportsParallelProcessing => ParallelProcessingFeature != null;
+		public bool ParallelProcessingEnabled => ParallelProcessingFeature is { Enabled: true};
 
 		public IParallelProcessingFeature ParallelProcessingFeature { get; set; }
 
-		ISerializationDefinition IProcessor.Definition => definition;
+		public ISerializationDefinition Definition { get; }
 
-		ILookupSerializationDefinition Definition => definition;
+		public ILookupSerializationConfiguration Configuration { get; }
 
-		public LookupProcessor(ILookupSerializationDefinition definition)
+		public LookupProcessor(ISerializationDefinition definition, ILookupSerializationConfiguration configuration)
 		{
-			this.definition = definition;
+			definition.ThrowIfNull(nameof(definition));
+			configuration.ThrowIfNull(nameof(configuration));
+			Definition = definition;
+			Configuration = configuration;
 		}
 
 		/// <inheritdoc />
@@ -40,39 +40,30 @@ namespace ImpossibleOdds.Serialization.Processors
 			// them individually to data that is accepted by the serialization definition
 			// and is accepted by the underlying type restrictions of the result collection.
 			IDictionary sourceValues = (IDictionary)objectToSerialize;
-			IDictionary processedValues = definition.CreateLookupInstance(sourceValues.Count);
+			IDictionary processedValues = Configuration.CreateLookupInstance(sourceValues.Count);
 			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
-			object parallelLock = null;
 
-			if (SupportsParallelProcessing && ParallelProcessingFeature.Enabled && (sourceValues.Count > 1))
+			if (ParallelProcessingEnabled)
 			{
-				parallelLock = new object();
-				Parallel.ForEach(sourceValues.Cast<DictionaryEntry>(), SerializeMember);
+				object parallelLock = new object();
+				Parallel.ForEach(sourceValues.Cast<DictionaryEntry>(), entry =>
+				{
+					object processedKey = Serializer.Serialize(entry.Key, Definition);
+					object processedValue = Serializer.Serialize(entry.Value, Definition);
+					lock (parallelLock) SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
+				});
 			}
 			else
 			{
-				foreach (DictionaryEntry key in sourceValues)
+				foreach (DictionaryEntry entry in sourceValues)
 				{
-					SerializeMember(key);
+					object processedKey = Serializer.Serialize(entry.Key, Definition);
+					object processedValue = Serializer.Serialize(entry.Value, Definition);
+					SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
 				}
 			}
 
 			return processedValues;
-
-			void SerializeMember(DictionaryEntry entry)
-			{
-				object processedKey = Serializer.Serialize(entry.Key, definition);
-				object processedValue = Serializer.Serialize(entry.Value, definition);
-
-				if (parallelLock != null)
-				{
-					lock (parallelLock) SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
-				}
-				else
-				{
-					SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
-				}
-			}
 		}
 
 		/// <inheritdoc />
@@ -101,32 +92,23 @@ namespace ImpossibleOdds.Serialization.Processors
 			IDictionary sourceValues = (IDictionary)dataToDeserialize;
 			IDictionary targetValues = (IDictionary)deserializationTarget;
 			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetValues);
-			object parallelLock = null;
 
-			if (SupportsParallelProcessing && ParallelProcessingFeature.Enabled && (sourceValues.Count > 1))
+			if (ParallelProcessingEnabled && (sourceValues.Count > 1))
 			{
-				parallelLock = new object();
-				Parallel.ForEach(sourceValues.Cast<DictionaryEntry>(), DeserializeMember);
+				object parallelLock = new object();
+				Parallel.ForEach(sourceValues.Cast<DictionaryEntry>(), entry =>
+				{
+					object processedKey = Serializer.Deserialize(collectionInfo.keyType, entry.Key, Definition);
+					object processedValue = Serializer.Deserialize(collectionInfo.valueType, entry.Value, Definition);
+					lock (parallelLock) SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
+				});
 			}
 			else
 			{
 				foreach (DictionaryEntry entry in sourceValues)
 				{
-					DeserializeMember(entry);
-				}
-			}
-
-			void DeserializeMember(DictionaryEntry entry)
-			{
-				object processedKey = Serializer.Deserialize(collectionInfo.keyType, entry.Key, definition);
-				object processedValue = Serializer.Deserialize(collectionInfo.valueType, entry.Value, definition);
-
-				if (parallelLock != null)
-				{
-					lock (parallelLock) SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
-				}
-				else
-				{
+					object processedKey = Serializer.Deserialize(collectionInfo.keyType, entry.Key, Definition);
+					object processedValue = Serializer.Deserialize(collectionInfo.valueType, entry.Value, Definition);
 					SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
 				}
 			}

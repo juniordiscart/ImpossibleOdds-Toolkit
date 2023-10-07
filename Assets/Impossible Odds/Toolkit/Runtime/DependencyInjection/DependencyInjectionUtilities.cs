@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.DependencyInjection
-{
-	using System;
-	using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
+namespace ImpossibleOdds.DependencyInjection
+{
 	public static class DependencyInjectionUtilities
 	{
 		/// <summary>
@@ -17,9 +17,9 @@
 		}
 
 		/// <summary>
-		/// Get the implemented interfaces by the given type as well as the type iteself again.
+		/// Get the implemented interfaces by the given type as well as the type itself again.
 		/// </summary>
-		/// <typeparam name="T">Type to retieve the interfaces for.</typeparam>
+		/// <typeparam name="T">Type to retrieve the interfaces for.</typeparam>
 		/// <returns>An array with the implemented interfaces and the type itself again (at index 0).</returns>
 		public static IEnumerable<Type> GetTypeAndInterfaces<T>()
 		{
@@ -29,15 +29,14 @@
 		/// <summary>
 		/// Get the implemented interfaces by the given type as well as the type itself again.
 		/// </summary>
-		/// <param name="type">Type to retieve the interfaces for.</param>
+		/// <param name="type">Type to retrieve the interfaces for.</param>
 		/// <returns>An array with the implemented interfaces and the type itself again (at index 0).</returns>
 		public static IEnumerable<Type> GetTypeAndInterfaces(Type type)
 		{
 			type.ThrowIfNull(nameof(type));
 
 			Type[] interfaces = type.GetInterfaces();
-			List<Type> t = new List<Type>(interfaces.Length + 1);
-			t.Add(type);
+			List<Type> t = new List<Type>(interfaces.Length + 1) { type };
 			t.AddRange(interfaces);
 
 			return t;

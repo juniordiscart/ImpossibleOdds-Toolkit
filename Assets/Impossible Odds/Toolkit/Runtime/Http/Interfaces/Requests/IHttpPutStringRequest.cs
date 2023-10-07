@@ -5,6 +5,9 @@
 	/// </summary>
 	public interface IHttpPutStringRequest : IHttpRequest
 	{
+		/// <summary>
+		/// The data to be sent to the the server in a string format.
+		/// </summary>
 		string PutData
 		{
 			get;

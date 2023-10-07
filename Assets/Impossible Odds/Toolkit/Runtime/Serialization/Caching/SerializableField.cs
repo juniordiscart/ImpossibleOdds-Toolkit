@@ -1,63 +1,45 @@
-﻿namespace ImpossibleOdds.Serialization.Caching
-{
-	using System;
-	using System.Reflection;
-	using ImpossibleOdds.ReflectionCaching;
+﻿using System;
+using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds.Serialization.Caching
+{
 	public class SerializableField : ISerializableField
 	{
-		private readonly FieldInfo field;
-		private readonly Attribute attribute;
-
 		public SerializableField(FieldInfo field, Attribute serializationAttribute)
 		{
 			field.ThrowIfNull(nameof(field));
 			serializationAttribute.ThrowIfNull(nameof(serializationAttribute));
 
-			this.field = field;
-			this.attribute = serializationAttribute;
+			Field = field;
+			Attribute = serializationAttribute;
 		}
 
 		/// <inheritdoc />
-		public FieldInfo Field
-		{
-			get => field;
-		}
+		public FieldInfo Field { get; }
 
 		/// <inheritdoc />
-		public Type MemberType
-		{
-			get => field.FieldType;
-		}
+		public Type MemberType => Field.FieldType;
 
 		/// <inheritdoc />
-		public Attribute Attribute
-		{
-			get => attribute;
-		}
+		public Attribute Attribute { get; }
 
 		/// <inheritdoc />
-		public Type AttributeType
-		{
-			get => attribute.GetType();
-		}
+		public Type AttributeType => Attribute.GetType();
 
 		/// <inheritdoc />
-		MemberInfo IMemberAttributePair.Member
-		{
-			get => field;
-		}
+		MemberInfo IMemberAttributePair.Member => Field;
 
 		/// <inheritdoc />
 		public object GetValue(object source)
 		{
-			return field.GetValue(source);
+			return Field.GetValue(source);
 		}
 
 		/// <inheritdoc />
 		public void SetValue(object source, object value)
 		{
-			field.SetValue(source, value);
+			Field.SetValue(source, value);
 		}
 	}
 }

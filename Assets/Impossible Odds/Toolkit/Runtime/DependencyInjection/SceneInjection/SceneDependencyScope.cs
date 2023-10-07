@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.DependencyInjection
-{
-	using UnityEngine;
+﻿using UnityEngine;
 
+namespace ImpossibleOdds.DependencyInjection
+{
 	/// <summary>
 	/// Injects the current scene's GameObjects with a DependencyContainer
 	/// populated by scope installers on this GameObject and its children.

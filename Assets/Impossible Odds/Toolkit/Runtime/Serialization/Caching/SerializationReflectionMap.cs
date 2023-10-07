@@ -1,39 +1,35 @@
-﻿namespace ImpossibleOdds.Serialization.Caching
-{
-	using System;
-	using System.Collections.Generic;
-	using System.Collections.Concurrent;
-	using System.Linq;
-	using System.Reflection;
-	using ImpossibleOdds;
-	using ImpossibleOdds.ReflectionCaching;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds.Serialization.Caching
+{
 	/// <summary>
 	/// An abstract reflection map for serialization purposes.
 	/// </summary>
 	public class SerializationReflectionMap : ISerializationReflectionMap
 	{
-		private readonly Type type = null;
-		private ConcurrentDictionary<Type, Attribute[]> typeDefinedAttributes = new ConcurrentDictionary<Type, Attribute[]>();
-		private ConcurrentDictionary<Type, ITypeResolveParameter[]> typeResolveParameters = new ConcurrentDictionary<Type, ITypeResolveParameter[]>();
-		private ConcurrentDictionary<Type, ISerializableMember[]> serializableMembers = new ConcurrentDictionary<Type, ISerializableMember[]>();
-		private ConcurrentDictionary<Type, ISerializationCallback[]> serializationCallbacks = new ConcurrentDictionary<Type, ISerializationCallback[]>();
-		private ConcurrentDictionary<Type, IRequiredSerializableMember[]> requiredMembers = new ConcurrentDictionary<Type, IRequiredSerializableMember[]>();
+		private readonly ConcurrentDictionary<Type, Attribute[]> typeDefinedAttributes = new ConcurrentDictionary<Type, Attribute[]>();
+		private readonly ConcurrentDictionary<Type, ITypeResolutionParameter[]> typeResolveParameters = new ConcurrentDictionary<Type, ITypeResolutionParameter[]>();
+		private readonly ConcurrentDictionary<Type, ISerializableMember[]> serializableMembers = new ConcurrentDictionary<Type, ISerializableMember[]>();
+		private readonly ConcurrentDictionary<Type, ISerializableMember[]> uniqueSerializableMembers = new ConcurrentDictionary<Type, ISerializableMember[]>();
+		private readonly ConcurrentDictionary<Type, ISerializationCallback[]> serializationCallbacks = new ConcurrentDictionary<Type, ISerializationCallback[]>();
+		private readonly ConcurrentDictionary<Type, IRequiredSerializableMember[]> requiredMembers = new ConcurrentDictionary<Type, IRequiredSerializableMember[]>();
 
 		public SerializationReflectionMap(Type type)
 		{
 			type.ThrowIfNull(nameof(type));
-			this.type = type;
+			Type = type;
 		}
 
 		/// <inheritdoc />
-		public Type Type
-		{
-			get => type;
-		}
+		public Type Type { get; }
 
 		/// <inheritdoc />
-		public ITypeResolveParameter[] GetTypeResolveParameters(Type attributeType)
+		public ITypeResolutionParameter[] GetTypeResolveParameters(Type attributeType)
 		{
 			attributeType.ThrowIfNull(nameof(attributeType));
 			return FindTypeResolveParameters(attributeType);
@@ -44,6 +40,13 @@
 		{
 			attributeType.ThrowIfNull(nameof(attributeType));
 			return FindSerializableMembers(attributeType);
+		}
+
+		/// <inheritdoc />
+		public ISerializableMember[] GetUniqueSerializableMembers(Type attributeType)
+		{
+			attributeType.ThrowIfNull(nameof(attributeType));
+			return FindUniqueSerializableMembers(attributeType);
 		}
 
 		/// <inheritdoc />
@@ -101,18 +104,16 @@
 				return r;
 			}
 
-			Attribute[] attributes = TypeReflectionUtilities.FindAllTypeDefinedAttributes(type, attributeType, true).ToArray();
+			Attribute[] attributes = TypeReflectionUtilities.FindAllTypeDefinedAttributes(Type, attributeType, true).ToArray();
 			return typeDefinedAttributes.GetOrAdd(attributeType, !attributes.IsNullOrEmpty() ? attributes : Array.Empty<Attribute>());
 		}
 
-		private ITypeResolveParameter[] FindTypeResolveParameters(Type attributeType)
+		private ITypeResolutionParameter[] FindTypeResolveParameters(Type attributeType)
 		{
-			if (typeResolveParameters.TryGetValue(attributeType, out ITypeResolveParameter[] result))
-			{
-				return result;
-			}
-
-			return typeResolveParameters.GetOrAdd(attributeType, FindTypeDefinedAttributes(attributeType).Cast<ITypeResolveParameter>().ToArray());
+			return
+				typeResolveParameters.TryGetValue(attributeType, out ITypeResolutionParameter[] result) ?
+					result :
+					typeResolveParameters.GetOrAdd(attributeType, FindTypeDefinedAttributes(attributeType).Cast<ITypeResolutionParameter>().ToArray());
 		}
 
 		private ISerializableMember[] FindSerializableMembers(Type attributeType)
@@ -124,7 +125,7 @@
 
 			// Go over the fields and properties that have the desired attribute defined.
 			List<ISerializableMember> serializableMembersForAttr = new List<ISerializableMember>();
-			IEnumerable<MemberInfo> membersWithAttr = TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, false, (MemberTypes.Field | MemberTypes.Property));
+			IEnumerable<MemberInfo> membersWithAttr = TypeReflectionUtilities.FindAllMembersWithAttribute(Type, attributeType, false, (MemberTypes.Field | MemberTypes.Property));
 			membersWithAttr = TypeReflectionUtilities.FilterBaseMethods(membersWithAttr);   // This filters out virtual/abstract properties with more concrete implementations.
 
 			foreach (MemberInfo member in membersWithAttr)
@@ -149,6 +150,29 @@
 			return serializableMembers.GetOrAdd(attributeType, !serializableMembersForAttr.IsNullOrEmpty() ? serializableMembersForAttr.ToArray() : Array.Empty<ISerializableMember>());
 		}
 
+		private ISerializableMember[] FindUniqueSerializableMembers(Type attributeType)
+		{
+			ISerializableMember[] allSerializableMembers = FindSerializableMembers(attributeType);
+			List<ISerializableMember> filteredCache = new List<ISerializableMember>(allSerializableMembers.Length);
+
+			foreach (ISerializableMember serializableMember in allSerializableMembers)
+			{
+				if (filteredCache.TryFindIndex(cachedMember => SerializationUtilities.IsMatch(cachedMember, serializableMember), out int index))
+				{
+					if (serializableMember.Member.DeclaringType.IsSubclassOf(filteredCache[index].Member.DeclaringType))
+					{
+						filteredCache[index] = serializableMember;
+					}
+				}
+				else
+				{
+					filteredCache.Add(serializableMember);
+				}
+			}
+
+			return uniqueSerializableMembers.GetOrAdd(attributeType, !filteredCache.IsNullOrEmpty() ? filteredCache.ToArray() : Array.Empty<ISerializableMember>());
+		}
+
 		private IRequiredSerializableMember[] FindRequiredMembers(Type attributeType)
 		{
 			if (requiredMembers.TryGetValue(attributeType, out IRequiredSerializableMember[] result))
@@ -158,7 +182,7 @@
 
 			// Go over the fields and properties that have the desired attribute defined.
 			List<IRequiredSerializableMember> requiredMembersForAttr = new List<IRequiredSerializableMember>();
-			foreach (MemberInfo member in TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, false, (MemberTypes.Field | MemberTypes.Property)))
+			foreach (MemberInfo member in TypeReflectionUtilities.FindAllMembersWithAttribute(Type, attributeType, false, (MemberTypes.Field | MemberTypes.Property)))
 			{
 				Array.ForEach(
 					Attribute.GetCustomAttributes(member, attributeType, true),
@@ -176,7 +200,7 @@
 			}
 
 			// Go over the methods that have the desired attribute defined.
-			IEnumerable<MemberInfo> callbackMethods = TypeReflectionUtilities.FindAllMembersWithAttribute(type, attributeType, false, MemberTypes.Method);
+			IEnumerable<MemberInfo> callbackMethods = TypeReflectionUtilities.FindAllMembersWithAttribute(Type, attributeType, false, MemberTypes.Method);
 			List<ISerializationCallback> serializationCallbacksForAttr = new List<ISerializationCallback>();
 			foreach (MethodInfo method in TypeReflectionUtilities.FilterBaseMethods(callbackMethods))
 			{

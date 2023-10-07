@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Photon.WebRpc
-{
-	using System;
+﻿using System;
 
-	[AttributeUsage(AttributeTargets.Enum, AllowMultiple = false)]
+namespace ImpossibleOdds.Photon.WebRpc
+{
+	[AttributeUsage(AttributeTargets.Enum)]
 	public sealed class WebRpcEnumStringAttribute : Attribute
 	{ }
 }

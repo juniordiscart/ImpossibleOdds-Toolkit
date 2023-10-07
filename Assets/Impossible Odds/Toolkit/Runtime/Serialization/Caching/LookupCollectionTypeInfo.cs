@@ -1,13 +1,13 @@
-﻿namespace ImpossibleOdds.Serialization.Caching
-{
-	using System;
-	using System.Collections;
-	using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 
+namespace ImpossibleOdds.Serialization.Caching
+{
 	/// <summary>
 	/// Contains type information about the lookup data structure, e.g. whether it restricts its key and/or value to be type restricted.
 	/// </summary>
-	public struct LookupCollectionTypeInfo
+	public readonly struct LookupCollectionTypeInfo
 	{
 		/// <summary>
 		/// Generic type of the lookup data structure.
@@ -43,11 +43,11 @@
 			collectionType.ThrowIfNull(nameof(collectionType));
 			if (!typeof(IDictionary).IsAssignableFrom(collectionType))
 			{
-				throw new ArgumentException(string.Format("{0} is not a {1}.", collectionType.Name, typeof(IDictionary).Name));
+				throw new ArgumentException($"{collectionType.Name} is not a {nameof(IDictionary)}.");
 			}
 
 			genericType = SerializationUtilities.GetGenericType(collectionType, typeof(IDictionary<,>));
-			genericParams = (genericType != null) ? genericType.GetGenericArguments() : null;
+			genericParams = genericType?.GetGenericArguments();
 			keyType = (genericParams != null) ? genericParams[0] : typeof(object);
 			valueType = (genericParams != null) ? genericParams[1] : typeof(object);
 			isKeyTypeConstrained = (genericParams != null) && (keyType != typeof(object));
@@ -56,12 +56,12 @@
 
 		public bool PassesKeyTypeRestriction(object key)
 		{
-			return isKeyTypeConstrained ? SerializationUtilities.PassesElementTypeRestriction(key, keyType) : true;
+			return !isKeyTypeConstrained || SerializationUtilities.PassesElementTypeRestriction(key, keyType);
 		}
 
 		public bool PassesValueTypeRestriction(object value)
 		{
-			return isValueTypeConstrained ? SerializationUtilities.PassesElementTypeRestriction(value, valueType) : true;
+			return !isValueTypeConstrained || SerializationUtilities.PassesElementTypeRestriction(value, valueType);
 		}
 
 		public object PostProcessKey(object key)

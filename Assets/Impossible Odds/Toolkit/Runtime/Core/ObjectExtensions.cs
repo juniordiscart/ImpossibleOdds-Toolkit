@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds
+{
 	public static class ObjectExtensions
 	{
 		/// <summary>
@@ -28,21 +28,22 @@
 		/// <returns>True if an error was logged/the argument is null. False otherwise.</returns>
 		public static bool LogErrorIfNull<T>(this T argument, string argumentName)
 		{
-			if (argument == null)
+			if (argument != null)
 			{
-				if (argument is UnityEngine.Object unityArg)
-				{
-					Log.Error(unityArg, "Argument '{0}' is null.", argumentName);
-				}
-				else
-				{
-					Log.Error("Argument '{0}' is null.", argumentName);
-				}
-
-				return true;
+				return false;
 			}
 
-			return false;
+			if (argument is UnityEngine.Object unityArg)
+			{
+				Log.Error(unityArg, "Argument '{0}' is null.", argumentName);
+			}
+			else
+			{
+				Log.Error("Argument '{0}' is null.", argumentName);
+			}
+
+			return true;
+
 		}
 	}
 }

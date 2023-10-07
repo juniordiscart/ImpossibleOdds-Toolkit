@@ -1,10 +1,11 @@
-﻿namespace ImpossibleOdds.ReflectionCaching
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+
+namespace ImpossibleOdds.ReflectionCaching
 {
-	using System;
-	using System.Collections.Concurrent;
-	using System.Collections.Generic;
-	using System.Linq;
-	using System.Reflection;
 
 	public static class TypeReflectionUtilities
 	{
@@ -17,8 +18,8 @@
 		/// </summary>
 		public const MemberTypes DefaultMemberTypes = MemberTypes.Field | MemberTypes.Property | MemberTypes.Method;
 
-		private readonly static Type ObjectType = typeof(object);
-		private readonly static ConcurrentDictionary<int, ConcurrentBag<object[]>> callbackParameterPool = new ConcurrentDictionary<int, ConcurrentBag<object[]>>();
+		private static readonly Type ObjectType = typeof(object);
+		private static readonly ConcurrentDictionary<int, ConcurrentBag<object[]>> CallbackParameterPool = new ConcurrentDictionary<int, ConcurrentBag<object[]>>();
 
 		/// <summary>
 		/// Finds the attributes of the given type defined on the target type. Optionally also includes those defined on the implemented interfaces.
@@ -91,11 +92,11 @@
 		{
 			if (length < 0)
 			{
-				throw new ArgumentOutOfRangeException(string.Format("A set of parameters must either larger than or equal to zero. Length of value {0} given.", length));
+				throw new ArgumentOutOfRangeException($"A set of parameters must either larger than or equal to zero. Length of value {length} given.");
 			}
 
 			// Create a new list of parameters if no set is available.
-			if (callbackParameterPool.TryGetValue(length, out ConcurrentBag<object[]> bag) && bag.TryTake(out object[] parameters))
+			if (CallbackParameterPool.TryGetValue(length, out ConcurrentBag<object[]> bag) && bag.TryTake(out object[] parameters))
 			{
 				return parameters;
 			}
@@ -120,7 +121,7 @@
 				parameterList[i] = null;
 			}
 
-			callbackParameterPool.GetOrAdd(parameterList.Length, (_) => new ConcurrentBag<object[]>()).Add(parameterList);
+			CallbackParameterPool.GetOrAdd(parameterList.Length, (_) => new ConcurrentBag<object[]>()).Add(parameterList);
 		}
 
 		/// <summary>

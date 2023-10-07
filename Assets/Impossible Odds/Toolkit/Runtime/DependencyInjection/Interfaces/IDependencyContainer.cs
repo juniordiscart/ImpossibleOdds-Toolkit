@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.DependencyInjection
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds.DependencyInjection
+{
 	/// <summary>
 	/// Dependency container interface.
 	/// </summary>
@@ -47,8 +47,8 @@
 		/// Register the binding to the type and its implemented interfaces. The binding's reported type should be assignable to the given type.
 		/// </summary>
 		/// <param name="binding">The binding to register.</param>
-		/// <typeparam name="TypeKey">The type key to which the binding is to be registered.</typeparam>
-		void RegisterWithInterfaces<TypeKey>(IDependencyBinding binding);
+		/// <typeparam name="TTypeKey">The type key to which the binding is to be registered.</typeparam>
+		void RegisterWithInterfaces<TTypeKey>(IDependencyBinding binding);
 		/// <summary>
 		/// Register the binding to the type and its implemented interfaces. The binding's reported type should be assignable to the given type.
 		/// </summary>

@@ -1,16 +1,16 @@
-﻿namespace ImpossibleOdds
-{
-	using System;
-	using System.Collections.Concurrent;
-	using System.Reflection;
-	using ImpossibleOdds.ReflectionCaching;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds
+{
 	/// <summary>
 	/// Caching system for enum display names.
 	/// </summary>
 	internal class DisplayNameCache : IReflectionMap
 	{
-		internal static ConcurrentDictionary<Type, DisplayNameCache> cache = new ConcurrentDictionary<Type, DisplayNameCache>();
+		internal static readonly ConcurrentDictionary<Type, DisplayNameCache> cache = new ConcurrentDictionary<Type, DisplayNameCache>();
 
 		internal static DisplayNameAttribute GetAttributeFromEnum(Enum e)
 		{
@@ -23,8 +23,7 @@
 			return cache[enumType][e];
 		}
 
-		private readonly Type enumType;
-		private ConcurrentDictionary<Enum, DisplayNameCacheEntry> displayNameFields = null;
+		private readonly ConcurrentDictionary<Enum, DisplayNameCacheEntry> displayNameFields = null;
 
 		public DisplayNameCache(Type type)
 		{
@@ -35,7 +34,7 @@
 				throw new ReflectionCachingException("The provided type {0} is not an enum.", type.Name);
 			}
 
-			this.enumType = type;
+			this.Type = type;
 
 			displayNameFields = new ConcurrentDictionary<Enum, DisplayNameCacheEntry>();
 			foreach (Enum enumValue in Enum.GetValues(type))
@@ -49,14 +48,8 @@
 		}
 
 		/// <inheritdoc />
-		public Type Type
-		{
-			get => enumType;
-		}
+		public Type Type { get; }
 
-		public DisplayNameAttribute this[Enum enumValue]
-		{
-			get => displayNameFields.ContainsKey(enumValue) ? displayNameFields[enumValue].Attribute : null;
-		}
+		public DisplayNameAttribute this[Enum enumValue] => displayNameFields.ContainsKey(enumValue) ? displayNameFields[enumValue].Attribute : null;
 	}
 }

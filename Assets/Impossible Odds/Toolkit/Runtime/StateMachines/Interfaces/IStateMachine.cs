@@ -1,9 +1,9 @@
-﻿namespace ImpossibleOdds.StateMachines
-{
-	using System;
-	using System.Collections.Generic;
-	using ImpossibleOdds.Runnables;
+﻿using System;
+using System.Collections.Generic;
+using ImpossibleOdds.Runnables;
 
+namespace ImpossibleOdds.StateMachines
+{
 	public interface IStateMachine : IRunnable
 	{
 		event Action<object> onStateChanged;

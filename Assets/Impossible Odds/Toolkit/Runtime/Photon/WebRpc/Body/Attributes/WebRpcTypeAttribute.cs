@@ -1,45 +1,27 @@
-﻿namespace ImpossibleOdds.Photon.WebRpc
+﻿using System;
+using ImpossibleOdds.Serialization;
+
+namespace ImpossibleOdds.Photon.WebRpc
 {
-	using System;
-	using ImpossibleOdds.Serialization;
-
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Struct, AllowMultiple = true)]
-	public class WebRpcTypeAttribute : Attribute, ILookupTypeResolveParameter
+	public class WebRpcTypeAttribute : Attribute, ILookupTypeResolutionParameter
 	{
-		private Type target = null;
-		private object value = null;
-		private string keyOverride = null;
+		/// <inheritdoc />
+		public Type Target { get; }
 
 		/// <inheritdoc />
-		public Type Target
-		{
-			get => target;
-		}
+		public object Value { get; set; }
 
 		/// <inheritdoc />
-		public object Value
-		{
-			get => value;
-			set => this.value = value;
-		}
+		object ILookupTypeResolutionParameter.KeyOverride => KeyOverride;
 
 		/// <inheritdoc />
-		object ILookupTypeResolveParameter.KeyOverride
-		{
-			get => keyOverride;
-		}
-
-		/// <inheritdoc />
-		public string KeyOverride
-		{
-			get => keyOverride;
-			set => keyOverride = value;
-		}
+		public string KeyOverride { get; set; }
 
 		public WebRpcTypeAttribute(Type target)
 		{
 			target.ThrowIfNull(nameof(target));
-			this.target = target;
+			Target = target;
 		}
 	}
 }

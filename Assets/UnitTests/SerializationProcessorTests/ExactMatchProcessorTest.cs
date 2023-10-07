@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Xml.Linq;
 using ImpossibleOdds.Serialization;
@@ -18,23 +17,23 @@ namespace Tests
             TestSerializationDefinition sd = new TestSerializationDefinition(supportedTypes);
             ExactMatchProcessor processor = new ExactMatchProcessor(sd);
 
-            GenericSerializationProcessorTester<ExactMatchProcessor>.CanSerializeTest(processor, supportedTypes, new List<CanSerializeTestData>()
+            GenericSerializationProcessorTester<ExactMatchProcessor>.CanSerializeTest(processor, supportedTypes, new List<CanSerializeTestData>
             {
-                new CanSerializeTestData()
+                new CanSerializeTestData
                 {
-                    failingValues = new List<object>(){null, 123, 123f, "123"}
+                    failingValues = new List<object> { null, 123, 123f, "123" }
                 },
-                new CanSerializeTestData()
+                new CanSerializeTestData
                 {
-                    supportedTypes = new List<Type>(){typeof(int)},
-                    failingValues = new List<object>(){null, 123f, "123"},
-                    passingValues = new List<object>(){123}
+                    supportedTypes = new List<Type> { typeof(int) },
+                    failingValues = new List<object> { null, 123f, "123" },
+                    passingValues = new List<object> { 123 }
                 },
-                new CanSerializeTestData()
+                new CanSerializeTestData
                 {
-                    supportedTypes = new List<Type>(){typeof(int), typeof(float), typeof(string)},
-                    failingValues = new List<object>(){null},
-                    passingValues = new List<object>(){123, 123f, "123"}
+                    supportedTypes = new List<Type> { typeof(int), typeof(float), typeof(string) },
+                    failingValues = new List<object> { null },
+                    passingValues = new List<object> { 123, 123f, "123" }
                 }
             });
         }
@@ -46,17 +45,17 @@ namespace Tests
             TestSerializationDefinition sd = new TestSerializationDefinition(supportedTypes);
             ExactMatchProcessor processor = new ExactMatchProcessor(sd);
 
-            GenericDeserializationProcessorTester<ExactMatchProcessor>.CanDeserializeTest(processor, new List<CanDeserializeTestData>()
+            GenericDeserializationProcessorTester<ExactMatchProcessor>.CanDeserializeTest(processor, new List<CanDeserializeTestData>
             {
-                new CanDeserializeTestData()
+                new CanDeserializeTestData
                 {
-                    throwingValues = new List<DeserializationThrowingValue>()
+                    throwingValues = new List<DeserializationThrowingValue>
                     {
                         new DeserializationThrowingValue(typeof(ArgumentNullException), null, null),
                         new DeserializationThrowingValue(typeof(ArgumentNullException), null, 123),
                         new DeserializationThrowingValue(typeof(ArgumentNullException), null, "123")
                     },
-                    passingValues = new List<CanDeserializeValue>()
+                    passingValues = new List<CanDeserializeValue>
                     {
                         new CanDeserializeValue(typeof(int), 123),
                         new CanDeserializeValue(typeof(float), 123f),
@@ -64,7 +63,7 @@ namespace Tests
                         new CanDeserializeValue(typeof(string), null),
                         new CanDeserializeValue(typeof(XElement), new XElement("Test"))
                     },
-                    failingValues = new List<CanDeserializeValue>()
+                    failingValues = new List<CanDeserializeValue>
                     {
                         new CanDeserializeValue(typeof(int), 123f),
                         new CanDeserializeValue(typeof(int), null),
@@ -84,11 +83,65 @@ namespace Tests
             TestSerializationDefinition sd = new TestSerializationDefinition(supportedTypes);
             ExactMatchProcessor processor = new ExactMatchProcessor(sd);
 
-            GenericSerializationProcessorTester<ExactMatchProcessor>.SerializeTest(processor, supportedTypes, new List<SerializeTestData>()
+            GenericSerializationProcessorTester<ExactMatchProcessor>.SerializeTest(processor, supportedTypes, new List<SerializeTestData>
             {
-                new SerializeTestData()
+                new SerializeTestData
                 {
-                    throwingValues = new List<SerializationThrowingValue>()
+                    throwingValues = new List<SerializationThrowingValue>
+                    {
+                        new SerializationThrowingValue(typeof(SerializationException), null),
+                        new SerializationThrowingValue(typeof(SerializationException), 123),
+                        new SerializationThrowingValue(typeof(SerializationException), 123f),
+                        new SerializationThrowingValue(typeof(SerializationException), "123"),
+                        new SerializationThrowingValue(typeof(SerializationException), Guid.NewGuid()),
+                        new SerializationThrowingValue(typeof(SerializationException), DateTime.Now),
+                        new SerializationThrowingValue(typeof(SerializationException), Vector3.one)
+                    }
+                },
+                new SerializeTestData
+                {
+                    supportedTypes = new List<Type> { typeof(int) },
+                    passingValues = new List<SerializeValue>
+                    {
+                        new SerializeValue(typeof(int), 123)
+                    },
+                    throwingValues = new List<SerializationThrowingValue>
+                    {
+                        new SerializationThrowingValue(typeof(SerializationException), null),
+                        new SerializationThrowingValue(typeof(SerializationException), 123f),
+                        new SerializationThrowingValue(typeof(SerializationException), "123"),
+                        new SerializationThrowingValue(typeof(SerializationException), Guid.NewGuid()),
+                        new SerializationThrowingValue(typeof(SerializationException), DateTime.Now),
+                        new SerializationThrowingValue(typeof(SerializationException), Vector3.one)
+                    }
+                },
+                new SerializeTestData
+                {
+                    supportedTypes = new List<Type> { typeof(int), typeof(float), typeof(string) },
+                    passingValues = new List<SerializeValue>
+                    {
+                        new SerializeValue(typeof(int), 123),
+                        new SerializeValue(typeof(float), 123f),
+                        new SerializeValue(typeof(string), "123")
+                    },
+                    throwingValues = new List<SerializationThrowingValue>
+                    {
+                        new SerializationThrowingValue(typeof(SerializationException), null),
+                        new SerializationThrowingValue(typeof(SerializationException), Guid.NewGuid()),
+                        new SerializationThrowingValue(typeof(SerializationException), DateTime.Now),
+                        new SerializationThrowingValue(typeof(SerializationException), Vector3.one)
+                    }
+                },
+                new SerializeTestData
+                {
+                    supportedTypes = new List<Type> { typeof(Guid), typeof(DateTime), typeof(Vector3) },
+                    passingValues = new List<SerializeValue>
+                    {
+                        new SerializeValue(typeof(Guid), Guid.NewGuid()),
+                        new SerializeValue(typeof(DateTime), DateTime.Now),
+                        new SerializeValue(typeof(Vector3), Vector3.one)
+                    },
+                    throwingValues = new List<SerializationThrowingValue>
                     {
                         new SerializationThrowingValue(typeof(SerializationException), null),
                         new SerializationThrowingValue(typeof(SerializationException), 123),
@@ -96,35 +149,6 @@ namespace Tests
                         new SerializationThrowingValue(typeof(SerializationException), "123")
                     }
                 },
-                new SerializeTestData()
-                {
-                    supportedTypes = new List<Type>(){typeof(int)},
-                    passingValues = new List<SerializeValue>()
-                    {
-                        new SerializeValue(typeof(int), 123)
-                    },
-                    throwingValues =  new List<SerializationThrowingValue>()
-                    {
-                        new SerializationThrowingValue(typeof(SerializationException), null),
-                        new SerializationThrowingValue(typeof(SerializationException), 123f),
-                        new SerializationThrowingValue(typeof(SerializationException), "123")
-                    }
-                },
-                new SerializeTestData()
-                {
-                    supportedTypes = new List<Type>(){typeof(int), typeof(float), typeof(string)},
-                    passingValues = new List<SerializeValue>()
-                    {
-                        new SerializeValue(typeof(int), 123),
-                        new SerializeValue(typeof(float), 123f),
-                        new SerializeValue(typeof(string), "123")
-                    },
-                    throwingValues = new List<SerializationThrowingValue>()
-                    {
-                        new SerializationThrowingValue(typeof(SerializationException), null),
-                        new SerializationThrowingValue(typeof(SerializationException), Guid.NewGuid())
-                    }
-                }
             });
         }
 
@@ -135,26 +159,29 @@ namespace Tests
             TestSerializationDefinition sd = new TestSerializationDefinition(supportedTypes);
             ExactMatchProcessor processor = new ExactMatchProcessor(sd);
 
-            GenericDeserializationProcessorTester<ExactMatchProcessor>.DeserializeTests(processor, new List<DeserializeTestData>()
+            GenericDeserializationProcessorTester<ExactMatchProcessor>.DeserializeTests(processor, new List<DeserializeTestData>
             {
-                new DeserializeTestData()
+                new DeserializeTestData
                 {
-                    throwingValues = new List<DeserializationThrowingValue>()
+                    throwingValues = new List<DeserializationThrowingValue>
                     {
                         new DeserializationThrowingValue(typeof(ArgumentNullException), null, null),
                         new DeserializationThrowingValue(typeof(ArgumentNullException), null, 123),
                         new DeserializationThrowingValue(typeof(ArgumentNullException), null, 123f),
                         new DeserializationThrowingValue(typeof(ArgumentNullException), null, "123"),
                         new DeserializationThrowingValue(typeof(SerializationException), typeof(int), 123f),
-                        new DeserializationThrowingValue(typeof(SerializationException), typeof(int), "123"),
+                        new DeserializationThrowingValue(typeof(SerializationException), typeof(int), "123")
                     },
-                    passingValues = new List<DeserializeValue>()
+                    passingValues = new List<DeserializeValue>
                     {
                         new DeserializeValue(typeof(int), 123),
                         new DeserializeValue(typeof(float), 123f),
                         new DeserializeValue(typeof(string), "123"),
                         new DeserializeValue(typeof(string), null),
                         new DeserializeValue(typeof(string), string.Empty),
+                        new DeserializeValue(typeof(Guid), Guid.NewGuid()),
+                        new DeserializeValue(typeof(DateTime), DateTime.Now),
+                        new DeserializeValue(typeof(Vector3), Vector3.one)
                     }
                 }
             });

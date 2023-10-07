@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.Serialization.Caching
-{
-	using ImpossibleOdds.ReflectionCaching;
+﻿using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds.Serialization.Caching
+{
 	public interface IRequiredSerializableMember : IMemberAttributePair
 	{
 		/// <summary>

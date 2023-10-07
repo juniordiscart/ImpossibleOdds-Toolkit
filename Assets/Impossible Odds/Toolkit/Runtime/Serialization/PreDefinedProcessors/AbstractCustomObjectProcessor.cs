@@ -1,10 +1,10 @@
-﻿namespace ImpossibleOdds.Serialization.Processors
-{
-	using System;
-	using System.Reflection;
-	using ImpossibleOdds.ReflectionCaching;
-	using ImpossibleOdds.Serialization.Caching;
+﻿using System;
+using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
+using ImpossibleOdds.Serialization.Caching;
 
+namespace ImpossibleOdds.Serialization.Processors
+{
 	public abstract class AbstractCustomObjectProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
 		public AbstractCustomObjectProcessor(ISerializationDefinition definition)
@@ -45,7 +45,7 @@
 		{
 			if (SupportsSerializationCallbacks)
 			{
-				InvokeCallback(target, CallbackFeature.OnSerializationAttributeType);
+				InvokeCallback(target, CallbackFeature.OnSerializationAttribute);
 			}
 		}
 
@@ -57,7 +57,7 @@
 		{
 			if (SupportsSerializationCallbacks)
 			{
-				InvokeCallback(target, CallbackFeature.OnSerializedAttributeType);
+				InvokeCallback(target, CallbackFeature.OnSerializedAttribute);
 			}
 		}
 
@@ -69,7 +69,7 @@
 		{
 			if (SupportsSerializationCallbacks)
 			{
-				InvokeCallback(target, CallbackFeature.OnDeserializationAttributeType);
+				InvokeCallback(target, CallbackFeature.OnDeserializationAttribute);
 			}
 		}
 
@@ -81,7 +81,7 @@
 		{
 			if (SupportsSerializationCallbacks)
 			{
-				InvokeCallback(target, CallbackFeature.OnDeserializedAttributeType);
+				InvokeCallback(target, CallbackFeature.OnDeserializedAttribute);
 			}
 		}
 

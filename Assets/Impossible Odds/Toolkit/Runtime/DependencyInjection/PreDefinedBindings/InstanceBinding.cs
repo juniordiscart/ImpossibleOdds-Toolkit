@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.DependencyInjection
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds.DependencyInjection
+{
 	/// <summary>
 	/// A binding that provides the same instance for each request.
 	/// </summary>

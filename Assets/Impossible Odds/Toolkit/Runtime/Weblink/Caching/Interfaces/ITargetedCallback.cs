@@ -1,9 +1,9 @@
-﻿namespace ImpossibleOdds.Weblink.Caching
-{
-	using System;
-	using System.Reflection;
-	using ImpossibleOdds.ReflectionCaching;
+﻿using System;
+using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds.Weblink.Caching
+{
 	public interface ITargetedCallback : IMemberAttributePair
 	{
 		/// <summary>

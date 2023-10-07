@@ -1,22 +1,17 @@
-﻿namespace ImpossibleOdds.Http
-{
-	using System;
-	using ImpossibleOdds.Serialization;
+﻿using System;
+using ImpossibleOdds.Serialization;
 
+namespace ImpossibleOdds.Http
+{
 	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
 	public sealed class HttpEnumAliasAttribute : Attribute, IEnumAliasParameter
 	{
-		private readonly string alias = null;
-
-		public string Alias
-		{
-			get => alias;
-		}
+		public string Alias { get; }
 
 		public HttpEnumAliasAttribute(string alias)
 		{
 			alias.ThrowIfNullOrEmpty(nameof(alias));
-			this.alias = alias;
+			Alias = alias;
 		}
 	}
 }

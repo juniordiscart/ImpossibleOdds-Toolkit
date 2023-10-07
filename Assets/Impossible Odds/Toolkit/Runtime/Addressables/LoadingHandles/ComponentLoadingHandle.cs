@@ -1,10 +1,10 @@
-﻿namespace ImpossibleOdds.Addressables
-{
-	using System;
-	using UnityEngine;
-	using UnityEngine.AddressableAssets;
-	using UnityEngine.ResourceManagement.AsyncOperations;
+﻿using System;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
+namespace ImpossibleOdds.Addressables
+{
 	/// <summary>
 	/// A loading handle to retrieve a GameObject with a component of a specific type on it.
 	/// </summary>

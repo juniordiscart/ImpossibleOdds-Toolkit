@@ -1,20 +1,18 @@
-﻿namespace ImpossibleOdds.Xml.Processors
-{
-	using System;
-	using System.Collections;
-	using System.Linq;
-	using System.Xml.Linq;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Serialization.Caching;
-	using ImpossibleOdds.Serialization.Processors;
+﻿using System;
+using System.Collections;
+using System.Linq;
+using System.Xml.Linq;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Serialization.Caching;
+using ImpossibleOdds.Serialization.Processors;
 
-	public class XmlSequenceProcessor : ISerializationProcessor, IDeserializationProcessor, IDeserializationToTargetProcessor
+namespace ImpossibleOdds.Xml.Processors
+{
+	public class XmlSequenceProcessor : ISerializationProcessor, IDeserializationToTargetProcessor
 	{
-		public XmlSerializationDefinition Definition { get; } = null;
+		public ISerializationDefinition Definition { get; }
 		public IParallelProcessingFeature ParallelProcessingFeature { get; set; }
 		public bool SupportsParallelProcessing => ParallelProcessingFeature != null;
-
-		ISerializationDefinition IProcessor.Definition => Definition;
 
 		public XmlSequenceProcessor(XmlSerializationDefinition definition)
 		{
@@ -39,7 +37,7 @@
 				object processedValue = Serializer.Serialize(sourceValue, Definition);
 
 				// If the processed value is not yet an xml element already, then create one.
-				XElement xmlEntry = (processedValue is XElement) ? (processedValue as XElement) : new XElement(XmlListElementAttribute.DefaultListEntryName, processedValue);
+				XElement xmlEntry = processedValue as XElement ?? new XElement(XmlListElementAttribute.DefaultListEntryName, processedValue);
 				listRoot.Add(xmlEntry);
 			}
 
@@ -82,7 +80,7 @@
 			foreach (XElement xmlEntry in sourceXml.Elements())
 			{
 				// If the value has any child elements or attributes, then the entry itself is deserialized, otherwise just its value is chosen.
-				object processedValue = (xmlEntry.HasElements || xmlEntry.HasAttributes) ? (object)xmlEntry : (object)xmlEntry.Value;
+				object processedValue = (xmlEntry.HasElements || xmlEntry.HasAttributes) ? xmlEntry : (object)xmlEntry.Value;
 				processedValue = Serializer.Deserialize(collectionInfo.elementType, processedValue, Definition);
 
 				SerializationUtilities.InsertInSequence(targetValues, collectionInfo, i, processedValue);

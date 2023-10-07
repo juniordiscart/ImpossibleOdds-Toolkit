@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds
+{
 	public static class EnumExtensions
 	{
 		/// <summary>
@@ -12,7 +12,7 @@
 		public static string DisplayName(this Enum e)
 		{
 			DisplayNameAttribute attr = DisplayNameCache.GetAttributeFromEnum(e);
-			return ((attr != null) && (attr.Name != null)) ? attr.Name : e.ToString();
+			return attr is { Name: { } } ? attr.Name : e.ToString();
 		}
 
 		/// <summary>
@@ -23,7 +23,7 @@
 		public static string LocalizationKey(this Enum e)
 		{
 			DisplayNameAttribute attr = DisplayNameCache.GetAttributeFromEnum(e);
-			return ((attr != null) && (attr.LocalizationKey != null)) ? attr.LocalizationKey : string.Empty;
+			return attr is { LocalizationKey: { } } ? attr.LocalizationKey : string.Empty;
 		}
 
 		/// <summary>

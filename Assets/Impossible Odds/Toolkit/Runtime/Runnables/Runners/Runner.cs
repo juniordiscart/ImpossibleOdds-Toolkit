@@ -1,26 +1,27 @@
-﻿namespace ImpossibleOdds.Runnables
+﻿using System.Collections.Generic;
+using System.Collections;
+using UnityEngine;
+
+namespace ImpossibleOdds.Runnables
 {
-	using System.Collections.Generic;
-	using System.Collections;
-
-	using UnityEngine;
-
 	public class Runner : MonoBehaviour, IRunner, IFixedRunner, ILateRunner, IRoutineRunner
 	{
-		private List<IRunnable> runnables = new List<IRunnable>();
-		private List<IFixedRunnable> fixedRunnables = new List<IFixedRunnable>();
-		private List<ILateRunnable> lateRunnables = new List<ILateRunnable>();
+		private readonly List<IRunnable> runnables = new List<IRunnable>();
+		private readonly List<IFixedRunnable> fixedRunnables = new List<IFixedRunnable>();
+		private readonly List<ILateRunnable> lateRunnables = new List<ILateRunnable>();
 
 		/// <inheritdoc />
 		public void AddUpdate(IRunnable runnable)
 		{
 			runnable.ThrowIfNull(nameof(runnable));
 
-			if (!runnables.Contains(runnable))
+			if (runnables.Contains(runnable))
 			{
-				runnables.Add(runnable);
-				Log.Info("Added runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
+				return;
 			}
+
+			runnables.Add(runnable);
+			Log.Info("Added runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
 		}
 
 		/// <inheritdoc />
@@ -28,11 +29,13 @@
 		{
 			runnable.ThrowIfNull(nameof(runnable));
 
-			if (!fixedRunnables.Contains(runnable))
+			if (fixedRunnables.Contains(runnable))
 			{
-				fixedRunnables.Add(runnable);
-				Log.Info("Added fixed runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
+				return;
 			}
+
+			fixedRunnables.Add(runnable);
+			Log.Info("Added fixed runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
 		}
 
 		/// <inheritdoc />
@@ -40,11 +43,13 @@
 		{
 			runnable.ThrowIfNull(nameof(runnable));
 
-			if (!lateRunnables.Contains(runnable))
+			if (lateRunnables.Contains(runnable))
 			{
-				lateRunnables.Add(runnable);
-				Log.Info("Added late runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
+				return;
 			}
+
+			lateRunnables.Add(runnable);
+			Log.Info("Added late runnable of type {0} to {1}.", runnable.GetType().Name, gameObject.name);
 		}
 
 		/// <summary>

@@ -1,9 +1,9 @@
-﻿namespace ImpossibleOdds.Photon.WebRpc
-{
-	using System;
-	using ImpossibleOdds.Weblink;
+﻿using System;
+using ImpossibleOdds.Weblink;
 
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+namespace ImpossibleOdds.Photon.WebRpc
+{
+	[AttributeUsage(AttributeTargets.Class)]
 	public sealed class WebRpcResponseTypeAttribute : WeblinkResponseAttribute
 	{
 		public WebRpcResponseTypeAttribute(Type responseType)
@@ -11,7 +11,7 @@
 		{
 			if (!typeof(IWebRpcResponse).IsAssignableFrom(responseType))
 			{
-				throw new WebRpcException("Type {0} does not implement interface {1}.", responseType.Name, typeof(IWebRpcResponse).Name);
+				throw new WebRpcException("Type {0} does not implement interface {1}.", responseType.Name, nameof(IWebRpcResponse));
 			}
 		}
 	}

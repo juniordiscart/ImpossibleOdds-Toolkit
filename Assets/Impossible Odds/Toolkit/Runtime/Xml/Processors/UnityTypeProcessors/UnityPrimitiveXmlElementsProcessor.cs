@@ -1,27 +1,18 @@
-﻿namespace ImpossibleOdds.Xml.Processors
-{
-	using System;
-	using System.Xml.Linq;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Serialization.Processors;
+﻿using System;
+using System.Xml.Linq;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Serialization.Processors;
 
+namespace ImpossibleOdds.Xml.Processors
+{
 	public abstract class UnityPrimitiveXmlElementsProcessor<TPrimitive> : ISerializationProcessor, IDeserializationProcessor
 	{
-		private readonly XmlSerializationDefinition definition = null;
-
-		public XmlSerializationDefinition Definition
-		{
-			get => definition;
-		}
-
-		ISerializationDefinition IProcessor.Definition
-		{
-			get => definition;
-		}
+		public ISerializationDefinition Definition { get; }
 
 		public UnityPrimitiveXmlElementsProcessor(XmlSerializationDefinition definition)
 		{
-			this.definition = definition;
+			definition.ThrowIfNull(nameof(definition));
+			Definition = definition;
 		}
 
 		/// <inheritdoc />
@@ -33,16 +24,13 @@
 		/// <inheritdoc />
 		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
-			return Deserialize(dataToDeserialize as XElement);
+			return Deserialize((XElement)dataToDeserialize);
 		}
 
 		/// <inheritdoc />
 		public virtual bool CanSerialize(object objectToSerialize)
 		{
-			return
-				(objectToSerialize != null) &&
-				(objectToSerialize is TPrimitive primitive) &&
-				CanSerialize(primitive);
+			return (objectToSerialize is TPrimitive primitive) && CanSerialize(primitive);
 		}
 
 		/// <inheritdoc />
@@ -51,7 +39,6 @@
 			targetType.ThrowIfNull(nameof(targetType));
 
 			return
-				(dataToDeserialize != null) &&
 				(dataToDeserialize is XElement element) &&
 				typeof(TPrimitive).IsAssignableFrom(targetType) &&
 				CanDeserialize(element);

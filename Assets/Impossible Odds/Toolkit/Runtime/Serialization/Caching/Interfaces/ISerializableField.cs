@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.Serialization.Caching
-{
-	using System.Reflection;
+﻿using System.Reflection;
 
+namespace ImpossibleOdds.Serialization.Caching
+{
 	public interface ISerializableField : ISerializableMember
 	{
 		/// <summary>

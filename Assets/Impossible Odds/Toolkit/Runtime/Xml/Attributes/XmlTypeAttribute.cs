@@ -1,56 +1,30 @@
-﻿namespace ImpossibleOdds.Xml
+﻿using System;
+using ImpossibleOdds.Serialization;
+
+namespace ImpossibleOdds.Xml
 {
-	using System;
-	using ImpossibleOdds.Serialization;
-
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Struct, AllowMultiple = true)]
-	public class XmlTypeAttribute : Attribute, ILookupTypeResolveParameter
+	public class XmlTypeAttribute : Attribute, ITypeResolutionParameter
 	{
-		private Type target = null;
-		private object value = null;
-		private string keyOverride = null;
-		private bool setAsElement = false;
+		/// <inheritdoc />
+		public Type Target { get; }
 
 		/// <inheritdoc />
-		public Type Target
-		{
-			get => target;
-		}
+		public object Value { get; set; }
 
 		/// <inheritdoc />
-		public object Value
-		{
-			get => value;
-			set => this.value = value;
-		}
-
-		/// <inheritdoc />
-		object ILookupTypeResolveParameter.KeyOverride
-		{
-			get => keyOverride;
-		}
-
-		/// <inheritdoc />
-		public string KeyOverride
-		{
-			get => keyOverride;
-			set => keyOverride = value;
-		}
+		public string KeyOverride { get; set; }
 
 		/// <summary>
 		/// By default, type information is saved in an XML Attribute.
 		/// Setting this to true will save the type information in an XML Element instead.
 		/// </summary>
-		public bool SetAsElement
-		{
-			get => setAsElement;
-			set => setAsElement = value;
-		}
+		public bool SetAsElement { get; set; }
 
 		public XmlTypeAttribute(Type target)
 		{
 			target.ThrowIfNull(nameof(target));
-			this.target = target;
+			Target = target;
 		}
 	}
 }

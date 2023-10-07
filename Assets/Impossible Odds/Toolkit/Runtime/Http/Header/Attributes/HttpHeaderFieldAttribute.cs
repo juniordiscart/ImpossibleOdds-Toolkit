@@ -1,30 +1,22 @@
-﻿namespace ImpossibleOdds.Http
-{
-	using System;
-	using ImpossibleOdds.Serialization;
+﻿using System;
+using ImpossibleOdds.Serialization;
 
+namespace ImpossibleOdds.Http
+{
 	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
 	public sealed class HttpHeaderFieldAttribute : Attribute, ILookupParameter<string>
 	{
-		private string key = null;
+		/// <inheritdoc />
+		object ILookupParameter.Key => Key;
 
-		object ILookupParameter.Key
-		{
-			get => Key;
-		}
-
-		public string Key
-		{
-			get => key;
-			set => key = value;
-		}
+		public string Key { get; set; }
 
 		public HttpHeaderFieldAttribute()
 		{ }
 
 		public HttpHeaderFieldAttribute(string key)
 		{
-			this.key = key;
+			Key = key;
 		}
 	}
 }

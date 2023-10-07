@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Xml
-{
-	using System.Text;
-	using System.Xml;
+﻿using System.Text;
+using System.Xml;
 
+namespace ImpossibleOdds.Xml
+{
 	public class XmlOptions
 	{
 		/// <summary>
@@ -12,7 +12,7 @@
 		{
 			get;
 			set;
-		}
+		} = true;
 
 		/// <summary>
 		/// Hide/show the XML header when generating output.
@@ -21,7 +21,7 @@
 		{
 			get;
 			set;
-		}
+		} = false;
 
 		/// <summary>
 		/// The reported encoding in the header of the XML document.
@@ -31,7 +31,7 @@
 		{
 			get;
 			set;
-		}
+		} = Encoding.UTF8;
 
 		/// <summary>
 		/// A customized serialization definition for processing XML elements.
@@ -40,7 +40,7 @@
 		{
 			get;
 			set;
-		}
+		} = null;
 
 		/// <summary>
 		/// Settings for the XML reader object.
@@ -49,14 +49,6 @@
 		{
 			get;
 			set;
-		}
-
-		public XmlOptions()
-		{
-			CompactOutput = true;
-			HideHeader = false;
-			Encoding = Encoding.UTF8;
-			SerializationDefinition = null;
 		}
 	}
 }

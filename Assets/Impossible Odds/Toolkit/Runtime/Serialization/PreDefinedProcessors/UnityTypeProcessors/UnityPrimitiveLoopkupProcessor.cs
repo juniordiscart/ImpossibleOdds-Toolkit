@@ -1,25 +1,19 @@
-﻿namespace ImpossibleOdds.Serialization.Processors
-{
-	using System;
-	using System.Collections;
+﻿using System;
+using System.Collections;
 
+namespace ImpossibleOdds.Serialization.Processors
+{
 	public abstract class UnityPrimitiveLookupProcessor<T> : ISerializationProcessor, IDeserializationProcessor
 	{
-		private readonly ILookupSerializationDefinition definition = null;
+		public ISerializationDefinition Definition { get; }
+		public ILookupSerializationConfiguration Configuration { get; }
 
-		public ILookupSerializationDefinition Definition
+		protected UnityPrimitiveLookupProcessor(ISerializationDefinition definition, ILookupSerializationConfiguration configuration)
 		{
-			get => definition;
-		}
-
-		ISerializationDefinition IProcessor.Definition
-		{
-			get => Definition;
-		}
-
-		public UnityPrimitiveLookupProcessor(ILookupSerializationDefinition definition)
-		{
-			this.definition = definition;
+			definition.ThrowIfNull(nameof(definition));
+			configuration.ThrowIfNull(nameof(configuration));
+			Definition = definition;
+			Configuration = configuration;
 		}
 
 		/// <inheritdoc />
@@ -37,9 +31,7 @@
 		/// <inheritdoc />
 		public virtual bool CanSerialize(object objectToSerialize)
 		{
-			return
-				(objectToSerialize != null) &&
-				(objectToSerialize is T);
+			return objectToSerialize is T;
 		}
 
 		/// <inheritdoc />

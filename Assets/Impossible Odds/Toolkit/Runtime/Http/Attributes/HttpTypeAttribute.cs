@@ -1,45 +1,27 @@
-﻿namespace ImpossibleOdds.Http
+﻿using System;
+using ImpossibleOdds.Serialization;
+
+namespace ImpossibleOdds.Http
 {
-	using System;
-	using ImpossibleOdds.Serialization;
-
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Struct, AllowMultiple = true)]
-	public class HttpTypeAttribute : Attribute, ILookupTypeResolveParameter
+	public class HttpTypeAttribute : Attribute, ILookupTypeResolutionParameter
 	{
-		private Type target = null;
-		private object value = null;
-		private string keyOverride = null;
+		/// <inheritdoc />
+		public Type Target { get; }
 
 		/// <inheritdoc />
-		public Type Target
-		{
-			get => target;
-		}
+		public object Value { get; set; }
 
 		/// <inheritdoc />
-		public object Value
-		{
-			get => value;
-			set => this.value = value;
-		}
+		object ILookupTypeResolutionParameter.KeyOverride => KeyOverride;
 
 		/// <inheritdoc />
-		object ILookupTypeResolveParameter.KeyOverride
-		{
-			get => KeyOverride;
-		}
-
-		/// <inheritdoc />
-		public string KeyOverride
-		{
-			get => keyOverride;
-			set => keyOverride = value;
-		}
+		public string KeyOverride { get; set; }
 
 		public HttpTypeAttribute(Type target)
 		{
 			target.ThrowIfNull(nameof(target));
-			this.target = target;
+			Target = target;
 		}
 	}
 }

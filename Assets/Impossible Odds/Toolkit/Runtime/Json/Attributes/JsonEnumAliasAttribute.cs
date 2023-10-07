@@ -1,22 +1,18 @@
-﻿namespace ImpossibleOdds.Json
-{
-	using System;
-	using ImpossibleOdds.Serialization;
+﻿using System;
+using ImpossibleOdds.Serialization;
 
-	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+namespace ImpossibleOdds.Json
+{
+	[AttributeUsage(AttributeTargets.Field)]
 	public sealed class JsonEnumAliasAttribute : Attribute, IEnumAliasParameter
 	{
-		private readonly string alias = null;
-
-		public string Alias
-		{
-			get => alias;
-		}
+		/// <inheritdoc />
+		public string Alias { get; }
 
 		public JsonEnumAliasAttribute(string alias)
 		{
 			alias.ThrowIfNullOrEmpty(nameof(alias));
-			this.alias = alias;
+			Alias = alias;
 		}
 	}
 }

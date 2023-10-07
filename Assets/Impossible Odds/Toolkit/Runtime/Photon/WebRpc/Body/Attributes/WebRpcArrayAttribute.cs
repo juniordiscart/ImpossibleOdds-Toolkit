@@ -1,9 +1,9 @@
-﻿namespace ImpossibleOdds.Photon.WebRpc
-{
-	using System;
-	using ImpossibleOdds.Serialization;
+﻿using System;
+using ImpossibleOdds.Serialization;
 
-	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false)]
-	public sealed class WebRpcArrayAttribute : Attribute, IIndexTypeObject
+namespace ImpossibleOdds.Photon.WebRpc
+{
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
+	public sealed class WebRpcArrayAttribute : Attribute, ISequenceTypeObject
 	{ }
 }

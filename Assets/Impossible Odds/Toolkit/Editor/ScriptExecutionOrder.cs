@@ -1,12 +1,12 @@
-﻿namespace ImpossibleOdds
-{
-	using System;
-	using System.Collections.Generic;
-	using System.Linq;
-	using System.Reflection;
-	using UnityEngine;
-	using UnityEditor;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using UnityEngine;
+using UnityEditor;
 
+namespace ImpossibleOdds
+{
 	[InitializeOnLoad]
 	internal class ScriptOrderManager
 	{
@@ -44,7 +44,7 @@
 		{
 			Dictionary<Type, ScriptExecutionInfo> scripts = new Dictionary<Type, ScriptExecutionInfo>();
 
-			// Find all monoscripts, and catalog them
+			// Find all mono scripts, and catalog them
 			foreach (MonoScript monoScript in MonoImporter.GetAllRuntimeMonoScripts())
 			{
 				Type monoType = monoScript.GetClass();
@@ -66,9 +66,9 @@
 					ExecuteBeforeAttribute attr = script.Type.GetCustomAttribute<ExecuteBeforeAttribute>(false);
 					foreach (Type executeBeforeType in attr.ExecuteBefore)
 					{
-						if (scripts.ContainsKey(executeBeforeType))
+						if (scripts.TryGetValue(executeBeforeType, out ScriptExecutionInfo sei))
 						{
-							script.AddDependency(scripts[executeBeforeType]);
+							script.AddDependency(sei);
 						}
 					}
 				}
@@ -141,14 +141,14 @@
 		/// Sorts the scripts topologically, per script island.
 		private static List<List<ScriptExecutionInfo>> SortScriptsTopologically(IEnumerable<ScriptExecutionInfo> allScripts)
 		{
-			List<GraphNode> topoNodes = CreateTopoGraph(allScripts);
-			List<GraphNode> sortedNodes = new List<GraphNode>(topoNodes.Count);
+			List<GraphNode> topologyNodes = CreateTopoGraph(allScripts);
+			List<GraphNode> sortedNodes = new List<GraphNode>(topologyNodes.Count);
 			List<HashSet<GraphNode>> islands = new List<HashSet<GraphNode>>();
 
 			// Visit the nodes that haven't been permanently been visited yet.
-			while (topoNodes.Exists(node => !node.IsPermanent))
+			while (topologyNodes.Exists(node => !node.IsPermanent))
 			{
-				topoNodes.First(node => !node.IsPermanent).Visit(sortedNodes, islands);
+				topologyNodes.First(node => !node.IsPermanent).Visit(sortedNodes, islands);
 			}
 
 			// Reverse the result for convenience
@@ -178,57 +178,40 @@
 			HashSet<ScriptExecutionInfo> filteredScripts = new HashSet<ScriptExecutionInfo>();
 			foreach (ScriptExecutionInfo script in allScripts)
 			{
-				if (script.HasDependencies)
+				if (!script.HasDependencies)
 				{
-					filteredScripts.Add(script);
-					foreach (ScriptExecutionInfo dependencyScript in script.Dependencies)
-					{
-						filteredScripts.Add(dependencyScript);
-					}
+					continue;
+				}
+
+				filteredScripts.Add(script);
+				foreach (ScriptExecutionInfo dependencyScript in script.Dependencies)
+				{
+					filteredScripts.Add(dependencyScript);
 				}
 			}
 
 			// Create a list of all the nodes in the graph based on the filtered scripts
-			List<GraphNode> topoNodes = new List<GraphNode>();
-			foreach (ScriptExecutionInfo script in filteredScripts)
-			{
-				topoNodes.Add(new GraphNode(script));
-			}
+			List<GraphNode> topologyNodes = filteredScripts.Select(script => new GraphNode(script)).ToList();
 
 			// Create the edges in the graph
-			foreach (GraphNode topoNode in topoNodes)
+			foreach (GraphNode topologyNode in topologyNodes.Where(tn => tn.node.HasDependencies))
 			{
-				if (topoNode.node.HasDependencies)
-				{
-					topoNode.edges.AddRange(topoNodes.Where(t => topoNode.node.Dependencies.Contains(t.node)));
-				}
+				topologyNode.edges.AddRange(topologyNodes.Where(t => topologyNode.node.Dependencies.Contains(t.node)));
 			}
 
-			return topoNodes;
+			return topologyNodes;
 		}
 
 		private class ScriptExecutionInfo : IComparable<ScriptExecutionInfo>
 		{
-			private readonly Type type = null;
-			private readonly MonoScript monoScript = null;
-			private readonly bool isFixedOrder = false;
 			private int order = 0;
-			private HashSet<ScriptExecutionInfo> dependsOn = new HashSet<ScriptExecutionInfo>();
+			private readonly HashSet<ScriptExecutionInfo> dependsOn = new HashSet<ScriptExecutionInfo>();
 
-			public MonoScript MonoScript
-			{
-				get => monoScript;
-			}
+			public MonoScript MonoScript { get; }
 
-			public Type Type
-			{
-				get => type;
-			}
+			public Type Type { get; }
 
-			public bool IsFixedOrder
-			{
-				get => isFixedOrder;
-			}
+			public bool IsFixedOrder { get; }
 
 			public int Order
 			{
@@ -244,31 +227,18 @@
 				}
 			}
 
-			public bool IsValidExecutionOrder
-			{
-				get => !HasDependencies || (order < dependsOn.Min(d => d.order));
-			}
+			public bool IsValidExecutionOrder => !HasDependencies || (order < dependsOn.Min(d => d.order));
 
-			public bool HasDependencies
-			{
-				get => dependsOn.Count > 0;
-			}
+			public bool HasDependencies => dependsOn.Count > 0;
 
-			public HashSet<ScriptExecutionInfo> Dependencies
-			{
-				get => dependsOn;
-			}
+			public HashSet<ScriptExecutionInfo> Dependencies => dependsOn;
 
-			public ScriptExecutionInfo(MonoScript monoScript, Type type, int order)
-			: this(monoScript, type, order, false)
-			{ }
-
-			public ScriptExecutionInfo(MonoScript monoScript, Type type, int order, bool isFixedOrder)
+			public ScriptExecutionInfo(MonoScript monoScript, Type type, int order, bool isFixedOrder = false)
 			{
-				this.monoScript = monoScript;
-				this.type = type;
+				MonoScript = monoScript;
+				Type = type;
+				IsFixedOrder = isFixedOrder;
 				this.order = order;
-				this.isFixedOrder = isFixedOrder;
 			}
 
 			public int CompareTo(ScriptExecutionInfo other)
@@ -341,9 +311,9 @@
 
 				IsTemporary = true;
 
-				for (int i = 0; i < edges.Count; ++i)
+				foreach (GraphNode t in edges)
 				{
-					edges[i].Visit(nodes, islands);
+					t.Visit(nodes, islands);
 				}
 
 				IsPermanent = true;
@@ -381,17 +351,21 @@
 
 			public int CompareTo(GraphNode other)
 			{
-				if (this.node.IsFixedOrder && other.node.IsFixedOrder)
+				switch (this.node.IsFixedOrder)
 				{
-					return node.Order.CompareTo(other.node.Order);
-				}
-				else if (this.node.IsFixedOrder)
-				{
-					return -1;
-				}
-				else if (other.node.IsFixedOrder)
-				{
-					return 1;
+					case true when other.node.IsFixedOrder:
+						return node.Order.CompareTo(other.node.Order);
+					case true:
+						return -1;
+					default:
+					{
+						if (other.node.IsFixedOrder)
+						{
+							return 1;
+						}
+
+						break;
+					}
 				}
 
 				return 0;

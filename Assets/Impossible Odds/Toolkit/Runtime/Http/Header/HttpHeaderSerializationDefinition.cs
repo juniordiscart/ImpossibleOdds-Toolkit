@@ -1,72 +1,36 @@
-﻿namespace ImpossibleOdds.Http
-{
-	using System;
-	using System.Collections;
-	using System.Collections.Generic;
-	using System.Globalization;
-	using System.Linq;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Serialization.Processors;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Serialization.Processors;
 
+namespace ImpossibleOdds.Http
+{
 	/// <summary>
 	/// Serialization definition for the header of HTTP requests.
 	/// </summary>
-	public class HttpHeaderSerializationDefinition : ILookupSerializationDefinition
+	public class HttpHeaderSerializationDefinition : ISerializationDefinition
 	{
-		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
-		private ISerializationProcessor[] serializationProcessors = null;
-		private IDeserializationProcessor[] deserializationProcessors = null;
-		private HashSet<Type> supportedTypes = null;
+		private readonly ISerializationProcessor[] serializationProcessors;
+		private readonly IDeserializationProcessor[] deserializationProcessors;
 
 		/// <inheritdoc />
-		public IEnumerable<ISerializationProcessor> SerializationProcessors
-		{
-			get => serializationProcessors;
-		}
+		public IEnumerable<ISerializationProcessor> SerializationProcessors => serializationProcessors;
 
 		/// <inheritdoc />
-		public IEnumerable<IDeserializationProcessor> DeserializationProcessors
-		{
-			get => deserializationProcessors;
-		}
+		public IEnumerable<IDeserializationProcessor> DeserializationProcessors => deserializationProcessors;
 
 		/// <inheritdoc />
-		public HashSet<Type> SupportedTypes
-		{
-			get => supportedTypes;
-		}
-
-		/// <summary>
-		/// Not implemented because the header definition does not requires objects to be marked for header parameters.
-		/// </summary>
-		Type ILookupSerializationDefinition.LookupBasedClassMarkingAttribute
-		{
-			get => throw new NotImplementedException();
-		}
+		public HashSet<Type> SupportedTypes { get; }
 
 		/// <inheritdoc />
-		public Type LookupBasedFieldAttribute
-		{
-			get => typeof(HttpHeaderFieldAttribute);
-		}
-
-		/// <inheritdoc />
-		public Type LookupBasedDataType
-		{
-			get => typeof(Dictionary<string, string>);
-		}
-
-		/// <inheritdoc />
-		public IFormatProvider FormatProvider
-		{
-			get => formatProvider;
-			set => formatProvider = value;
-		}
+		public IFormatProvider FormatProvider { get; set; } = CultureInfo.InvariantCulture;
 
 		public HttpHeaderSerializationDefinition()
 		{
 			// Basic set of types
-			supportedTypes = new HashSet<Type>()
+			SupportedTypes = new HashSet<Type>()
 			{
 				typeof(short),
 				typeof(ushort),
@@ -79,6 +43,8 @@
 				typeof(bool),
 				typeof(string)
 			};
+
+			ILookupSerializationConfiguration lookupConfiguration = new HttpHeaderLookupConfiguration();
 
 			List<IProcessor> processors = new List<IProcessor>()
 			{
@@ -93,8 +59,8 @@
 				new VersionProcessor(this),
 				new GuidProcessor(this),
 				new StringProcessor(this),
-				new LookupProcessor(this),
-				new CustomObjectLookupProcessor(this, false)
+				new LookupProcessor(this, lookupConfiguration),
+				new CustomObjectLookupProcessor(this, lookupConfiguration, false)
 				{
 					CallbackFeature = new CallBackFeature<OnHttpHeaderSerializingAttribute, OnHttpHeaderSerializedAttribute, OnHttpHeaderDeserializingAttribute, OnHttpHeaderDeserializedAttribute>(),
 					RequiredValueFeature = new RequiredValueFeature<HttpHeaderRequiredAttribute>()
@@ -103,18 +69,6 @@
 
 			serializationProcessors = processors.Where(p => p is ISerializationProcessor).Cast<ISerializationProcessor>().ToArray();
 			deserializationProcessors = processors.Where(p => p is IDeserializationProcessor).Cast<IDeserializationProcessor>().ToArray();
-		}
-
-		/// <inheritdoc />
-		public Dictionary<string, string> CreateLookupInstance(int capacity)
-		{
-			return new Dictionary<string, string>(capacity);
-		}
-
-		/// <inheritdoc />
-		IDictionary ILookupSerializationDefinition.CreateLookupInstance(int capacity)
-		{
-			return CreateLookupInstance(capacity);
 		}
 	}
 }

@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Photon.WebRpc
-{
-	using System;
+﻿using System;
 
-	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+namespace ImpossibleOdds.Photon.WebRpc
+{
+	[AttributeUsage(AttributeTargets.Method)]
 	public sealed class OnWebRpcSerializingAttribute : Attribute
 	{ }
 }

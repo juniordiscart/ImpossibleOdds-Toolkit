@@ -1,17 +1,17 @@
-﻿namespace ImpossibleOdds
-{
-	using System;
-	using System.Reflection;
-	using System.Collections.Concurrent;
-	using System.Collections.Generic;
-	using UnityEngine.Events;
+﻿using System;
+using System.Reflection;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using UnityEngine.Events;
 
+namespace ImpossibleOdds
+{
 	public static class DelegateExtensions
 	{
-		private static ConcurrentDictionary<Type, List<FieldInfo>> delegateCache = new ConcurrentDictionary<Type, List<FieldInfo>>();
+		private static readonly ConcurrentDictionary<Type, List<FieldInfo>> DelegateCache = new ConcurrentDictionary<Type, List<FieldInfo>>();
 
 		/// <summary>
-		/// Clears the invokation lists of delegates found in the source that target the target.
+		/// Clears the invocation lists of delegates found in the source that target the target.
 		/// </summary>
 		/// <param name="source">The object of which the delegates will be cleared.</param>
 		/// <param name="target">The object to be removed from the delegate invocation lists.</param>
@@ -19,7 +19,7 @@
 		{
 			source.ThrowIfNull(nameof(source));
 			target.ThrowIfNull(nameof(target));
-			Type sourceType = source is Type ? source as Type : source.GetType();
+			Type sourceType = source is Type type ? type : source.GetType();
 			bool isStaticSource = source is Type; // Source - instance or static?
 			bool isStaticTarget = target is Type; // Target - instance or static?
 
@@ -65,10 +65,7 @@
 		/// </summary>
 		public static void InvokeIfNotNull(this Action del)
 		{
-			if (del != null)
-			{
-				del.Invoke();
-			}
+			del?.Invoke();
 		}
 
 		/// <summary>
@@ -76,10 +73,7 @@
 		/// </summary>
 		public static void InvokeIfNotNull<T1>(this Action<T1> del, T1 p1)
 		{
-			if (del != null)
-			{
-				del.Invoke(p1);
-			}
+			del?.Invoke(p1);
 		}
 
 		/// <summary>
@@ -87,10 +81,7 @@
 		/// </summary>
 		public static void InvokeIfNotNull<T1, T2>(this Action<T1, T2> del, T1 p1, T2 p2)
 		{
-			if (del != null)
-			{
-				del.Invoke(p1, p2);
-			}
+			del?.Invoke(p1, p2);
 		}
 
 		/// <summary>
@@ -98,10 +89,7 @@
 		/// </summary>
 		public static void InvokeIfNotNull<T1, T2, T3>(this Action<T1, T2, T3> del, T1 p1, T2 p2, T3 p3)
 		{
-			if (del != null)
-			{
-				del.Invoke(p1, p2, p3);
-			}
+			del?.Invoke(p1, p2, p3);
 		}
 
 		/// <summary>
@@ -109,10 +97,7 @@
 		/// </summary>
 		public static void InvokeIfNotNull<T1, T2, T3, T4>(this Action<T1, T2, T3, T4> del, T1 p1, T2 p2, T3 p3, T4 p4)
 		{
-			if (del != null)
-			{
-				del.Invoke(p1, p2, p3, p4);
-			}
+			del?.Invoke(p1, p2, p3, p4);
 		}
 
 		/// <summary>
@@ -160,10 +145,7 @@
 		/// </summary>
 		public static void InvokeIfNotNull(this UnityAction del)
 		{
-			if (del != null)
-			{
-				del.Invoke();
-			}
+			del?.Invoke();
 		}
 
 		/// <summary>
@@ -171,10 +153,7 @@
 		/// </summary>
 		public static void InvokeIfNotNull<T1>(this UnityAction<T1> del, T1 p1)
 		{
-			if (del != null)
-			{
-				del.Invoke(p1);
-			}
+			del?.Invoke(p1);
 		}
 
 		/// <summary>
@@ -182,10 +161,7 @@
 		/// </summary>
 		public static void InvokeIfNotNull<T1, T2>(this UnityAction<T1, T2> del, T1 p1, T2 p2)
 		{
-			if (del != null)
-			{
-				del.Invoke(p1, p2);
-			}
+			del?.Invoke(p1, p2);
 		}
 
 		/// <summary>
@@ -193,10 +169,7 @@
 		/// </summary>
 		public static void InvokeIfNotNull<T1, T2, T3>(this UnityAction<T1, T2, T3> del, T1 p1, T2 p2, T3 p3)
 		{
-			if (del != null)
-			{
-				del.Invoke(p1, p2, p3);
-			}
+			del?.Invoke(p1, p2, p3);
 		}
 
 		/// <summary>
@@ -204,10 +177,7 @@
 		/// </summary>
 		public static void InvokeIfNotNull<T1, T2, T3, T4>(this UnityAction<T1, T2, T3, T4> del, T1 p1, T2 p2, T3 p3, T4 p4)
 		{
-			if (del != null)
-			{
-				del.Invoke(p1, p2, p3, p4);
-			}
+			del?.Invoke(p1, p2, p3, p4);
 		}
 
 		/// <summary>
@@ -215,10 +185,7 @@
 		/// </summary>
 		public static void InvokeIfNotNull(this UnityEvent del)
 		{
-			if (del != null)
-			{
-				del.Invoke();
-			}
+			del?.Invoke();
 		}
 
 		/// <summary>
@@ -226,10 +193,7 @@
 		/// </summary>
 		public static void InvokeIfNotNull<T1>(this UnityEvent<T1> del, T1 p1)
 		{
-			if (del != null)
-			{
-				del.Invoke(p1);
-			}
+			del?.Invoke(p1);
 		}
 
 		/// <summary>
@@ -237,10 +201,7 @@
 		/// </summary>
 		public static void InvokeIfNotNull<T1, T2>(this UnityEvent<T1, T2> del, T1 p1, T2 p2)
 		{
-			if (del != null)
-			{
-				del.Invoke(p1, p2);
-			}
+			del?.Invoke(p1, p2);
 		}
 
 		/// <summary>
@@ -248,10 +209,7 @@
 		/// </summary>
 		public static void InvokeIfNotNull<T1, T2, T3>(this UnityEvent<T1, T2, T3> del, T1 p1, T2 p2, T3 p3)
 		{
-			if (del != null)
-			{
-				del.Invoke(p1, p2, p3);
-			}
+			del?.Invoke(p1, p2, p3);
 		}
 
 		/// <summary>
@@ -259,15 +217,12 @@
 		/// </summary>
 		public static void InvokeIfNotNull<T1, T2, T3, T4>(this UnityEvent<T1, T2, T3, T4> del, T1 p1, T2 p2, T3 p3, T4 p4)
 		{
-			if (del != null)
-			{
-				del.Invoke(p1, p2, p3, p4);
-			}
+			del?.Invoke(p1, p2, p3, p4);
 		}
 
 		private static List<FieldInfo> GetDelegatesForType(Type type)
 		{
-			if (delegateCache.TryGetValue(type, out List<FieldInfo> d))
+			if (DelegateCache.TryGetValue(type, out List<FieldInfo> d))
 			{
 				return d;
 			}
@@ -293,7 +248,7 @@
 				typeIt = typeIt.BaseType;
 			}
 
-			return delegateCache.GetOrAdd(type, delegates);
+			return DelegateCache.GetOrAdd(type, delegates);
 		}
 	}
 }

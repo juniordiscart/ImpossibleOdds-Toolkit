@@ -6,7 +6,7 @@
 	public interface IRunner
 	{
 		/// <summary>
-		/// Add runnable that whishes to hook into the Update loop.
+		/// Add runnable that wishes to hook into the Update loop.
 		/// </summary>
 		/// <param name="runnable">Runnable to register.</param>
 		void AddUpdate(IRunnable runnable);

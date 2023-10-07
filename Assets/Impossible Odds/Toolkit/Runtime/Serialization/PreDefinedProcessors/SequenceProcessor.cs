@@ -1,33 +1,29 @@
-﻿namespace ImpossibleOdds.Serialization.Processors
-{
-	using System;
-	using System.Collections;
-	using System.Threading.Tasks;
-	using ImpossibleOdds.Serialization.Caching;
+﻿using System;
+using System.Collections;
+using System.Threading.Tasks;
+using ImpossibleOdds.Serialization.Caching;
 
+namespace ImpossibleOdds.Serialization.Processors
+{
 	/// <summary>
 	/// A (de)serialization processor for list-like data structures.
 	/// </summary>
-	public class SequenceProcessor : ISerializationProcessor, IDeserializationProcessor, IDeserializationToTargetProcessor
+	public class SequenceProcessor : ISerializationProcessor, IDeserializationToTargetProcessor
 	{
-		private readonly IIndexSerializationDefinition definition;
+		public bool ParallelProcessingEnabled => ParallelProcessingFeature is { Enabled: true };
 
-		public bool SupportsParallelProcessing => ParallelProcessingFeature != null;
 		public IParallelProcessingFeature ParallelProcessingFeature { get; set; }
 
-		ISerializationDefinition IProcessor.Definition
-		{
-			get => definition;
-		}
+		public ISerializationDefinition Definition { get; }
 
-		IIndexSerializationDefinition Definition
-		{
-			get => definition;
-		}
+		public ISequenceSerializationConfiguration Configuration { get; }
 
-		public SequenceProcessor(IIndexSerializationDefinition definition)
+		public SequenceProcessor(ISerializationDefinition definition, ISequenceSerializationConfiguration configuration)
 		{
-			this.definition = definition;
+			definition.ThrowIfNull(nameof(definition));
+			configuration.ThrowIfNull(nameof(configuration));
+			Definition = definition;
+			Configuration = configuration;
 		}
 
 		/// <inheritdoc />
@@ -43,37 +39,28 @@
 			// them individually to data that is accepted by the serialization definition
 			// and is accepted by the underlying type restrictions of the result collection.
 			IList sourceValues = (IList)objectToSerialize;
-			IList processedValues = definition.CreateSequenceInstance(sourceValues.Count);
+			IList processedValues = Configuration.CreateSequenceInstance(sourceValues.Count);
 			SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
-			object parallelLock = null;
 
-			if (SupportsParallelProcessing && ParallelProcessingFeature.Enabled && (sourceValues.Count > 1))
+			if (ParallelProcessingEnabled && (sourceValues.Count > 1))
 			{
-				parallelLock = new object();
-				Parallel.For(0, sourceValues.Count, SerializeMember);
+				object parallelLock = new object();
+				Parallel.For(0, sourceValues.Count, (int index) =>
+				{
+					object processedValue = Serializer.Serialize(sourceValues[index], Definition);
+					lock (parallelLock) SerializationUtilities.InsertInSequence(processedValues, collectionInfo, index, processedValue);
+				});
 			}
 			else
 			{
-				for (int i = 0; i < sourceValues.Count; ++i)
+				for (int index = 0; index < sourceValues.Count; ++index)
 				{
-					SerializeMember(i);
+					object processedValue = Serializer.Serialize(sourceValues[index], Definition);
+					SerializationUtilities.InsertInSequence(processedValues, collectionInfo, index, processedValue);
 				}
 			}
 
 			return processedValues;
-
-			void SerializeMember(int index)
-			{
-				object processedValue = Serializer.Serialize(sourceValues[index], definition);
-				if (parallelLock != null)
-				{
-					lock (parallelLock) SerializationUtilities.InsertInSequence(processedValues, collectionInfo, index, processedValue);
-				}
-				else
-				{
-					SerializationUtilities.InsertInSequence(processedValues, collectionInfo, index, processedValue);
-				}
-			}
 		}
 
 		/// <inheritdoc />
@@ -107,31 +94,21 @@
 			IList sourceValues = (IList)dataToDeserialize;
 			IList targetValues = (IList)deserializationTarget;
 			SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetValues);
-			object parallelLock = null;
 
-			if (SupportsParallelProcessing && ParallelProcessingFeature.Enabled && (sourceValues.Count > 1))
+			if (ParallelProcessingEnabled && (sourceValues.Count > 1))
 			{
-				parallelLock = new object();
-				Parallel.For(0, sourceValues.Count, DeserializeMember);
+				object parallelLock = new object();
+				Parallel.For(0, sourceValues.Count, (int index) =>
+				{
+					object processedValue = collectionInfo.PostProcessValue(Serializer.Deserialize(collectionInfo.elementType, sourceValues[index], Definition));
+					lock (parallelLock) SerializationUtilities.InsertInSequence(targetValues, collectionInfo, index, processedValue);
+				});
 			}
 			else
 			{
-				for (int i = 0; i < sourceValues.Count; ++i)
+				for (int index = 0; index < sourceValues.Count; ++index)
 				{
-					DeserializeMember(i);
-				}
-			}
-
-			void DeserializeMember(int index)
-			{
-				object processedValue = Serializer.Deserialize(collectionInfo.elementType, sourceValues[index], definition);
-				processedValue = collectionInfo.PostProcessValue(processedValue);
-				if (parallelLock != null)
-				{
-					lock (parallelLock) SerializationUtilities.InsertInSequence(targetValues, collectionInfo, index, processedValue);
-				}
-				else
-				{
+					object processedValue = collectionInfo.PostProcessValue(Serializer.Deserialize(collectionInfo.elementType, sourceValues[index], Definition));
 					SerializationUtilities.InsertInSequence(targetValues, collectionInfo, index, processedValue);
 				}
 			}

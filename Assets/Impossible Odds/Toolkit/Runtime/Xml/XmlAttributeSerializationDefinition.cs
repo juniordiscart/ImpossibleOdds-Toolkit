@@ -1,48 +1,34 @@
-﻿namespace ImpossibleOdds.Xml
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Xml.Linq;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Serialization.Processors;
+
+namespace ImpossibleOdds.Xml
 {
-	using System;
-	using System.Collections.Generic;
-	using System.Globalization;
-	using System.Linq;
-	using System.Xml.Linq;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Serialization.Processors;
 
 	public class XmlAttributeSerializationDefinition : ISerializationDefinition
 	{
-		private IFormatProvider formatProvider = CultureInfo.InvariantCulture;
-		private ISerializationProcessor[] serializationProcessors;
-		private IDeserializationProcessor[] deserializationProcessors;
-		private HashSet<Type> supportedTypes;
+		private readonly ISerializationProcessor[] serializationProcessors;
+		private readonly IDeserializationProcessor[] deserializationProcessors;
 
 		/// <inheritdoc />
-		public IEnumerable<ISerializationProcessor> SerializationProcessors
-		{
-			get => serializationProcessors;
-		}
+		public IEnumerable<ISerializationProcessor> SerializationProcessors => serializationProcessors;
 
 		/// <inheritdoc />
-		public IEnumerable<IDeserializationProcessor> DeserializationProcessors
-		{
-			get => deserializationProcessors;
-		}
+		public IEnumerable<IDeserializationProcessor> DeserializationProcessors => deserializationProcessors;
 
 		/// <inheritdoc />
-		public IFormatProvider FormatProvider
-		{
-			get => formatProvider;
-			set => formatProvider = value;
-		}
+		public IFormatProvider FormatProvider { get; set; } = CultureInfo.InvariantCulture;
 
 		/// <inheritdoc />
-		public HashSet<Type> SupportedTypes
-		{
-			get => supportedTypes;
-		}
+		public HashSet<Type> SupportedTypes { get; }
 
 		public XmlAttributeSerializationDefinition()
 		{
-			supportedTypes = new HashSet<Type>()
+			SupportedTypes = new HashSet<Type>()
 			{
 				typeof(short),
 				typeof(int),

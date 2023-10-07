@@ -1,23 +1,20 @@
-﻿namespace ImpossibleOdds.Xml.Processors
-{
-	using System;
-	using System.Collections;
-	using System.Linq;
-	using System.Threading.Tasks;
-	using System.Xml.Linq;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Serialization.Caching;
-	using ImpossibleOdds.Serialization.Processors;
-	using ImpossibleOdds.Xml;
+﻿using System;
+using System.Collections;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Serialization.Caching;
+using ImpossibleOdds.Serialization.Processors;
 
-	public class XmlLookupProcessor : ISerializationProcessor, IDeserializationProcessor, IDeserializationToTargetProcessor
+namespace ImpossibleOdds.Xml.Processors
+{
+	public class XmlLookupProcessor : ISerializationProcessor, IDeserializationToTargetProcessor
 	{
-		public XmlSerializationDefinition Definition { get; } = null;
+		public ISerializationDefinition Definition { get; }
 
 		public IParallelProcessingFeature ParallelProcessingFeature { get; set; }
 		public bool SupportsParallelProcessing => ParallelProcessingFeature != null;
-
-		ISerializationDefinition IProcessor.Definition => Definition;
 
 		public XmlLookupProcessor(XmlSerializationDefinition definition)
 		{
@@ -37,24 +34,26 @@
 			// Process each individual lookup entry.
 			XElement lookupRoot = new XElement("LookupElement");   // Create default-named root.
 			IDictionary sourceValues = (IDictionary)objectToSerialize;
-			object parallelLock = null;
 
-			if (Definition.ParallelProcessingEnabled && (sourceValues.Count > 1))
+			if (SupportsParallelProcessing && ParallelProcessingFeature.Enabled && (sourceValues.Count > 1))
 			{
-				parallelLock = new object();
-				Parallel.ForEach(sourceValues.Cast<DictionaryEntry>(), SerializeMember);
+				object parallelLock = new object();
+				Parallel.ForEach(sourceValues.Cast<DictionaryEntry>(), entry =>
+				{
+					lock (parallelLock) lookupRoot.Add(SerializeMember(entry));
+				});
 			}
 			else
 			{
 				foreach (DictionaryEntry sourceValue in sourceValues)
 				{
-					SerializeMember(sourceValue);
+					lookupRoot.Add(SerializeMember(sourceValue));
 				}
 			}
 
 			return lookupRoot;
 
-			void SerializeMember(DictionaryEntry sourceValue)
+			XElement SerializeMember(DictionaryEntry sourceValue)
 			{
 				object processedKey = Serializer.Serialize(sourceValue.Key, Definition);
 				object processedValue = Serializer.Serialize(sourceValue.Value, Definition);
@@ -77,14 +76,7 @@
 					xmlEntry = new XElement(processedKey as string, processedValue);
 				}
 
-				if (parallelLock != null)
-				{
-					lock (parallelLock) lookupRoot.Add(xmlEntry);
-				}
-				else
-				{
-					lookupRoot.Add(xmlEntry);
-				}
+				return xmlEntry;
 			}
 		}
 
@@ -114,35 +106,27 @@
 			XElement sourceXml = (XElement)dataToDeserialize;
 			IDictionary targetValues = (IDictionary)deserializationTarget;
 			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetValues);
-			object parallelLock = null;
 
-			if (Definition.ParallelProcessingEnabled && (targetValues.Count > 1))
+			if (SupportsParallelProcessing && ParallelProcessingFeature.Enabled && (targetValues.Count > 1))
 			{
-				parallelLock = new object();
-				Parallel.ForEach(sourceXml.Elements(), DeserializeMember);
+				object parallelLock = new object();
+				Parallel.ForEach(sourceXml.Elements(), xmlEntry =>
+				{
+					// If the value has any child elements or attributes, then the entry itself is deserialized, otherwise just it value is chosen.
+					object processedKey = Serializer.Deserialize(collectionInfo.keyType, xmlEntry.Name.LocalName, Definition);
+					object processedValue = (xmlEntry.HasElements || xmlEntry.HasAttributes) ? xmlEntry : (object)xmlEntry.Value;
+					processedValue = Serializer.Deserialize(collectionInfo.valueType, processedValue, Definition);
+					lock (parallelLock) SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
+				});
 			}
 			else
 			{
 				foreach (XElement xmlEntry in sourceXml.Elements())
 				{
-					DeserializeMember(xmlEntry);
-				}
-			}
-
-			void DeserializeMember(XElement xmlEntry)
-			{
-				object processedKey = Serializer.Deserialize(collectionInfo.keyType, xmlEntry.Name.LocalName, Definition);
-
-				// If the value has any child elements or attributes, then the entry itself is deserialized, otherwise just it value is chosen.
-				object processedValue = (xmlEntry.HasElements || xmlEntry.HasAttributes) ? xmlEntry : (object)xmlEntry.Value;
-				processedValue = Serializer.Deserialize(collectionInfo.valueType, processedValue, Definition);
-
-				if (parallelLock != null)
-				{
-					lock (parallelLock) SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
-				}
-				else
-				{
+					// If the value has any child elements or attributes, then the entry itself is deserialized, otherwise just it value is chosen.
+					object processedKey = Serializer.Deserialize(collectionInfo.keyType, xmlEntry.Name.LocalName, Definition);
+					object processedValue = (xmlEntry.HasElements || xmlEntry.HasAttributes) ? xmlEntry : (object)xmlEntry.Value;
+					processedValue = Serializer.Deserialize(collectionInfo.valueType, processedValue, Definition);
 					SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
 				}
 			}

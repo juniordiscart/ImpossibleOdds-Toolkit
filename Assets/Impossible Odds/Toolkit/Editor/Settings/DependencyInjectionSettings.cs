@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Settings
-{
-	using System.Collections.Generic;
-	using UnityEditor;
+﻿using System.Collections.Generic;
+using UnityEditor;
 
+namespace ImpossibleOdds.Settings
+{
 	public class DependencyInjectionSettings : AbstractSingleSetting
 	{
 		private const string GlobalDependencyInjectionDisabled = "IMPOSSIBLE_ODDS_DEPENDENCY_INJECTION_DISABLE_GLOBAL_AUTO_INJECT";
@@ -11,15 +11,9 @@
 		: base(loadedSymbols)
 		{ }
 
-		public override string SettingName
-		{
-			get => "Dependency Injection Settings";
-		}
+		public override string SettingName => "Dependency Injection Settings";
 
-		public override string Symbol
-		{
-			get => GlobalDependencyInjectionDisabled;
-		}
+		public override string Symbol => GlobalDependencyInjectionDisabled;
 
 		public override void DisplayGUI(string searchContext)
 		{

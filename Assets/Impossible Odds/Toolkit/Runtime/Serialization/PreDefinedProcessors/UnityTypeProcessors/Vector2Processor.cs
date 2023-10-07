@@ -1,26 +1,26 @@
-﻿namespace ImpossibleOdds.Serialization.Processors
-{
-	using System;
-	using System.Collections;
-	using UnityEngine;
+﻿using System;
+using System.Collections;
+using UnityEngine;
 
+namespace ImpossibleOdds.Serialization.Processors
+{
 	public class Vector2SequenceProcessor : UnityPrimitiveSequenceProcessor<Vector2>
 	{
 		private const int Size = 2;
 
-		public Vector2SequenceProcessor(IIndexSerializationDefinition definition)
-		: base(definition)
+		public Vector2SequenceProcessor(ISerializationDefinition definition, ISequenceSerializationConfiguration configuration)
+		: base(definition, configuration)
 		{ }
 
 		/// <inheritdoc />
 		public override bool CanDeserialize(Type targetType, object dataToDeserialize)
 		{
-			if (!CanDeserialize(targetType, dataToDeserialize))
+			if (!base.CanDeserialize(targetType, dataToDeserialize))
 			{
 				return false;
 			}
 
-			return (dataToDeserialize is IList list) && (list.Count == Size);
+			return (dataToDeserialize is IList { Count: Size });
 		}
 
 		protected override Vector2 Deserialize(IList sequenceData)
@@ -32,7 +32,7 @@
 
 		protected override IList Serialize(Vector2 value)
 		{
-			IList result = Definition.CreateSequenceInstance(Size);
+			IList result = Configuration.CreateSequenceInstance(Size);
 			result.Add(Serializer.Serialize(value.x, Definition));
 			result.Add(Serializer.Serialize(value.y, Definition));
 			return result;
@@ -44,13 +44,24 @@
 		private const string X = "x";
 		private const string Y = "y";
 
-		public Vector2LookupProcessor(ILookupSerializationDefinition definition)
-		: base(definition)
+		public Vector2LookupProcessor(ISerializationDefinition definition, ILookupSerializationConfiguration configuration)
+		: base(definition, configuration)
 		{ }
+
+		/// <inheritdoc />
+		public override bool CanDeserialize(Type targetType, object dataToDeserialize)
+		{
+			if (!base.CanDeserialize(targetType, dataToDeserialize))
+			{
+				return false;
+			}
+
+			return (dataToDeserialize is IDictionary lookUp) && lookUp.Contains(X) && lookUp.Contains(Y);
+		}
 
 		protected override IDictionary Serialize(Vector2 value)
 		{
-			IDictionary result = Definition.CreateLookupInstance(2);
+			IDictionary result = Configuration.CreateLookupInstance(2);
 			result.Add(Serializer.Serialize(X, Definition), Serializer.Serialize(value.x, Definition));
 			result.Add(Serializer.Serialize(Y, Definition), Serializer.Serialize(value.y, Definition));
 			return result;
@@ -66,8 +77,8 @@
 
 	public class Vector2Processor : UnityPrimitiveSwitchProcessor<Vector2SequenceProcessor, Vector2LookupProcessor, Vector2>
 	{
-		public Vector2Processor(IIndexSerializationDefinition sequenceDefinition, ILookupSerializationDefinition lookupDefinition, PrimitiveProcessingMethod preferredProcessingMethod)
-		: this(new Vector2SequenceProcessor(sequenceDefinition), new Vector2LookupProcessor(lookupDefinition), preferredProcessingMethod)
+		public Vector2Processor(ISerializationDefinition definition, ISequenceSerializationConfiguration sequenceConfiguration, ILookupSerializationConfiguration lookupConfiguration, PrimitiveProcessingMethod preferredProcessingMethod)
+		: this(new Vector2SequenceProcessor(definition, sequenceConfiguration), new Vector2LookupProcessor(definition, lookupConfiguration), preferredProcessingMethod)
 		{ }
 
 		public Vector2Processor(Vector2SequenceProcessor sequenceProcessor, Vector2LookupProcessor lookupProcessor, PrimitiveProcessingMethod preferredProcessingMethod)

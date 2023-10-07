@@ -1,37 +1,27 @@
-﻿namespace ImpossibleOdds.StateMachines
-{
-	using System;
-	using System.Collections.Concurrent;
-	using System.Collections.Generic;
-	using ImpossibleOdds.Runnables;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 
+namespace ImpossibleOdds.StateMachines
+{
 	public class StateMachine<TStateKey> : IStateMachine<TStateKey>
 	{
-		private ConcurrentDictionary<TStateKey, IState> stateMapping = new ConcurrentDictionary<TStateKey, IState>();
-		private ConcurrentDictionary<TStateKey, List<IStateTransition<TStateKey>>> transitions = new ConcurrentDictionary<TStateKey, List<IStateTransition<TStateKey>>>();
+		private readonly ConcurrentDictionary<TStateKey, IState> stateMapping = new ConcurrentDictionary<TStateKey, IState>();
+		private readonly ConcurrentDictionary<TStateKey, List<IStateTransition<TStateKey>>> transitions = new ConcurrentDictionary<TStateKey, List<IStateTransition<TStateKey>>>();
 		private TStateKey currentState;
-		private bool initialised = false;
+		private bool initialised;
 
 		public event Action<TStateKey> onStateChanged;
 		public event Action<IStateTransition<TStateKey>> onTransitionTriggered;
 
 		/// <inheritdoc />
-		public TStateKey CurrentState
-		{
-			get => currentState;
-		}
+		public TStateKey CurrentState => currentState;
 
 		/// <inheritdoc />
-		object IStateMachine.CurrentState
-		{
-			get => CurrentState;
-		}
+		object IStateMachine.CurrentState => CurrentState;
 
 		/// <inheritdoc />
-		private IState CurrentStateObj
-		{
-			get => stateMapping.TryGetValue(currentState, out IState state) ? state : null;
-		}
+		private IState CurrentStateObj => stateMapping.TryGetValue(currentState, out IState state) ? state : null;
 
 		/// <inheritdoc />
 		event Action<object> IStateMachine.onStateChanged
@@ -127,16 +117,9 @@
 			// Moving to a state always initializes the state machine.
 			initialised = true;
 
-			if (CurrentStateObj != null)
-			{
-				CurrentStateObj.Exit();
-			}
-
+			CurrentStateObj?.Exit();
 			currentState = stateKey;
-			if (CurrentStateObj != null)
-			{
-				CurrentStateObj.Enter();
-			}
+			CurrentStateObj?.Enter();
 
 			onStateChanged.InvokeIfNotNull(stateKey);
 		}
@@ -299,13 +282,15 @@
 		{
 			transition.ThrowIfNull(nameof(transition));
 
-			if (transitions.TryGetValue(transition.From, out List<IStateTransition<TStateKey>> stateTransitions))
+			if (!transitions.TryGetValue(transition.From, out List<IStateTransition<TStateKey>> stateTransitions))
 			{
-				lock (stateTransitions)
-				{
-					stateTransitions.Remove(transition);
-					transition.onTriggered -= OnTransitionTriggered;
-				}
+				return;
+			}
+
+			lock (stateTransitions)
+			{
+				stateTransitions.Remove(transition);
+				transition.onTriggered -= OnTransitionTriggered;
 			}
 		}
 
@@ -393,41 +378,49 @@
 			}
 
 			IState currentState = CurrentStateObj;
-			if (currentState != null)
+			if (currentState == null)
 			{
-				currentState.Update();
+				return;
+			}
 
-				// Check whether any transition originating from the current state is able to trigger.
-				if (transitions.TryGetValue(CurrentState, out List<IStateTransition<TStateKey>> stateTransitions))
+			currentState.Update();
+
+			// Check whether any transition originating from the current state is able to trigger.
+			if (!transitions.TryGetValue(CurrentState, out List<IStateTransition<TStateKey>> stateTransitions))
+			{
+				return;
+			}
+
+			lock (stateTransitions)
+			{
+				foreach (IStateTransition<TStateKey> transition in stateTransitions)
 				{
-					lock (stateTransitions)
+					if (!transition.CanTrigger)
 					{
-						foreach (IStateTransition<TStateKey> transition in stateTransitions)
-						{
-							if (transition.CanTrigger)
-							{
-								transition.Trigger();
-								break;
-							}
-						}
+						continue;
 					}
+
+					transition.Trigger();
+					break;
 				}
 			}
 		}
 
 		private void OnTransitionTriggered(IStateTransition transition)
 		{
-			if (transition is IStateTransition<TStateKey> typedTransition)
+			if (!(transition is IStateTransition<TStateKey> typedTransition))
 			{
-				if (currentState.Equals(typedTransition.From))
-				{
-					onTransitionTriggered.InvokeIfNotNull(typedTransition);
-					MoveToState(typedTransition.To);
-				}
-				else
-				{
-					Log.Warning("A transition between states {0} and {1} has triggered, but the state machine is not in state {0}. The state machine will not move to state {1}.", transition.From.ToString(), transition.To.ToString());
-				}
+				return;
+			}
+
+			if (currentState.Equals(typedTransition.From))
+			{
+				onTransitionTriggered.InvokeIfNotNull(typedTransition);
+				MoveToState(typedTransition.To);
+			}
+			else
+			{
+				Log.Warning("A transition between states {0} and {1} has triggered, but the state machine is not in state {0}. The state machine will not move to state {1}.", transition.From.ToString(), transition.To.ToString());
 			}
 		}
 	}

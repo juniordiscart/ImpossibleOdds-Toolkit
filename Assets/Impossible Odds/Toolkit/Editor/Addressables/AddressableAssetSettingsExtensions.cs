@@ -1,9 +1,8 @@
+using UnityEditor;
+using UnityEditor.AddressableAssets.Settings;
+
 namespace ImpossibleOdds.Editor.Addressables
 {
-	using UnityEditor;
-	using UnityEditor.AddressableAssets.Settings;
-	using ImpossibleOdds;
-
 	public static class AddressableAssetSettingsExtensions
 	{
 		/// <summary>
@@ -26,7 +25,7 @@ namespace ImpossibleOdds.Editor.Addressables
 		public static AddressableAssetGroup FindAssetGroup(this AddressableAssetSettings s, UnityEngine.Object asset)
 		{
 			AddressableAssetEntry entry = s.FindAssetEntry(asset);
-			return (entry != null) ? entry.parentGroup : null;
+			return entry?.parentGroup;
 		}
 
 		/// <summary>
@@ -41,12 +40,7 @@ namespace ImpossibleOdds.Editor.Addressables
 			asset.ThrowIfNull(nameof(asset));
 			string assetGuid = GetAssetGuid(asset);
 
-			if (string.IsNullOrWhiteSpace(assetGuid))
-			{
-				return null;
-			}
-
-			return s.FindAssetEntry(assetGuid);
+			return string.IsNullOrWhiteSpace(assetGuid) ? null : s.FindAssetEntry(assetGuid);
 		}
 
 		/// <summary>

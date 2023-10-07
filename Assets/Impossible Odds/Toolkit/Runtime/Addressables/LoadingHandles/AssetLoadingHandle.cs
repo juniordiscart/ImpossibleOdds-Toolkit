@@ -1,10 +1,11 @@
-﻿namespace ImpossibleOdds.Addressables
+﻿using System;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.ResourceLocations;
+using UnityEngine.ResourceManagement.AsyncOperations;
+
+namespace ImpossibleOdds.Addressables
 {
-	using System;
-	using UnityEngine.AddressableAssets;
-	using UnityEngine.ResourceManagement.ResourceLocations;
-	using UnityEngine.ResourceManagement.AsyncOperations;
-	using ImpossibleOdds;
+	using Addressables = UnityEngine.AddressableAssets.Addressables;
 
 	/// <summary>
 	/// Generic loading handle to load in Unity-specific objects.

@@ -1,9 +1,9 @@
-﻿namespace ImpossibleOdds.Addressables
-{
-	using UnityEngine;
-	using UnityEngine.AddressableAssets;
-	using UnityEngine.ResourceManagement.AsyncOperations;
+﻿using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
+namespace ImpossibleOdds.Addressables
+{
 	/// <summary>
 	/// A loading handle specifically for loading GameObjects.
 	/// </summary>
@@ -12,18 +12,12 @@
 		/// <summary>
 		/// The loading handle.
 		/// </summary>
-		public new AsyncOperationHandle<GameObject> LoadingHandle
-		{
-			get => loadingHandle;
-		}
+		public new AsyncOperationHandle<GameObject> LoadingHandle => loadingHandle;
 
 		/// <summary>
 		/// The loaded GameObject when the loading operation succeeds.
 		/// </summary>
-		public GameObject GameObject
-		{
-			get => IsSuccess ? loadingHandle.Result : null;
-		}
+		public GameObject GameObject => IsSuccess ? loadingHandle.Result : null;
 
 		public GameObjectLoadingHandle(string assetAddress)
 		: base(assetAddress)

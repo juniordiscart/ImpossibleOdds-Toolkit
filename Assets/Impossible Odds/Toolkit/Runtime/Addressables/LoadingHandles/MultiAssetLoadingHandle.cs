@@ -1,97 +1,55 @@
-﻿namespace ImpossibleOdds.Addressables
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.ResourceManagement.ResourceLocations;
+using System.Threading.Tasks;
+
+namespace ImpossibleOdds.Addressables
 {
-	using System;
-	using System.Collections;
-	using System.Collections.Generic;
-	using UnityEngine;
-	using UnityEngine.AddressableAssets;
-	using UnityEngine.ResourceManagement.AsyncOperations;
-	using UnityEngine.ResourceManagement.ResourceLocations;
-	using ImpossibleOdds;
-	using System.Threading.Tasks;
+	using Addressables = UnityEngine.AddressableAssets.Addressables;
 
 	public class MultiAssetLoadingHandle<TObject> : IMultiAddressablesLoadingHandle<TObject>
 	where TObject : UnityEngine.Object
 	{
 		protected AsyncOperationHandle<IList<IResourceLocation>> locationLoadingHandle;
 		protected AsyncOperationHandle<IList<TObject>> assetsLoadingHandle;
-		private bool isDisposed = false;
-		private bool isDone = false;
 
 		public event Action<IMultiAddressablesLoadingHandle<TObject>> onCompleted;
 
-		public AsyncOperationHandle<IList<IResourceLocation>> ResourceLocationLoadingHandle
-		{
-			get => locationLoadingHandle;
-		}
+		public AsyncOperationHandle<IList<IResourceLocation>> ResourceLocationLoadingHandle => locationLoadingHandle;
 
-		public AsyncOperationHandle<IList<TObject>> AssetsLoadingHandle
-		{
-			get => assetsLoadingHandle;
-		}
+		public AsyncOperationHandle<IList<TObject>> AssetsLoadingHandle => assetsLoadingHandle;
 
-		public bool IsDone
-		{
-			get => isDone;
-		}
+		public bool IsDone { get; private set; }
 
-		public float Progress
-		{
-			get => (locationLoadingHandle.IsDone && assetsLoadingHandle.IsValid()) ? assetsLoadingHandle.PercentComplete : 0f;
-		}
+		public float Progress => (locationLoadingHandle.IsDone && assetsLoadingHandle.IsValid()) ? assetsLoadingHandle.PercentComplete : 0f;
 
-		public bool IsSuccess
-		{
-			get
-			{
-				return
-					IsDone &&
-					(assetsLoadingHandle.Status == AsyncOperationStatus.Succeeded) &&
-					(locationLoadingHandle.Status == AsyncOperationStatus.Succeeded);
-			}
-		}
+		public bool IsSuccess =>
+			IsDone &&
+			(assetsLoadingHandle.Status == AsyncOperationStatus.Succeeded) &&
+			(locationLoadingHandle.Status == AsyncOperationStatus.Succeeded);
 
-		public bool IsDisposed
-		{
-			get => isDisposed;
-		}
+		public bool IsDisposed { get; private set; }
 
-		public IList<TObject> Result
-		{
-			get => assetsLoadingHandle.Result;
-		}
+		public IList<TObject> Result => assetsLoadingHandle.Result;
 
-		public Task<IList<TObject>> Task
-		{
-			get => assetsLoadingHandle.Task;
-		}
+		public Task<IList<TObject>> Task => assetsLoadingHandle.Task;
 
-		object IAddressablesLoadingHandle.Result
-		{
-			get => Result;
-		}
+		object IAddressablesLoadingHandle.Result => Result;
 
-		object IEnumerator.Current
-		{
-			get => null;
-		}
+		object IEnumerator.Current => null;
 
-		Task IAddressablesLoadingHandle.Task
-		{
-			get => assetsLoadingHandle.Task;
-		}
+		Task IAddressablesLoadingHandle.Task => assetsLoadingHandle.Task;
 
 		event Action<IAddressablesLoadingHandle> IAddressablesLoadingHandle.onCompleted
 		{
-			add { onCompleted += value; }
-			remove { onCompleted -= value; }
+			add => onCompleted += value;
+			remove => onCompleted -= value;
 		}
 
-		public MultiAssetLoadingHandle(IEnumerable keys)
-		: this(keys, Addressables.MergeMode.Union)
-		{ }
-
-		public MultiAssetLoadingHandle(IEnumerable keys, Addressables.MergeMode mergeMode)
+		public MultiAssetLoadingHandle(IEnumerable keys, Addressables.MergeMode mergeMode = Addressables.MergeMode.Union)
 		{
 			this.locationLoadingHandle = Addressables.LoadResourceLocationsAsync(keys, mergeMode, typeof(TObject));
 			locationLoadingHandle.Completed += OnLocationLoadingCompleted;
@@ -110,7 +68,7 @@
 
 		public virtual void Dispose()
 		{
-			if (isDisposed)
+			if (IsDisposed)
 			{
 				return;
 			}
@@ -125,8 +83,8 @@
 				Addressables.Release(locationLoadingHandle);
 			}
 
-			isDone = true;
-			isDisposed = true;
+			IsDone = true;
+			IsDisposed = true;
 		}
 
 		/// <inheritdoc />
@@ -157,8 +115,8 @@
 		{
 			if (locationLoadingHandle.Status != AsyncOperationStatus.Succeeded)
 			{
-				Debug.LogErrorFormat("The loading of resource locations in loadinghandle of type '{0}' did not complete successfully.", this.GetType().Name);
-				isDone = true;
+				Debug.LogErrorFormat("The loading of resource locations in loading handle of type '{0}' did not complete successfully.", this.GetType().Name);
+				IsDone = true;
 				return;
 			}
 
@@ -168,7 +126,7 @@
 
 		private void OnAssetsLoadingCompleted(AsyncOperationHandle<IList<TObject>> r)
 		{
-			isDone = true;
+			IsDone = true;
 			onCompleted.InvokeIfNotNull(this);
 		}
 

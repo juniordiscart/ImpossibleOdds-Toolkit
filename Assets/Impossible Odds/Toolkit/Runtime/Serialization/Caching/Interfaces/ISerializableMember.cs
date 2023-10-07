@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Serialization.Caching
-{
-	using System;
-	using ImpossibleOdds.ReflectionCaching;
+﻿using System;
+using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds.Serialization.Caching
+{
 	/// <summary>
 	/// Interface for caching common info of a serializable member of an object.
 	/// </summary>

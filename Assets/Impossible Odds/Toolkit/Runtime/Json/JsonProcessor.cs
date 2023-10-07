@@ -1,15 +1,15 @@
-﻿namespace ImpossibleOdds.Json
-{
-	using System;
-	using System.Collections;
-	using System.IO;
-	using System.Linq;
-	using System.Text;
-	using System.Text.RegularExpressions;
-	using System.Threading.Tasks;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Serialization.Caching;
+﻿using System;
+using System.Collections;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Serialization.Caching;
 
+namespace ImpossibleOdds.Json
+{
 	public static class JsonProcessor
 	{
 		private const int DefaultResultsCacheCapacity = 1024;
@@ -17,23 +17,28 @@
 		private const string TrueStr = "true";
 		private const string FalseStr = "false";
 
-		private readonly static JsonSerializationDefinition defaultSerializationDefinition = new JsonSerializationDefinition();
-		private readonly static Regex numericalRegex = new Regex(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$");
-		private readonly static char[] numericalSymbols = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '+', 'e', 'E', '.' };
-		private readonly static char[] floatingPointDefiningSymbols = { 'e', 'E', '.' };
-		private readonly static char[] sequenceFollowupSymbols = { ',', ']' };
-		private readonly static char[] lookupKeyOrCloseSymbols = { '"', '}' };
-		private readonly static char[] lookupNextOrCloseSymbols = { ',', '}' };
+		private static readonly JsonSerializationDefinition DefaultSerializationDefinition = new JsonSerializationDefinition();
+		private static readonly ILookupSerializationConfiguration DefaultLookupConfiguration = new JsonLookupConfiguration();
+		private static readonly ISequenceSerializationConfiguration DefaultSequenceConfiguration = new JsonSequenceConfiguration();
+		private static readonly Regex NumericalRegex = new Regex(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$");
+		private static readonly char[] NumericalSymbols = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '+', 'e', 'E', '.' };
+		private static readonly char[] FloatingPointDefiningSymbols = { 'e', 'E', '.' };
+		private static readonly char[] SequenceFollowupSymbols = { ',', ']' };
+		private static readonly char[] LookupKeyOrCloseSymbols = { '"', '}' };
+		private static readonly char[] LookupNextOrCloseSymbols = { ',', '}' };
 
 		private static SerializationState DefaultSerializationState
 		{
 			get
 			{
-				SerializationState s = new SerializationState();
-				s.escapeSlashChar = true;
-				s.compactOutput = true;
-				s.IndentationLevel = 0;
-				s.serializationDefinition = defaultSerializationDefinition;
+				SerializationState s = new SerializationState
+				{
+					escapeSlashChar = true,
+					compactOutput = true,
+					IndentationLevel = 0,
+					serializationDefinition = DefaultSerializationDefinition,
+
+				};
 				return s;
 			}
 		}
@@ -43,8 +48,8 @@
 		/// </summary>
 		public static bool ParallelProcessingEnabled
 		{
-			get => defaultSerializationDefinition.ParallelProcessingEnabled;
-			set => defaultSerializationDefinition.ParallelProcessingEnabled = value;
+			get => DefaultSerializationDefinition.ParallelProcessingEnabled;
+			set => DefaultSerializationDefinition.ParallelProcessingEnabled = value;
 		}
 
 		/// <summary>
@@ -69,10 +74,8 @@
 		public static void Serialize(object obj, StringBuilder resultStore, JsonOptions options = null)
 		{
 			resultStore.ThrowIfNull(nameof(resultStore));
-			using (StringWriter writer = new StringWriter(resultStore))
-			{
-				Serialize(obj, writer, options);
-			}
+			using StringWriter writer = new StringWriter(resultStore);
+			Serialize(obj, writer, options);
 		}
 
 		/// <summary>
@@ -104,10 +107,8 @@
 		{
 			jsonStr.ThrowIfNull(nameof(jsonStr));
 
-			using (StringReader reader = new StringReader(jsonStr))
-			{
-				return Deserialize(reader, options);
-			}
+			using StringReader reader = new StringReader(jsonStr);
+			return Deserialize(reader, options);
 		}
 
 		/// <summary>
@@ -119,12 +120,14 @@
 		{
 			jsonReader.ThrowIfNull(nameof(jsonReader));
 
-			ISerializationDefinition definition =
-				(options?.SerializationDefinition != null) ?
-				options.SerializationDefinition :
-				defaultSerializationDefinition;
-
-			return FromJson(new DeserializationState(definition, jsonReader, new StringBuilder()));
+			return FromJson(new DeserializationState()
+				{
+					definition = options?.SerializationDefinition ?? DefaultSerializationDefinition,
+					lookupConfiguration = options?.LookupSerializationConfiguration ?? DefaultLookupConfiguration,
+					sequenceConfiguration = options?.SequenceSerializationConfiguration ?? DefaultSequenceConfiguration,
+					reader = jsonReader,
+					buffer = new StringBuilder(),
+				});
 		}
 
 		/// <summary>
@@ -160,7 +163,7 @@
 			targetType.ThrowIfNull(nameof(targetType));
 			jsonStr.ThrowIfNull(nameof(jsonStr));
 
-			ISerializationDefinition sd = (options?.SerializationDefinition != null) ? options.SerializationDefinition : defaultSerializationDefinition;
+			ISerializationDefinition sd = options?.SerializationDefinition ?? DefaultSerializationDefinition;
 			return Serializer.Deserialize(targetType, Deserialize(jsonStr, options), sd);
 		}
 
@@ -175,7 +178,7 @@
 			targetType.ThrowIfNull(nameof(targetType));
 			jsonReader.ThrowIfNull(nameof(jsonReader));
 
-			ISerializationDefinition sd = (options?.SerializationDefinition != null) ? options.SerializationDefinition : defaultSerializationDefinition;
+			ISerializationDefinition sd = options?.SerializationDefinition ?? DefaultSerializationDefinition;
 			object result = Deserialize(jsonReader, options);
 			return Serializer.Deserialize(targetType, result, sd);
 		}
@@ -191,10 +194,8 @@
 			target.ThrowIfNull(nameof(target));
 			jsonStr.ThrowIfNull(nameof(jsonStr));
 
-			using (StringReader reader = new StringReader(jsonStr))
-			{
-				Deserialize(target, reader, options);
-			}
+			using StringReader reader = new StringReader(jsonStr);
+			Deserialize(target, reader, options);
 		}
 
 		/// <summary>
@@ -208,17 +209,21 @@
 			target.ThrowIfNull(nameof(target));
 			jsonReader.ThrowIfNull(nameof(jsonReader));
 
-			ISerializationDefinition sd =
-				(options?.SerializationDefinition != null) ?
-				options.SerializationDefinition :
-				defaultSerializationDefinition;
+			ISerializationDefinition definition = options?.SerializationDefinition ?? DefaultSerializationDefinition;
 
 			object result = FromJson(
-				new DeserializationState(sd, jsonReader, new StringBuilder()),
+				new DeserializationState()
+				{
+					definition = definition,
+					lookupConfiguration =  options?.LookupSerializationConfiguration ?? DefaultLookupConfiguration,
+					sequenceConfiguration = options?.SequenceSerializationConfiguration ?? DefaultSequenceConfiguration,
+					buffer = new StringBuilder(),
+					reader = jsonReader,
+				},
 				DataFilterMode.Filter,
 				SerializationUtilities.GetTypeMap(target.GetType()));
 
-			Serializer.Deserialize(target, result, sd);
+			Serializer.Deserialize(target, result, definition);
 		}
 
 		#region Async
@@ -360,50 +365,55 @@
 
 		private static void ToJson(object obj, SerializationState writer)
 		{
-			if (obj == null)
+			switch (obj)
 			{
-				writer.writer.Write(NullStr);
-			}
-			else if (obj is char)
-			{
-				writer.Write('"');
-				CleanStringToJson(new string((char)obj, 1), writer);
-				writer.Write('"');
-			}
-			else if (obj is string)
-			{
-				writer.Write('"');
-				CleanStringToJson((string)obj, writer);
-				writer.Write('"');
-			}
-			else if (obj is bool)
-			{
-				writer.Write((bool)obj ? TrueStr : FalseStr);
-			}
-			else if (obj.GetType().IsPrimitive)
-			{
-				writer.Write(((IConvertible)obj).ToString(writer.serializationDefinition.FormatProvider));
-			}
-			else if (obj is IDictionary dictionary)
-			{
-				FromLookupToJson(dictionary, writer);
-			}
-			else if (obj is IList list)
-			{
-				FromSequenceToJson(list, writer);
-			}
-			else
-			{
-				try
+				case null:
+					writer.writer.Write(NullStr);
+					break;
+				case char c:
+					writer.Write('"');
+					CleanStringToJson(new string(c, 1), writer);
+					writer.Write('"');
+					break;
+				case string s:
+					writer.Write('"');
+					CleanStringToJson(s, writer);
+					writer.Write('"');
+					break;
+				case bool b:
+					writer.Write(b ? TrueStr : FalseStr);
+					break;
+				default:
 				{
-					// If we can't directly process the object, we attempt to deconstruct it to blocks we can handle.
-					object data = Serializer.Serialize(obj, writer.serializationDefinition);
-					ToJson(data, writer);
-				}
-				catch (System.Exception e)
-				{
-					Log.Exception(e);
-					throw new JsonException("Unexpected JSON building scenario. Failed to serialize object of type {0}.\n{1} message:\n{2}", obj.GetType().Name, e.GetType().Name, e.Message);
+					if (obj.GetType().IsPrimitive)
+					{
+						writer.Write(((IConvertible)obj).ToString(writer.serializationDefinition.FormatProvider));
+					}
+					else switch (obj)
+					{
+						case IDictionary dictionary:
+							FromLookupToJson(dictionary, writer);
+							break;
+						case IList list:
+							FromSequenceToJson(list, writer);
+							break;
+						default:
+							try
+							{
+								// If we can't directly process the object, we attempt to deconstruct it to blocks we can handle.
+								object data = Serializer.Serialize(obj, writer.serializationDefinition);
+								ToJson(data, writer);
+							}
+							catch (System.Exception e)
+							{
+								Log.Exception(e);
+								throw new JsonException("Unexpected JSON building scenario. Failed to serialize object of type {0}.\n{1} message:\n{2}", obj.GetType().Name, e.GetType().Name, e.Message);
+							}
+
+							break;
+					}
+
+					break;
 				}
 			}
 		}
@@ -477,9 +487,9 @@
 		{
 			// Regex.Escape is too aggressive in removing characters.
 			// builder.Append(Regex.Escape(str));
-			for (int i = 0; i < str.Length; ++i)
+			foreach (char t in str)
 			{
-				CleanCharToJson(str[i], writer);
+				CleanCharToJson(t, writer);
 			}
 		}
 
@@ -518,7 +528,7 @@
 				default:
 					if (('\x00' <= c) && (c <= '\x1f'))
 					{
-						writer.Write(string.Format("\\u{0:D4}", ((int)c)));
+						writer.Write($"\\u{((int)c):D4}");
 					}
 					else
 					{
@@ -593,7 +603,7 @@
 							return ProcessSequence(dv);
 					}
 				default:    // Numerical, or unexpected
-					if (char.IsDigit(dv.Peek) || char.Equals(dv.Peek, '-'))
+					if (char.IsDigit(dv.Peek) || Equals(dv.Peek, '-'))
 					{
 						switch(filterMode)
 						{
@@ -613,7 +623,7 @@
 
 		private static string ReadString(DeserializationState reader)
 		{
-			if (!char.Equals(reader.Peek, '"'))
+			if (!Equals(reader.Peek, '"'))
 			{
 				throw new JsonException("Expected the '\"'-token to read a string value.");
 			}
@@ -624,7 +634,7 @@
 			do
 			{
 				// Read until the next '"' character.
-				while (!reader.IsDone && !char.Equals(reader.Peek, '"'))
+				while (!reader.IsDone && !Equals(reader.Peek, '"'))
 				{
 					reader.buffer.Append(reader.Read);
 				}
@@ -635,7 +645,7 @@
 				}
 
 				bool isEscaped = IsCharacterEscaped(reader);
-				if (isEscaped && char.Equals(reader.Peek, '"'))
+				if (isEscaped && Equals(reader.Peek, '"'))
 				{
 					reader.buffer.Append(reader.Read);
 				}
@@ -657,7 +667,7 @@
 
 		private static void SkipString(DeserializationState reader)
 		{
-			if (!char.Equals(reader.Peek, '"'))
+			if (!Equals(reader.Peek, '"'))
 			{
 				throw new JsonException("Expected the '\"'-token to read a string value.");
 			}
@@ -668,7 +678,7 @@
 			do
 			{
 				// Read until the next '"' character.
-				while (!reader.IsDone && !char.Equals(reader.Peek, '"'))
+				while (!reader.IsDone && !Equals(reader.Peek, '"'))
 				{
 					_ = reader.Read;
 				}
@@ -679,7 +689,7 @@
 				}
 
 				bool isEscaped = IsCharacterEscaped(reader);
-				if (isEscaped && char.Equals(reader.Peek, '"'))
+				if (isEscaped && Equals(reader.Peek, '"'))
 				{
 					_ = reader.Read;
 				}
@@ -693,13 +703,13 @@
 
 		private static object ReadNumber(DeserializationState reader)
 		{
-			ReadUntil(reader, numericalSymbols);
+			ReadUntil(reader, NumericalSymbols);
 			reader.buffer.Clear();
 
 			bool isFloatingPoint = false;
-			while (!reader.IsDone && IsCharacterValid(numericalSymbols, reader.Peek))
+			while (!reader.IsDone && IsCharacterValid(NumericalSymbols, reader.Peek))
 			{
-				if (IsCharacterValid(floatingPointDefiningSymbols, reader.Peek))
+				if (IsCharacterValid(FloatingPointDefiningSymbols, reader.Peek))
 				{
 					isFloatingPoint = true;
 				}
@@ -710,7 +720,7 @@
 			string numberStr = reader.buffer.ToString();
 			reader.buffer.Clear();
 
-			if (!numericalRegex.IsMatch(numberStr))
+			if (!NumericalRegex.IsMatch(numberStr))
 			{
 				throw new JsonException("The string value '{0}' does not match the JSON-defined numerical pattern.", numberStr);
 			}
@@ -729,10 +739,10 @@
 
 		private static void SkipNumber(DeserializationState reader)
 		{
-			ReadUntil(reader, numericalSymbols);
+			ReadUntil(reader, NumericalSymbols);
 			reader.buffer.Clear();
 
-			while (!reader.IsDone && IsCharacterValid(numericalSymbols, reader.Peek))
+			while (!reader.IsDone && IsCharacterValid(NumericalSymbols, reader.Peek))
 			{
 				_ = reader.Read;
 			}
@@ -740,23 +750,24 @@
 
 		private static IDictionary ProcessLookup(DeserializationState reader)
 		{
-			if (!(reader.definition is ILookupSerializationDefinition lookupDefinition))
+			if (reader.lookupConfiguration is null)
 			{
-				throw new JsonException("The JSON data contains a JSON-object, but the provided serialization definition of type {0} does not support the processing of such data structures.", reader.definition.GetType().Name);
+				throw new JsonException("The JSON data contains a JSON-object, but no lookup configuration has been provided.");
 			}
 
-			IDictionary lookup = lookupDefinition.CreateLookupInstance(0);
+			IDictionary lookup = reader.lookupConfiguration.CreateLookupInstance(0);
 
 			_ = ReadUntil(reader, '{').Read; // Skip over the '{' character.
 
 			while (!reader.IsDone)
 			{
-				ReadUntil(reader, lookupKeyOrCloseSymbols);
-				if (char.Equals(reader.Peek, '}'))
+				ReadUntil(reader, LookupKeyOrCloseSymbols);
+				if (Equals(reader.Peek, '}'))
 				{
 					break;
 				}
-				else if (!char.Equals(reader.Peek, '"'))
+
+				if (!Equals(reader.Peek, '"'))
 				{
 					throw new JsonException("Unexpected '{0}' character. Expected a string-token.", reader.Peek);
 				}
@@ -775,14 +786,14 @@
 					lookup.Add(key, value);
 				}
 
-				ReadUntil(reader, lookupNextOrCloseSymbols);
+				ReadUntil(reader, LookupNextOrCloseSymbols);
 
-				if (char.Equals(reader.Peek, ','))
+				if (Equals(reader.Peek, ','))
 				{
 					_ = reader.Read;    // Step over the ',' character.
 					ReadUntil(reader, '"');  // We expect an object key next, so advance to the '"' character.
 				}
-				else if (char.Equals(reader.Peek, '}'))
+				else if (Equals(reader.Peek, '}'))
 				{
 					break;
 				}
@@ -794,25 +805,26 @@
 
 		private static IDictionary FilterLookup(DeserializationState reader, ISerializationReflectionMap reflectionMap)
 		{
-			if (!(reader.definition is ILookupSerializationDefinition lookupDefinition))
+			if (reader.lookupConfiguration is null)
 			{
-				throw new JsonException("The JSON data contains a JSON-object, but the provided serialization definition of type {0} does not support the processing of such data structures.", reader.definition.GetType().Name);
+				throw new JsonException("The JSON data contains a JSON-object, but no lookup configuration has been provided.");
 			}
 
 			reflectionMap.ThrowIfNull(nameof(reflectionMap));
-			ISerializableMember[] members = reflectionMap.GetSerializableMembers(lookupDefinition.LookupBasedFieldAttribute);
+			ISerializableMember[] members = reflectionMap.GetUniqueSerializableMembers(reader.lookupConfiguration.MemberAttribute);
 
-			IDictionary lookup = lookupDefinition.CreateLookupInstance(0);
+			IDictionary lookup = reader.lookupConfiguration.CreateLookupInstance(0);
 			_ = ReadUntil(reader, '{').Read;    // Skip over the '{' character.
 
 			while (!reader.IsDone)
 			{
-				ReadUntil(reader, lookupKeyOrCloseSymbols);
-				if (char.Equals(reader.Peek, '}'))
+				ReadUntil(reader, LookupKeyOrCloseSymbols);
+				if (Equals(reader.Peek, '}'))
 				{
 					break;
 				}
-				else if (!char.Equals(reader.Peek, '"'))
+
+				if (!Equals(reader.Peek, '"'))
 				{
 					throw new JsonException("Unexpected '{0}' character. Expected a string-token.", reader.Peek);
 				}
@@ -835,14 +847,14 @@
 					FromJson(reader, DataFilterMode.Skip);
 				}
 
-				ReadUntil(reader, lookupNextOrCloseSymbols);
+				ReadUntil(reader, LookupNextOrCloseSymbols);
 
-				if (char.Equals(reader.Peek, ','))
+				if (Equals(reader.Peek, ','))
 				{
 					_ = reader.Read;    // Step over the ',' character.
 					ReadUntil(reader, '"');  // We expect an object key next, so advance to the '"' character.
 				}
-				else if (char.Equals(reader.Peek, '}'))
+				else if (Equals(reader.Peek, '}'))
 				{
 					break;
 				}
@@ -855,19 +867,21 @@
 			{
 				foreach(ISerializableMember member in _members)
 				{
-					if ((member.Attribute is ILookupParameter lookupParameter))
+					if ((!(member.Attribute is ILookupParameter lookupParameter)))
 					{
-						string memberKey = lookupParameter.Key as string;
+						continue;
+					}
 
-						if (memberKey.IsNullOrEmpty())
-						{
-							memberKey = member.Member.Name;
-						}
+					string memberKey = lookupParameter.Key as string;
 
-						if (string.Equals(key, memberKey))
-						{
-							return true;
-						}
+					if (memberKey.IsNullOrEmpty())
+					{
+						memberKey = member.Member.Name;
+					}
+
+					if (string.Equals(key, memberKey))
+					{
+						return true;
 					}
 				}
 
@@ -881,12 +895,13 @@
 
 			while (!reader.IsDone)
 			{
-				ReadUntil(reader, lookupKeyOrCloseSymbols);
-				if (char.Equals(reader.Peek, '}'))
+				ReadUntil(reader, LookupKeyOrCloseSymbols);
+				if (Equals(reader.Peek, '}'))
 				{
 					break;
 				}
-				else if (!char.Equals(reader.Peek, '"'))
+
+				if (!Equals(reader.Peek, '"'))
 				{
 					throw new JsonException("Unexpected '{0}' character. Expected a string-token.", reader.Peek);
 				}
@@ -895,13 +910,13 @@
 				_ = ReadUntil(reader, ':').Read; // Step over the ':' character.
 				FromJson(reader, DataFilterMode.Skip); // Read and skip the value.
 
-				ReadUntil(reader, lookupNextOrCloseSymbols);
-				if (char.Equals(reader.Peek, ','))
+				ReadUntil(reader, LookupNextOrCloseSymbols);
+				if (Equals(reader.Peek, ','))
 				{
 					_ = reader.Read;    // Step over the ',' character.
 					ReadUntil(reader, '"');  // We expect an object key next, so advance to the '"' character.
 				}
-				else if (char.Equals(reader.Peek, '}'))
+				else if (Equals(reader.Peek, '}'))
 				{
 					break;
 				}
@@ -912,34 +927,35 @@
 
 		private static IList ProcessSequence(DeserializationState reader)
 		{
-			if (!(reader.definition is IIndexSerializationDefinition sequenceDefinition))
+			if (reader.sequenceConfiguration is null)
 			{
-				throw new JsonException("The JSON data contains a JSON-array, but the provided serialization definition of type {0} does not support the processing of such data structures.", reader.definition.GetType().Name);
+				throw new JsonException("The JSON data contains a JSON-array, but no sequence configuration has been provided.");
 			}
 
-			IList sequence = sequenceDefinition.CreateSequenceInstance(0);
+			IList sequence = reader.sequenceConfiguration.CreateSequenceInstance(0);
 			_ = ReadUntil(reader, '[').Read; // Skip over the starting '[' character.
 
 			while (!reader.IsDone)
 			{
 				ReadWhitespace(reader);
-				if (char.Equals(reader.Peek, ']'))
+				if (Equals(reader.Peek, ']'))
 				{
 					break;  // End of sequence reached.
 				}
-				else if (char.Equals(reader.Peek, ','))
+
+				if (Equals(reader.Peek, ','))
 				{
 					throw new JsonException("Unexpected ',' character.");
 				}
 
 				sequence.Add(FromJson(reader));
 
-				ReadUntil(reader, sequenceFollowupSymbols);
-				if (char.Equals(reader.Peek, ','))
+				ReadUntil(reader, SequenceFollowupSymbols);
+				if (Equals(reader.Peek, ','))
 				{
 					_ = reader.Read;    // Skip the over ',' character.
 				}
-				else if (char.Equals(reader.Peek, ']'))
+				else if (Equals(reader.Peek, ']'))
 				{
 					break;  // End of sequence reached.
 				}
@@ -951,28 +967,29 @@
 
 		private static IList FilterSequence(DeserializationState reader, ISerializationReflectionMap reflectionMap)
 		{
-			if (!(reader.definition is IIndexSerializationDefinition sequenceDefinition))
+			if (reader.sequenceConfiguration is null)
 			{
-				throw new JsonException("The JSON data contains a JSON-array, but the provided serialization definition of type {0} does not support the processing of such data structures.", reader.definition.GetType().Name);
+				throw new JsonException("The JSON data contains a JSON-array, but no sequence configuration has been provided.");
 			}
 
 			reflectionMap.ThrowIfNull(nameof(reflectionMap));
 
-			IList sequence = sequenceDefinition.CreateSequenceInstance(0);
+			IList sequence = reader.sequenceConfiguration.CreateSequenceInstance(0);
 			_ = ReadUntil(reader, '[').Read; // Skip over the starting '[' character.
 
-			ISerializableMember[] members = reflectionMap.GetSerializableMembers(sequenceDefinition.IndexBasedFieldAttribute);
-			int maxIndex = members.Where(m => m.Attribute is IIndexParameter).Max(m => (m.Attribute as IIndexParameter).Index);
+			ISerializableMember[] members = reflectionMap.GetUniqueSerializableMembers(reader.sequenceConfiguration.MemberAttribute);
+			int maxIndex = members.Where(m => m.Attribute is ISequenceParameter).Max(m => ((ISequenceParameter)m.Attribute).Index);
 
 			int currentIndex = 0;
 			while (!reader.IsDone)
 			{
 				ReadWhitespace(reader);
-				if (char.Equals(reader.Peek, ']'))
+				if (Equals(reader.Peek, ']'))
 				{
 					break;  // End of sequence reached.
 				}
-				else if (char.Equals(reader.Peek, ','))
+
+				if (Equals(reader.Peek, ','))
 				{
 					throw new JsonException("Unexpected ',' character.");
 				}
@@ -986,13 +1003,13 @@
 					FromJson(reader, DataFilterMode.Skip);
 				}
 
-				ReadUntil(reader, sequenceFollowupSymbols);
+				ReadUntil(reader, SequenceFollowupSymbols);
 
-				if (char.Equals(reader.Peek, ','))
+				if (Equals(reader.Peek, ','))
 				{
 					_ = reader.Read;    // Skip the over ',' character.
 				}
-				else if (char.Equals(reader.Peek, ']'))
+				else if (Equals(reader.Peek, ']'))
 				{
 					break;  // End of sequence reached.
 				}
@@ -1011,23 +1028,24 @@
 			while (!reader.IsDone)
 			{
 				ReadWhitespace(reader);
-				if (char.Equals(reader.Peek, ']'))
+				if (Equals(reader.Peek, ']'))
 				{
 					break;  // End of sequence reached.
 				}
-				else if (char.Equals(reader.Peek, ','))
+
+				if (Equals(reader.Peek, ','))
 				{
 					throw new JsonException("Unexpected ',' character.");
 				}
 
 				FromJson(reader, DataFilterMode.Skip);
-				ReadUntil(reader, sequenceFollowupSymbols);
+				ReadUntil(reader, SequenceFollowupSymbols);
 
-				if (char.Equals(reader.Peek, ','))
+				if (Equals(reader.Peek, ','))
 				{
 					_ = reader.Read;    // Skip the over ',' character.
 				}
-				else if (char.Equals(reader.Peek, ']'))
+				else if (Equals(reader.Peek, ']'))
 				{
 					break;  // End of sequence reached.
 				}
@@ -1091,7 +1109,7 @@
 			int escapeCount = 0;
 			for (int i = (reader.buffer.Length - 1); i >= 0; --i)
 			{
-				if (char.Equals(reader.buffer[i], '\\'))
+				if (Equals(reader.buffer[i], '\\'))
 				{
 					escapeCount++;
 				}

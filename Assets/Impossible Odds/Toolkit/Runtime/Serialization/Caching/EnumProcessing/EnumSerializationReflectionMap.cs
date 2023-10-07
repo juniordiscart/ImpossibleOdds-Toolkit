@@ -1,23 +1,17 @@
-﻿namespace ImpossibleOdds.Serialization.Caching
-{
-	using System;
-	using System.Collections.Concurrent;
-	using System.Linq;
-	using System.Reflection;
-	using ImpossibleOdds;
-	using ImpossibleOdds.ReflectionCaching;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds.Serialization.Caching
+{
 	internal class EnumSerializationReflectionMap : IReflectionMap
 	{
-		private static readonly string[] EnumFlagSplit = new string[] { ", " };
+		private static readonly string[] EnumFlagSplit = { ", " };
 
-		private readonly Type enumType;
-		private readonly bool isFlag;
-		private readonly Enum[] values;
-		private readonly string[] names;
-
-		private ConcurrentDictionary<Type, Attribute[]> typeDefinedAttributes = new ConcurrentDictionary<Type, Attribute[]>();
-		private ConcurrentDictionary<Type, CachedEnumEntry[]> enumSerializableValues = new ConcurrentDictionary<Type, CachedEnumEntry[]>();
+		private readonly ConcurrentDictionary<Type, Attribute[]> typeDefinedAttributes = new ConcurrentDictionary<Type, Attribute[]>();
+		private readonly ConcurrentDictionary<Type, CachedEnumEntry[]> enumSerializableValues = new ConcurrentDictionary<Type, CachedEnumEntry[]>();
 
 		public EnumSerializationReflectionMap(Type type)
 		{
@@ -28,47 +22,35 @@
 				throw new ReflectionCachingException("The provided type {0} is not an enum.", type.Name);
 			}
 
-			this.enumType = type;
-			this.isFlag = Attribute.IsDefined(type, typeof(FlagsAttribute), false);
-			values = Enum.GetValues(type).Cast<Enum>().ToArray();
-			names = Enum.GetNames(type);
+			Type = type;
+			IsFlag = Attribute.IsDefined(type, typeof(FlagsAttribute), false);
+			Values = Enum.GetValues(type).Cast<Enum>().ToArray();
+			Names = Enum.GetNames(type);
 		}
 
 		/// <summary>
 		/// Is this enum type decorated with the System.Flags attribute?
 		/// </summary>
-		public bool IsFlag
-		{
-			get => isFlag;
-		}
+		public bool IsFlag { get; }
 
 		/// <inheritdoc />
-		public Type Type
-		{
-			get => enumType;
-		}
+		public Type Type { get; }
 
 		/// <summary>
 		/// The values associated with the enum.
 		/// </summary>
-		public Enum[] Values
-		{
-			get => values;
-		}
+		public Enum[] Values { get; }
 
 		/// <summary>
 		/// The original names of each enum value.
 		/// </summary>
-		public string[] Names
-		{
-			get => names;
-		}
+		public string[] Names { get; }
 
 		public CachedEnumEntry[] GetEnumSerializationValues(IEnumAliasFeature enumAliasSupport)
 		{
 			enumAliasSupport.ThrowIfNull(nameof(enumAliasSupport));
-			enumAliasSupport.AliasValueAttributeType.ThrowIfNull(nameof(enumAliasSupport.AliasValueAttributeType));
-			return FindEnumAliases(enumAliasSupport.AliasValueAttributeType);
+			enumAliasSupport.AliasValueAttribute.ThrowIfNull(nameof(enumAliasSupport.AliasValueAttribute));
+			return FindEnumAliases(enumAliasSupport.AliasValueAttribute);
 		}
 
 		/// <summary>
@@ -77,8 +59,8 @@
 		public bool PrefersStringBasedRepresentation(IEnumAliasFeature enumAliasSupport)
 		{
 			enumAliasSupport.ThrowIfNull(nameof(enumAliasSupport));
-			enumAliasSupport.AsStringAttributeType.ThrowIfNull(nameof(enumAliasSupport.AsStringAttributeType));
-			return !FindTypeDefinedAttributes(enumAliasSupport.AsStringAttributeType).IsNullOrEmpty();
+			enumAliasSupport.AsStringAttribute.ThrowIfNull(nameof(enumAliasSupport.AsStringAttribute));
+			return !FindTypeDefinedAttributes(enumAliasSupport.AsStringAttribute).IsNullOrEmpty();
 		}
 
 		/// <summary>
@@ -86,7 +68,7 @@
 		/// </summary>
 		public bool IsValueDefined(Enum value)
 		{
-			return Array.Exists(values, (v => v.Equals(value)));
+			return Array.Exists(Values, (v => v.Equals(value)));
 		}
 
 		/// <summary>
@@ -95,57 +77,58 @@
 		public bool IsNameDefined(string name)
 		{
 			name.ThrowIfNullOrEmpty(name);
-			return Array.Exists(names, n => n.Equals(name));
+			return Array.Exists(Names, n => n.Equals(name));
 		}
 
 		public string GetStringRepresentationFor(Enum value, IEnumAliasFeature enumAliasSupport)
 		{
 			enumAliasSupport.ThrowIfNull(nameof(enumAliasSupport));
-			enumAliasSupport.AliasValueAttributeType.ThrowIfNull(nameof(enumAliasSupport.AliasValueAttributeType));
+			enumAliasSupport.AliasValueAttribute.ThrowIfNull(nameof(enumAliasSupport.AliasValueAttribute));
 
 			int resultIndex = -1;
-			CachedEnumEntry[] aliasEntries = FindEnumAliases(enumAliasSupport.AliasValueAttributeType);
-			if (values.TryFindIndex((v => v.Equals(value)), out resultIndex))
+			CachedEnumEntry[] aliasEntries = FindEnumAliases(enumAliasSupport.AliasValueAttribute);
+			if (Values.TryFindIndex((v => v.Equals(value)), out resultIndex))
 			{
 				return aliasEntries[resultIndex].StringBasedRepresentation;    // This works because the alias entries are in the same sequence as the name and value arrays.
 			}
 
-			if (IsFlag)
+			if (!IsFlag)
 			{
-				// Explode the current result.
-				string[] enumStringValues = value.ToString().Split(EnumFlagSplit, StringSplitOptions.RemoveEmptyEntries);
-
-				// Check each value name whether an alias is available.
-				for (int i = 0; i < enumStringValues.Length; ++i)
-				{
-					if (names.TryFindIndex(n => n.Equals(enumStringValues[i]), out resultIndex))
-					{
-						enumStringValues[i] = aliasEntries[resultIndex].StringBasedRepresentation;
-					}
-				}
-
-				// Stitch back together the result based on the replaced values.
-				return string.Join(EnumFlagSplit[0], enumStringValues);
+				return value.ToString();
 			}
 
-			return value.ToString();
+			// Explode the current result.
+			string[] enumStringValues = value.ToString().Split(EnumFlagSplit, StringSplitOptions.RemoveEmptyEntries);
+
+			// Check each value name whether an alias is available.
+			for (int i = 0; i < enumStringValues.Length; ++i)
+			{
+				if (Names.TryFindIndex(n => n.Equals(enumStringValues[i]), out resultIndex))
+				{
+					enumStringValues[i] = aliasEntries[resultIndex].StringBasedRepresentation;
+				}
+			}
+
+			// Stitch back together the result based on the replaced values.
+			return string.Join(EnumFlagSplit[0], enumStringValues);
+
 		}
 
 		public Enum GetEnumValueFor(string value, IEnumAliasFeature enumAliasSupport)
 		{
 			enumAliasSupport.ThrowIfNull(nameof(enumAliasSupport));
-			enumAliasSupport.AliasValueAttributeType.ThrowIfNull(nameof(enumAliasSupport.AliasValueAttributeType));
+			enumAliasSupport.AliasValueAttribute.ThrowIfNull(nameof(enumAliasSupport.AliasValueAttribute));
 
 			int resultIndex = -1;
-			CachedEnumEntry[] aliasEntries = FindEnumAliases(enumAliasSupport.AliasValueAttributeType);
+			CachedEnumEntry[] aliasEntries = FindEnumAliases(enumAliasSupport.AliasValueAttribute);
 			if (aliasEntries.TryFindIndex((ae => ae.alias.Equals(value)), out resultIndex))
 			{
 				return aliasEntries[resultIndex].value;
 			}
 
-			if (names.TryFindIndex((n => n.Equals(value)), out resultIndex))
+			if (Names.TryFindIndex((n => n.Equals(value)), out resultIndex))
 			{
-				return values[resultIndex];
+				return Values[resultIndex];
 			}
 
 			if (IsFlag && value.Contains(EnumFlagSplit[0]))
@@ -172,7 +155,7 @@
 				return r;
 			}
 
-			Attribute[] attributes = Attribute.GetCustomAttributes(enumType, attributeType, true);
+			Attribute[] attributes = Attribute.GetCustomAttributes(Type, attributeType, true);
 			return typeDefinedAttributes.GetOrAdd(attributeType, !attributes.IsNullOrEmpty() ? attributes : Array.Empty<Attribute>());
 		}
 
@@ -219,10 +202,7 @@
 				this.alias = alias;
 			}
 
-			public string StringBasedRepresentation
-			{
-				get => !string.IsNullOrEmpty(alias) ? alias : name;
-			}
+			public string StringBasedRepresentation => !string.IsNullOrEmpty(alias) ? alias : name;
 		}
 	}
 }

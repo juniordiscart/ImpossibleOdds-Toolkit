@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.Weblink
-{
-	using System.Collections;
+﻿using System.Collections;
 
+namespace ImpossibleOdds.Weblink
+{
 	/// <summary>
 	/// Handle that keeps track of messages in transit.
 	/// </summary>
@@ -32,7 +32,7 @@
 		}
 	}
 
-	public interface IWeblinkMessageHandle<TRequest, TResponse> : IWeblinkMessageHandle
+	public interface IWeblinkMessageHandle<out TRequest, out TResponse> : IWeblinkMessageHandle
 	where TRequest : IWeblinkRequest
 	where TResponse : IWeblinkResponse
 	{

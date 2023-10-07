@@ -1,8 +1,8 @@
+using System;
+using System.Collections.Generic;
+
 namespace ImpossibleOdds.DependencyInjection
 {
-	using System;
-	using System.Collections.Generic;
-
 	/// <summary>
 	/// Read-only access to check on and get bindings in a dependency resources container.
 	/// </summary>
@@ -11,9 +11,10 @@ namespace ImpossibleOdds.DependencyInjection
 		/// <summary>
 		/// Checks whether a binding exists for the given type.
 		/// </summary>
-		/// <typeparam name="TypeKey">The type to check the binding for.</typeparam>
+		/// <typeparam name="TTypeKey">The type to check the binding for.</typeparam>
 		/// <returns>True if the binding exists.</returns>
-		bool BindingExists<TypeKey>();
+		bool BindingExists<TTypeKey>();
+
 		/// <summary>
 		/// Checks whether a binding exists for the given type.
 		/// </summary>
@@ -24,9 +25,10 @@ namespace ImpossibleOdds.DependencyInjection
 		/// <summary>
 		/// Retrieves the binding for type the given type.
 		/// </summary>
-		/// <typeparam name="TypeKey">The type for which to get the binding.</typeparam>
+		/// <typeparam name="TTypeKey">The type for which to get the binding.</typeparam>
 		/// <returns>The binding, if it exists.</returns>
-		IDependencyBinding GetBinding<TypeKey>();
+		IDependencyBinding GetBinding<TTypeKey>();
+
 		/// <summary>
 		/// Retrieves the binding for the given type.
 		/// </summary>

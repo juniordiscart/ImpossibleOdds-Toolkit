@@ -1,10 +1,10 @@
-﻿namespace ImpossibleOdds.Addressables
-{
-	using System;
-	using System.Collections;
-	using System.Collections.Generic;
-	using System.Threading.Tasks;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
+namespace ImpossibleOdds.Addressables
+{
 	/// <summary>
 	/// A basic loading handle interface for fetching Addressable Assets.
 	/// </summary>
@@ -124,7 +124,7 @@
 		}
 
 		/// <summary>
-		/// The task for awaiting the loading asynchonously.
+		/// The task for awaiting the loading asynchronously.
 		/// </summary>
 		new Task<IList<TObject>> Task
 		{

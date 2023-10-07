@@ -1,24 +1,26 @@
-﻿namespace ImpossibleOdds.Xml
-{
-	using System;
-	using System.IO;
-	using System.Text;
-	using System.Threading.Tasks;
-	using System.Xml;
-	using System.Xml.Linq;
-	using ImpossibleOdds.Serialization;
-	using ImpossibleOdds.Serialization.Caching;
+﻿using System;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Linq;
+using ImpossibleOdds.Serialization;
+using ImpossibleOdds.Serialization.Caching;
 
+namespace ImpossibleOdds.Xml
+{
 	public static class XmlProcessor
 	{
-		private static XmlOptions defaultOptions = null;
+		private static readonly XmlOptions defaultOptions;
 
 		static XmlProcessor()
 		{
-			defaultOptions = new XmlOptions();
-			defaultOptions.SerializationDefinition = new XmlSerializationDefinition();
-			defaultOptions.Encoding = Encoding.UTF8;
-			defaultOptions.CompactOutput = true;
+			defaultOptions = new XmlOptions
+			{
+				SerializationDefinition = new XmlSerializationDefinition(),
+				Encoding = Encoding.UTF8,
+				CompactOutput = true
+			};
 		}
 
 		/// <summary>
@@ -29,11 +31,9 @@
 		/// <returns>An XML representation of the given object.</returns>
 		public static string Serialize(object obj, XmlOptions options = null)
 		{
-			using (StringWriter resultStore = new StringWriter())
-			{
-				Serialize(obj, resultStore, options);
-				return resultStore.ToString();
-			}
+			using StringWriter resultStore = new StringWriter();
+			Serialize(obj, resultStore, options);
+			return resultStore.ToString();
 		}
 
 		/// <summary>
@@ -46,10 +46,8 @@
 		{
 			resultStore.ThrowIfNull(nameof(resultStore));
 
-			using (StringWriter writer = new StringWriter(resultStore))
-			{
-				Serialize(obj, writer, options);
-			}
+			using StringWriter writer = new StringWriter(resultStore);
+			Serialize(obj, writer, options);
 		}
 
 		/// <summary>
@@ -62,22 +60,19 @@
 		{
 			writer.ThrowIfNull(nameof(writer));
 
-			if (options == null)
+			options ??= defaultOptions;
+
+			XDocument document = ToXml(obj, options.SerializationDefinition ?? defaultOptions.SerializationDefinition);
+
+			XmlWriterSettings writerSettings = new XmlWriterSettings
 			{
-				options = defaultOptions;
-			}
+				Indent = !options.CompactOutput,
+				OmitXmlDeclaration = options.HideHeader,
+				Encoding = options.Encoding
+			};
 
-			XDocument document = ToXml(obj, (options.SerializationDefinition != null) ? options.SerializationDefinition : defaultOptions.SerializationDefinition);
-
-			XmlWriterSettings writerSettings = new XmlWriterSettings();
-			writerSettings.Indent = !options.CompactOutput;
-			writerSettings.OmitXmlDeclaration = options.HideHeader;
-			writerSettings.Encoding = options.Encoding;
-
-			using (XmlWriter xmlWriter = XmlWriter.Create(writer, writerSettings))
-			{
-				document.Save(xmlWriter);
-			}
+			using XmlWriter xmlWriter = XmlWriter.Create(writer, writerSettings);
+			document.Save(xmlWriter);
 		}
 
 		/// <summary>
@@ -102,6 +97,7 @@
 		/// Deserialize the XML string to an XDocument value which can be used to further process to a custom object.
 		/// </summary>
 		/// <param name="xmlStr">XML representation of an object.</param>
+		/// <param name="options"></param>
 		/// <returns>An XDocument representing the XML values found in the XML string.</returns>
 		public static XDocument Deserialize(string xmlStr, XmlOptions options = null)
 		{
@@ -112,6 +108,7 @@
 		/// Deserialize the XML string to an XDocument value which can be used to to further process to a custom object.
 		/// </summary>
 		/// <param name="reader">A reader that will read an XML string.</param>
+		/// <param name="options"></param>
 		/// <returns>An XDocument representing the XML values found in the XML string.</returns>
 		public static XDocument Deserialize(TextReader reader, XmlOptions options = null)
 		{
@@ -127,6 +124,7 @@
 		/// Deserialize the XML string to an instance of the target type.
 		/// </summary>
 		/// <param name="xmlStr">XML representation of an object.</param>
+		/// <param name="options"></param>
 		/// <typeparam name="TTarget">Target type of the instance.</typeparam>
 		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
 		public static TTarget Deserialize<TTarget>(string xmlStr, XmlOptions options = null)
@@ -138,6 +136,7 @@
 		/// Deserialize the XML values to be read from the text reader to an instance of the target type.
 		/// </summary>
 		/// <param name="reader">Text reader from which to read the XML values.</param>
+		/// <param name="options"></param>
 		/// <typeparam name="TTarget">Target type of the instance.</typeparam>
 		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
 		public static TTarget Deserialize<TTarget>(TextReader reader, XmlOptions options = null)
@@ -150,6 +149,7 @@
 		/// Deserialize the XML values to be read from the XML document to an instance of the target type.
 		/// </summary>
 		/// <param name="document">XML document from which to read the XML values.</param>
+		/// <param name="options"></param>
 		/// <typeparam name="TTarget">Target type of the instance.</typeparam>
 		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
 		public static TTarget Deserialize<TTarget>(XDocument document, XmlOptions options = null)
@@ -163,6 +163,7 @@
 		/// </summary>
 		/// <param name="targetType">Target type of the instance.</param>
 		/// <param name="xmlStr">XML representation of an object.</param>
+		/// <param name="options"></param>
 		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
 		public static object Deserialize(Type targetType, string xmlStr, XmlOptions options = null)
 		{
@@ -174,6 +175,7 @@
 		/// </summary>
 		/// <param name="targetType">Target type of the instance.</param>
 		/// <param name="reader">Text reader from which to read the XML values.</param>
+		/// <param name="options"></param>
 		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
 		public static object Deserialize(Type targetType, TextReader reader, XmlOptions options = null)
 		{
@@ -193,13 +195,14 @@
 		/// </summary>
 		/// <param name="targetType">Target type of the instance.</param>
 		/// <param name="document">XML document from which to read the XML values.</param>
+		/// <param name="options"></param>
 		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
 		public static object Deserialize(Type targetType, XDocument document, XmlOptions options = null)
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 			document.ThrowIfNull(nameof(document));
 
-			XmlSerializationDefinition sd = (options?.SerializationDefinition != null) ? options.SerializationDefinition : defaultOptions.SerializationDefinition;
+			XmlSerializationDefinition sd = options?.SerializationDefinition ?? defaultOptions.SerializationDefinition;
 			return FromXml(targetType, document, sd);
 		}
 
@@ -208,6 +211,7 @@
 		/// </summary>
 		/// <param name="target">The target object onto which the XML values should be applied.</param>
 		/// <param name="xmlStr">XML representation of an object.</param>
+		/// <param name="options"></param>
 		public static void Deserialize(object target, string xmlStr, XmlOptions options = null)
 		{
 			Deserialize(target, new StringReader(xmlStr), options);
@@ -218,6 +222,7 @@
 		/// </summary>
 		/// <param name="target">The target object onto which the XML values should be applied.</param>
 		/// <param name="reader">Text reader from which to read the XML values.</param>
+		/// <param name="options"></param>
 		public static void Deserialize(object target, TextReader reader, XmlOptions options = null)
 		{
 			target.ThrowIfNull(nameof(target));
@@ -229,9 +234,7 @@
 				XmlReader.Create(reader);
 
 			XmlSerializationDefinition sd =
-				(options?.SerializationDefinition != null) ?
-				options.SerializationDefinition :
-				defaultOptions.SerializationDefinition;
+				options?.SerializationDefinition ?? defaultOptions.SerializationDefinition;
 
 			ISerializationReflectionMap reflectionMap = SerializationUtilities.GetTypeMap(target.GetType());
 
@@ -247,15 +250,14 @@
 		/// </summary>
 		/// <param name="target">The target object onto which the XML values should be applied.</param>
 		/// <param name="document">XML document from which to read the XML values.</param>
+		/// <param name="options"></param>
 		public static void Deserialize(object target, XDocument document, XmlOptions options = null)
 		{
 			target.ThrowIfNull(nameof(target));
 			document.ThrowIfNull(nameof(document));
 
 			XmlSerializationDefinition sd =
-				(options?.SerializationDefinition != null) ?
-				options.SerializationDefinition :
-				defaultOptions.SerializationDefinition;
+				options?.SerializationDefinition ?? defaultOptions.SerializationDefinition;
 
 			FromXml(target, document, sd);
 		}
@@ -300,6 +302,7 @@
 		/// Deserialize the XML string async to an XDocument value which can be used to further process to a custom object.
 		/// </summary>
 		/// <param name="xmlStr">XML representation of an object.</param>
+		/// <param name="options"></param>
 		/// <returns>An XDocument representing the XML values found in the XML string.</returns>
 		public static async Task<XDocument> DeserializeAsync(string xmlStr, XmlOptions options = null)
 		{
@@ -312,6 +315,7 @@
 		/// Deserialize the XML string async to an XDocument value which can be used to to further process to a custom object.
 		/// </summary>
 		/// <param name="reader">A reader that will read an XML string.</param>
+		/// <param name="options"></param>
 		/// <returns>An XDocument representing the XML values found in the XML string.</returns>
 		public static async Task<XDocument> DeserializeAsync(TextReader reader, XmlOptions options = null)
 		{
@@ -324,6 +328,7 @@
 		/// Deserialize the XML string async to an instance of the target type.
 		/// </summary>
 		/// <param name="xmlStr">XML representation of an object.</param>
+		/// <param name="options"></param>
 		/// <typeparam name="TTarget">Target type of the instance.</typeparam>
 		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
 		public static async Task<TTarget> DeserializeAsync<TTarget>(string xmlStr, XmlOptions options = null)
@@ -337,6 +342,7 @@
 		/// Deserialize the XML values async to be read from the text reader to an instance of the target type.
 		/// </summary>
 		/// <param name="reader">Text reader from which to read the XML values.</param>
+		/// <param name="options"></param>
 		/// <typeparam name="TTarget">Target type of the instance.</typeparam>
 		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
 		public static async Task<TTarget> DeserializeAsync<TTarget>(TextReader reader, XmlOptions options = null)
@@ -350,6 +356,7 @@
 		/// Deserialize the XML values async to be read from the XML document to an instance of the target type.
 		/// </summary>
 		/// <param name="document">XML document from which to read the XML values.</param>
+		/// <param name="options"></param>
 		/// <typeparam name="TTarget">Target type of the instance.</typeparam>
 		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
 		public static async Task<TTarget> DeserializeAsync<TTarget>(XDocument document, XmlOptions options = null)
@@ -364,6 +371,7 @@
 		/// </summary>
 		/// <param name="targetType">Target type of the instance.</param>
 		/// <param name="xmlStr">XML representation of an object.</param>
+		/// <param name="options"></param>
 		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
 		public static async Task<object> DeserializeAsync(Type targetType, string xmlStr, XmlOptions options = null)
 		{
@@ -377,6 +385,7 @@
 		/// </summary>
 		/// <param name="targetType">Target type of the instance.</param>
 		/// <param name="reader">Text reader from which to read the XML values.</param>
+		/// <param name="options"></param>
 		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
 		public static async Task<object> DeserializeAsync(Type targetType, TextReader reader, XmlOptions options = null)
 		{
@@ -390,6 +399,7 @@
 		/// </summary>
 		/// <param name="targetType">Target type of the instance.</param>
 		/// <param name="document">XML document from which to read the XML values.</param>
+		/// <param name="options"></param>
 		/// <returns>Instance of the target type with the values of the XML values applied.</returns>
 		public static async Task<object> DeserializeAsync(Type targetType, XDocument document, XmlOptions options = null)
 		{
@@ -403,6 +413,7 @@
 		/// </summary>
 		/// <param name="target">The target object onto which the XML values should be applied.</param>
 		/// <param name="xmlStr">XML representation of an object.</param>
+		/// <param name="options"></param>
 		public static async Task DeserializeAsync(object target, string xmlStr, XmlOptions options = null)
 		{
 			await Task.Run(() => Deserialize(target, xmlStr, options));
@@ -413,6 +424,7 @@
 		/// </summary>
 		/// <param name="target">The target object onto which the XML values should be applied.</param>
 		/// <param name="reader">Text reader from which to read the XML values.</param>
+		/// <param name="options"></param>
 		public static async Task DeserializeAsync(object target, TextReader reader, XmlOptions options = null)
 		{
 			await Task.Run(() => Deserialize(target, reader, options));
@@ -423,6 +435,7 @@
 		/// </summary>
 		/// <param name="target">The target object onto which the XML values should be applied.</param>
 		/// <param name="document">XML document from which to read the XML values.</param>
+		/// <param name="options"></param>
 		public static async Task DeserializeAsync(object target, XDocument document, XmlOptions options = null)
 		{
 			await Task.Run(() => Deserialize(target, document, options));
@@ -436,34 +449,36 @@
 			definition.ThrowIfNull(nameof(objectToSerialize));
 
 			// If it's already a document, then don't bother.
-			if ((objectToSerialize != null) && objectToSerialize is XDocument)
+			if (objectToSerialize is XDocument document)
 			{
-				return objectToSerialize as XDocument;
+				return document;
 			}
 
 			// Create the document and add a declaration, if any.
-			XDocument document = new XDocument();
+			document = new XDocument();
 
 			// Create the root element, if any.
-			if (objectToSerialize != null)
+			if (objectToSerialize == null)
 			{
-				// The type should define an XML root attribute.
-				Type objectType = objectToSerialize.GetType();
-				XmlObjectAttribute rootInfo = Attribute.GetCustomAttribute(objectType, typeof(XmlObjectAttribute), false) as XmlObjectAttribute;
-				if (rootInfo == null)
-				{
-					throw new XmlException("The object to serialize of type {0} has not defined an {1} attribute.", objectType.Name, typeof(XmlObjectAttribute).Name);
-				}
-
-				// Serialize the object and define the name of the root element.
-				XElement rootElement = Serializer.Serialize<XElement>(objectToSerialize, definition);
-				if (rootElement != null)
-				{
-					rootElement.Name = !string.IsNullOrEmpty(rootInfo.RootName) ? rootInfo.RootName : objectType.Name;
-					rootElement.Add(new XAttribute(XNamespace.Xmlns + XmlSerializationDefinition.XmlSchemaPrefix, XmlSerializationDefinition.XmlSchemaURL));
-				}
-				document.Add(rootElement);
+				return document;
 			}
+
+			// The type should define an XML root attribute.
+			Type objectType = objectToSerialize.GetType();
+			XmlObjectAttribute rootInfo = Attribute.GetCustomAttribute(objectType, typeof(XmlObjectAttribute), false) as XmlObjectAttribute;
+			if (rootInfo == null)
+			{
+				throw new XmlException("The object to serialize of type {0} has not defined an {1} attribute.", objectType.Name, nameof(XmlObjectAttribute));
+			}
+
+			// Serialize the object and define the name of the root element.
+			XElement rootElement = Serializer.Serialize<XElement>(objectToSerialize, definition);
+			if (rootElement != null)
+			{
+				rootElement.Name = !string.IsNullOrEmpty(rootInfo.RootName) ? rootInfo.RootName : objectType.Name;
+				rootElement.Add(new XAttribute(XNamespace.Xmlns + XmlSerializationDefinition.XmlSchemaPrefix, XmlSerializationDefinition.XmlSchemaURL));
+			}
+			document.Add(rootElement);
 
 			return document;
 		}
@@ -682,7 +697,7 @@
 				return element;
 			}
 
-			ISerializableMember[] members = reflectionMap.GetSerializableMembers(typeof(XmlElementAttribute));
+			ISerializableMember[] members = reflectionMap.GetUniqueSerializableMembers(typeof(XmlElementAttribute));
 
 			// Keep reading until encountering the end element.
 			while (reader.Read())
@@ -691,7 +706,8 @@
 				{
 					break;
 				}
-				else if ((reader.NodeType == XmlNodeType.Element) && !KeyExists<XmlElementAttribute>(members, reader.Name))
+
+				if ((reader.NodeType == XmlNodeType.Element) && !KeyExists<XmlElementAttribute>(members, reader.Name))
 				{
 					SkipNext(reader);
 				}
@@ -768,8 +784,7 @@
 
 		private static XAttribute FilterAttribute(DeserializationState reader, ISerializationReflectionMap reflectionMap)
 		{
-			ISerializableMember[] members = reflectionMap.GetSerializableMembers(typeof(XmlAttributeAttribute));
-
+			ISerializableMember[] members = reflectionMap.GetUniqueSerializableMembers(typeof(XmlAttributeAttribute));
 			return KeyExists<XmlAttributeAttribute>(members, reader.Name) ? ReadAttribute(reader) : null;
 		}
 

@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Settings
-{
-	using System.Collections.Generic;
-	using UnityEditor;
+﻿using System.Collections.Generic;
+using UnityEditor;
 
+namespace ImpossibleOdds.Settings
+{
 	public class JsonProjectSettings : AbstractSingleSetting
 	{
 		private const string JsonUnityTypesAsArray = "IMPOSSIBLE_ODDS_JSON_UNITY_TYPES_AS_ARRAY";
@@ -11,15 +11,9 @@
 		: base(loadedSymbols)
 		{ }
 
-		public override string SettingName
-		{
-			get => "JSON Serialization Settings";
-		}
+		public override string SettingName => "JSON Serialization Settings";
 
-		public override string Symbol
-		{
-			get => JsonUnityTypesAsArray;
-		}
+		public override string Symbol => JsonUnityTypesAsArray;
 
 		public override void DisplayGUI(string searchContext)
 		{

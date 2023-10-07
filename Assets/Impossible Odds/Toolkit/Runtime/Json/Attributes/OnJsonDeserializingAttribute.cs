@@ -1,8 +1,8 @@
-﻿namespace ImpossibleOdds.Json
-{
-	using System;
+﻿using System;
 
-	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+namespace ImpossibleOdds.Json
+{
+	[AttributeUsage(AttributeTargets.Method)]
 	public sealed class OnJsonDeserializingAttribute : Attribute
 	{ }
 }

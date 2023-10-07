@@ -1,23 +1,18 @@
-﻿namespace ImpossibleOdds
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds
+{
 	/// <summary>
 	/// Explicitly sets the script execution order to the specified value.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 	public sealed class ExecuteAtAttribute : Attribute
 	{
-		private readonly int order;
-
-		public int Order
-		{
-			get => order;
-		}
+		public int Order { get; }
 
 		public ExecuteAtAttribute(int order)
 		{
-			this.order = order;
+			Order = order;
 		}
 	}
 }

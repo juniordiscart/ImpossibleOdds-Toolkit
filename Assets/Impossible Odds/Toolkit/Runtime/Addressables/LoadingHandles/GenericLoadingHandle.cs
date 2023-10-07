@@ -1,11 +1,11 @@
-﻿namespace ImpossibleOdds.Addressables
+﻿using System;
+using System.Collections;
+using System.Threading.Tasks;
+using UnityEngine.ResourceManagement.AsyncOperations;
+
+namespace ImpossibleOdds.Addressables
 {
-	using System;
-	using System.Collections;
-	using UnityEngine.AddressableAssets;
-	using UnityEngine.ResourceManagement.AsyncOperations;
-	using ImpossibleOdds;
-	using System.Threading.Tasks;
+	using Addressables = UnityEngine.AddressableAssets.Addressables;
 
 	/// <summary>
 	/// Generic loading handle.
@@ -15,7 +15,6 @@
 	// where TObject : UnityEngine.Object
 	{
 		protected readonly AsyncOperationHandle<TObject> loadingHandle;
-		private bool disposed = false;
 
 		/// <inheritdoc />
 		public event Action<IAddressablesLoadingHandle<TObject>> onCompleted;
@@ -28,64 +27,34 @@
 		}
 
 		/// <inheritdoc />
-		public AsyncOperationHandle<TObject> LoadingHandle
-		{
-			get => loadingHandle;
-		}
+		public AsyncOperationHandle<TObject> LoadingHandle => loadingHandle;
 
 		/// <inheritdoc />
-		public float Progress
-		{
-			get => loadingHandle.IsValid() ? loadingHandle.PercentComplete : 0f;
-		}
+		public float Progress => loadingHandle.IsValid() ? loadingHandle.PercentComplete : 0f;
 
 		/// <inheritdoc />
-		public bool IsDone
-		{
-			get => loadingHandle.IsValid() && loadingHandle.IsDone;
-		}
+		public bool IsDone => loadingHandle.IsValid() && loadingHandle.IsDone;
 
 		/// <inheritdoc />
-		public bool IsSuccess
-		{
-			get => IsDone && (loadingHandle.Status == AsyncOperationStatus.Succeeded);
-		}
+		public bool IsSuccess => IsDone && (loadingHandle.Status == AsyncOperationStatus.Succeeded);
 
 		/// <inheritdoc />
-		public bool IsDisposed
-		{
-			get => disposed;
-		}
+		public bool IsDisposed { get; private set; }
 
 		/// <inheritdoc />
-		public TObject Result
-		{
-			get => loadingHandle.Result;
-		}
+		public TObject Result => loadingHandle.Result;
 
 		/// <inheritdoc />
-		public Task<TObject> Task
-		{
-			get => loadingHandle.Task;
-		}
+		public Task<TObject> Task => loadingHandle.Task;
 
 		/// <inheritdoc />
-		object IAddressablesLoadingHandle.Result
-		{
-			get => Result;
-		}
+		object IAddressablesLoadingHandle.Result => Result;
 
 		/// <inheritdoc />
-		object IEnumerator.Current
-		{
-			get => null;
-		}
+		object IEnumerator.Current => null;
 
 		/// <inheritdoc />
-		Task IAddressablesLoadingHandle.Task
-		{
-			get => Task;
-		}
+		Task IAddressablesLoadingHandle.Task => Task;
 
 		public GenericLoadingHandle(AsyncOperationHandle<TObject> loadingHandle)
 		{
@@ -103,7 +72,7 @@
 		/// </summary>
 		public virtual void Dispose()
 		{
-			if (disposed || !loadingHandle.IsValid())
+			if (IsDisposed || !loadingHandle.IsValid())
 			{
 				return;
 			}
@@ -113,7 +82,7 @@
 				Addressables.Release(loadingHandle);
 			}
 
-			disposed = true;
+			IsDisposed = true;
 		}
 
 		/// <inheritdoc />
@@ -144,7 +113,7 @@
 		private void OnCompleted(AsyncOperationHandle<TObject> handle)
 		{
 			// If the handle is already disposed off, then unload the handle immediately.
-			if (disposed)
+			if (IsDisposed)
 			{
 				Addressables.Release(loadingHandle);
 				return;

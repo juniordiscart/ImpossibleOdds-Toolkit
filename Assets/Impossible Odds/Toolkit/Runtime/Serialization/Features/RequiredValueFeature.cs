@@ -1,4 +1,5 @@
 using System;
+using ImpossibleOdds.Serialization.Caching;
 
 namespace ImpossibleOdds.Serialization
 {
@@ -11,6 +12,32 @@ namespace ImpossibleOdds.Serialization
     where TRequiredValue : Attribute, IRequiredParameter
     {
         /// <inheritdoc />
-        public Type RequiredValueAttributeType => typeof(TRequiredValue);
+        public Type RequiredValueAttribute => typeof(TRequiredValue);
+
+        /// <inheritdoc />
+        public bool IsMemberRequired(Type target, ISerializableMember member)
+        {
+            target.ThrowIfNull(nameof(target));
+            member.ThrowIfNull(nameof(member));
+
+            ISerializationReflectionMap typeMap = SerializationUtilities.GetTypeMap(target);
+            return typeMap.IsMemberRequired(member.Member, RequiredValueAttribute);
+        }
+
+        /// <inheritdoc />
+        public bool IsValueValid(Type target, ISerializableMember member, object value)
+        {
+            target.ThrowIfNull(nameof(target));
+            member.ThrowIfNull(nameof(member));
+
+            if (value != null)
+            {
+                return true;
+            }
+
+            ISerializationReflectionMap typeMap = SerializationUtilities.GetTypeMap(target);
+            return !typeMap.TryGetRequiredMemberInfo(member.Member, RequiredValueAttribute, out IRequiredSerializableMember requiredAttrInfo) ||
+                   !requiredAttrInfo.RequiredParameterAttribute.NullCheck;
+        }
     }
 }

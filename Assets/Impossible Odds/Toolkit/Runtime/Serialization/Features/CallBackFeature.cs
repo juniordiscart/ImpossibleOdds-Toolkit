@@ -17,15 +17,15 @@ namespace ImpossibleOdds.Serialization
     where TDeserialized : Attribute
     {
         /// <inheritdoc />
-        public Type OnSerializationAttributeType => typeof(TSerialization);
+        public Type OnSerializationAttribute => typeof(TSerialization);
 
         /// <inheritdoc />
-        public Type OnSerializedAttributeType => typeof(TSerialized);
+        public Type OnSerializedAttribute => typeof(TSerialized);
 
         /// <inheritdoc />
-        public Type OnDeserializationAttributeType => typeof(TDeserialization);
+        public Type OnDeserializationAttribute => typeof(TDeserialization);
 
         /// <inheritdoc />
-        public Type OnDeserializedAttributeType => typeof(TDeserialized);
+        public Type OnDeserializedAttribute => typeof(TDeserialized);
     }
 }

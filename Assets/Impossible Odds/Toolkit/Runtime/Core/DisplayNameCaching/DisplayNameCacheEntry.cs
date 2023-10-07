@@ -1,45 +1,32 @@
-﻿namespace ImpossibleOdds
-{
-	using System;
-	using System.Reflection;
-	using ImpossibleOdds.ReflectionCaching;
+﻿using System;
+using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds
+{
 	internal struct DisplayNameCacheEntry : IMemberAttributePair
 	{
 		private readonly FieldInfo field;
-		private readonly DisplayNameAttribute displayNameAttribute;
 
 		public DisplayNameCacheEntry(FieldInfo enumField, DisplayNameAttribute displayNameAttribute)
 		{
 			enumField.ThrowIfNull(nameof(enumField));
 			displayNameAttribute.ThrowIfNull(nameof(displayNameAttribute));
 
-			this.field = enumField;
-			this.displayNameAttribute = displayNameAttribute;
+			field = enumField;
+			Attribute = displayNameAttribute;
 		}
 
 		/// <inheritdoc />
-		MemberInfo IMemberAttributePair.Member
-		{
-			get => field;
-		}
+		MemberInfo IMemberAttributePair.Member => field;
 
 		/// <inheritdoc />
-		Attribute IMemberAttributePair.Attribute
-		{
-			get => displayNameAttribute;
-		}
+		Attribute IMemberAttributePair.Attribute => Attribute;
 
 		/// <inheritdoc />
-		Type IMemberAttributePair.AttributeType
-		{
-			get => displayNameAttribute.GetType();
-		}
+		Type IMemberAttributePair.AttributeType => Attribute.GetType();
 
 		/// <inheritdoc />
-		public DisplayNameAttribute Attribute
-		{
-			get => displayNameAttribute;
-		}
+		public DisplayNameAttribute Attribute { get; }
 	}
 }

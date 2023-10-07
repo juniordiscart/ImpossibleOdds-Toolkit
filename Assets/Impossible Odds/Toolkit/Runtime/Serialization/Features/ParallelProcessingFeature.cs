@@ -6,6 +6,6 @@ namespace ImpossibleOdds.Serialization
     public class ParallelProcessingFeature : IParallelProcessingFeature
     {
         /// <inheritdoc />
-        public bool Enabled { get; set; } = false;
+        public bool Enabled { get; set; }
     }
 }

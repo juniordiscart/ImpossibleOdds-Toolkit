@@ -1,9 +1,9 @@
-﻿namespace ImpossibleOdds.Serialization.Caching
-{
-	using System;
-	using System.Reflection;
-	using ImpossibleOdds.ReflectionCaching;
+﻿using System;
+using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds.Serialization.Caching
+{
 	public interface ISerializationReflectionMap : IReflectionMap
 	{
 		/// <summary>
@@ -11,7 +11,7 @@
 		/// </summary>
 		/// <param name="attributeType">Type of the type resolve parameter to look for.</param>
 		/// <returns>All type resolve parameters that match the type requirement.</returns>
-		ITypeResolveParameter[] GetTypeResolveParameters(Type attributeType);
+		ITypeResolutionParameter[] GetTypeResolveParameters(Type attributeType);
 
 		/// <summary>
 		/// Get all serializable members on this type with the defined attribute.
@@ -19,6 +19,14 @@
 		/// <param name="attributeType">The serialization attribute to filter for.</param>
 		/// <returns>All members with the serialization attribute defined.</returns>
 		ISerializableMember[] GetSerializableMembers(Type attributeType);
+
+		/// <summary>
+		/// Get all serializable members on this type with the defined attribute.
+		/// This will filter out any members with matching attributes on base classes.
+		/// </summary>
+		/// <param name="attributeType">The serialization attribute to filter for.</param>
+		/// <returns>All unique members with the serialization attribute defined.</returns>
+		ISerializableMember[] GetUniqueSerializableMembers(Type attributeType);
 
 		/// <summary>
 		/// Get all members that are considered to be required during (de)serialization.

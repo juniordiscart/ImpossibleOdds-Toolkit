@@ -1,60 +1,40 @@
-﻿namespace ImpossibleOdds.Serialization.Caching
-{
-	using System;
-	using System.Reflection;
-	using ImpossibleOdds;
-	using ImpossibleOdds.ReflectionCaching;
+﻿using System;
+using System.Reflection;
+using ImpossibleOdds.ReflectionCaching;
 
+namespace ImpossibleOdds.Serialization.Caching
+{
 	public class SerializationCallbackMethod : ISerializationCallback
 	{
-		private readonly MethodInfo callback;
-		private readonly Attribute attribute;
-		private readonly ParameterInfo[] parameters;
-
 		public SerializationCallbackMethod(MethodInfo callbackMethod, Attribute callbackAttribute)
 		{
 			callbackMethod.ThrowIfNull(nameof(callbackMethod));
 			callbackAttribute.ThrowIfNull(nameof(callbackAttribute));
 
-			this.callback = callbackMethod;
-			this.attribute = callbackAttribute;
-			this.parameters = callback.GetParameters();
+			Method = callbackMethod;
+			Attribute = callbackAttribute;
+			Parameters = Method.GetParameters();
 		}
 
 		/// <inheritdoc />
-		public MethodInfo Method
-		{
-			get => callback;
-		}
+		public MethodInfo Method { get; }
 
 		/// <inheritdoc />
-		public ParameterInfo[] Parameters
-		{
-			get => parameters;
-		}
+		public ParameterInfo[] Parameters { get; }
 
 		/// <inheritdoc />
-		MemberInfo IMemberAttributePair.Member
-		{
-			get => callback;
-		}
+		MemberInfo IMemberAttributePair.Member => Method;
 
 		/// <inheritdoc />
-		public Attribute Attribute
-		{
-			get => attribute;
-		}
+		public Attribute Attribute { get; }
 
 		/// <inheritdoc />
-		public Type AttributeType
-		{
-			get => attribute.GetType();
-		}
+		public Type AttributeType => Attribute.GetType();
 
 		/// <inheritdoc />
 		public void InvokeCallback(object source, params object[] args)
 		{
-			callback.Invoke(source, args);
+			Method.Invoke(source, args);
 		}
 	}
 }

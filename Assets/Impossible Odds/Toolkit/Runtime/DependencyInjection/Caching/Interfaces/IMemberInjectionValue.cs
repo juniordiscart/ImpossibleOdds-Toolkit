@@ -1,6 +1,7 @@
-﻿namespace ImpossibleOdds.DependencyInjection
+﻿using ImpossibleOdds.ReflectionCaching;
+
+namespace ImpossibleOdds.DependencyInjection
 {
-	using ImpossibleOdds.ReflectionCaching;
 
 	internal interface IMemberInjectionValue : IMemberAttributePair
 	{

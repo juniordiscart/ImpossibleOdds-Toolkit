@@ -1,9 +1,9 @@
-﻿namespace ImpossibleOdds.Serialization.Caching
-{
-	using System;
-	using System.Collections;
-	using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 
+namespace ImpossibleOdds.Serialization.Caching
+{
 	/// <summary>
 	/// Contains type information about the sequence data structure, i.e. whether it restricts its values to be type restricted, and whether it is an array or not.
 	/// </summary>
@@ -35,7 +35,7 @@
 			collectionType.ThrowIfNull(nameof(collectionType));
 			if (!typeof(IList).IsAssignableFrom(collectionType))
 			{
-				throw new ArgumentException(string.Format("{0} is not a {1}.", collectionType.Name, typeof(IList).Name));
+				throw new ArgumentException($"{collectionType.Name} is not a {nameof(IList)}.");
 			}
 
 			genericType = SerializationUtilities.GetGenericType(collectionType, typeof(IList<>));
@@ -51,7 +51,7 @@
 		/// <returns>True if the value can be added to the collection, false otherwise.</returns>
 		public bool PassesElementTypeRestriction(object value)
 		{
-			return isTypeConstrained ? SerializationUtilities.PassesElementTypeRestriction(value, elementType) : true;
+			return !isTypeConstrained || SerializationUtilities.PassesElementTypeRestriction(value, elementType);
 		}
 
 		/// <summary>
