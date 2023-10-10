@@ -89,7 +89,7 @@ namespace ImpossibleOdds.Serialization.Caching
 			CachedEnumEntry[] aliasEntries = FindEnumAliases(enumAliasSupport.AliasValueAttribute);
 			if (Values.TryFindIndex((v => v.Equals(value)), out resultIndex))
 			{
-				return aliasEntries[resultIndex].StringBasedRepresentation;    // This works because the alias entries are in the same sequence as the name and value arrays.
+				return aliasEntries[resultIndex].StringBasedRepresentation; // This works because the alias entries are in the same sequence as the name and value arrays.
 			}
 
 			if (!IsFlag)
@@ -111,7 +111,6 @@ namespace ImpossibleOdds.Serialization.Caching
 
 			// Stitch back together the result based on the replaced values.
 			return string.Join(EnumFlagSplit[0], enumStringValues);
-
 		}
 
 		public Enum GetEnumValueFor(string value, IEnumAliasFeature enumAliasSupport)
@@ -131,21 +130,23 @@ namespace ImpossibleOdds.Serialization.Caching
 				return Values[resultIndex];
 			}
 
-			if (IsFlag && value.Contains(EnumFlagSplit[0]))
+			// If the enum does not contain flags, then just try and parse the string value.
+			if (!IsFlag || !value.Contains(EnumFlagSplit[0]))
 			{
-				string[] splitValues = value.Split(EnumFlagSplit, StringSplitOptions.RemoveEmptyEntries);
-				for (int i = 0; i < splitValues.Length; ++i)
-				{
-					if (aliasEntries.TryFindIndex((ae => ae.alias.Equals(splitValues[i])), out resultIndex))
-					{
-						splitValues[i] = aliasEntries[resultIndex].name;
-					}
-				}
-
-				value = string.Join(EnumFlagSplit[0], splitValues);
+				return Enum.Parse(Type, value) as Enum;
 			}
 
-			return Enum.Parse(Type, value) as Enum;
+			// Replace aliases with their original string counterparts so that it can be properly parsed.
+			string[] splitValues = value.Split(EnumFlagSplit, StringSplitOptions.RemoveEmptyEntries);
+			for (int i = 0; i < splitValues.Length; ++i)
+			{
+				if (aliasEntries.TryFindIndex((ae => ae.alias.Equals(splitValues[i])), out resultIndex))
+				{
+					splitValues[i] = aliasEntries[resultIndex].name;
+				}
+			}
+
+			return Enum.Parse(Type, string.Join(EnumFlagSplit[0], splitValues)) as Enum;
 		}
 
 		private Attribute[] FindTypeDefinedAttributes(Type attributeType)
@@ -173,7 +174,7 @@ namespace ImpossibleOdds.Serialization.Caching
 				Enum value = Values[i];
 				string name = Names[i];
 				string alias = string.Empty;
-				FieldInfo field = Type.GetField(name);  // Field can be retrieved based on the name of the value.
+				FieldInfo field = Type.GetField(name); // Field can be retrieved based on the name of the value.
 				Attribute attr = Attribute.GetCustomAttribute(field, attributeType);
 
 				// If a custom alias is defined, then pick up that one as the name.

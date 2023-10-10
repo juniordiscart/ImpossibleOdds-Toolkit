@@ -334,7 +334,26 @@ namespace ImpossibleOdds
 			return false;
 		}
 
+		/// <summary>
+		/// Tries to find the index of the element that matches.
+		/// </summary>
+		/// <returns>True if an element is present that matches, false otherwise.</returns>
+		public static bool TryFindIndex(this Array l, object match, out int index)
+		{
+			l.ThrowIfNull(nameof(l));
+			for (int i = 0; i < l.Length; i++)
+			{
+				if (Equals(l.GetValue(i), match))
+				{
+					index = i;
+					return true;
+				}
+			}
 
+			index = -1;
+			return false;
+		}
+		
 		/// <summary>
 		/// Tries to find the item that matches search query.
 		/// </summary>
@@ -358,7 +377,7 @@ namespace ImpossibleOdds
 			result = default;
 			return false;
 		}
-
+		
 		/// <summary>
 		/// Checks whether the collection is null or empty.
 		/// </summary>

@@ -74,16 +74,14 @@ namespace ImpossibleOdds.Serialization.Processors
 			// For booleans, we do an additional test.
 			return
 				typeof(bool) == targetType ?
-				ConvertToBoolean(dataToDeserialize) :
-				Convert.ChangeType(dataToDeserialize, targetType, Definition.FormatProvider);
+					ConvertToBoolean(dataToDeserialize) :
+					Convert.ChangeType(dataToDeserialize, targetType, Definition.FormatProvider);
 		}
 
 		/// <inheritdoc />
 		public virtual bool CanSerialize(object objectToSerialize)
 		{
-			return
-				(objectToSerialize != null) &&
-				objectToSerialize.GetType().IsPrimitive;
+			return (objectToSerialize != null) && objectToSerialize.GetType().IsPrimitive;
 		}
 
 		/// <inheritdoc />
