@@ -17,8 +17,8 @@
 		/// </summary>
 		public const MemberTypes DefaultMemberTypes = MemberTypes.Field | MemberTypes.Property | MemberTypes.Method;
 
-		private readonly static Type ObjectType = typeof(object);
-		private readonly static ConcurrentDictionary<int, ConcurrentBag<object[]>> callbackParameterPool = new ConcurrentDictionary<int, ConcurrentBag<object[]>>();
+		private static readonly Type ObjectType = typeof(object);
+		private static readonly ConcurrentDictionary<int, ConcurrentBag<object[]>> CallbackParameterPool = new ConcurrentDictionary<int, ConcurrentBag<object[]>>();
 
 		/// <summary>
 		/// Finds the attributes of the given type defined on the target type. Optionally also includes those defined on the implemented interfaces.
@@ -31,11 +31,48 @@
 		{
 			IEnumerable<Attribute> typeDefinedAttributes = Attribute.GetCustomAttributes(targetType, attributeType, true);
 
-			if (includeInterfaces)
+			if (!includeInterfaces)
 			{
-				foreach (Type iType in targetType.GetInterfaces())
+				return typeDefinedAttributes;
+			}
+			
+			foreach (Type iType in targetType.GetInterfaces())
+			{
+				typeDefinedAttributes = typeDefinedAttributes.Union(Attribute.GetCustomAttributes(iType, attributeType, true));
+			}
+
+			return typeDefinedAttributes;
+		}
+
+		/// <summary>
+		/// Finds the attributes of the given type on any sub-type of the target type.
+		/// </summary>
+		/// <param name="targetType"></param>
+		/// <param name="attributeType"></param>
+		/// <param name="includeInterfaces"></param>
+		/// <returns></returns>
+		public static IEnumerable<(Type, Attribute)> FindAllTypeDefinedAttributesInSubTypes(Type targetType, Type attributeType, bool includeInterfaces)
+		{
+			IEnumerable<Type> allSubTypes = Enumerable.Empty<Type>();
+			foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+			{
+				allSubTypes = allSubTypes.Concat(assembly.GetTypes().Where(t => t.IsSubclassOf(targetType)));
+			}
+
+			IEnumerable<(Type, Attribute)> typeDefinedAttributes = Enumerable.Empty<(Type, Attribute)>();
+
+			foreach (Type subType in allSubTypes)
+			{
+				typeDefinedAttributes = typeDefinedAttributes.Union(Attribute.GetCustomAttributes(subType, attributeType, false).Select(a => (subType, a)));
+
+				if (!includeInterfaces)
 				{
-					typeDefinedAttributes = typeDefinedAttributes.Union(Attribute.GetCustomAttributes(iType, attributeType, true));
+					continue;
+				}
+				
+				foreach (Type iType in subType.GetInterfaces())
+				{
+					typeDefinedAttributes = typeDefinedAttributes.Union(Attribute.GetCustomAttributes(iType, attributeType, true).Select(a => (iType, a)));
 				}
 			}
 
@@ -91,18 +128,16 @@
 		{
 			if (length < 0)
 			{
-				throw new ArgumentOutOfRangeException(string.Format("A set of parameters must either larger than or equal to zero. Length of value {0} given.", length));
+				throw new ArgumentOutOfRangeException($"A set of parameters must either larger than or equal to zero. Length of value {length} given.");
 			}
 
 			// Create a new list of parameters if no set is available.
-			if (callbackParameterPool.TryGetValue(length, out ConcurrentBag<object[]> bag) && bag.TryTake(out object[] parameters))
+			if (CallbackParameterPool.TryGetValue(length, out ConcurrentBag<object[]> bag) && bag.TryTake(out object[] parameters))
 			{
 				return parameters;
 			}
-			else
-			{
-				return new object[length];
-			}
+
+			return new object[length];
 		}
 
 		/// <summary>
@@ -120,7 +155,7 @@
 				parameterList[i] = null;
 			}
 
-			callbackParameterPool.GetOrAdd(parameterList.Length, (_) => new ConcurrentBag<object[]>()).Add(parameterList);
+			CallbackParameterPool.GetOrAdd(parameterList.Length, (_) => new ConcurrentBag<object[]>()).Add(parameterList);
 		}
 
 		/// <summary>

@@ -115,7 +115,9 @@
 			}
 
 			Attribute[] attributes = TypeReflectionUtilities.FindAllTypeDefinedAttributes(Type, attributeType, true).ToArray();
-			return typeDefinedAttributes.GetOrAdd(attributeType, !attributes.IsNullOrEmpty() ? attributes : Array.Empty<Attribute>());
+			return typeDefinedAttributes.GetOrAdd(attributeType, !attributes.IsNullOrEmpty() ?
+				attributes :
+				Array.Empty<Attribute>());
 		}
 
 		private ITypeResolveParameter[] FindTypeResolveParameters(Type attributeType)
@@ -125,7 +127,45 @@
 				return result;
 			}
 
-			return typeResolveParameters.GetOrAdd(attributeType, FindTypeDefinedAttributes(attributeType).Cast<ITypeResolveParameter>().ToArray());
+			Attribute[] typeDefinedAttributes = FindTypeDefinedAttributes(attributeType);
+			Attribute[] typeResolveAttributes = typeDefinedAttributes.Where(attr => !Type.IsSubclassOf(((ITypeResolveParameter)attr).Target)).ToArray();
+			List<ITypeResolveParameter> validTypeResolveParameters = new List<ITypeResolveParameter>(typeResolveAttributes.Cast<ITypeResolveParameter>());
+
+			// Find backtracking type resolve attributes defined on this type itself.
+			foreach (ITypeResolveParameter typeResolveParameter in typeDefinedAttributes.Where(attr => Type.IsSubclassOf(((ITypeResolveParameter)attr).Target)).Cast<ITypeResolveParameter>())
+			{
+				validTypeResolveParameters.Add(CreateInvertedTypeResolveParameter(typeResolveParameter, Type));
+			}
+
+			// Each of these sub-type type resolve attributes need to be checked and converted to a suitable structure to work with by the processors.
+			foreach ((Type, Attribute) subTypeResolveAttribute in TypeReflectionUtilities.FindAllTypeDefinedAttributesInSubTypes(Type, attributeType, true))
+			{
+				if (!(subTypeResolveAttribute.Item2 is ITypeResolveParameter typeResolveParameter) || !typeResolveParameter.Target.IsAssignableFrom(Type))
+				{
+					continue;
+				}
+				
+				validTypeResolveParameters.Add(CreateInvertedTypeResolveParameter(typeResolveParameter, subTypeResolveAttribute.Item1));
+			}
+
+			return typeResolveParameters.GetOrAdd(attributeType, validTypeResolveParameters.ToArray());
+
+			ITypeResolveParameter CreateInvertedTypeResolveParameter(ITypeResolveParameter original, Type declaredType)
+			{
+				switch (original)
+				{
+					case ILookupTypeResolveParameter lookupParameter:
+						return new InvertedLookupTypeResolveParameter()
+						{
+							Target = declaredType,
+							Value = lookupParameter.Value,
+							KeyOverride = lookupParameter.KeyOverride,
+							OriginalAttribute = lookupParameter
+						};
+					default:
+						throw new NotImplementedException(original.GetType().Name);
+				}
+			}
 		}
 
 		private ISerializableMember[] FindSerializableMembers(Type attributeType)
@@ -138,7 +178,7 @@
 			// Go over the fields and properties that have the desired attribute defined.
 			List<ISerializableMember> serializableMembersForAttr = new List<ISerializableMember>();
 			IEnumerable<MemberInfo> membersWithAttr = TypeReflectionUtilities.FindAllMembersWithAttribute(Type, attributeType, false, (MemberTypes.Field | MemberTypes.Property));
-			membersWithAttr = TypeReflectionUtilities.FilterBaseMethods(membersWithAttr);   // This filters out virtual/abstract properties with more concrete implementations.
+			membersWithAttr = TypeReflectionUtilities.FilterBaseMethods(membersWithAttr); // This filters out virtual/abstract properties with more concrete implementations.
 
 			foreach (MemberInfo member in membersWithAttr)
 			{
@@ -159,7 +199,9 @@
 				}
 			}
 
-			return serializableMembers.GetOrAdd(attributeType, !serializableMembersForAttr.IsNullOrEmpty() ? serializableMembersForAttr.ToArray() : Array.Empty<ISerializableMember>());
+			return serializableMembers.GetOrAdd(attributeType, !serializableMembersForAttr.IsNullOrEmpty() ?
+				serializableMembersForAttr.ToArray() :
+				Array.Empty<ISerializableMember>());
 		}
 
 		private IRequiredSerializableMember[] FindRequiredMembers(Type attributeType)
@@ -178,7 +220,9 @@
 					(a) => requiredMembersForAttr.Add(new RequiredSerializableMember(member, a)));
 			}
 
-			return requiredMembers.GetOrAdd(attributeType, !requiredMembersForAttr.IsNullOrEmpty() ? requiredMembersForAttr.ToArray() : Array.Empty<IRequiredSerializableMember>());
+			return requiredMembers.GetOrAdd(attributeType, !requiredMembersForAttr.IsNullOrEmpty() ?
+				requiredMembersForAttr.ToArray() :
+				Array.Empty<IRequiredSerializableMember>());
 		}
 
 		private ISerializationCallback[] FindSerializationCallbackMethods(Type attributeType)
@@ -201,7 +245,9 @@
 				}
 			}
 
-			return serializationCallbacks.GetOrAdd(attributeType, !serializationCallbacksForAttr.IsNullOrEmpty() ? serializationCallbacksForAttr.ToArray() : Array.Empty<ISerializationCallback>());
+			return serializationCallbacks.GetOrAdd(attributeType, !serializationCallbacksForAttr.IsNullOrEmpty() ?
+				serializationCallbacksForAttr.ToArray() :
+				Array.Empty<ISerializationCallback>());
 		}
 	}
 }

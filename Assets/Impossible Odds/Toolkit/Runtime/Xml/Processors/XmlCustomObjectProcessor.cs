@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq;
 
 namespace ImpossibleOdds.Xml.Processors
@@ -35,7 +36,7 @@ namespace ImpossibleOdds.Xml.Processors
 			}
 
 			Type sourceType = objectToSerialize.GetType();
-			if (!Attribute.IsDefined(sourceType, typeof(XmlObjectAttribute), true))
+			if (!Attribute.IsDefined(sourceType, typeof(XmlObjectAttribute)))
 			{
 				serializedResult = null;
 				return false;
@@ -121,24 +122,26 @@ namespace ImpossibleOdds.Xml.Processors
 			}
 
 			// Add the type information, if any.
-			XmlTypeAttribute typeResolveParameter = ResolveTypeForSerialization(sourceType);
-			if (typeResolveParameter != null)
+			ILookupTypeResolveParameter typeResolveParameter = ResolveTypeForSerialization(sourceType);
+			if (typeResolveParameter == null)
 			{
-				XName typeKey = (typeResolveParameter.KeyOverride != null) ? typeResolveParameter.KeyOverride : xmlDefinition.TypeResolveKey;
-				if ((element.Element(typeKey) == null) && (element.Attribute(typeKey) == null))
+				return element;
+			}
+			
+			XName typeKey = (typeResolveParameter.KeyOverride != null) ? (string)typeResolveParameter.KeyOverride : xmlDefinition.TypeResolveKey;
+			if ((element.Element(typeKey) == null) && (element.Attribute(typeKey) == null))
+			{
+				object typeValue = typeResolveParameter.Value ?? typeResolveParameter.Target.Name;
+				if (SetAsElement(typeResolveParameter))
 				{
-					object typeValue = (typeResolveParameter.Value != null) ? typeResolveParameter.Value : typeResolveParameter.Target.Name;
-					if (typeResolveParameter.SetAsElement)
-					{
-						typeValue = Serializer.Serialize(typeValue, Definition);
-						element.Add(new XElement(typeKey, typeValue));
-					}
-					else
-					{
-						typeValue = Serializer.Serialize(typeValue, XmlDefinition.AttributeSerializationDefinition);
-						typeValue = SerializationUtilities.PostProcessValue<string>(typeValue);
-						element.SetAttributeValue(typeKey, typeValue);
-					}
+					typeValue = Serializer.Serialize(typeValue, Definition);
+					element.Add(new XElement(typeKey, typeValue));
+				}
+				else
+				{
+					typeValue = Serializer.Serialize(typeValue, XmlDefinition.AttributeSerializationDefinition);
+					typeValue = SerializationUtilities.PostProcessValue<string>(typeValue);
+					element.SetAttributeValue(typeKey, typeValue);
 				}
 			}
 
@@ -389,20 +392,12 @@ namespace ImpossibleOdds.Xml.Processors
 			return !string.IsNullOrWhiteSpace(xmlAttribute.Key) ? xmlAttribute.Key : member.Name;
 		}
 
-		private XmlTypeAttribute ResolveTypeForSerialization(Type sourceType)
+		private ILookupTypeResolveParameter ResolveTypeForSerialization(Type sourceType)
 		{
 			ITypeResolveParameter[] typeResolveAttributes = SerializationUtilities.GetTypeMap(sourceType).GetTypeResolveParameters(typeof(XmlTypeAttribute));
 
 			// Find the attribute with the right target.
-			foreach (ITypeResolveParameter tr in typeResolveAttributes)
-			{
-				if (tr.Target == sourceType)
-				{
-					return tr as XmlTypeAttribute;
-				}
-			}
-
-			return null;
+			return typeResolveAttributes.FirstOrDefault(tr => tr.Target == sourceType) as ILookupTypeResolveParameter;
 		}
 
 		private Type ResolveTypeForDeserialization(Type targetType, XElement element)
@@ -411,7 +406,7 @@ namespace ImpossibleOdds.Xml.Processors
 				SerializationUtilities.GetTypeMap(targetType).
 				GetTypeResolveParameters(typeof(XmlTypeAttribute));
 
-			foreach (XmlTypeAttribute typeResolveAttr in typeResolveAttrs.Cast<XmlTypeAttribute>())
+			foreach (ILookupTypeResolveParameter typeResolveAttr in typeResolveAttrs.Cast<ILookupTypeResolveParameter>())
 			{
 				// Perform this filter as well as a way to stop the recursion.
 				if (typeResolveAttr.Target == targetType)
@@ -424,11 +419,11 @@ namespace ImpossibleOdds.Xml.Processors
 				if (typeResolveAttr.KeyOverride != null)
 				{
 					string processedKey = SerializationUtilities.PostProcessValue<string>(Serializer.Serialize(typeResolveAttr.KeyOverride, Definition));
-					resolvedTargetType = ResolveTypeForDeserialization(element, typeResolveAttr, processedKey);
+					resolvedTargetType = ResolveTypeForDeserialization(element, typeResolveAttr, processedKey, SetAsElement(typeResolveAttr));
 				}
 				else
 				{
-					resolvedTargetType = ResolveTypeForDeserialization(element, typeResolveAttr, xmlDefinition.TypeResolveKey);
+					resolvedTargetType = ResolveTypeForDeserialization(element, typeResolveAttr, xmlDefinition.TypeResolveKey, SetAsElement(typeResolveAttr));
 				}
 
 				// Recursively find a more concrete type, if any.
@@ -449,14 +444,14 @@ namespace ImpossibleOdds.Xml.Processors
 			return targetType;
 		}
 
-		private Type ResolveTypeForDeserialization(XElement element, XmlTypeAttribute typeResolveParam, XName processedKey)
+		private Type ResolveTypeForDeserialization(XElement element, ILookupTypeResolveParameter typeResolveParam, XName processedKey, bool setAsElement)
 		{
 			if (processedKey == null)
 			{
 				return null;
 			}
 
-			if (typeResolveParam.SetAsElement && element.HasElements)
+			if (setAsElement && element.HasElements)
 			{
 				XElement xmlTypeElement = element.Element(processedKey);
 				if (xmlTypeElement != null)
@@ -484,6 +479,19 @@ namespace ImpossibleOdds.Xml.Processors
 			}
 
 			return null;
+		}
+
+		private bool SetAsElement(ILookupTypeResolveParameter typeResolveParameter)
+		{
+			switch (typeResolveParameter)
+			{
+				case XmlTypeAttribute xmlTypeAttribute:
+					return xmlTypeAttribute.SetAsElement;
+				case InvertedLookupTypeResolveParameter invertedTypeParam:
+					return ((XmlTypeAttribute)(invertedTypeParam.OriginalAttribute)).SetAsElement;
+				default:
+					return false;
+			}
 		}
 	}
 }
