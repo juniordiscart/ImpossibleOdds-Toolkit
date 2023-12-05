@@ -35,22 +35,25 @@ public class TestInverseTypeResolveAttributes : MonoBehaviour
 	{
 		string serializedJson = JsonProcessor.Serialize(obj);
 		Log.Info(serializedJson);
-		A deserializedJson = JsonProcessor.Deserialize<A>(serializedJson);
-		Log.Info($"Deserialized JSON type: {deserializedJson.GetType().Name}");
+		IA deserializedJsonIA = JsonProcessor.Deserialize<IA>(serializedJson);
+		Log.Info($"Deserialized JSON type from {nameof(IA)}: {deserializedJsonIA.GetType().Name}");
+		A deserializedJsonA = JsonProcessor.Deserialize<A>(serializedJson);
+		Log.Info($"Deserialized JSON type from {nameof(A)}: {deserializedJsonA.GetType().Name}");
 
 		string serializedXml = XmlProcessor.Serialize(obj);
 		Log.Info(serializedXml);
-		A deserializedXml = XmlProcessor.Deserialize<A>(serializedXml);
-		Log.Info($"Deserialized XML type: {deserializedXml.GetType().Name}");
+		IA deserializedXmlIA = XmlProcessor.Deserialize<IA>(serializedXml);
+		Log.Info($"Deserialized XML type from {nameof(IA)}: {deserializedXmlIA.GetType().Name}");
+		A deserializedXmlA = XmlProcessor.Deserialize<A>(serializedXml);
+		Log.Info($"Deserialized XML type from {nameof(A)}: {deserializedXmlA.GetType().Name}");
 	}
-
-
+	
 	[JsonType(typeof(A)),
 	 JsonType(typeof(B)),
-	 JsonType(typeof(C), KeyOverride = "Weuk"),
+	 JsonType(typeof(C), Value = "Citrus", KeyOverride = "Weuk"),
+	 XmlType(typeof(C), Value = "Citrus", KeyOverride = "Weuk"),
 	 XmlType(typeof(A)),
-	 XmlType(typeof(B)),
-	 XmlType(typeof(C), Value = "Citrus", KeyOverride = "Weuk")]
+	 XmlType(typeof(B))]
 	public interface IA
 	{
 	}
@@ -71,15 +74,15 @@ public class TestInverseTypeResolveAttributes : MonoBehaviour
 	}
 
 	[XmlObject,
-	 JsonType(typeof(A)),
-	 XmlType(typeof(A))]
+	 JsonType(typeof(IA)),
+	 XmlType(typeof(IA))]
 	public class X : A
 	{
 	}
 
 	[XmlObject,
-	 JsonType(typeof(A)),
-	 XmlType(typeof(A), KeyOverride = "Weuk", Value = "y tho")]
+	 JsonType(typeof(IA), KeyOverride = "Weuk", Value = "y tho"),
+	 XmlType(typeof(IA), KeyOverride = "Weuk", Value = "y tho")]
 	public class Y : B
 	{
 	}

@@ -114,7 +114,7 @@
 				return r;
 			}
 
-			Attribute[] attributes = TypeReflectionUtilities.FindAllTypeDefinedAttributes(Type, attributeType, true).ToArray();
+			Attribute[] attributes = TypeReflectionUtilities.FindAllTypeDefinedAttributes(Type, attributeType, true).Select(a => a.Item2).ToArray();
 			return typeDefinedAttributes.GetOrAdd(attributeType, !attributes.IsNullOrEmpty() ?
 				attributes :
 				Array.Empty<Attribute>());
@@ -127,25 +127,36 @@
 				return result;
 			}
 
-			Attribute[] typeDefinedAttributes = FindTypeDefinedAttributes(attributeType);
-			Attribute[] typeResolveAttributes = typeDefinedAttributes.Where(attr => !Type.IsSubclassOf(((ITypeResolveParameter)attr).Target)).ToArray();
-			List<ITypeResolveParameter> validTypeResolveParameters = new List<ITypeResolveParameter>(typeResolveAttributes.Cast<ITypeResolveParameter>());
-
-			// Find backtracking type resolve attributes defined on this type itself.
-			foreach (ITypeResolveParameter typeResolveParameter in typeDefinedAttributes.Where(attr => Type.IsSubclassOf(((ITypeResolveParameter)attr).Target)).Cast<ITypeResolveParameter>())
+			List<ITypeResolveParameter> validTypeResolveParameters = new List<ITypeResolveParameter>();
+			
+			foreach ((Type, Attribute) typeDefinedAttribute in TypeReflectionUtilities.FindAllTypeDefinedAttributes(Type, attributeType, true))
 			{
-				validTypeResolveParameters.Add(CreateInvertedTypeResolveParameter(typeResolveParameter, Type));
-			}
-
-			// Each of these sub-type type resolve attributes need to be checked and converted to a suitable structure to work with by the processors.
-			foreach ((Type, Attribute) subTypeResolveAttribute in TypeReflectionUtilities.FindAllTypeDefinedAttributesInSubTypes(Type, attributeType, true))
-			{
-				if (!(subTypeResolveAttribute.Item2 is ITypeResolveParameter typeResolveParameter) || !typeResolveParameter.Target.IsAssignableFrom(Type))
+				ITypeResolveParameter typeResolveParameter = (ITypeResolveParameter)typeDefinedAttribute.Item2;
+				
+				// If the type is assignable from the type resolve target.
+				if (Type.IsAssignableFrom(typeResolveParameter.Target) || typeDefinedAttribute.Item1.IsAssignableFrom(typeResolveParameter.Target))
 				{
+					validTypeResolveParameters.Add(typeResolveParameter);
 					continue;
 				}
+
+				// If the type resolve target is assignable from the type.
+				if (typeResolveParameter.Target.IsAssignableFrom(Type))
+				{
+					validTypeResolveParameters.Add(CreateInvertedTypeResolveParameter(typeResolveParameter, typeDefinedAttribute.Item1));
+					continue;
+				}
+			}
+			
+			foreach ((Type, Attribute) subTypeResolveAttribute in TypeReflectionUtilities.FindAllTypeDefinedAttributesInSubTypes(Type, attributeType, true))
+			{
+				ITypeResolveParameter typeResolveParameter = (ITypeResolveParameter)subTypeResolveAttribute.Item2;
 				
-				validTypeResolveParameters.Add(CreateInvertedTypeResolveParameter(typeResolveParameter, subTypeResolveAttribute.Item1));
+				if (typeResolveParameter.Target.IsAssignableFrom(Type))
+				{
+					validTypeResolveParameters.Add(CreateInvertedTypeResolveParameter(typeResolveParameter, subTypeResolveAttribute.Item1));
+					continue;
+				}
 			}
 
 			return typeResolveParameters.GetOrAdd(attributeType, validTypeResolveParameters.ToArray());

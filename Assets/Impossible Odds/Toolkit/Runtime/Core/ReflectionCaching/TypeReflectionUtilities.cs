@@ -27,9 +27,20 @@
 		/// <param name="attributeType">The attribute that should be present on the members of the type.</param>
 		/// <param name="includeInterfaces">Should implemented interfaces also be searched for the attribute?</param>
 		/// <returns>The set of attributes defined on the type and its implemented interfaces.</returns>
-		public static IEnumerable<Attribute> FindAllTypeDefinedAttributes(Type targetType, Type attributeType, bool includeInterfaces)
+		public static IEnumerable<(Type, Attribute)> FindAllTypeDefinedAttributes(Type targetType, Type attributeType, bool includeInterfaces)
 		{
-			IEnumerable<Attribute> typeDefinedAttributes = Attribute.GetCustomAttributes(targetType, attributeType, true);
+			IEnumerable<(Type, Attribute)> typeDefinedAttributes = Enumerable.Empty<(Type, Attribute)>();
+
+			Type type = targetType;
+			while (type != null)
+			{
+				Type t = type;
+				typeDefinedAttributes = typeDefinedAttributes
+					.Union(Attribute.GetCustomAttributes(type, attributeType, false)
+						.Select(a => (t, a)));
+
+				type = type.BaseType;
+			}
 
 			if (!includeInterfaces)
 			{
@@ -38,7 +49,9 @@
 			
 			foreach (Type iType in targetType.GetInterfaces())
 			{
-				typeDefinedAttributes = typeDefinedAttributes.Union(Attribute.GetCustomAttributes(iType, attributeType, true));
+				typeDefinedAttributes = typeDefinedAttributes
+					.Union(Attribute.GetCustomAttributes(iType, attributeType, true)
+						.Select(a => (iType, a)));
 			}
 
 			return typeDefinedAttributes;
@@ -53,17 +66,21 @@
 		/// <returns></returns>
 		public static IEnumerable<(Type, Attribute)> FindAllTypeDefinedAttributesInSubTypes(Type targetType, Type attributeType, bool includeInterfaces)
 		{
-			IEnumerable<Type> allSubTypes = Enumerable.Empty<Type>();
+			IEnumerable<Type> allAssignableTypes = Enumerable.Empty<Type>();
 			foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
 			{
-				allSubTypes = allSubTypes.Concat(assembly.GetTypes().Where(t => t.IsSubclassOf(targetType)));
+				allAssignableTypes = allAssignableTypes
+					.Concat(assembly.GetTypes()
+						.Where(targetType.IsAssignableFrom));
 			}
 
 			IEnumerable<(Type, Attribute)> typeDefinedAttributes = Enumerable.Empty<(Type, Attribute)>();
 
-			foreach (Type subType in allSubTypes)
+			foreach (Type subType in allAssignableTypes)
 			{
-				typeDefinedAttributes = typeDefinedAttributes.Union(Attribute.GetCustomAttributes(subType, attributeType, false).Select(a => (subType, a)));
+				typeDefinedAttributes = typeDefinedAttributes
+					.Union(Attribute.GetCustomAttributes(subType, attributeType, false)
+						.Select(a => (subType, a)));
 
 				if (!includeInterfaces)
 				{
@@ -72,11 +89,13 @@
 				
 				foreach (Type iType in subType.GetInterfaces())
 				{
-					typeDefinedAttributes = typeDefinedAttributes.Union(Attribute.GetCustomAttributes(iType, attributeType, true).Select(a => (iType, a)));
+					typeDefinedAttributes = typeDefinedAttributes
+						.Union(Attribute.GetCustomAttributes(iType, attributeType, true)
+							.Select(a => (iType, a)));
 				}
 			}
 
-			return typeDefinedAttributes;
+			return typeDefinedAttributes.Except(FindAllTypeDefinedAttributes(targetType, attributeType, includeInterfaces));
 		}
 
 		/// <summary>
