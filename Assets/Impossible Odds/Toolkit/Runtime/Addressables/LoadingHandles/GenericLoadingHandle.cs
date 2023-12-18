@@ -16,6 +16,7 @@
 	{
 		protected readonly AsyncOperationHandle<TObject> loadingHandle;
 		private bool disposed = false;
+		private bool released = false;
 
 		/// <inheritdoc />
 		public event Action<IAddressablesLoadingHandle<TObject>> onCompleted;
@@ -111,6 +112,7 @@
 			if (IsDone)
 			{
 				Addressables.Release(loadingHandle);
+				released = true;
 			}
 
 			disposed = true;
@@ -144,9 +146,10 @@
 		private void OnCompleted(AsyncOperationHandle<TObject> handle)
 		{
 			// If the handle is already disposed off, then unload the handle immediately.
-			if (disposed)
+			if (disposed && !released)
 			{
 				Addressables.Release(loadingHandle);
+				released = true;
 				return;
 			}
 
