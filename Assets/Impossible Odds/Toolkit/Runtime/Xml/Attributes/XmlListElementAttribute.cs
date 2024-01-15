@@ -22,7 +22,7 @@
 		{ }
 
 		public XmlListElementAttribute(string key)
-		: base(key)
+			: base(key)
 		{ }
 	}
 }

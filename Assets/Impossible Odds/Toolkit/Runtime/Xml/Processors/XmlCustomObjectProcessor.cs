@@ -164,6 +164,10 @@ namespace ImpossibleOdds.Xml.Processors
 				{
 					xmlResult = Serialize(value, sourceMember.Member, listElementAttribute);
 				}
+				else if (sourceMember.Attribute is XmlNestedListElementAttribute nestedListElementAttribute)
+				{
+					xmlResult = Serialize(value, sourceMember.Member, nestedListElementAttribute);
+				}
 				else if (sourceMember.Attribute is XmlCDataAttribute cdataElementAttribute)
 				{
 					xmlResult = Serialize(value, sourceMember.Member, cdataElementAttribute);
@@ -223,9 +227,47 @@ namespace ImpossibleOdds.Xml.Processors
 
 				return xmlElement;
 			}
-			else
+			
+			throw new XmlException("The serialized result of member {0} of type {1} did not return a valid {2} result.", memberInfo.Name, memberInfo.DeclaringType.Name, typeof(XElement).Name);
+		}
+		
+		private XElement Serialize(object fieldValue, MemberInfo memberInfo, XmlNestedListElementAttribute listElementAttribute)
+		{
+			if (!(fieldValue is IList listValue))
 			{
-				throw new XmlException("The serialized result of member {0} of type {1} did not return a valid {2} result.", memberInfo.Name, memberInfo.DeclaringType.Name, typeof(XElement).Name);
+				throw new XmlException("The value of member {0} of type {1} is requested to be serialized as a list, but does not implement the {2} interface.", memberInfo.Name, memberInfo.DeclaringType.Name, typeof(IList).Name);
+			}
+
+			fieldValue = Serializer.Serialize(fieldValue, Definition);
+
+			if (fieldValue is XElement xmlElement)
+			{
+				xmlElement.Name = GetElementKey(listElementAttribute, memberInfo);
+				foreach (XElement childElement in xmlElement.Elements())
+				{
+					NameChildElements(childElement, listElementAttribute, 0);
+				}
+
+				return xmlElement;
+			}
+			
+			throw new XmlException("The serialized result of member {0} of type {1} did not return a valid {2} result.", memberInfo.Name, memberInfo.DeclaringType.Name, typeof(XElement).Name);
+
+			void NameChildElements(XContainer parent, XmlNestedListElementAttribute listElementAttribute, int entryNameOffset)
+			{
+				if (entryNameOffset >= listElementAttribute.NestedListEntryNames.Length)
+				{
+					return;
+				}
+				
+				foreach (XElement xElement in parent.Elements())
+				{
+					xElement.Name =
+						!listElementAttribute.NestedListEntryNames[entryNameOffset].IsNullOrWhiteSpace() ?
+						listElementAttribute.NestedListEntryNames[entryNameOffset] :
+						XmlNestedListElementAttribute.DefaultListEntryName;
+					NameChildElements(xElement, listElementAttribute, entryNameOffset + 1);
+				}
 			}
 		}
 
@@ -278,6 +320,10 @@ namespace ImpossibleOdds.Xml.Processors
 				else if (member.Attribute is XmlListElementAttribute listElementAttribute)
 				{
 					processedResult = Deserialize(source, member, listElementAttribute, typeMap);
+				}
+				else if (member.Attribute is XmlNestedListElementAttribute nestedListElementAttribute)
+				{
+					processedResult = Deserialize(source, member, nestedListElementAttribute, typeMap);
 				}
 				else if (member.Attribute is XmlCDataAttribute cdataElementAttribute)
 				{
@@ -358,6 +404,27 @@ namespace ImpossibleOdds.Xml.Processors
 			{
 				return SerializationUtilities.GetDefaultValue(memberInfo.MemberType);
 			}
+		}
+		
+		private object Deserialize(XElement source, ISerializableMember memberInfo, XmlNestedListElementAttribute listElementInfo, ISerializationReflectionMap typeMap)
+		{
+			if (!typeof(IList).IsAssignableFrom(memberInfo.MemberType))
+			{
+				throw new XmlException("Member {0} of type {1} is marked as an XML List, but does not implement any {2} interface to receive these values.", memberInfo.Member.Name, memberInfo.Member.DeclaringType.Name, typeof(IList).Name);
+			}
+
+			XElement childElement = source.Element(GetElementKey(listElementInfo, memberInfo.Member));
+			if (childElement != null)
+			{
+				return Serializer.Deserialize(memberInfo.MemberType, childElement, Definition);
+			}
+			
+			if (typeMap.IsMemberRequired(memberInfo.Member, xmlDefinition.RequiredAttributeType))
+			{
+				throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType.Name);
+			}
+			
+			return SerializationUtilities.GetDefaultValue(memberInfo.MemberType);
 		}
 
 		private object Deserialize(XElement source, ISerializableMember memberInfo, XmlCDataAttribute cdataInfo, ISerializationReflectionMap typeMap)

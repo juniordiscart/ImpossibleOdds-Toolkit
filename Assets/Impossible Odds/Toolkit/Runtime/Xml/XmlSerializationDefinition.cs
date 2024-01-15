@@ -198,6 +198,7 @@
 				new XmlColorProcessor(this, defaultProcessingMethod),
 				new XmlColor32Processor(this, defaultProcessingMethod),
 				new XmlLookupProcessor(this),
+				new XmlCustomSequenceProcessor(this, new XmlSequenceProcessor(this)),	// Put this one before the regular sequence processor, as both will identify the source object as a list.
 				new XmlSequenceProcessor(this),
 				new XmlCustomObjectProcessor(this),
 			};
