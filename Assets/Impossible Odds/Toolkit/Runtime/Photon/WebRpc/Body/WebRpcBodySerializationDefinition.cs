@@ -52,9 +52,8 @@
 		{
 			get => typeof(OnWebRpcSerializedAttribute);
 		}
-
 		/// <inheritdoc />
-		public Type OnDeserializionCallbackType
+		public Type OnDeserializationCallbackType
 		{
 			get => typeof(OnWebRpcDeserializingAttribute);
 		}
