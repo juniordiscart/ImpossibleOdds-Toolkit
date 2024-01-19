@@ -114,6 +114,8 @@
 				new DateTimeProcessor(this),
 				new VersionProcessor(this),
 				new GuidProcessor(this),
+				new IPAddressProcessor(this),
+				new IPEndPointProcessor(this),
 				new StringProcessor(this),
 				new Vector2Processor(this, this, defaultProcessingMethod),
 				new Vector2IntProcessor(this, this, defaultProcessingMethod),
