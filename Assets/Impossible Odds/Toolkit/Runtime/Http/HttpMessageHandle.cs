@@ -60,7 +60,7 @@
 				{
 					case UnityWebRequest.Result.ConnectionError:
 					case UnityWebRequest.Result.ProtocolError:
-					case UnityWebRequest.Result.DataProcessingError:
+					// case UnityWebRequest.Result.DataProcessingError:
 						return true;
 					default:
 						return false;
