@@ -32,9 +32,7 @@
 		/// <param name="reference">The asset reference.</param>
 		public AssetLoadingHandle(AssetReferenceT<T> reference)
 		: this(reference.AssetGUID)
-		{
-			base.onCompleted += OnCompleted;
-		}
+		{ }
 
 		/// <summary>
 		/// Load the object using it's resource location.
