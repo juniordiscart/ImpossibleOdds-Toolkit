@@ -1,4 +1,7 @@
-﻿namespace ImpossibleOdds.Serialization.Processors
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace ImpossibleOdds.Serialization.Processors
 {
 	using System;
 	using System.Collections;
@@ -207,24 +210,54 @@
 			// Include type information, if available.
 			if (SupportsTypeResolvement)
 			{
-				ITypeResolveParameter typeResolveAttr = ResolveTypeForSerialization(sourceType);
-				if (typeResolveAttr != null)
+				ITypeResolveParameter[] typeResolveParameters = SerializationUtilities.
+					GetTypeMap(sourceType).
+					GetTypeResolveParameters(TypeResolveDefinition.TypeResolveAttribute);
+				Dictionary<object, Type> insertedTypeInfo = new Dictionary<object, Type>(typeResolveParameters.Length);
+				
+				foreach (ILookupTypeResolveParameter typeResolutionParameter in typeResolveParameters.Cast<ILookupTypeResolveParameter>())
 				{
-					object typeKey =
-						((typeResolveAttr is ILookupTypeResolveParameter lookupTypeResolveAttr) && (lookupTypeResolveAttr.KeyOverride != null)) ?
-							lookupTypeResolveAttr.KeyOverride :
-							typeResolveSupport.TypeResolveKey;
+					if (!typeResolutionParameter.Target.IsAssignableFrom(sourceType))
+					{
+						continue;
+					}
+
+					object typeKey = typeResolutionParameter.KeyOverride ?? typeResolveSupport.TypeResolveKey;
 					typeKey = Serializer.Serialize(typeKey, definition);
 
-					// If the data already contains a value for the processed key, then the type information is assumed
-					// to be inferred from that value. Otherwise, add the processed type key as well.
-					if (!processedValues.Contains(typeKey))
+					// If the information was already present before this function added the type information,
+					// then the type information is assumed to be part of the object's serialized data already and won't be modified.
+					// If it was added by this function, then it should check that the type information of the most closely related type is used.
+					if ((!insertedTypeInfo.ContainsKey(typeKey) && processedValues.Contains(typeKey)) ||
+					    insertedTypeInfo.ContainsKey(typeKey) && !insertedTypeInfo[typeKey].IsAssignableFrom(typeResolutionParameter.Target))
 					{
-						object typeValue = typeResolveAttr.Value ?? typeResolveAttr.Target.Name;
-						typeValue = Serializer.Serialize(typeValue, definition);
-						SerializationUtilities.InsertInLookup(processedValues, collectionInfo, typeKey, typeValue);
+						continue;
 					}
+
+					object typeValue = typeResolutionParameter.Value ?? typeResolutionParameter.Target.Name;
+					typeValue = Serializer.Serialize(typeValue, definition);
+					SerializationUtilities.InsertInLookup(processedValues, collectionInfo, typeKey, typeValue);
+					insertedTypeInfo[typeKey] = typeResolutionParameter.Target;
 				}
+				
+				// ITypeResolveParameter typeResolveAttr = ResolveTypeForSerialization(sourceType);
+				// if (typeResolveAttr != null)
+				// {
+				// 	object typeKey =
+				// 		((typeResolveAttr is ILookupTypeResolveParameter lookupTypeResolveAttr) && (lookupTypeResolveAttr.KeyOverride != null)) ?
+				// 			lookupTypeResolveAttr.KeyOverride :
+				// 			typeResolveSupport.TypeResolveKey;
+				// 	typeKey = Serializer.Serialize(typeKey, definition);
+				//
+				// 	// If the data already contains a value for the processed key, then the type information is assumed
+				// 	// to be inferred from that value. Otherwise, add the processed type key as well.
+				// 	if (!processedValues.Contains(typeKey))
+				// 	{
+				// 		object typeValue = typeResolveAttr.Value ?? typeResolveAttr.Target.Name;
+				// 		typeValue = Serializer.Serialize(typeValue, definition);
+				// 		SerializationUtilities.InsertInLookup(processedValues, collectionInfo, typeKey, typeValue);
+				// 	}
+				// }
 			}
 
 			return processedValues;
