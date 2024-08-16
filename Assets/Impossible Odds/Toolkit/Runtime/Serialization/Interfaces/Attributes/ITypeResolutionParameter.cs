@@ -1,7 +1,7 @@
-﻿namespace ImpossibleOdds.Serialization
-{
-	using System;
+﻿using System;
 
+namespace ImpossibleOdds.Serialization
+{
 	/// <summary>
 	/// Base interface for type resolve interfaces.
 	/// </summary>

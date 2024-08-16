@@ -43,6 +43,8 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public override object Serialize(object objectToSerialize)
 		{
+			this.ThrowIfCantSerialize(objectToSerialize);
+			
 			if (objectToSerialize == null)
 			{
 				return null;
@@ -57,7 +59,7 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public override object Deserialize(Type targetType, object dataToDeserialize)
 		{
-			targetType.ThrowIfNull(nameof(targetType));
+			this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
 
 			Type instanceType =
 				SupportsTypeResolution ?
@@ -118,6 +120,12 @@ namespace ImpossibleOdds.Serialization.Processors
 					return false;
 			}
 		}
+		
+		/// <inheritdoc />
+		public bool CanDeserialize(object deserializationTarget, object dataToDeserialize)
+		{
+			return deserializationTarget != null && CanDeserialize(deserializationTarget.GetType(), dataToDeserialize);
+		}
 
 		private IDictionary Serialize(Type sourceType, object source)
 		{
@@ -166,7 +174,7 @@ namespace ImpossibleOdds.Serialization.Processors
 
 		private void Deserialize(object target, IDictionary source)
 		{
-			// Get all of the fields that would like to get their value filled in.
+			// Get all the fields that would like to get their value filled in.
 			Type targetType = target.GetType();
 			ISerializationReflectionMap typeMap = SerializationUtilities.GetTypeMap(targetType);
 			ISerializableMember[] targetMembers = typeMap.GetSerializableMembers(Configuration.MemberAttribute);
@@ -227,6 +235,8 @@ namespace ImpossibleOdds.Serialization.Processors
 				{
 					return result;
 				}
+				
+				Log.Error("TODO: inspect this");
 
 				// If the value is not allowed to be null, then quit.
 				if (SupportsRequiredValues && !RequiredValueFeature.IsValueValid(targetType, targetMember, result))

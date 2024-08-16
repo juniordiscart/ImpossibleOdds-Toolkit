@@ -29,10 +29,7 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public virtual object Serialize(object objectToSerialize)
 		{
-			if (!CanSerialize(objectToSerialize))
-			{
-				throw new SerializationException($"The provided data cannot be serialized by this processor of type {nameof(EnumProcessor)}.");
-			}
+			this.ThrowIfCantSerialize(objectToSerialize);
 
 			Type sourceType = objectToSerialize.GetType();
 			EnumSerializationReflectionMap typeCache = GetEnumTypeCache(sourceType);
@@ -56,10 +53,7 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
-			if (!CanDeserialize(targetType, dataToDeserialize))
-			{
-				throw new SerializationException($"The provided data cannot be deserialized by this processor of type {nameof(EnumProcessor)}.");
-			}
+			this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
 
 			// If the data is an integral numeric value, try to convert it to a valid value of the enum.
 			if (SerializationUtilities.IsNumericIntegralType(dataToDeserialize.GetType()) || (dataToDeserialize is Enum))

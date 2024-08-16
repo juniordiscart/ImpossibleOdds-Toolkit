@@ -7,20 +7,25 @@ using ImpossibleOdds.Serialization.Caching;
 namespace ImpossibleOdds.Serialization
 {
     /// <summary>
-    /// Generic index-based type resolution feature object that provides the type of the attribute used
-    /// to store type information in the data structure.
+    /// Index-based type resolution feature object that provides the type of the attribute used to store type information in the data structure.
     /// </summary>
-    /// <typeparam name="TTypeResolution">The type of the attribute to be defined atop of a class, struct or interface.</typeparam>
-    public class SequenceTypeResolutionFeature<TTypeResolution> : ISequenceTypeResolutionFeature
-        where TTypeResolution : ISequenceTypeResolutionParameter
+    public class SequenceTypeResolutionFeature : ISequenceTypeResolutionFeature
     {
-        public SequenceTypeResolutionFeature(int typeResolutionIndex)
+        public SequenceTypeResolutionFeature(Type typeOfTypeResolutionAttribute, int typeResolutionIndex)
         {
+            typeOfTypeResolutionAttribute.ThrowIfNull(nameof(typeOfTypeResolutionAttribute));
+
+            if (!typeof(ISequenceTypeResolutionParameter).IsAssignableFrom(typeOfTypeResolutionAttribute))
+            {
+                throw new ArgumentException($"{nameof(SequenceTypeResolutionFeature)} requires parameter {nameof(typeOfTypeResolutionAttribute)} to implement {nameof(ISequenceTypeResolutionParameter)}.");
+            }
+
+            TypeResolutionAttribute = typeOfTypeResolutionAttribute;
             TypeResolutionIndex = typeResolutionIndex;
         }
 
         /// <inheritdoc />
-        public Type TypeResolutionAttribute => typeof(TTypeResolution);
+        public Type TypeResolutionAttribute { get; }
 
         /// <inheritdoc />
         public int TypeResolutionIndex { get; }
@@ -33,7 +38,7 @@ namespace ImpossibleOdds.Serialization
             definition.ThrowIfNull(nameof(definition));
 
             SequenceCollectionTypeInfo sourceCollectionInfo = SerializationUtilities.GetCollectionTypeInfo(sourceData);
-            ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(targetType).GetTypeResolveParameters(TypeResolutionAttribute);
+            ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(targetType).GetTypeResolutionParameters(TypeResolutionAttribute);
 
             Type resolvedType = targetType;
             foreach (ISequenceTypeResolutionParameter typeResolutionParameter in typeResolutionParameters.Where(trp => trp is ISequenceTypeResolutionParameter).Cast<ISequenceTypeResolutionParameter>())
@@ -83,7 +88,7 @@ namespace ImpossibleOdds.Serialization
             definition.ThrowIfNull(nameof(definition));
 
             SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(serializedData);
-            ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(sourceType).GetTypeResolveParameters(TypeResolutionAttribute);
+            ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(sourceType).GetTypeResolutionParameters(TypeResolutionAttribute);
             Dictionary<int, Type> insertedTypeInfo = new Dictionary<int, Type>();
 
             foreach (ISequenceTypeResolutionParameter typeResolutionParameter in typeResolutionParameters.Where(trp => trp is ISequenceTypeResolutionParameter).Cast<ISequenceTypeResolutionParameter>())
@@ -110,5 +115,14 @@ namespace ImpossibleOdds.Serialization
                 insertedTypeInfo[index] = typeResolutionParameter.Target;
             }
         }
+    }
+
+    /// <inheritdoc />
+    public class SequenceTypeResolutionFeature<TTypeResolution> : SequenceTypeResolutionFeature
+    where TTypeResolution : ISequenceTypeResolutionParameter
+    {
+        public SequenceTypeResolutionFeature(int typeResolutionIndex)
+            : base(typeof(TTypeResolution), typeResolutionIndex)
+        { }
     }
 }

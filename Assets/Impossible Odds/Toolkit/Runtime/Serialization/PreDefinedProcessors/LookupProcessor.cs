@@ -30,6 +30,8 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public virtual object Serialize(object objectToSerialize)
 		{
+			this.ThrowIfCantSerialize(objectToSerialize);
+			
 			// Accept null values.
 			if ((objectToSerialize == null))
 			{
@@ -131,6 +133,12 @@ namespace ImpossibleOdds.Serialization.Processors
 			return
 				typeof(IDictionary).IsAssignableFrom(targetType) &&
 				((dataToDeserialize == null) || (dataToDeserialize is IDictionary));
+		}
+		
+		/// <inheritdoc />
+		public bool CanDeserialize(object deserializationTarget, object dataToDeserialize)
+		{
+			return deserializationTarget != null && CanDeserialize(deserializationTarget.GetType(), dataToDeserialize);
 		}
 	}
 }

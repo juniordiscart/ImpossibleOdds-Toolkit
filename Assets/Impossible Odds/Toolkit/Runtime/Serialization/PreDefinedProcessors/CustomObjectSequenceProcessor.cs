@@ -33,6 +33,8 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public override object Serialize(object objectToSerialize)
 		{
+			this.ThrowIfCantSerialize(objectToSerialize);
+			
 			if (objectToSerialize == null)
 			{
 				return null;
@@ -101,6 +103,12 @@ namespace ImpossibleOdds.Serialization.Processors
 			Type instanceType = ResolveTypeFromSequence(targetType, list);
 			return !RequiresMarking || Attribute.IsDefined(instanceType, Configuration.TypeMarkingAttribute);
 		}
+		
+		/// <inheritdoc />
+        public bool CanDeserialize(object deserializationTarget, object dataToDeserialize)
+        {
+            return deserializationTarget != null && CanDeserialize(deserializationTarget.GetType(), dataToDeserialize);
+        }
 
 		private IList Serialize(Type sourceType, object source)
 		{
@@ -189,7 +197,7 @@ namespace ImpossibleOdds.Serialization.Processors
 				return targetType;
 			}
 
-			ITypeResolutionParameter[] typeResolveAttrs = SerializationUtilities.GetTypeMap(targetType).GetTypeResolveParameters(TypeResolutionFeature.TypeResolutionAttribute);
+			ITypeResolutionParameter[] typeResolveAttrs = SerializationUtilities.GetTypeMap(targetType).GetTypeResolutionParameters(TypeResolutionFeature.TypeResolutionAttribute);
 			foreach (ITypeResolutionParameter typeResolveAttr in typeResolveAttrs)
 			{
 				if (!source[TypeResolutionFeature.TypeResolutionIndex].Equals(typeResolveAttr.Value))

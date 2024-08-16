@@ -8,7 +8,7 @@ namespace ImpossibleOdds.Serialization.Processors
 	public interface IDeserializationProcessor : IProcessor
 	{
 		/// <summary>
-		/// Can this processor deserialize the provided object to an instance of the target type?
+		/// Can this processor deserialize the provided data to an instance of the target type?
 		/// </summary>
 		/// <param name="targetType">The target type to deserialize the given data to.</param>
 		/// <param name="dataToDeserialize">The data to deserialize.</param>

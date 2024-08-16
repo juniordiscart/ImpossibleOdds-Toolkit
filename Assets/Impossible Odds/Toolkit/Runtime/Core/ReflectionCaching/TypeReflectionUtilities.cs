@@ -6,13 +6,13 @@ using System.Reflection;
 
 namespace ImpossibleOdds.ReflectionCaching
 {
-
 	public static class TypeReflectionUtilities
 	{
 		/// <summary>
 		/// Default: instance, public, and non-public.
 		/// </summary>
 		public const BindingFlags DefaultBindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
 		/// <summary>
 		/// Default: fields, properties and methods.
 		/// </summary>
@@ -23,21 +23,100 @@ namespace ImpossibleOdds.ReflectionCaching
 
 		/// <summary>
 		/// Finds the attributes of the given type defined on the target type. Optionally also includes those defined on the implemented interfaces.
+		/// The returned set matches each attribute to the type that has it defined.
 		/// </summary>
 		/// <param name="targetType">The type on which to search for attributes.</param>
 		/// <param name="attributeType">The attribute that should be present on the members of the type.</param>
 		/// <param name="includeInterfaces">Should implemented interfaces also be searched for the attribute?</param>
 		/// <returns>The set of attributes defined on the type and its implemented interfaces.</returns>
-		public static IEnumerable<Attribute> FindAllTypeDefinedAttributes(Type targetType, Type attributeType, bool includeInterfaces)
+		public static IEnumerable<(Type, Attribute)> FindAllTypeDefinedAttributes(Type targetType, Type attributeType, bool includeInterfaces)
 		{
-			IEnumerable<Attribute> typeDefinedAttributes = Attribute.GetCustomAttributes(targetType, attributeType, true);
+			targetType.ThrowIfNull(nameof(targetType));
+			attributeType.ThrowIfNull(nameof(attributeType));
 
+			IEnumerable<(Type, Attribute)> typeDefinedAttributes = Enumerable.Empty<(Type, Attribute)>();
+
+			Type typeIterator = targetType;
+			while (typeIterator != null)
+			{
+				Type iterator = typeIterator;
+				typeDefinedAttributes = typeDefinedAttributes.Concat(Attribute.GetCustomAttributes(targetType, attributeType, false).Select(attr => (iterator, attr)));
+				typeIterator = typeIterator.BaseType;
+			}
+
+			return
+				includeInterfaces ?
+					typeDefinedAttributes.Concat(FindAllInterfaceDefinedAttributes(targetType, attributeType)) :
+					typeDefinedAttributes;
+		}
+
+		/// <summary>
+		/// Finds all the attributes defined in interfaces implemented by the target type. 
+		/// </summary>
+		/// <param name="targetType">The target type for which to find the attributes in the implemented interfaces.</param>
+		/// <param name="attributeType">The type of the attribute to search for.</param>
+		/// <returns>A set of tuples of attributes along with the interface type that defined the attribute.</returns>
+		public static IEnumerable<(Type, Attribute)> FindAllInterfaceDefinedAttributes(Type targetType, Type attributeType)
+		{
+			targetType.ThrowIfNull(nameof(targetType));
+			attributeType.ThrowIfNull(nameof(attributeType));
+
+			IEnumerable<(Type, Attribute)> interfaceDefineAttributes = Enumerable.Empty<(Type, Attribute)>();
+			return targetType.GetInterfaces()
+				.Aggregate(interfaceDefineAttributes, (current, iType) => current.Union(Attribute.GetCustomAttributes(iType, attributeType, false)
+					.Select(a => (iType, a))));
+		}
+
+		/// <summary>
+		/// Finds the attributes of the given type defined in sub-types of the target type, excluding those on the target type itself.
+		/// The returned set matches each attribute to the type that has it defined.
+		/// </summary>
+		/// <param name="targetType">The type on which to search for attributes.</param>
+		/// <param name="attributeType">The attribute that should be present on the members of the type.</param>
+		/// <param name="includeInterfaces">Should implemented interfaces also be searched for the attribute?</param>
+		/// <returns>The set of attributes defined on sub-types of the target type and its implemented interfaces.</returns>
+		public static IEnumerable<(Type, Attribute)> FindAllTypeDefinedAttributesInSubTypes(Type targetType, Type attributeType, bool includeInterfaces)
+		{
+			targetType.ThrowIfNull(nameof(targetType));
+			attributeType.ThrowIfNull(nameof(attributeType));
+
+			// Find all types that can be assigned to the target type.
+			IEnumerable<Type> allAssignableTypes = Enumerable.Empty<Type>();
+			allAssignableTypes = AppDomain.CurrentDomain.GetAssemblies()
+				.Aggregate(allAssignableTypes, (current, assembly) => current.Concat(assembly.GetTypes()
+					.Where(t => targetType.IsAssignableFrom(t) && (t != targetType))));
+
+			Type[] baseImplementedInterfaces = null;
 			if (includeInterfaces)
 			{
-				foreach (Type iType in targetType.GetInterfaces())
+				baseImplementedInterfaces = targetType.GetInterfaces();
+
+				// If the target type itself is an interface, then add it to the set, as it is used for exclusion later on.
+				if (targetType.IsInterface)
 				{
-					typeDefinedAttributes = typeDefinedAttributes.Union(Attribute.GetCustomAttributes(iType, attributeType, true));
+					baseImplementedInterfaces = baseImplementedInterfaces.Append(targetType).ToArray();
 				}
+			}
+
+			// Go over each type and find the attributes.
+			IEnumerable<(Type, Attribute)> typeDefinedAttributes = Enumerable.Empty<(Type, Attribute)>();
+			foreach (Type subType in allAssignableTypes)
+			{
+				typeDefinedAttributes =
+					typeDefinedAttributes
+						.Union(Attribute.GetCustomAttributes(subType, attributeType, false)
+							.Select(a => (subType, a)));
+
+				if (!includeInterfaces)
+				{
+					continue;
+				}
+
+				typeDefinedAttributes =
+					subType.GetInterfaces()
+						.Except(baseImplementedInterfaces)
+						.Aggregate(typeDefinedAttributes, (current, iType) => current.Union(Attribute.GetCustomAttributes(iType, attributeType, false)
+							.Select(a => (iType, a))));
 			}
 
 			return typeDefinedAttributes;
@@ -62,25 +141,20 @@ namespace ImpossibleOdds.ReflectionCaching
 				membersWithAttribute = membersWithAttribute
 					.Union(
 						itType
-						.GetMembers(bindingFlags | BindingFlags.DeclaredOnly)   // Because we're going down the type chain anyway, we only get what is defined on this type.
-						.Where(m => memberFilter.HasMemberFlag(m.MemberType) && Attribute.IsDefined(m, attributeType, true)));
+							.GetMembers(bindingFlags | BindingFlags.DeclaredOnly) // Because we're going down the type chain anyway, we only get what is defined on this type.
+							.Where(m => memberFilter.HasMemberFlag(m.MemberType) && Attribute.IsDefined(m, attributeType, true)));
 
 				itType = itType.BaseType;
 			}
 
-			if (includeInterfaces)
+			if (!includeInterfaces)
 			{
-				foreach (Type iType in targetType.GetInterfaces())
-				{
-					membersWithAttribute = membersWithAttribute
-						.Union(
-							iType
-							.GetMembers(bindingFlags)
-							.Where(m => memberFilter.HasMemberFlag(m.MemberType) && Attribute.IsDefined(m, attributeType, true)));
-				}
+				return membersWithAttribute;
 			}
 
-			return membersWithAttribute;
+			return targetType.GetInterfaces()
+				.Aggregate(membersWithAttribute, (current, iType) => current.Union(iType.GetMembers(bindingFlags)
+					.Where(m => memberFilter.HasMemberFlag(m.MemberType) && Attribute.IsDefined(m, attributeType, true))));
 		}
 
 		/// <summary>
@@ -100,10 +174,8 @@ namespace ImpossibleOdds.ReflectionCaching
 			{
 				return parameters;
 			}
-			else
-			{
-				return new object[length];
-			}
+
+			return new object[length];
 		}
 
 		/// <summary>
@@ -134,16 +206,17 @@ namespace ImpossibleOdds.ReflectionCaching
 		{
 			HashSet<MemberInfo> duplicateMembers = new HashSet<MemberInfo>();
 
-			foreach (MemberInfo member in members)
+			IEnumerable<MemberInfo> memberInfos = members as MemberInfo[] ?? members.ToArray();
+			foreach (MemberInfo member in memberInfos)
 			{
 				switch (member.MemberType)
 				{
 					case MemberTypes.Method:
-						MethodInfo m0 = member as MethodInfo;
-						foreach (MethodInfo m1 in members.Where(m => m is MethodInfo))
+						MethodInfo m0 = (MethodInfo)member;
+						foreach (MethodInfo m1 in memberInfos.Where(m => m is MethodInfo).Cast<MethodInfo>())
 						{
 							// If the declaring type of m0 is a base of declaring type of m1, and m0 is a base definition of m1, then it is a duplicate.
-							if ((m0 == m1) || !m0.DeclaringType.IsAssignableFrom(m1.DeclaringType))
+							if ((m0.DeclaringType != null) && ((m0 == m1) || !m0.DeclaringType.IsAssignableFrom(m1.DeclaringType)))
 							{
 								continue;
 							}
@@ -153,13 +226,14 @@ namespace ImpossibleOdds.ReflectionCaching
 								duplicateMembers.Add(m0);
 							}
 						}
+
 						break;
 					case MemberTypes.Property:
-						PropertyInfo p0 = member as PropertyInfo;
-						foreach (PropertyInfo p1 in members.Where(m => m is PropertyInfo))
+						PropertyInfo p0 = (PropertyInfo)member;
+						foreach (PropertyInfo p1 in memberInfos.Where(m => m is PropertyInfo).Cast<PropertyInfo>())
 						{
 							// Same as for methods, but based on the properties' backing methods.
-							if ((p0 == p1) || !p0.DeclaringType.IsAssignableFrom(p1.DeclaringType))
+							if ((p0.DeclaringType != null) && ((p0 == p1) || !p0.DeclaringType.IsAssignableFrom(p1.DeclaringType)))
 							{
 								continue;
 							}
@@ -169,12 +243,13 @@ namespace ImpossibleOdds.ReflectionCaching
 								duplicateMembers.Add(p0);
 							}
 						}
+
 						break;
 					case MemberTypes.Event:
-						EventInfo e0 = member as EventInfo;
-						foreach (EventInfo e1 in members.Where(m => m is EventInfo))
+						EventInfo e0 = (EventInfo)member;
+						foreach (EventInfo e1 in memberInfos.Where(m => m is EventInfo).Cast<EventInfo>())
 						{
-							if ((e0 == e1) || !e0.DeclaringType.IsAssignableFrom(e1.DeclaringType))
+							if (e0.DeclaringType != null && ((e0 == e1) || !e0.DeclaringType.IsAssignableFrom(e1.DeclaringType)))
 							{
 								continue;
 							}
@@ -185,11 +260,12 @@ namespace ImpossibleOdds.ReflectionCaching
 								duplicateMembers.Add(e0);
 							}
 						}
+
 						break;
 				}
 			}
 
-			return members.Except(duplicateMembers);
+			return memberInfos.Except(duplicateMembers);
 		}
 
 		public static bool IsPropertyDuplicate(PropertyInfo p0, PropertyInfo p1)
@@ -197,31 +273,20 @@ namespace ImpossibleOdds.ReflectionCaching
 			p0.ThrowIfNull(nameof(p0));
 			p1.ThrowIfNull(nameof(p1));
 
-			bool gettersDuplicate = false;
-			if (p0.CanRead == p1.CanRead)
+			bool gettersDuplicate =
+				(p0.CanRead == p1.CanRead) ?
+					p0.GetMethod.IsVirtual && p1.GetMethod.IsVirtual && (p0.GetMethod.GetBaseDefinition() == p1.GetMethod.GetBaseDefinition()) :
+					!p0.CanRead && !p1.CanRead;
+
+			if (p0.CanWrite != p1.CanWrite)
 			{
-				if (p0.CanRead && p1.CanRead)
-				{
-					gettersDuplicate = p0.GetMethod.IsVirtual && p1.GetMethod.IsVirtual && (p0.GetMethod.GetBaseDefinition() == p1.GetMethod.GetBaseDefinition());
-				}
-				else
-				{
-					gettersDuplicate = !p0.CanRead && !p1.CanRead;
-				}
+				return false;
 			}
 
-			bool settersDuplicate = false;
-			if (p0.CanWrite == p1.CanWrite)
-			{
-				if (p0.CanWrite && p1.CanWrite)
-				{
-					settersDuplicate = p0.SetMethod.IsVirtual && p1.SetMethod.IsVirtual && (p0.SetMethod.GetBaseDefinition() == p1.SetMethod.GetBaseDefinition());
-				}
-				else
-				{
-					settersDuplicate = !p0.CanWrite && !p1.CanWrite;
-				}
-			}
+			bool settersDuplicate =
+				(p0.CanWrite && p1.CanWrite) ?
+					p0.SetMethod.IsVirtual && p1.SetMethod.IsVirtual && (p0.SetMethod.GetBaseDefinition() == p1.SetMethod.GetBaseDefinition()) :
+					!p0.CanWrite && !p1.CanWrite;
 
 			return gettersDuplicate && settersDuplicate;
 		}

@@ -25,6 +25,8 @@ namespace ImpossibleOdds.Xml.Processors
 		/// <inheritdoc />
 		public object Serialize(object objectToSerialize)
 		{
+			this.ThrowIfCantSerialize(objectToSerialize);
+			
 			// Accept null values.
 			if ((objectToSerialize == null))
 			{
@@ -149,6 +151,12 @@ namespace ImpossibleOdds.Xml.Processors
 			return
 				typeof(IDictionary).IsAssignableFrom(targetType) &&
 				((dataToDeserialize == null) || (dataToDeserialize is IDictionary));
+		}
+		
+		/// <inheritdoc />
+		public virtual bool CanDeserialize(object deserializationTarget, object dataToDeserialize)
+		{
+			return deserializationTarget != null && CanDeserialize(deserializationTarget.GetType(), dataToDeserialize);
 		}
 	}
 }

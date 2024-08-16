@@ -42,6 +42,8 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public virtual object Serialize(object objectToSerialize)
 		{
+			this.ThrowIfCantSerialize(objectToSerialize);
+			
 			Type sourceType = objectToSerialize.GetType();
 
 			// Check whether the type is supported at all by the serialization definition...

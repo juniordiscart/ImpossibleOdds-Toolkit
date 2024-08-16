@@ -11,12 +11,14 @@ namespace ImpossibleOdds.Xml
 
 		/// <inheritdoc />
 		public object Value { get; set; }
-
-		/// <inheritdoc />
+		
+		/// <summary>
+		/// Alternative key to be used to store the type data.
+		/// </summary>
 		public string KeyOverride { get; set; }
 
 		/// <summary>
-		/// By default, type information is saved in an XML Attribute.
+		/// By default, type data is saved in an XML Attribute.
 		/// Setting this to true will save the type information in an XML Element instead.
 		/// </summary>
 		public bool SetAsElement { get; set; }

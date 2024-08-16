@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Xml.Linq;
 using ImpossibleOdds.Serialization;
 
@@ -22,113 +21,116 @@ namespace ImpossibleOdds.Xml
         public Type FindTypeInSourceData(Type baseType, XElement sourceData, IXmlSerializationDefinition definition)
         {
             baseType.ThrowIfNull(nameof(baseType));
-			sourceData.ThrowIfNull(nameof(sourceData));
-			definition.ThrowIfNull(nameof(definition));
+            sourceData.ThrowIfNull(nameof(sourceData));
+            definition.ThrowIfNull(nameof(definition));
 
-			ITypeResolutionParameter[] typeResolutionParameters =  SerializationUtilities.GetTypeMap(baseType).GetTypeResolveParameters(TypeResolutionAttribute);
+            ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(baseType).GetTypeResolutionParameters(TypeResolutionAttribute);
 
-			Type resolvedType = baseType;
+            Type resolvedType = baseType;
 
-			foreach (XmlTypeAttribute typeResolutionParameter in typeResolutionParameters.Where(trp => trp is XmlTypeAttribute).Cast<XmlTypeAttribute>())
-			{
-				// If we're considering the same type again, or the type would be a step backwards, then don't bother checking further.
-				if ((typeResolutionParameter.Target == resolvedType) ||
-				    resolvedType.IsSubclassOf(typeResolutionParameter.Target) ||
-				    !baseType.IsAssignableFrom(typeResolutionParameter.Target))
-				{
-					continue;
-				}
+            foreach (ITypeResolutionParameter typeResolutionParameter in typeResolutionParameters)
+            {
+                // If we're considering the same type again, or the type would be a step backwards, then don't bother checking further.
+                if ((typeResolutionParameter.Target == resolvedType) ||
+                    resolvedType.IsSubclassOf(typeResolutionParameter.Target) ||
+                    !baseType.IsAssignableFrom(typeResolutionParameter.Target))
+                {
+                    continue;
+                }
 
-				// Fetch the type data from either a defined element or attribute in the source data.
-				XName processedKey = typeResolutionParameter.KeyOverride ?? TypeResolutionKey;
-				string sourceTypeValue = typeResolutionParameter.SetAsElement switch
-				{
-					true when sourceData.HasElements => sourceData.Element(processedKey)?.Value,
-					false when sourceData.HasAttributes => sourceData.Attribute(processedKey)?.Value,
-					_ => null
-				};
+                XmlTypeAttribute xmlTypeAttr = typeResolutionParameter switch
+                {
+                    XmlTypeAttribute xmlAttr => xmlAttr,
+                    IInvertedTypeResolutionParameter inverted => (XmlTypeAttribute)inverted.OriginalParameter,
+                    _ => throw new ArgumentOutOfRangeException(typeResolutionParameter.GetType().Name)
+                };
 
-				// If no such source value could be found, then skip it.
-				if (sourceTypeValue is null)
-				{
-					continue;
-				}
+                // Fetch the type data from either a defined element or attribute in the source data.
+                XName processedKey = xmlTypeAttr.KeyOverride ?? TypeResolutionKey;
+                string sourceTypeValue = xmlTypeAttr.SetAsElement switch
+                {
+                    true when sourceData.HasElements => sourceData.Element(processedKey)?.Value,
+                    false when sourceData.HasAttributes => sourceData.Attribute(processedKey)?.Value,
+                    _ => null
+                };
 
-				// Compare the values.
-				object typeParameterValue = typeResolutionParameter.Value ?? typeResolutionParameter.Target.Name;
-				string processedValue = SerializationUtilities.PostProcessValue<string>(Serializer.Serialize(typeParameterValue, definition));
-				if (!Equals(sourceTypeValue, processedValue))
-				{
-					continue;
-				}
+                // If no such source value could be found, then skip it.
+                if (sourceTypeValue is null)
+                {
+                    continue;
+                }
 
-				resolvedType = typeResolutionParameter.Target;
-			}
+                // Compare the values.
+                object typeParameterValue = typeResolutionParameter.Value ?? typeResolutionParameter.Target.Name;
+                string processedValue = SerializationUtilities.PostProcessValue<string>(Serializer.Serialize(typeParameterValue, definition));
+                if (!Equals(sourceTypeValue, processedValue))
+                {
+                    continue;
+                }
 
-			// If a different type was found other than the original, then attempt to search further.
-			if (baseType != resolvedType)
-			{
-				resolvedType = FindTypeInSourceData(resolvedType, sourceData, definition);
-			}
+                resolvedType = typeResolutionParameter.Target;
+            }
 
-			return resolvedType;
+            // If a different type was found other than the original, then attempt to search further.
+            if (baseType != resolvedType)
+            {
+                resolvedType = FindTypeInSourceData(resolvedType, sourceData, definition);
+            }
+
+            return resolvedType;
         }
 
         /// <inheritdoc />
         public void InsertTypeInData(Type sourceType, XElement serializedData, IXmlSerializationDefinition definition)
         {
-	        sourceType.ThrowIfNull(nameof(sourceType));
-	        serializedData.ThrowIfNull(nameof(serializedData));
-	        definition.ThrowIfNull(nameof(definition));
+            sourceType.ThrowIfNull(nameof(sourceType));
+            serializedData.ThrowIfNull(nameof(serializedData));
+            definition.ThrowIfNull(nameof(definition));
 
-	        ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(sourceType).GetTypeResolveParameters(TypeResolutionAttribute);
-	        Dictionary<object, Type> insertedTypeInfo = new Dictionary<object, Type>();
+            ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(sourceType).GetTypeResolutionParameters(TypeResolutionAttribute);
+            Dictionary<object, Type> insertedTypeInfo = new Dictionary<object, Type>();
 
-	        foreach (XmlTypeAttribute typeResolutionParameter in typeResolutionParameters.Where(trp => trp is XmlTypeAttribute).Cast<XmlTypeAttribute>())
-	        {
-		        if (!typeResolutionParameter.Target.IsAssignableFrom(sourceType))
-		        {
-			        continue;
-		        }
+            foreach (ITypeResolutionParameter typeResolutionParameter in typeResolutionParameters)
+            {
+                if (!typeResolutionParameter.Target.IsAssignableFrom(sourceType))
+                {
+                    continue;
+                }
 
-		        XName typeKey = typeResolutionParameter.KeyOverride ?? TypeResolutionKey;
+                XmlTypeAttribute xmlTypeAttr = typeResolutionParameter switch
+                {
+                    XmlTypeAttribute xmlAttr => xmlAttr,
+                    IInvertedTypeResolutionParameter inverted => (XmlTypeAttribute)inverted.OriginalParameter,
+                    _ => throw new ArgumentOutOfRangeException(typeResolutionParameter.GetType().Name)
+                };
 
-		        // If the information was already present before this function added the type information, then the type information
-		        // is assumed to be part of the object's serialized data already. If it was added by this function, then it should check
-		        // that the information from the most basic available type is used.
-		        if (typeResolutionParameter.SetAsElement)
-		        {
-			        if ((!insertedTypeInfo.ContainsKey(typeKey) && (serializedData.Element(typeKey) != null)) ||
-			            insertedTypeInfo.ContainsKey(typeKey) && insertedTypeInfo[typeKey].IsAssignableFrom(typeResolutionParameter.Target))
-			        {
-				        continue;
-			        }
-		        }
-		        else
-		        {
-			        if ((!insertedTypeInfo.ContainsKey(typeKey) && (serializedData.Attribute(typeKey) != null)) ||
-			            insertedTypeInfo.ContainsKey(typeKey) && insertedTypeInfo[typeKey].IsAssignableFrom(typeResolutionParameter.Target))
-			        {
-				        continue;
-			        }
-		        }
+                XName typeKey = xmlTypeAttr.KeyOverride ?? TypeResolutionKey;
 
-		        object typeValue = typeResolutionParameter.Value ?? typeResolutionParameter.Target.Name;
+                // If the information was already present before this function added the type information,
+                // then the type information is assumed to be part of the object's serialized data already and won't be modified.
+                // If it was added by this function, then it should check that the type information of the most closely related type is used.
+                bool typeDataAlreadyPresent = xmlTypeAttr.SetAsElement ? (serializedData.Element(typeKey) != null) : (serializedData.Attribute(typeKey) != null);
+                if ((!insertedTypeInfo.ContainsKey(typeKey) && typeDataAlreadyPresent) ||
+                    insertedTypeInfo.ContainsKey(typeKey) && !insertedTypeInfo[typeKey].IsAssignableFrom(typeResolutionParameter.Target))
+                {
+                    continue;
+                }
 
-		        if (typeResolutionParameter.SetAsElement)
-		        {
-			        typeValue = Serializer.Serialize(typeValue, definition);
-			        serializedData.Add(new XElement(typeKey, typeValue));
-		        }
-		        else
-		        {
-			        typeValue = Serializer.Serialize(typeValue, definition.AttributeSerializationDefinition);
-			        typeValue = SerializationUtilities.PostProcessValue<string>(typeValue);
-			        serializedData.SetAttributeValue(typeKey, typeValue);
-		        }
+                object typeValue = typeResolutionParameter.Value ?? typeResolutionParameter.Target.Name;
+                insertedTypeInfo[typeKey] = typeResolutionParameter.Target;
 
-		        insertedTypeInfo[typeKey] = typeResolutionParameter.Target;
-	        }
+                if (xmlTypeAttr.SetAsElement)
+                {
+                    typeValue = Serializer.Serialize(typeValue, definition);
+                    serializedData.Add(new XElement(typeKey, typeValue));
+                }
+                else
+                {
+                    typeValue = Serializer.Serialize(typeValue, definition.AttributeSerializationDefinition);
+                    typeValue = SerializationUtilities.PostProcessValue<string>(typeValue);
+                    serializedData.SetAttributeValue(typeKey, typeValue);
+                }
+            }
         }
     }
 }

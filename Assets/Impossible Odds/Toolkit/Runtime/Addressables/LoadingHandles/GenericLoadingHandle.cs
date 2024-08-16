@@ -40,6 +40,7 @@ namespace ImpossibleOdds.Addressables
 
 		/// <inheritdoc />
 		public bool IsDisposed { get; private set; }
+		public bool IsReleased { get; private set; }
 
 		/// <inheritdoc />
 		public TObject Result => loadingHandle.Result;
@@ -80,6 +81,7 @@ namespace ImpossibleOdds.Addressables
 			if (IsDone)
 			{
 				Addressables.Release(loadingHandle);
+				IsReleased = true;
 			}
 
 			IsDisposed = true;
@@ -113,9 +115,10 @@ namespace ImpossibleOdds.Addressables
 		private void OnCompleted(AsyncOperationHandle<TObject> handle)
 		{
 			// If the handle is already disposed off, then unload the handle immediately.
-			if (IsDisposed)
+			if (IsDisposed && !IsReleased)
 			{
 				Addressables.Release(loadingHandle);
+				IsReleased = true;
 				return;
 			}
 

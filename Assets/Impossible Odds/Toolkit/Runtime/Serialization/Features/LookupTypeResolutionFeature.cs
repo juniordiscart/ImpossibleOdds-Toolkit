@@ -6,113 +6,128 @@ using ImpossibleOdds.Serialization.Caching;
 
 namespace ImpossibleOdds.Serialization
 {
-	/// <summary>
-	/// Generic lookup-based type resolution feature object that provides the type of the attribute used
-	/// to store type information in the data structure.
-	/// </summary>
-	/// <typeparam name="TTypeResolution">The type of the attribute to be defined atop of a class, struct or interface.</typeparam>
-	public class LookupTypeResolutionFeature<TTypeResolution> : ILookupTypeResolutionFeature
-		where TTypeResolution : ITypeResolutionParameter
-	{
-		public LookupTypeResolutionFeature(object typeResolutionKey)
-		{
-			TypeResolutionKey = typeResolutionKey;
-		}
+    /// <summary>
+    /// Lookup-based type resolution feature object that provides the type of the attribute used to store type information in the data structure.
+    /// </summary>
+    public class LookupTypeResolutionFeature : ILookupTypeResolutionFeature
+    {
+        public LookupTypeResolutionFeature(Type typeOfTypeResolutionAttribute, object typeResolutionKey)
+        {
+            typeOfTypeResolutionAttribute.ThrowIfNull(nameof(typeOfTypeResolutionAttribute));
+            typeResolutionKey.ThrowIfNull(nameof(typeResolutionKey));
 
-		/// <inheritdoc />
-		public Type TypeResolutionAttribute => typeof(TTypeResolution);
+            if (!typeof(ILookupTypeResolutionParameter).IsAssignableFrom(typeOfTypeResolutionAttribute))
+            {
+                throw new ArgumentException($"{nameof(LookupTypeResolutionFeature)} requires parameter {nameof(typeOfTypeResolutionAttribute)} to implement {nameof(ILookupTypeResolutionParameter)}.");
+            }
 
-		/// <inheritdoc />
-		public object TypeResolutionKey { get; }
+            TypeResolutionAttribute = typeOfTypeResolutionAttribute;
+            TypeResolutionKey = typeResolutionKey;
+        }
 
-		/// <inheritdoc />
-		public Type FindTypeInSourceData(Type targetType, IDictionary sourceData, ISerializationDefinition definition)
-		{
-			targetType.ThrowIfNull(nameof(targetType));
-			sourceData.ThrowIfNull(nameof(sourceData));
-			definition.ThrowIfNull(nameof(definition));
+        /// <inheritdoc />
+        public Type TypeResolutionAttribute { get; }
 
-			LookupCollectionTypeInfo sourceCollectionInfo = SerializationUtilities.GetCollectionTypeInfo(sourceData);
-			ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(targetType).GetTypeResolveParameters(TypeResolutionAttribute);
+        /// <inheritdoc />
+        public object TypeResolutionKey { get; }
 
-			Type resolvedType = targetType;
+        /// <inheritdoc />
+        public Type FindTypeInSourceData(Type targetType, IDictionary sourceData, ISerializationDefinition definition)
+        {
+            targetType.ThrowIfNull(nameof(targetType));
+            sourceData.ThrowIfNull(nameof(sourceData));
+            definition.ThrowIfNull(nameof(definition));
 
-			foreach (ILookupTypeResolutionParameter typeResolutionParameter in typeResolutionParameters.Where(trp => trp is ILookupTypeResolutionParameter).Cast<ILookupTypeResolutionParameter>())
-			{
-				// If we're considering the same type again, or the type would be a step backwards, then don't bother checking further.
-				if ((typeResolutionParameter.Target == resolvedType) ||
-				    resolvedType.IsSubclassOf(typeResolutionParameter.Target) ||
-				    !targetType.IsAssignableFrom(typeResolutionParameter.Target))
-				{
-					continue;
-				}
+            LookupCollectionTypeInfo sourceCollectionInfo = SerializationUtilities.GetCollectionTypeInfo(sourceData);
+            ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(targetType).GetTypeResolutionParameters(TypeResolutionAttribute);
 
-				// Process the key
-				object processedKey = typeResolutionParameter.KeyOverride ?? TypeResolutionKey;
-				processedKey = sourceCollectionInfo.PostProcessKey(Serializer.Serialize(processedKey, definition));
+            Type resolvedType = targetType;
 
-				// Check that the key exists in the source data.
-				if (!sourceData.Contains(processedKey) || (sourceData[processedKey] == null))
-				{
-					continue;
-				}
+            foreach (ILookupTypeResolutionParameter typeResolutionParameter in typeResolutionParameters.Cast<ILookupTypeResolutionParameter>())
+            {
+                // If we're considering the same type again, or the type would be a step backwards, then don't bother checking further.
+                if ((typeResolutionParameter.Target == resolvedType) ||
+                    resolvedType.IsSubclassOf(typeResolutionParameter.Target) ||
+                    !targetType.IsAssignableFrom(typeResolutionParameter.Target))
+                {
+                    continue;
+                }
 
-				// Process the value on the attribute and try to match it with the entry in the source data.
-				object processedValue = typeResolutionParameter.Value ?? typeResolutionParameter.Target.Name;
-				processedValue = sourceCollectionInfo.PostProcessValue(Serializer.Serialize(processedValue, definition));
+                // Process the key
+                object processedKey = typeResolutionParameter.KeyOverride ?? TypeResolutionKey;
+                processedKey = sourceCollectionInfo.PostProcessKey(Serializer.Serialize(processedKey, definition));
 
-				if (!Equals(sourceData[processedKey], processedValue))
-				{
-					continue;
-				}
+                // Check that the key exists in the source data.
+                if (!sourceData.Contains(processedKey) || (sourceData[processedKey] == null))
+                {
+                    continue;
+                }
 
-				resolvedType = typeResolutionParameter.Target;
-			}
+                // Process the value on the attribute and try to match it with the entry in the source data.
+                object processedValue = typeResolutionParameter.Value ?? typeResolutionParameter.Target.Name;
+                processedValue = sourceCollectionInfo.PostProcessValue(Serializer.Serialize(processedValue, definition));
 
-			// If a different type was found other than the original, then attempt to search further.
-			if (targetType != resolvedType)
-			{
-				resolvedType = FindTypeInSourceData(resolvedType, sourceData, definition);
-			}
+                if (!Equals(sourceData[processedKey], processedValue))
+                {
+                    continue;
+                }
 
-			return resolvedType;
-		}
+                resolvedType = typeResolutionParameter.Target;
+            }
 
-		/// <inheritdoc />
-		public void InsertTypeInData(Type sourceType, IDictionary serializedData, ISerializationDefinition definition)
-		{
-			sourceType.ThrowIfNull(nameof(sourceType));
-			serializedData.ThrowIfNull(nameof(serializedData));
-			definition.ThrowIfNull(nameof(definition));
+            // If a different type was found other than the original, then attempt to search further.
+            if (targetType != resolvedType)
+            {
+                resolvedType = FindTypeInSourceData(resolvedType, sourceData, definition);
+            }
 
-			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(serializedData);
-			ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(sourceType).GetTypeResolveParameters(TypeResolutionAttribute);
-			Dictionary<object, Type> insertedTypeInfo = new Dictionary<object, Type>();
+            return resolvedType;
+        }
 
-			foreach (ILookupTypeResolutionParameter typeResolutionParameter in typeResolutionParameters.Where(trp => trp is ILookupTypeResolutionParameter).Cast<ILookupTypeResolutionParameter>())
-			{
-				if (!typeResolutionParameter.Target.IsAssignableFrom(sourceType))
-				{
-					continue;
-				}
+        /// <inheritdoc />
+        public void InsertTypeInData(Type sourceType, IDictionary serializedData, ISerializationDefinition definition)
+        {
+            sourceType.ThrowIfNull(nameof(sourceType));
+            serializedData.ThrowIfNull(nameof(serializedData));
+            definition.ThrowIfNull(nameof(definition));
 
-				object typeKey = typeResolutionParameter.KeyOverride ?? TypeResolutionKey;
-				typeKey = Serializer.Serialize(typeKey, definition);
+            LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(serializedData);
+            ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(sourceType).GetTypeResolutionParameters(TypeResolutionAttribute);
+            Dictionary<object, Type> insertedTypeInfo = new Dictionary<object, Type>(typeResolutionParameters.Length);
 
-				// If the information was already present before this function added the type information, then the type information
-				// is assumed to be part of the object's serialized data already. If it was added by this function, then it should check
-				// that the information from the most basic available type is used.
-				if ((!insertedTypeInfo.ContainsKey(typeKey) && serializedData.Contains(typeKey)) ||
-				    insertedTypeInfo.ContainsKey(typeKey) && insertedTypeInfo[typeKey].IsAssignableFrom(typeResolutionParameter.Target))
-				{
-					continue;
-				}
+            foreach (ILookupTypeResolutionParameter typeResolutionParameter in typeResolutionParameters.Cast<ILookupTypeResolutionParameter>())
+            {
+                if (!typeResolutionParameter.Target.IsAssignableFrom(sourceType))
+                {
+                    continue;
+                }
 
-				object typeValue = typeResolutionParameter.Value ?? typeResolutionParameter.Target.Name;
-				typeValue = Serializer.Serialize(typeValue, definition);
-				SerializationUtilities.InsertInLookup(serializedData, collectionInfo, typeKey, typeValue);
-				insertedTypeInfo[typeKey] = typeResolutionParameter.Target;
-			}
-		}
-	}
+                object typeKey = typeResolutionParameter.KeyOverride ?? TypeResolutionKey;
+                typeKey = Serializer.Serialize(typeKey, definition);
+
+                // If the information was already present before this function added the type information,
+                // then the type information is assumed to be part of the object's serialized data already and won't be modified.
+                // If it was added by this function, then it should check that the type information of the most closely related type is used.
+                if ((!insertedTypeInfo.ContainsKey(typeKey) && serializedData.Contains(typeKey)) ||
+                    insertedTypeInfo.ContainsKey(typeKey) && !insertedTypeInfo[typeKey].IsAssignableFrom(typeResolutionParameter.Target))
+                {
+                    continue;
+                }
+
+                object typeValue = typeResolutionParameter.Value ?? typeResolutionParameter.Target.Name;
+                typeValue = Serializer.Serialize(typeValue, definition);
+                SerializationUtilities.InsertInLookup(serializedData, collectionInfo, typeKey, typeValue);
+                insertedTypeInfo[typeKey] = typeResolutionParameter.Target;
+            }
+        }
+    }
+
+    /// <inheritdoc />
+    public class LookupTypeResolutionFeature<TTypeResolution> : LookupTypeResolutionFeature
+    where TTypeResolution : ITypeResolutionParameter
+    {
+        public LookupTypeResolutionFeature(object typeResolutionKey)
+            : base(typeof(TTypeResolution), typeResolutionKey)
+        { }
+    }
 }

@@ -13,7 +13,7 @@ namespace ImpossibleOdds.Serialization.Caching
 	public class SerializationReflectionMap : ISerializationReflectionMap
 	{
 		private readonly ConcurrentDictionary<Type, Attribute[]> typeDefinedAttributes = new ConcurrentDictionary<Type, Attribute[]>();
-		private readonly ConcurrentDictionary<Type, ITypeResolutionParameter[]> typeResolveParameters = new ConcurrentDictionary<Type, ITypeResolutionParameter[]>();
+		private readonly ConcurrentDictionary<Type, ITypeResolutionParameter[]> typeResolutionParameters = new ConcurrentDictionary<Type, ITypeResolutionParameter[]>();
 		private readonly ConcurrentDictionary<Type, ISerializableMember[]> serializableMembers = new ConcurrentDictionary<Type, ISerializableMember[]>();
 		private readonly ConcurrentDictionary<Type, ISerializableMember[]> uniqueSerializableMembers = new ConcurrentDictionary<Type, ISerializableMember[]>();
 		private readonly ConcurrentDictionary<Type, ISerializationCallback[]> serializationCallbacks = new ConcurrentDictionary<Type, ISerializationCallback[]>();
@@ -29,10 +29,10 @@ namespace ImpossibleOdds.Serialization.Caching
 		public Type Type { get; }
 
 		/// <inheritdoc />
-		public ITypeResolutionParameter[] GetTypeResolveParameters(Type attributeType)
+		public ITypeResolutionParameter[] GetTypeResolutionParameters(Type attributeType)
 		{
 			attributeType.ThrowIfNull(nameof(attributeType));
-			return FindTypeResolveParameters(attributeType);
+			return FindTypeResolutionParameters(attributeType);
 		}
 
 		/// <inheritdoc />
@@ -90,30 +90,45 @@ namespace ImpossibleOdds.Serialization.Caching
 			return false;
 		}
 
-		/// <inheritdoc />
-		public Attribute[] GetTypeDefinedAttributes(Type attributeType)
+		private ITypeResolutionParameter[] FindTypeResolutionParameters(Type attributeType)
 		{
-			attributeType.ThrowIfNull(nameof(attributeType));
-			return FindTypeDefinedAttributes(attributeType);
-		}
-
-		private Attribute[] FindTypeDefinedAttributes(Type attributeType)
-		{
-			if (typeDefinedAttributes.TryGetValue(attributeType, out Attribute[] r))
+			if (typeResolutionParameters.TryGetValue(attributeType, out ITypeResolutionParameter[] result))
 			{
-				return r;
+				return result;
 			}
+			
+			List<ITypeResolutionParameter> validTypeResolutionParameters = new List<ITypeResolutionParameter>();
+			AddValidTypeResolutionParameters(validTypeResolutionParameters, TypeReflectionUtilities.FindAllTypeDefinedAttributes(Type, attributeType, true));
+			AddValidTypeResolutionParameters(validTypeResolutionParameters, TypeReflectionUtilities.FindAllTypeDefinedAttributesInSubTypes(Type, attributeType, true));
 
-			Attribute[] attributes = TypeReflectionUtilities.FindAllTypeDefinedAttributes(Type, attributeType, true).ToArray();
-			return typeDefinedAttributes.GetOrAdd(attributeType, !attributes.IsNullOrEmpty() ? attributes : Array.Empty<Attribute>());
-		}
+			return typeResolutionParameters.GetOrAdd(attributeType, validTypeResolutionParameters.ToArray());
 
-		private ITypeResolutionParameter[] FindTypeResolveParameters(Type attributeType)
-		{
-			return
-				typeResolveParameters.TryGetValue(attributeType, out ITypeResolutionParameter[] result) ?
-					result :
-					typeResolveParameters.GetOrAdd(attributeType, FindTypeDefinedAttributes(attributeType).Cast<ITypeResolutionParameter>().ToArray());
+			void AddValidTypeResolutionParameters(List<ITypeResolutionParameter> validParameters, IEnumerable<(Type, Attribute)> attributes)
+			{
+				foreach ((Type, Attribute) typeDefinedAttribute in attributes)
+				{
+					ITypeResolutionParameter typeResolutionParameter = (ITypeResolutionParameter)typeDefinedAttribute.Item2;
+				
+					// If the type is assignable from the type resolution target.
+					if (Type.IsAssignableFrom(typeResolutionParameter.Target) || typeDefinedAttribute.Item1.IsAssignableFrom(typeResolutionParameter.Target))
+					{
+						validParameters.Add(typeResolutionParameter);
+						continue;
+					}
+
+					// If the type resolution  target is assignable from the type.
+					if (typeResolutionParameter.Target.IsAssignableFrom(Type))
+					{
+						validParameters.Add(typeResolutionParameter switch
+						{
+							ILookupTypeResolutionParameter lookupParameter => new InvertedLookupTypeResolutionParameter(typeDefinedAttribute.Item1, lookupParameter),
+							ISequenceTypeResolutionParameter sequenceParameter => new InvertedSequenceTypeResolutionParameter(typeDefinedAttribute.Item1, sequenceParameter),
+							_ => new InvertedTypeResolutionParameter(typeDefinedAttribute.Item1, typeResolutionParameter)
+						});
+						continue;
+					}
+				}
+			}
 		}
 
 		private ISerializableMember[] FindSerializableMembers(Type attributeType)
@@ -142,8 +157,6 @@ namespace ImpossibleOdds.Serialization.Caching
 							Attribute.GetCustomAttributes(member, attributeType, true),
 							(a) => serializableMembersForAttr.Add(new SerializableProperty(member as PropertyInfo, a)));
 						break;
-					default:
-						throw new NotSupportedException(member.MemberType.DisplayName());
 				}
 			}
 
@@ -202,7 +215,7 @@ namespace ImpossibleOdds.Serialization.Caching
 			// Go over the methods that have the desired attribute defined.
 			IEnumerable<MemberInfo> callbackMethods = TypeReflectionUtilities.FindAllMembersWithAttribute(Type, attributeType, false, MemberTypes.Method);
 			List<ISerializationCallback> serializationCallbacksForAttr = new List<ISerializationCallback>();
-			foreach (MethodInfo method in TypeReflectionUtilities.FilterBaseMethods(callbackMethods))
+			foreach (MethodInfo method in TypeReflectionUtilities.FilterBaseMethods(callbackMethods).Cast<MethodInfo>())
 			{
 				Array.ForEach(
 					Attribute.GetCustomAttributes(method, attributeType, true),

@@ -18,10 +18,7 @@ namespace ImpossibleOdds.Serialization.Processors
         /// <inheritdoc />
         public virtual object Serialize(object objectToSerialize)
         {
-            if (!CanSerialize(objectToSerialize))
-            {
-                throw new SerializationException($"The provided data cannot be serialized by this processor of type {nameof(DecimalProcessor)}.");
-            }
+            this.ThrowIfCantSerialize(objectToSerialize);
 
             // If the serialization definition supports the decimal-type, then just return already.
             // Otherwise, try to convert it to a string value.

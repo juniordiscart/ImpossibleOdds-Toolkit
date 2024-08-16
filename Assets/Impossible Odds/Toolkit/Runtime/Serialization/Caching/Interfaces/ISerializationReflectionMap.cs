@@ -11,7 +11,7 @@ namespace ImpossibleOdds.Serialization.Caching
 		/// </summary>
 		/// <param name="attributeType">Type of the type resolve parameter to look for.</param>
 		/// <returns>All type resolve parameters that match the type requirement.</returns>
-		ITypeResolutionParameter[] GetTypeResolveParameters(Type attributeType);
+		ITypeResolutionParameter[] GetTypeResolutionParameters(Type attributeType);
 
 		/// <summary>
 		/// Get all serializable members on this type with the defined attribute.

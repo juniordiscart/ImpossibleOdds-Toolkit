@@ -26,6 +26,8 @@ namespace ImpossibleOdds.Xml.Processors
 		/// <inheritdoc />
 		public virtual object Serialize(object objectToSerialize)
 		{
+			this.ThrowIfCantSerialize(objectToSerialize);
+			
 			if ((objectToSerialize == null) || (objectToSerialize is string))
 			{
 				return objectToSerialize;

@@ -18,11 +18,7 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public virtual object Serialize(object objectToSerialize)
 		{
-			if (!CanSerialize(objectToSerialize))
-			{
-				throw new SerializationException($"The provided data cannot be serialized by this processor of type {nameof(ExactMatchProcessor)}.");
-			}
-
+			this.ThrowIfCantSerialize(objectToSerialize);
 			return objectToSerialize;
 		}
 
