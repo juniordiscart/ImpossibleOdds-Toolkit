@@ -246,12 +246,30 @@
 		protected virtual void InvokeResponseCallbacks(THandle handle)
 		{
 			handle.ThrowIfNull(nameof(handle));
-			foreach (object callback in responseCallbacks)
+			
+			List<object> responseCallbacksCopy;
+			lock (responseCallbacks)
 			{
-				if (callback != null)
+				responseCallbacksCopy = new List<object>(responseCallbacks);
+			}
+			
+			foreach (object callback in responseCallbacksCopy)
+			{
+				if (callback == null)
 				{
-					WeblinkUtilities.InvokeResponseCallback<TResponseCallback, TResponseAssoc>(callback, handle);
+					continue;
 				}
+
+				// If the callback is not in the set of original callbacks anymore, then skip it.
+				lock (responseCallbacks)
+				{
+					if (!responseCallbacks.Contains(callback))
+					{
+						continue;
+					}
+				}
+				
+				WeblinkUtilities.InvokeResponseCallback<TResponseCallback, TResponseAssoc>(callback, handle);
 			}
 		}
 
