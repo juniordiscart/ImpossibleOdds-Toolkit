@@ -25,7 +25,11 @@
 		/// </summary>
 		public static IDependencyScope GlobalScope
 		{
-			get => globalScope;
+			get
+			{
+				Initialize();
+				return globalScope;
+			}
 		}
 
 		/// <summary>
@@ -37,10 +41,25 @@
 			set => autoInjectLoadedScenes = value;
 		}
 
-		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-		private static void Initialize()
+		/// <summary>
+		/// Checks whether the global dependency injection scope exists.
+		/// </summary>
+		public static bool Exists
 		{
-			globalScope = new GlobalDependencyScope();
+			get => globalScope != null;
+		}
+		
+#if !IMPOSSIBLE_ODDS_DEPENDENCY_INJECTION_DISABLE_GLOBAL_SCOPE_INITIALIZATION
+		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+#endif
+		private static GlobalDependencyScope Initialize()
+		{
+			if (globalScope == null)
+			{
+				globalScope = new GlobalDependencyScope();
+			}
+
+			return globalScope;
 		}
 		#endregion
 
