@@ -8,6 +8,11 @@ namespace ImpossibleOdds.Serialization.Processors
 		public ISerializationDefinition Definition { get; }
 
 		public ISequenceSerializationConfiguration Configuration { get; }
+		
+		/// <summary>
+		/// The required size for the sequence, as defined by the type that's being handled.
+		/// </summary>
+		public abstract int Size { get; }
 
 		protected UnityPrimitiveSequenceProcessor(ISerializationDefinition definition, ISequenceSerializationConfiguration configuration)
 		{
@@ -20,12 +25,14 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public virtual object Serialize(object objectToSerialize)
 		{
+			this.ThrowIfCantSerialize(objectToSerialize);
 			return Serialize((T)objectToSerialize);
 		}
 
 		/// <inheritdoc />
 		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
+			this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
 			return Deserialize(dataToDeserialize as IList);
 		}
 
@@ -41,8 +48,9 @@ namespace ImpossibleOdds.Serialization.Processors
 			targetType.ThrowIfNull(nameof(targetType));
 
 			return
-				(typeof(T) == targetType) &&    // Don't use AssignableFrom here, as it may trigger implicit conversions for certain types, e.g. Vector2 -> Vector3, ect.
-				(dataToDeserialize is IList);
+				(typeof(T) == targetType) && // Don't use AssignableFrom here, as it may trigger implicit conversions for certain types, e.g. Vector2 -> Vector3, ect.
+				(dataToDeserialize is IList listToDeserialize) &&
+				(listToDeserialize.Count == Size);
 		}
 
 		protected abstract IList Serialize(T value);

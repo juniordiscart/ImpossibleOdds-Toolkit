@@ -8,6 +8,8 @@ namespace ImpossibleOdds.Xml.Processors
 	public abstract class UnityPrimitiveXmlAttributesProcessor<TPrimitive> : ISerializationProcessor, IDeserializationProcessor
 	{
 		public ISerializationDefinition Definition { get; }
+		
+		public abstract string[] Keys { get; }
 
 		protected UnityPrimitiveXmlAttributesProcessor(XmlSerializationDefinition definition)
 		{
@@ -18,19 +20,21 @@ namespace ImpossibleOdds.Xml.Processors
 		/// <inheritdoc />
 		public virtual object Serialize(object objectToSerialize)
 		{
+			this.ThrowIfCantSerialize(objectToSerialize);
 			return Serialize((TPrimitive)objectToSerialize);
 		}
 
 		/// <inheritdoc />
 		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
+			this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
 			return Deserialize((XElement)dataToDeserialize);
 		}
 
 		/// <inheritdoc />
 		public virtual bool CanSerialize(object objectToSerialize)
 		{
-			return (objectToSerialize is TPrimitive primitive) && CanSerialize(primitive);
+			return objectToSerialize is TPrimitive;
 		}
 
 		/// <inheritdoc />
@@ -41,11 +45,9 @@ namespace ImpossibleOdds.Xml.Processors
 			return
 				(dataToDeserialize is XElement element) &&
 				typeof(TPrimitive).IsAssignableFrom(targetType) &&
-				CanDeserialize(element);
+				Array.TrueForAll(Keys, key => element.Attribute(key) != null);
 		}
-
-		protected abstract bool CanSerialize(TPrimitive primitive);
-		protected abstract bool CanDeserialize(XElement element);
+		
 		protected abstract XElement Serialize(TPrimitive value);
 		protected abstract TPrimitive Deserialize(XElement xmlData);
 	}

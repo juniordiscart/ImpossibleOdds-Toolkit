@@ -5,16 +5,16 @@ using System.Collections.Generic;
 namespace ImpossibleOdds.Serialization.Caching
 {
 	/// <summary>
-	/// Contains type information about the lookup data structure, e.g. whether it restricts its key and/or value to be type restricted.
+	/// Contains type information about the dictionary data structure, e.g. whether it restricts its key and/or value to be type restricted.
 	/// </summary>
-	public readonly struct LookupCollectionTypeInfo
+	public readonly struct DictionaryCollectionTypeInfo
 	{
 		/// <summary>
-		/// Generic type of the lookup data structure.
+		/// Generic type of the dictionary data structure.
 		/// </summary>
 		public readonly Type genericType;
 		/// <summary>
-		/// The types of the key and value in the lookup data structure.
+		/// The types of the key and value in the dictionary data structure.
 		/// </summary>
 		public readonly Type[] genericParams;
 		/// <summary>
@@ -34,11 +34,11 @@ namespace ImpossibleOdds.Serialization.Caching
 		/// </summary>
 		public readonly bool isValueTypeConstrained;
 
-		public LookupCollectionTypeInfo(IDictionary instance)
+		public DictionaryCollectionTypeInfo(IDictionary instance)
 		: this(instance.GetType())
 		{ }
 
-		public LookupCollectionTypeInfo(Type collectionType)
+		public DictionaryCollectionTypeInfo(Type collectionType)
 		{
 			collectionType.ThrowIfNull(nameof(collectionType));
 			if (!typeof(IDictionary).IsAssignableFrom(collectionType))

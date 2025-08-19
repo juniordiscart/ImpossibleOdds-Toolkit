@@ -2,13 +2,30 @@ using System;
 
 namespace ImpossibleOdds.Serialization.Processors
 {
-    /// <summary>
-    /// A (de)serialization processor specifically to process Version values.
-    /// </summary>
     public class VersionProcessor : ISerializationProcessor, IDeserializationProcessor
     {
+        private int fieldCount = 3;
+        
         public ISerializationDefinition Definition { get; }
 
+        /// <summary>
+        /// When the Version value is converted to a string, the field count determines how many components a version value should have.
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">The field count value is expected to be between 0 and 4.</exception>
+        public int FieldCount
+        {
+            get => fieldCount;
+            set
+            {
+                if (fieldCount is < 0 or > 4)
+                {
+                    throw new ArgumentOutOfRangeException($"{nameof(FieldCount)} is expected to be between 0 and 4.");
+                }
+
+                fieldCount = value;
+            }
+        }
+        
         public VersionProcessor(ISerializationDefinition definition)
         {
             definition.ThrowIfNull(nameof(definition));
@@ -19,25 +36,13 @@ namespace ImpossibleOdds.Serialization.Processors
         public virtual object Serialize(object objectToSerialize)
         {
             this.ThrowIfCantSerialize(objectToSerialize);
-
-            // If the serialization definition supports the Version-type, then just return already.
-            // Otherwise, try to convert it to a string value.
-            if (Definition.SupportedTypes.Contains(typeof(Version)))
-            {
-                return objectToSerialize;
-            }
-
-            Version value = (Version)objectToSerialize;
-            return value.ToString();
+            return Definition.SupportedTypes.Contains(typeof(Version)) ? objectToSerialize : ((Version)objectToSerialize).ToString(fieldCount);
         }
 
         /// <inheritdoc />
         public virtual object Deserialize(Type targetType, object dataToDeserialize)
         {
-            if (!CanDeserialize(targetType, dataToDeserialize))
-            {
-                throw new SerializationException($"The provided data cannot be deserialized by this processor of type {nameof(VersionProcessor)}.");
-            }
+            this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
 
             switch (dataToDeserialize)
             {
@@ -73,7 +78,7 @@ namespace ImpossibleOdds.Serialization.Processors
             return
                 (dataToDeserialize != null) &&
                 typeof(Version).IsAssignableFrom(targetType) &&
-                ((dataToDeserialize is Version) || (dataToDeserialize is string));
+                (dataToDeserialize is Version or string);
         }
     }
 }

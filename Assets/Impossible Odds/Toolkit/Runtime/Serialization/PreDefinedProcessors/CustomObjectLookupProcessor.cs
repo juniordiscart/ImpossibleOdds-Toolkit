@@ -49,11 +49,14 @@ namespace ImpossibleOdds.Serialization.Processors
 			{
 				return null;
 			}
+			
+			ISerializableMember[] sourceMembers = SerializationUtilities.GetTypeMap(objectToSerialize.GetType()).GetUniqueSerializableMembers(Configuration.MemberAttribute);
+			IDictionary targetLookup = Configuration.CreateLookupInstance(sourceMembers.Length + 1); // Include capacity for type information.
 
-			InvokeOnSerializationCallback(objectToSerialize);
-			object serializedResult = Serialize(objectToSerialize.GetType(), objectToSerialize);
-			InvokeOnSerializedCallback(objectToSerialize);
-			return serializedResult;
+			InvokeOnSerializationCallback(objectToSerialize, targetLookup);
+			Serialize(objectToSerialize.GetType(), targetLookup);
+			InvokeOnSerializedCallback(objectToSerialize, targetLookup);
+			return targetLookup;
 		}
 
 		/// <inheritdoc />
@@ -73,7 +76,7 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public virtual void Deserialize(object deserializationTarget, object dataToDeserialize)
 		{
-			deserializationTarget.ThrowIfNull(nameof(deserializationTarget));
+			this.ThrowIfCantDeserializeToTarget(deserializationTarget, dataToDeserialize);
 
 			// If the source value is null, then there is little to do.
 			if (dataToDeserialize == null)
@@ -81,9 +84,9 @@ namespace ImpossibleOdds.Serialization.Processors
 				return;
 			}
 
-			InvokeOnDeserializationCallback(deserializationTarget);
+			InvokeOnDeserializationCallback(deserializationTarget, dataToDeserialize);
 			Deserialize(deserializationTarget, (IDictionary)dataToDeserialize);
-			InvokeOnDeserializedCallback(deserializationTarget);
+			InvokeOnDeserializedCallback(deserializationTarget, dataToDeserialize);
 		}
 
 		/// <inheritdoc />
@@ -91,7 +94,7 @@ namespace ImpossibleOdds.Serialization.Processors
 		{
 			// Either the object is null - which is accepted,
 			// or the object does not require class marking,
-			// or it requires class marking and it is class marked.
+			// or it requires class marking, and it is class marked.
 			return
 				(objectToSerialize == null) ||
 				!RequiresMarking ||
@@ -127,25 +130,23 @@ namespace ImpossibleOdds.Serialization.Processors
 			return deserializationTarget != null && CanDeserialize(deserializationTarget.GetType(), dataToDeserialize);
 		}
 
-		private IDictionary Serialize(Type sourceType, object source)
+		private void Serialize(object source, IDictionary targetLookup)
 		{
-			ISerializableMember[] sourceMembers = SerializationUtilities.GetTypeMap(sourceType).GetUniqueSerializableMembers(Configuration.MemberAttribute);
-			IDictionary processedValues = Configuration.CreateLookupInstance(sourceMembers.Length + 1); // Include capacity for type information.
-			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
+			ISerializableMember[] sourceMembers = SerializationUtilities.GetTypeMap(source.GetType()).GetUniqueSerializableMembers(Configuration.MemberAttribute);
+			DictionaryCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetLookup);
 
 			// Process the source key and value pairs.
 			if (ParallelProcessingEnabled && (sourceMembers.Length > 1))
 			{
-				object parallelLock = new object();
 				Parallel.ForEach(sourceMembers, sourceMember =>
 				{
 					object processedKey = Serializer.Serialize(Configuration.GetLookupKey(sourceMember), Definition);
 					object processedValue = Serializer.Serialize(sourceMember.GetValue(source), Definition);
-					lock (parallelLock)
+					lock (targetLookup)
 					{
-						if (!processedValues.Contains(processedKey))
+						if (!targetLookup.Contains(processedKey))
 						{
-							SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
+							SerializationUtilities.InsertInLookup(targetLookup, collectionInfo, processedKey, processedValue);
 						}
 					}
 				});
@@ -156,9 +157,9 @@ namespace ImpossibleOdds.Serialization.Processors
 				{
 					object processedKey = Serializer.Serialize(Configuration.GetLookupKey(sourceMember), Definition);
 					object processedValue = Serializer.Serialize(sourceMember.GetValue(source), Definition);
-					if (!processedValues.Contains(processedKey))
+					if (!targetLookup.Contains(processedKey))
 					{
-						SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
+						SerializationUtilities.InsertInLookup(targetLookup, collectionInfo, processedKey, processedValue);
 					}
 				});
 			}
@@ -166,10 +167,8 @@ namespace ImpossibleOdds.Serialization.Processors
 			// Include type information, if available.
 			if (SupportsTypeResolution)
 			{
-				TypeResolutionFeature.InsertTypeInData(sourceType, processedValues, Definition);
+				TypeResolutionFeature.InsertTypeInData(source.GetType(), targetLookup, Definition);
 			}
-
-			return processedValues;
 		}
 
 		private void Deserialize(object target, IDictionary source)
@@ -181,7 +180,6 @@ namespace ImpossibleOdds.Serialization.Processors
 
 			if (ParallelProcessingEnabled)
 			{
-				object parallelLock = new object();
 				Parallel.ForEach(targetMembers, targetMember =>
 				{
 					if (!ContainsKey(targetMember))
@@ -189,7 +187,8 @@ namespace ImpossibleOdds.Serialization.Processors
 						return;
 					}
 
-					lock (parallelLock) targetMember.SetValue(target, DeserializeMember(targetMember));
+					object deserializedMember = DeserializeMember(targetMember);
+					lock (target) targetMember.SetValue(target, deserializedMember);
 				});
 			}
 			else
@@ -223,7 +222,7 @@ namespace ImpossibleOdds.Serialization.Processors
 					throw new SerializationException($"The member '{targetMember.Member.Name}' is marked as required on type {targetMember.Member.DeclaringType.Name} but is not present in the source.");
 				}
 
-				Log.Warning("The source does not contain a value associated with key '{0}' for a target of type {1}.", key, target.GetType().Name);
+				Log.Warning($"The source does not contain a value associated with key '{key}' for a target of type {target.GetType().Name}.");
 				return false;
 			}
 
@@ -235,11 +234,9 @@ namespace ImpossibleOdds.Serialization.Processors
 				{
 					return result;
 				}
-				
-				Log.Error("TODO: inspect this");
 
 				// If the value is not allowed to be null, then quit.
-				if (SupportsRequiredValues && !RequiredValueFeature.IsValueValid(targetType, targetMember, result))
+				if (SupportsRequiredValues && !RequiredValueFeature.IsValueValid(targetType, targetMember, null))
 				{
 					throw new SerializationException($"The member '{targetMember.Member.Name}' is marked as required on type {targetMember.Member.DeclaringType.Name} but the value is null in the source.");
 				}

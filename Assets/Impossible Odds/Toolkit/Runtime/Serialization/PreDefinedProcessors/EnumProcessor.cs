@@ -1,110 +1,122 @@
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using ImpossibleOdds.Serialization.Caching;
 
 namespace ImpossibleOdds.Serialization.Processors
 {
-	/// <summary>
-	/// A (de)serialization processor for enum values. This includes potential alias values for the enum values.
-	/// </summary>
-	public class EnumProcessor : ISerializationProcessor, IDeserializationProcessor
-	{
-		private static readonly ConcurrentDictionary<Type, EnumSerializationReflectionMap> EnumTypeCache = new ConcurrentDictionary<Type, EnumSerializationReflectionMap>();
+    /// <summary>
+    /// A (de)serialization processor for enum values. This includes potential alias values for the enum values.
+    /// </summary>
+    public class EnumProcessor : ISerializationProcessor, IDeserializationProcessor
+    {
+        private static readonly ConcurrentDictionary<Type, EnumSerializationReflectionMap> EnumTypeCache = new ConcurrentDictionary<Type, EnumSerializationReflectionMap>();
+        
+        private static EnumSerializationReflectionMap GetEnumTypeCache(Type enumType)
+        {
+            enumType.ThrowIfNull(nameof(enumType));
 
-		public bool SupportsEnumAlias => AliasFeature != null;
+            if (!enumType.IsEnum)
+            {
+                throw new ArgumentException($"Type {enumType.Name} is not an enum.");
+            }
 
-		public ISerializationDefinition Definition { get; }
+            return EnumTypeCache.GetOrAdd(enumType, _ => new EnumSerializationReflectionMap(enumType));
+        }
 
-		/// <summary>
-		/// The enum alias feature to determine string-based representations of enum definitions.
-		/// </summary>
-		public IEnumAliasFeature AliasFeature { get; set; }
+        private string enumFormat = "G";
 
-		public EnumProcessor(ISerializationDefinition definition)
-		{
-			Definition = definition;
-		}
+        public bool SupportsEnumAlias => AliasFeature != null;
 
-		/// <inheritdoc />
-		public virtual object Serialize(object objectToSerialize)
-		{
-			this.ThrowIfCantSerialize(objectToSerialize);
+        public ISerializationDefinition Definition { get; }
 
-			Type sourceType = objectToSerialize.GetType();
-			EnumSerializationReflectionMap typeCache = GetEnumTypeCache(sourceType);
+        /// <summary>
+        /// The enum alias feature to determine string-based representations of enum definitions.
+        /// </summary>
+        public IEnumAliasFeature AliasFeature { get; set; }
 
-			try
-			{
-				if (SupportsEnumAlias && typeCache.PrefersStringBasedRepresentation(AliasFeature) && Definition.SupportedTypes.Contains(typeof(string)))
-				{
-					return typeCache.GetStringRepresentationFor(objectToSerialize as Enum, AliasFeature);
-				}
+        public string Format
+        {
+            get => enumFormat;
+            set
+            {
+                enumFormat = value switch
+                {
+                    null or "" => "G",
+                    "G" or "g" or "F" or "f" or "D" or "d" or "X" or "x" => value,
+                    _ => throw new ArgumentOutOfRangeException($"{nameof(Format)} is expected to be one of the following values: null, \"\", 'G', 'g', 'F', 'f', 'D', 'd', 'X' or 'x'.")
+                };
+            }
+        }
 
-				// Exceptions may be triggered if the underlying value of the enum is not supported.
-				return Serializer.Serialize(Convert.ChangeType(objectToSerialize, Enum.GetUnderlyingType(sourceType)), Definition);
-			}
-			catch (Exception e)
-			{
-				throw new SerializationException($"Failed to serialize an enum value of type {sourceType.Name} to its underlying type of {Enum.GetUnderlyingType(sourceType).Name}", e);
-			}
-		}
+        public EnumProcessor(ISerializationDefinition definition)
+        {
+            definition.ThrowIfNull(nameof(definition));
+            Definition = definition;
+        }
 
-		/// <inheritdoc />
-		public virtual object Deserialize(Type targetType, object dataToDeserialize)
-		{
-			this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
+        /// <inheritdoc />
+        public virtual object Serialize(object objectToSerialize)
+        {
+            this.ThrowIfCantSerialize(objectToSerialize);
 
-			// If the data is an integral numeric value, try to convert it to a valid value of the enum.
-			if (SerializationUtilities.IsNumericIntegralType(dataToDeserialize.GetType()) || (dataToDeserialize is Enum))
-			{
-				return Enum.ToObject(targetType, dataToDeserialize);
-			}
+            Type sourceType = objectToSerialize.GetType();
+            EnumSerializationReflectionMap typeCache = GetEnumTypeCache(sourceType);
 
-			string strValue = (string)dataToDeserialize;
+            try
+            {
+                if (SupportsEnumAlias && typeCache.PrefersStringBasedRepresentation(AliasFeature) && Definition.SupportedTypes.Contains(typeof(string)))
+                {
+                    return typeCache.GetStringRepresentationFor(objectToSerialize as Enum, AliasFeature, Format);
+                }
 
-			try
-			{
-				return
-					SupportsEnumAlias ?
-						GetEnumTypeCache(targetType).GetEnumValueFor(strValue, AliasFeature) :
-						Enum.Parse(targetType, strValue);
-			}
-			catch (Exception e)
-			{
-				throw new SerializationException($"Failed to deserialize the value '{strValue}' to a known value of Enum {targetType.Name}", e);
-			}
-		}
+                // Exceptions may be triggered if the underlying value of the enum is not supported.
+                return Serializer.Serialize(Convert.ChangeType(objectToSerialize, Enum.GetUnderlyingType(sourceType)), Definition);
+            }
+            catch (Exception e)
+            {
+                throw new SerializationException($"Failed to serialize an enum value of type {sourceType.Name} to its underlying type of {Enum.GetUnderlyingType(sourceType).Name}", e);
+            }
+        }
 
-		/// <inheritdoc />
-		public virtual bool CanSerialize(object objectToSerialize)
-		{
-			return
-				(objectToSerialize != null) &&
-				objectToSerialize.GetType().IsEnum;
-		}
+        /// <inheritdoc />
+        public virtual object Deserialize(Type targetType, object dataToDeserialize)
+        {
+            this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
 
-		/// <inheritdoc />
-		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
-		{
-			targetType.ThrowIfNull(nameof(targetType));
+            // If the data is an integral numeric value, try to convert it to a valid value of the enum.
+            if (SerializationUtilities.IsNumericIntegralType(dataToDeserialize.GetType()) || (dataToDeserialize is Enum))
+            {
+                return Enum.ToObject(targetType, dataToDeserialize);
+            }
 
-			return
-				targetType.IsEnum &&
-				(dataToDeserialize != null) &&
-				(SerializationUtilities.IsNumericIntegralType(dataToDeserialize.GetType()) || (dataToDeserialize is string) || (dataToDeserialize is Enum));
-		}
+            string strValue = (string)dataToDeserialize;
 
-		private EnumSerializationReflectionMap GetEnumTypeCache(Type enumType)
-		{
-			enumType.ThrowIfNull(nameof(enumType));
+            try
+            {
+                return
+                    SupportsEnumAlias ? GetEnumTypeCache(targetType).GetEnumValueFor(strValue, AliasFeature) : Enum.Parse(targetType, strValue);
+            }
+            catch (Exception e)
+            {
+                throw new SerializationException($"Failed to deserialize the value '{strValue}' to a known value of Enum {targetType.Name}", e);
+            }
+        }
 
-			if (!enumType.IsEnum)
-			{
-				throw new ArgumentException($"The type {enumType.Name} is not an enum.");
-			}
+        /// <inheritdoc />
+        public virtual bool CanSerialize(object objectToSerialize)
+        {
+            return (objectToSerialize != null) && objectToSerialize.GetType().IsEnum;
+        }
 
-			return EnumTypeCache.GetOrAdd(enumType, (type) => new EnumSerializationReflectionMap(enumType));
-		}
-	}
+        /// <inheritdoc />
+        public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
+        {
+            targetType.ThrowIfNull(nameof(targetType));
+
+            return
+                targetType.IsEnum &&
+                (dataToDeserialize != null) &&
+                (SerializationUtilities.IsNumericIntegralType(dataToDeserialize.GetType()) || (dataToDeserialize is string) || (dataToDeserialize is Enum));
+        }
+    }
 }

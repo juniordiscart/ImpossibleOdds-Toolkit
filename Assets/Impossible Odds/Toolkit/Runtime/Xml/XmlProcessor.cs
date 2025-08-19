@@ -105,7 +105,7 @@ namespace ImpossibleOdds.Xml
 		}
 
 		/// <summary>
-		/// Deserialize the XML string to an XDocument value which can be used to to further process to a custom object.
+		/// Deserialize the XML string to an XDocument value which can be used to further process to a custom object.
 		/// </summary>
 		/// <param name="reader">A reader that will read an XML string.</param>
 		/// <param name="options"></param>
@@ -465,10 +465,9 @@ namespace ImpossibleOdds.Xml
 
 			// The type should define an XML root attribute.
 			Type objectType = objectToSerialize.GetType();
-			XmlObjectAttribute rootInfo = Attribute.GetCustomAttribute(objectType, typeof(XmlObjectAttribute), false) as XmlObjectAttribute;
-			if (rootInfo == null)
+			if (Attribute.GetCustomAttribute(objectType, typeof(XmlObjectAttribute), false) is not XmlObjectAttribute rootInfo)
 			{
-				throw new XmlException("The object to serialize of type {0} has not defined an {1} attribute.", objectType.Name, nameof(XmlObjectAttribute));
+				throw new XmlException($"The object to serialize of type {objectType.Name} has not defined an {nameof(XmlObjectAttribute)} attribute.");
 			}
 
 			// Serialize the object and define the name of the root element.
@@ -582,7 +581,7 @@ namespace ImpossibleOdds.Xml
 					node = null;
 					break;
 				default:
-					Log.Warning("Xml node type {0} is not supported.", reader.NodeType.DisplayName());
+					Log.Warning($"Xml node type {reader.NodeType.DisplayName()} is not supported.");
 					node = null;
 					break;
 			}
@@ -617,7 +616,7 @@ namespace ImpossibleOdds.Xml
 		{
 			if (reader.NodeType != XmlNodeType.XmlDeclaration)
 			{
-				throw new XmlException("A declaration node is expected. Received: {0}.", reader.NodeType.DisplayName());
+				throw new XmlException($"A declaration node is expected. Received: {reader.NodeType.DisplayName()}.");
 			}
 
 			string version = reader.MoveToAttribute("version") ? reader.Value : string.Empty;
@@ -632,7 +631,7 @@ namespace ImpossibleOdds.Xml
 		{
 			if (reader.NodeType != XmlNodeType.Element)
 			{
-				throw new XmlException("An element node is expected. Received: {0}.", reader.NodeType.DisplayName());
+				throw new XmlException($"An element node is expected. Received: {reader.NodeType.DisplayName()}.");
 			}
 
 			XElement element = new XElement(reader.Name);
@@ -673,7 +672,7 @@ namespace ImpossibleOdds.Xml
 		{
 			if (reader.NodeType != XmlNodeType.Element)
 			{
-				throw new XmlException("An element node is expected. Received: {0}.", reader.NodeType.DisplayName());
+				throw new XmlException($"An element node is expected. Received: {reader.NodeType.DisplayName()}.");
 			}
 
 			XElement element = new XElement(reader.Name);
@@ -727,7 +726,7 @@ namespace ImpossibleOdds.Xml
 		{
 			if (reader.NodeType != XmlNodeType.Element)
 			{
-				throw new XmlException("An element node is expected. Received: {0}.", reader.NodeType.DisplayName());
+				throw new XmlException($"An element node is expected. Received: {reader.NodeType.DisplayName()}.");
 			}
 
 			// Return already if it's empty, e.g. <element />
@@ -793,19 +792,21 @@ namespace ImpossibleOdds.Xml
 		{
 			foreach (ISerializableMember member in members)
 			{
-				if ((member.Attribute is TAttribute parameter))
+				if ((member.Attribute is not TAttribute parameter))
 				{
-					string memberKey = parameter.Key;
+					continue;
+				}
+				
+				string memberKey = parameter.Key;
 
-					if (memberKey.IsNullOrEmpty())
-					{
-						memberKey = member.Member.Name;
-					}
+				if (memberKey.IsNullOrEmpty())
+				{
+					memberKey = member.Member.Name;
+				}
 
-					if (string.Equals(key, memberKey))
-					{
-						return true;
-					}
+				if (string.Equals(key, memberKey))
+				{
+					return true;
 				}
 			}
 

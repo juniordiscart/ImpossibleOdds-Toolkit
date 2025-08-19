@@ -5,62 +5,49 @@ namespace ImpossibleOdds.Xml.Processors
 {
 	public class XmlVector3AttributesProcessor : UnityPrimitiveXmlAttributesProcessor<Vector3>
 	{
-		private const string X = "x";
-		private const string Y = "y";
-		private const string Z = "z";
+		private static readonly string[] XYZ = {"x", "y", "z"};
 
 		public XmlVector3AttributesProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
 
+		public override string[] Keys => XYZ;
+
 		protected override XElement Serialize(Vector3 value)
 		{
 			XElement xmlElement = new XElement(string.Empty);
-			xmlElement.SetAttributeValue(X, value.x);
-			xmlElement.SetAttributeValue(Y, value.y);
-			xmlElement.SetAttributeValue(Z, value.z);
+			xmlElement.SetAttributeValue(XYZ[0], value.x);
+			xmlElement.SetAttributeValue(XYZ[1], value.y);
+			xmlElement.SetAttributeValue(XYZ[2], value.z);
 			return xmlElement;
 		}
 
 		protected override Vector3 Deserialize(XElement xmlData)
 		{
 			return new Vector3(
-				float.Parse(xmlData.Attribute(X).Value),
-				float.Parse(xmlData.Attribute(Y).Value),
-				float.Parse(xmlData.Attribute(Z).Value)
+				float.Parse(xmlData.Attribute(XYZ[0]).Value),
+				float.Parse(xmlData.Attribute(XYZ[1]).Value),
+				float.Parse(xmlData.Attribute(XYZ[2]).Value)
 			);
-		}
-
-		protected override bool CanSerialize(Vector3 primitive)
-		{
-			return true;
-		}
-
-		protected override bool CanDeserialize(XElement element)
-		{
-			return
-				(element.Attribute(X) != null) &&
-				(element.Attribute(Y) != null) &&
-				(element.Attribute(Z) != null);
 		}
 	}
 
 	public class XmlVector3ElementsProcessor : UnityPrimitiveXmlElementsProcessor<Vector3>
 	{
-		private const string X = "x";
-		private const string Y = "y";
-		private const string Z = "z";
+		private static readonly string[] XYZ = {"x", "y", "z"};
 
 		public XmlVector3ElementsProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
 
+		public override string[] Keys => XYZ;
+
 		protected override XElement Serialize(Vector3 value)
 		{
 			XElement xElement = new XElement(string.Empty);
-			xElement.Add(new XElement(X, value.x));
-			xElement.Add(new XElement(Y, value.y));
-			xElement.Add(new XElement(Z, value.z));
+			xElement.Add(new XElement(XYZ[0], value.x));
+			xElement.Add(new XElement(XYZ[1], value.y));
+			xElement.Add(new XElement(XYZ[2], value.z));
 
 			return xElement;
 		}
@@ -68,23 +55,10 @@ namespace ImpossibleOdds.Xml.Processors
 		protected override Vector3 Deserialize(XElement xmlData)
 		{
 			return new Vector3(
-				float.Parse(xmlData.Element(X).Value),
-				float.Parse(xmlData.Element(Y).Value),
-				float.Parse(xmlData.Element(Z).Value)
+				float.Parse(xmlData.Element(XYZ[0]).Value),
+				float.Parse(xmlData.Element(XYZ[1]).Value),
+				float.Parse(xmlData.Element(XYZ[2]).Value)
 			);
-		}
-
-		protected override bool CanSerialize(Vector3 primitive)
-		{
-			return true;
-		}
-
-		protected override bool CanDeserialize(XElement element)
-		{
-			return
-				(element.Element(X) != null) &&
-				(element.Element(Y) != null) &&
-				(element.Element(Z) != null);
 		}
 	}
 

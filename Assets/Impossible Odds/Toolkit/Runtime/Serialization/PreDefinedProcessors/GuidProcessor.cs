@@ -7,41 +7,51 @@ namespace ImpossibleOdds.Serialization.Processors
 	/// </summary>
 	public class GuidProcessor : ISerializationProcessor, IDeserializationProcessor
 	{
+		private string guidFormat = "D";
+		
 		public ISerializationDefinition Definition { get; }
 
 		/// <summary>
 		/// The format to serialize Guid values.
-		/// Default format is 'D'.
 		/// </summary>
-		public string Format { get; set; }
+		public string Format
+		{
+			get => guidFormat;
+			set
+			{
+				switch (value)
+				{
+					case null:
+					case "D":
+					case "N":
+					case "B":
+					case "P":
+					case "X":
+						guidFormat = value;
+						break;
+					default:
+						throw new ArgumentOutOfRangeException($"{nameof(Format)} is expected to be one of the following values: null, \"\", 'D', 'N', 'B', 'P' or 'X'.");
+				}
+			}
+		}
 
-		public GuidProcessor(ISerializationDefinition definition, string format = "D")
+		public GuidProcessor(ISerializationDefinition definition)
 		{
 			definition.ThrowIfNull(nameof(definition));
 			Definition = definition;
-			Format = format;
 		}
 
 		/// <inheritdoc />
 		public virtual object Serialize(object objectToSerialize)
 		{
 			this.ThrowIfCantSerialize(objectToSerialize);
-
-			// If the serialization definition supports the Guid-type, then just return already.
-			// Otherwise, try to convert it to a string value.
-			return
-				Definition.SupportedTypes.Contains(typeof(Guid)) ?
-					objectToSerialize :
-					((Guid)objectToSerialize).ToString(Format);
+			return Definition.SupportedTypes.Contains(typeof(Guid)) ? objectToSerialize : ((Guid)objectToSerialize).ToString(Format);
 		}
 
 		/// <inheritdoc />
 		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
-			if (!CanDeserialize(targetType, dataToDeserialize))
-			{
-				throw new SerializationException($"The provided data cannot be deserialized by this processor of type {nameof(GuidProcessor)}.");
-			}
+			this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
 
 			switch (dataToDeserialize)
 			{
@@ -65,7 +75,7 @@ namespace ImpossibleOdds.Serialization.Processors
 		public virtual bool CanSerialize(object objectToSerialize)
 		{
 			return
-				objectToSerialize is Guid &&
+				(objectToSerialize is Guid) &&
 				(Definition.SupportedTypes.Contains(typeof(Guid)) || Definition.SupportedTypes.Contains(typeof(string)));
 		}
 
@@ -77,7 +87,7 @@ namespace ImpossibleOdds.Serialization.Processors
 			return
 				(dataToDeserialize != null) &&
 				typeof(Guid).IsAssignableFrom(targetType) &&
-				((dataToDeserialize is Guid) || (dataToDeserialize is string));
+				(dataToDeserialize is Guid or string);
 		}
 	}
 }

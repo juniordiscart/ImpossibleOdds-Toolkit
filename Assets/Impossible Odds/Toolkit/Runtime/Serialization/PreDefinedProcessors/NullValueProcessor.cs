@@ -20,15 +20,9 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
-			if (!CanDeserialize(targetType, dataToDeserialize))
-			{
-				throw new SerializationException($"The provided data cannot be deserialized by this processor of type {nameof(NullValueProcessor)}.");
-			}
+			this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
 
-			return
-				targetType.IsValueType ?
-				Activator.CreateInstance(targetType) :
-				null;
+			return targetType.IsValueType ? SerializationUtilities.CreateInstance(targetType) : null;
 		}
 
 		/// <inheritdoc />

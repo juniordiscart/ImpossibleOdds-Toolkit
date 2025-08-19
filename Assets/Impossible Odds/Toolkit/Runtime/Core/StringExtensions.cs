@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ImpossibleOdds
 {
@@ -10,7 +11,7 @@ namespace ImpossibleOdds
 		/// <param name="argument">The string to check for null or emptiness.</param>
 		/// <param name="argumentName">The name of the string in case it is null or empty.</param>
 		/// <returns>Returns the string.</returns>
-		public static string ThrowIfNullOrEmpty(this string argument, string argumentName)
+		public static string ThrowIfNullOrEmpty([NotNull] this string argument, string argumentName)
 		{
 			if (string.IsNullOrEmpty(argument))
 			{
@@ -26,7 +27,7 @@ namespace ImpossibleOdds
 		/// <param name="argument">The string to check for null or whitespaces.</param>
 		/// <param name="argumentName">The name of the string in case it is null or just whitespace.</param>
 		/// <returns>Returns the string.</returns>
-		public static string ThrowIfNullOrWhitespace(this string argument, string argumentName)
+		public static string ThrowIfNullOrWhitespace([NotNull] this string argument, string argumentName)
 		{
 			if (string.IsNullOrWhiteSpace(argument))
 			{

@@ -14,7 +14,7 @@ namespace ImpossibleOdds.Xml.Processors
 		public ISerializationDefinition Definition { get; }
 
 		public IParallelProcessingFeature ParallelProcessingFeature { get; set; }
-		public bool SupportsParallelProcessing => ParallelProcessingFeature != null;
+		private bool ParallelProcessingEnabled => ParallelProcessingFeature is { Enabled: true };
 
 		public XmlLookupProcessor(XmlSerializationDefinition definition)
 		{
@@ -37,12 +37,12 @@ namespace ImpossibleOdds.Xml.Processors
 			XElement lookupRoot = new XElement("LookupElement");   // Create default-named root.
 			IDictionary sourceValues = (IDictionary)objectToSerialize;
 
-			if (SupportsParallelProcessing && ParallelProcessingFeature.Enabled && (sourceValues.Count > 1))
+			if (ParallelProcessingEnabled && (sourceValues.Count > 1))
 			{
-				object parallelLock = new object();
 				Parallel.ForEach(sourceValues.Cast<DictionaryEntry>(), entry =>
 				{
-					lock (parallelLock) lookupRoot.Add(SerializeMember(entry));
+					XElement serializedMember = SerializeMember(entry);
+					lock (lookupRoot) lookupRoot.Add(serializedMember);
 				});
 			}
 			else
@@ -60,7 +60,7 @@ namespace ImpossibleOdds.Xml.Processors
 				object processedKey = Serializer.Serialize(sourceValue.Key, Definition);
 				object processedValue = Serializer.Serialize(sourceValue.Value, Definition);
 
-				if (!(processedKey is string))
+				if (processedKey is not string)
 				{
 					processedKey = Convert.ToString(processedKey);
 				}
@@ -85,6 +85,8 @@ namespace ImpossibleOdds.Xml.Processors
 		/// <inheritdoc />
 		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
+			this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
+			
 			// If the value is null, it can just return already.
 			if (dataToDeserialize == null)
 			{
@@ -99,6 +101,8 @@ namespace ImpossibleOdds.Xml.Processors
 		/// <inheritdoc />
 		public virtual void Deserialize(object deserializationTarget, object dataToDeserialize)
 		{
+			this.ThrowIfCantDeserializeToTarget(deserializationTarget, dataToDeserialize);
+			
 			// If there is nothing to do...
 			if (dataToDeserialize == null)
 			{
@@ -107,18 +111,17 @@ namespace ImpossibleOdds.Xml.Processors
 
 			XElement sourceXml = (XElement)dataToDeserialize;
 			IDictionary targetValues = (IDictionary)deserializationTarget;
-			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetValues);
+			DictionaryCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetValues);
 
-			if (SupportsParallelProcessing && ParallelProcessingFeature.Enabled && (targetValues.Count > 1))
+			if (ParallelProcessingEnabled && (targetValues.Count > 1))
 			{
-				object parallelLock = new object();
 				Parallel.ForEach(sourceXml.Elements(), xmlEntry =>
 				{
 					// If the value has any child elements or attributes, then the entry itself is deserialized, otherwise just it value is chosen.
 					object processedKey = Serializer.Deserialize(collectionInfo.keyType, xmlEntry.Name.LocalName, Definition);
-					object processedValue = (xmlEntry.HasElements || xmlEntry.HasAttributes) ? xmlEntry : (object)xmlEntry.Value;
+					object processedValue = (xmlEntry.HasElements || xmlEntry.HasAttributes) ? xmlEntry : xmlEntry.Value;
 					processedValue = Serializer.Deserialize(collectionInfo.valueType, processedValue, Definition);
-					lock (parallelLock) SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
+					lock (targetValues) SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
 				});
 			}
 			else
@@ -127,7 +130,7 @@ namespace ImpossibleOdds.Xml.Processors
 				{
 					// If the value has any child elements or attributes, then the entry itself is deserialized, otherwise just it value is chosen.
 					object processedKey = Serializer.Deserialize(collectionInfo.keyType, xmlEntry.Name.LocalName, Definition);
-					object processedValue = (xmlEntry.HasElements || xmlEntry.HasAttributes) ? xmlEntry : (object)xmlEntry.Value;
+					object processedValue = (xmlEntry.HasElements || xmlEntry.HasAttributes) ? xmlEntry : xmlEntry.Value;
 					processedValue = Serializer.Deserialize(collectionInfo.valueType, processedValue, Definition);
 					SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
 				}
@@ -137,9 +140,7 @@ namespace ImpossibleOdds.Xml.Processors
 		/// <inheritdoc />
 		public virtual bool CanSerialize(object objectToSerialize)
 		{
-			return
-				(objectToSerialize == null) ||
-				(objectToSerialize is IDictionary);
+			return objectToSerialize is null or IDictionary;
 		}
 
 		/// <inheritdoc />
@@ -148,9 +149,7 @@ namespace ImpossibleOdds.Xml.Processors
 			targetType.ThrowIfNull(nameof(targetType));
 
 			// Check if the target implements the general IDictionary interface, if not, we can just skip altogether.
-			return
-				typeof(IDictionary).IsAssignableFrom(targetType) &&
-				((dataToDeserialize == null) || (dataToDeserialize is IDictionary));
+			return typeof(IDictionary).IsAssignableFrom(targetType) && dataToDeserialize is null or IDictionary;
 		}
 		
 		/// <inheritdoc />

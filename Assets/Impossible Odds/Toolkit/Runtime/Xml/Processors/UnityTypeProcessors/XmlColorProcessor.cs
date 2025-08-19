@@ -5,68 +5,52 @@ namespace ImpossibleOdds.Xml.Processors
 {
 	public class XmlColorAttributesProcessor : UnityPrimitiveXmlAttributesProcessor<Color>
 	{
-		private const string R = "r";
-		private const string G = "g";
-		private const string B = "b";
-		private const string A = "a";
+		private static readonly string[] RGBA = {"r", "g", "b", "a"};
 
 		public XmlColorAttributesProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
 
+		public override string[] Keys => RGBA;
+
 		protected override XElement Serialize(Color value)
 		{
 			XElement xmlElement = new XElement(string.Empty);
-			xmlElement.SetAttributeValue(R, value.r);
-			xmlElement.SetAttributeValue(G, value.g);
-			xmlElement.SetAttributeValue(B, value.b);
-			xmlElement.SetAttributeValue(A, value.a);
+			xmlElement.SetAttributeValue(RGBA[0], value.r);
+			xmlElement.SetAttributeValue(RGBA[1], value.g);
+			xmlElement.SetAttributeValue(RGBA[2], value.b);
+			xmlElement.SetAttributeValue(RGBA[3], value.a);
 			return xmlElement;
 		}
 
 		protected override Color Deserialize(XElement xmlData)
 		{
 			return new Color(
-				float.Parse(xmlData.Attribute(R).Value),
-				float.Parse(xmlData.Attribute(G).Value),
-				float.Parse(xmlData.Attribute(B).Value),
-				float.Parse(xmlData.Attribute(A).Value)
+				float.Parse(xmlData.Attribute(RGBA[0]).Value),
+				float.Parse(xmlData.Attribute(RGBA[1]).Value),
+				float.Parse(xmlData.Attribute(RGBA[2]).Value),
+				float.Parse(xmlData.Attribute(RGBA[3]).Value)
 			);
-		}
-
-		protected override bool CanSerialize(Color primitive)
-		{
-			return true;
-		}
-
-		protected override bool CanDeserialize(XElement element)
-		{
-			return
-				(element.Attribute(R) != null) &&
-				(element.Attribute(G) != null) &&
-				(element.Attribute(B) != null) &&
-				(element.Attribute(A) != null);
 		}
 	}
 
 	public class XmlColorElementsProcessor : UnityPrimitiveXmlElementsProcessor<Color>
 	{
-		private const string R = "r";
-		private const string G = "g";
-		private const string B = "b";
-		private const string A = "a";
+		private static readonly string[] RGBA = {"r", "g", "b", "a"};
 
 		public XmlColorElementsProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
 
+		public override string[] Keys => RGBA;
+
 		protected override XElement Serialize(Color value)
 		{
 			XElement xElement = new XElement(string.Empty);
-			xElement.Add(new XElement(R, value.r));
-			xElement.Add(new XElement(G, value.g));
-			xElement.Add(new XElement(B, value.b));
-			xElement.Add(new XElement(A, value.a));
+			xElement.Add(new XElement(RGBA[0], value.r));
+			xElement.Add(new XElement(RGBA[1], value.g));
+			xElement.Add(new XElement(RGBA[2], value.b));
+			xElement.Add(new XElement(RGBA[3], value.a));
 
 			return xElement;
 		}
@@ -74,25 +58,11 @@ namespace ImpossibleOdds.Xml.Processors
 		protected override Color Deserialize(XElement xmlData)
 		{
 			return new Color(
-				float.Parse(xmlData.Element(R).Value),
-				float.Parse(xmlData.Element(G).Value),
-				float.Parse(xmlData.Element(B).Value),
-				float.Parse(xmlData.Element(A).Value)
+				float.Parse(xmlData.Element(RGBA[0]).Value),
+				float.Parse(xmlData.Element(RGBA[1]).Value),
+				float.Parse(xmlData.Element(RGBA[2]).Value),
+				float.Parse(xmlData.Element(RGBA[3]).Value)
 			);
-		}
-
-		protected override bool CanSerialize(Color primitive)
-		{
-			return true;
-		}
-
-		protected override bool CanDeserialize(XElement element)
-		{
-			return
-				(element.Element(R) != null) &&
-				(element.Element(G) != null) &&
-				(element.Element(B) != null) &&
-				(element.Element(A) != null);
 		}
 	}
 

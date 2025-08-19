@@ -6,22 +6,11 @@ namespace ImpossibleOdds.Serialization.Processors
 {
 	public class QuaternionSequenceProcessor : UnityPrimitiveSequenceProcessor<Quaternion>
 	{
-		private const int Size = 4;
-
 		public QuaternionSequenceProcessor(ISerializationDefinition definition, ISequenceSerializationConfiguration configuration)
 		: base(definition, configuration)
 		{ }
 
-		/// <inheritdoc />
-		public override bool CanDeserialize(Type targetType, object dataToDeserialize)
-		{
-			if (!base.CanDeserialize(targetType, dataToDeserialize))
-			{
-				return false;
-			}
-
-			return (dataToDeserialize is IList { Count: Size });
-		}
+		public override int Size => 4;
 
 		protected override Quaternion Deserialize(IList sequenceData)
 		{
@@ -45,46 +34,31 @@ namespace ImpossibleOdds.Serialization.Processors
 
 	public class QuaternionLookupProcessor : UnityPrimitiveLookupProcessor<Quaternion>
 	{
-		private const string X = "x";
-		private const string Y = "y";
-		private const string Z = "z";
-		private const string W = "w";
+		private static readonly string[] XYZW = { "x", "y", "z", "w" };
 
 		public QuaternionLookupProcessor(ISerializationDefinition definition, ILookupSerializationConfiguration configuration)
 		: base(definition, configuration)
 		{ }
 
-		/// <inheritdoc />
-		public override bool CanDeserialize(Type targetType, object dataToDeserialize)
-		{
-			if (!base.CanDeserialize(targetType, dataToDeserialize))
-			{
-				return false;
-			}
-
-			return
-				(dataToDeserialize is IDictionary lookUp) &&
-				lookUp.Contains(X) && lookUp.Contains(Y) &&
-				lookUp.Contains(Z) && lookUp.Contains(W);
-		}
+		public override string[] Keys => XYZW;
 
 		protected override IDictionary Serialize(Quaternion value)
 		{
 			IDictionary result = Configuration.CreateLookupInstance(4);
-			result.Add(Serializer.Serialize(X, Definition), Serializer.Serialize(value.x, Definition));
-			result.Add(Serializer.Serialize(Y, Definition), Serializer.Serialize(value.y, Definition));
-			result.Add(Serializer.Serialize(Z, Definition), Serializer.Serialize(value.z, Definition));
-			result.Add(Serializer.Serialize(W, Definition), Serializer.Serialize(value.w, Definition));
+			result.Add(Serializer.Serialize(XYZW[0], Definition), Serializer.Serialize(value.x, Definition));
+			result.Add(Serializer.Serialize(XYZW[1], Definition), Serializer.Serialize(value.y, Definition));
+			result.Add(Serializer.Serialize(XYZW[2], Definition), Serializer.Serialize(value.z, Definition));
+			result.Add(Serializer.Serialize(XYZW[3], Definition), Serializer.Serialize(value.w, Definition));
 			return result;
 		}
 
 		protected override Quaternion Deserialize(IDictionary lookupData)
 		{
 			return new Quaternion(
-				Convert.ToSingle(lookupData[X]),
-				Convert.ToSingle(lookupData[Y]),
-				Convert.ToSingle(lookupData[Z]),
-				Convert.ToSingle(lookupData[W]));
+				Convert.ToSingle(lookupData[XYZW[0]]),
+				Convert.ToSingle(lookupData[XYZW[1]]),
+				Convert.ToSingle(lookupData[XYZW[2]]),
+				Convert.ToSingle(lookupData[XYZW[3]]));
 		}
 	}
 

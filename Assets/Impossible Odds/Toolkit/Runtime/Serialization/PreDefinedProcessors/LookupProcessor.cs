@@ -11,13 +11,10 @@ namespace ImpossibleOdds.Serialization.Processors
 	/// </summary>
 	public class LookupProcessor : ISerializationProcessor, IDeserializationToTargetProcessor
 	{
-		public bool ParallelProcessingEnabled => ParallelProcessingFeature is { Enabled: true};
-
 		public IParallelProcessingFeature ParallelProcessingFeature { get; set; }
-
 		public ISerializationDefinition Definition { get; }
-
 		public ILookupSerializationConfiguration Configuration { get; }
+		private bool ParallelProcessingEnabled => ParallelProcessingFeature is { Enabled: true};
 
 		public LookupProcessor(ISerializationDefinition definition, ILookupSerializationConfiguration configuration)
 		{
@@ -43,16 +40,15 @@ namespace ImpossibleOdds.Serialization.Processors
 			// and is accepted by the underlying type restrictions of the result collection.
 			IDictionary sourceValues = (IDictionary)objectToSerialize;
 			IDictionary processedValues = Configuration.CreateLookupInstance(sourceValues.Count);
-			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
+			DictionaryCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
 
 			if (ParallelProcessingEnabled)
 			{
-				object parallelLock = new object();
 				Parallel.ForEach(sourceValues.Cast<DictionaryEntry>(), entry =>
 				{
 					object processedKey = Serializer.Serialize(entry.Key, Definition);
 					object processedValue = Serializer.Serialize(entry.Value, Definition);
-					lock (parallelLock) SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
+					lock (processedValues) SerializationUtilities.InsertInLookup(processedValues, collectionInfo, processedKey, processedValue);
 				});
 			}
 			else
@@ -71,6 +67,8 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
+			this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
+			
 			// If the value is null, we can just return already.
 			if (dataToDeserialize == null)
 			{
@@ -85,6 +83,8 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public virtual void Deserialize(object deserializationTarget, object dataToDeserialize)
 		{
+			this.ThrowIfCantDeserializeToTarget(deserializationTarget, dataToDeserialize);
+			
 			// If there is nothing to do...
 			if (dataToDeserialize == null)
 			{
@@ -93,16 +93,15 @@ namespace ImpossibleOdds.Serialization.Processors
 
 			IDictionary sourceValues = (IDictionary)dataToDeserialize;
 			IDictionary targetValues = (IDictionary)deserializationTarget;
-			LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetValues);
+			DictionaryCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetValues);
 
 			if (ParallelProcessingEnabled && (sourceValues.Count > 1))
 			{
-				object parallelLock = new object();
 				Parallel.ForEach(sourceValues.Cast<DictionaryEntry>(), entry =>
 				{
 					object processedKey = Serializer.Deserialize(collectionInfo.keyType, entry.Key, Definition);
 					object processedValue = Serializer.Deserialize(collectionInfo.valueType, entry.Value, Definition);
-					lock (parallelLock) SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
+					lock (targetValues) SerializationUtilities.InsertInLookup(targetValues, collectionInfo, processedKey, processedValue);
 				});
 			}
 			else
@@ -119,9 +118,7 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public virtual bool CanSerialize(object objectToSerialize)
 		{
-			return
-				(objectToSerialize == null) ||
-				(objectToSerialize is IDictionary);
+			return objectToSerialize is null or IDictionary;
 		}
 
 		/// <inheritdoc />
@@ -130,15 +127,13 @@ namespace ImpossibleOdds.Serialization.Processors
 			targetType.ThrowIfNull(nameof(targetType));
 
 			// Check if the target implements the general IDictionary interface, if not, we can just skip altogether.
-			return
-				typeof(IDictionary).IsAssignableFrom(targetType) &&
-				((dataToDeserialize == null) || (dataToDeserialize is IDictionary));
+			return typeof(IDictionary).IsAssignableFrom(targetType) && (dataToDeserialize is null or IDictionary);
 		}
 		
 		/// <inheritdoc />
 		public bool CanDeserialize(object deserializationTarget, object dataToDeserialize)
 		{
-			return deserializationTarget != null && CanDeserialize(deserializationTarget.GetType(), dataToDeserialize);
+			return (deserializationTarget != null) && CanDeserialize(deserializationTarget.GetType(), dataToDeserialize);
 		}
 	}
 }

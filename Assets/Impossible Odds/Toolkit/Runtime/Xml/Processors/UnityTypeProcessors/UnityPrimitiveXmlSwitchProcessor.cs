@@ -52,30 +52,17 @@ namespace ImpossibleOdds.Xml.Processors
 		/// <inheritdoc />
 		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
-			// Depending whether the element has any children, decide how to process the data,
-			// regardless of how the data prefers to be serialized.
-			XElement element = (XElement)dataToDeserialize;
-			if (element.HasElements)
+			return ProcessingMethod switch
 			{
-				return ElementsProcessor.Deserialize(targetType, dataToDeserialize);
-			}
-
-			if (element.HasAttributes)
-			{
-				return AttributesProcessor.Deserialize(targetType, dataToDeserialize);
-			}
-
-			throw new SerializationException($"Unsupported data of type {dataToDeserialize.GetType().Name} to deserialize into an instance of type {typeof(TPrimitive).Name}.");
+				XmlPrimitiveProcessingMethod.Attributes => AttributesProcessor.Deserialize(targetType, dataToDeserialize),
+				XmlPrimitiveProcessingMethod.Elements => ElementsProcessor.Deserialize(targetType, dataToDeserialize),
+				_ => throw new SerializationException($"Unsupported processing method ('{ProcessingMethod.DisplayName()}') to deserialize the value.")
+			};
 		}
 
 		/// <inheritdoc />
 		public virtual bool CanSerialize(object objectToSerialize)
 		{
-			if (!(objectToSerialize is TPrimitive))
-			{
-				return false;
-			}
-
 			return ProcessingMethod switch
 			{
 				XmlPrimitiveProcessingMethod.Attributes => AttributesProcessor.CanSerialize(objectToSerialize),
@@ -87,13 +74,6 @@ namespace ImpossibleOdds.Xml.Processors
 		/// <inheritdoc />
 		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
 		{
-			targetType.ThrowIfNull(nameof(targetType));
-
-			if (!(dataToDeserialize is XElement))
-			{
-				return false;
-			}
-
 			return ProcessingMethod switch
 			{
 				XmlPrimitiveProcessingMethod.Attributes => AttributesProcessor.CanDeserialize(targetType, dataToDeserialize),

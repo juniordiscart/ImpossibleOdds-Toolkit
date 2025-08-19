@@ -16,19 +16,14 @@ namespace ImpossibleOdds.Serialization.Processors
         /// <summary>
         /// The format used for DateTime string representation during serialization.
         /// </summary>
-        public string DateTimeFormat { get; set; }
+        public string Format { get; set; } = string.Empty;
 
         public ISerializationDefinition Definition { get; }
 
         public DateTimeProcessor(ISerializationDefinition definition)
-            : this(definition, string.Empty)
-        { }
-
-        public DateTimeProcessor(ISerializationDefinition definition, string dateTimeFormat)
         {
             definition.ThrowIfNull(nameof(definition));
             Definition = definition;
-            DateTimeFormat = dateTimeFormat;
         }
 
         /// <inheritdoc />
@@ -48,7 +43,7 @@ namespace ImpossibleOdds.Serialization.Processors
             if (PreferStringSerialization && Definition.SupportedTypes.Contains(typeof(string)))
             {
                 return
-                    string.IsNullOrWhiteSpace(DateTimeFormat) ? dtValue.ToString(Definition.FormatProvider) : dtValue.ToString(DateTimeFormat);
+                    string.IsNullOrWhiteSpace(Format) ? dtValue.ToString(Definition.FormatProvider) : dtValue.ToString(Format);
             }
 
             return dtValue.Ticks;
@@ -57,10 +52,7 @@ namespace ImpossibleOdds.Serialization.Processors
         /// <inheritdoc />
         public virtual object Deserialize(Type targetType, object dataToDeserialize)
         {
-            if (!CanDeserialize(targetType, dataToDeserialize))
-            {
-                throw new SerializationException($"The provided data cannot be deserialized by this processor of type {nameof(DateTimeProcessor)}.");
-            }
+            this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
 
             switch (dataToDeserialize)
             {
@@ -70,7 +62,7 @@ namespace ImpossibleOdds.Serialization.Processors
                     try
                     {
                         return
-                            string.IsNullOrWhiteSpace(DateTimeFormat) ? DateTime.Parse(dateTimeStr, Definition.FormatProvider) : DateTime.ParseExact(dateTimeStr, DateTimeFormat, CultureInfo.InvariantCulture);
+                            string.IsNullOrWhiteSpace(Format) ? DateTime.Parse(dateTimeStr, Definition.FormatProvider) : DateTime.ParseExact(dateTimeStr, Format, CultureInfo.InvariantCulture);
                     }
                     catch (Exception e)
                     {
@@ -109,7 +101,7 @@ namespace ImpossibleOdds.Serialization.Processors
             return
                 (dataToDeserialize != null) &&
                 typeof(DateTime).IsAssignableFrom(targetType) &&
-                ((dataToDeserialize is DateTime) || (dataToDeserialize is string) || (dataToDeserialize is IConvertible));
+                (dataToDeserialize is DateTime or string or IConvertible);
         }
     }
 }

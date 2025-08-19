@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using ImpossibleOdds.Serialization;
 using ImpossibleOdds.Serialization.Caching;
@@ -12,7 +13,8 @@ namespace ImpossibleOdds.Xml.Processors
 	{
 		public ISerializationDefinition Definition { get; }
 		public IParallelProcessingFeature ParallelProcessingFeature { get; set; }
-		public bool SupportsParallelProcessing => ParallelProcessingFeature != null;
+		
+		private bool ParallelProcessingEnabled => ParallelProcessingFeature is { Enabled: true };
 
 		public XmlSequenceProcessor(XmlSerializationDefinition definition)
 		{
@@ -31,17 +33,33 @@ namespace ImpossibleOdds.Xml.Processors
 				return null;
 			}
 
-			// Process each entry in the list to an xml element.
-			XElement listRoot = new XElement("List"); // Create a default-named list-root element.
+			// Process each entry in the list to a xml element.
+			XElement listRoot = new XElement("ListElement"); // Create a default-named list-root element.
 			IList sourceValues = (IList)objectToSerialize;
-			foreach (object sourceValue in sourceValues)
-			{
-				object processedValue = Serializer.Serialize(sourceValue, Definition);
 
-				// If the processed value is not yet an xml element already, then create one.
-				XElement xmlEntry = processedValue as XElement ?? new XElement(XmlListElementAttribute.DefaultListEntryName, processedValue);
-				listRoot.Add(xmlEntry);
+			if (ParallelProcessingEnabled && (sourceValues.Count > 1))
+			{
+				Parallel.For(0, sourceValues.Count, index =>
+				{
+					object processedValue = Serializer.Serialize(sourceValues[index], Definition);
+
+					// If the processed value is not yet a xml element already, then create one.
+					XElement xmlEntry = processedValue as XElement ?? new XElement(XmlListElementAttribute.DefaultListEntryName, processedValue);
+					lock(listRoot) listRoot.Add(xmlEntry);
+				});
 			}
+			else
+			{
+				foreach (object sourceValue in sourceValues)
+				{
+					object processedValue = Serializer.Serialize(sourceValue, Definition);
+
+					// If the processed value is not yet a xml element already, then create one.
+					XElement xmlEntry = processedValue as XElement ?? new XElement(XmlListElementAttribute.DefaultListEntryName, processedValue);
+					listRoot.Add(xmlEntry);
+				}
+			}
+			
 
 			return listRoot;
 		}
@@ -49,6 +67,8 @@ namespace ImpossibleOdds.Xml.Processors
 		/// <inheritdoc />
 		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
+			this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
+			
 			// If the value is null, it can just return here already.
 			if (dataToDeserialize == null)
 			{
@@ -68,6 +88,8 @@ namespace ImpossibleOdds.Xml.Processors
 		/// <inheritdoc />
 		public virtual void Deserialize(object deserializationTarget, object dataToDeserialize)
 		{
+			this.ThrowIfCantDeserializeToTarget(deserializationTarget, dataToDeserialize);
+			
 			// If there is nothing to do...
 			if (dataToDeserialize == null)
 			{
@@ -76,26 +98,39 @@ namespace ImpossibleOdds.Xml.Processors
 
 			XElement sourceXml = (XElement)dataToDeserialize;
 			IList targetValues = (IList)deserializationTarget;
-			SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetValues);
+			ListCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetValues);
+			XElement[] sourceElements = sourceXml.Elements().ToArray();
 
-			int i = 0;
-			foreach (XElement xmlEntry in sourceXml.Elements())
+			if (ParallelProcessingEnabled && (sourceElements.Length > 1))
 			{
-				// If the value has any child elements or attributes, then the entry itself is deserialized, otherwise just its value is chosen.
-				object processedValue = (xmlEntry.HasElements || xmlEntry.HasAttributes) ? xmlEntry : (object)xmlEntry.Value;
-				processedValue = Serializer.Deserialize(collectionInfo.elementType, processedValue, Definition);
+				Parallel.For(0, sourceElements.Length, index =>
+				{
+					// If the value has any child elements or attributes, then the entry itself is deserialized, otherwise just its value is chosen.
+					XElement xmlEntry = sourceElements[index];
+					object processedValue = (xmlEntry.HasElements || xmlEntry.HasAttributes) ? xmlEntry : xmlEntry.Value;
+					processedValue = Serializer.Deserialize(collectionInfo.elementType, processedValue, Definition);
 
-				SerializationUtilities.InsertInSequence(targetValues, collectionInfo, i, processedValue);
-				++i;
+					lock (targetValues) SerializationUtilities.InsertInList(targetValues, collectionInfo, index, processedValue);
+				});
+			}
+			else
+			{
+				for (int index = 0; index < sourceElements.Length; index++)
+				{
+					// If the value has any child elements or attributes, then the entry itself is deserialized, otherwise just its value is chosen.
+					XElement xmlEntry = sourceElements[index];
+					object processedValue = (xmlEntry.HasElements || xmlEntry.HasAttributes) ? xmlEntry : xmlEntry.Value;
+					processedValue = Serializer.Deserialize(collectionInfo.elementType, processedValue, Definition);
+
+					SerializationUtilities.InsertInList(targetValues, collectionInfo, index, processedValue);
+				}
 			}
 		}
 	
 		/// <inheritdoc />
 		public virtual bool CanSerialize(object objectToSerialize)
 		{
-			return
-				(objectToSerialize == null) ||
-				(objectToSerialize is IList);
+			return objectToSerialize is null or IList;
 		}
 
 		/// <inheritdoc />
@@ -103,9 +138,7 @@ namespace ImpossibleOdds.Xml.Processors
 		{
 			targetType.ThrowIfNull(nameof(targetType));
 
-			return
-				typeof(IList).IsAssignableFrom(targetType) &&
-				((dataToDeserialize == null) || (dataToDeserialize is XElement));
+			return typeof(IList).IsAssignableFrom(targetType) && dataToDeserialize is null or XElement;
 		}
 		
 		/// <inheritdoc />

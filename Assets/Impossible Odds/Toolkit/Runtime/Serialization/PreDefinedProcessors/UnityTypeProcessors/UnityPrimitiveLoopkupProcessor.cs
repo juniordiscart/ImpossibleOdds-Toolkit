@@ -3,10 +3,15 @@ using System.Collections;
 
 namespace ImpossibleOdds.Serialization.Processors
 {
-	public abstract class UnityPrimitiveLookupProcessor<T> : ISerializationProcessor, IDeserializationProcessor
+	public abstract class UnityPrimitiveLookupProcessor<TPrimitive> : ISerializationProcessor, IDeserializationProcessor
 	{
 		public ISerializationDefinition Definition { get; }
 		public ILookupSerializationConfiguration Configuration { get; }
+		
+		/// <summary>
+		/// The required keys for the collection, as defined by the type that's being handled.
+		/// </summary>
+		public abstract string[] Keys { get; }
 
 		protected UnityPrimitiveLookupProcessor(ISerializationDefinition definition, ILookupSerializationConfiguration configuration)
 		{
@@ -19,19 +24,21 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public virtual object Serialize(object objectToSerialize)
 		{
-			return Serialize((T)objectToSerialize);
+			this.ThrowIfCantSerialize(objectToSerialize);
+			return Serialize((TPrimitive)objectToSerialize);
 		}
 
 		/// <inheritdoc />
 		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
-			return Deserialize(dataToDeserialize as IDictionary);
+			this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
+			return Deserialize((IDictionary)dataToDeserialize);
 		}
 
 		/// <inheritdoc />
 		public virtual bool CanSerialize(object objectToSerialize)
 		{
-			return objectToSerialize is T;
+			return objectToSerialize is TPrimitive;
 		}
 
 		/// <inheritdoc />
@@ -40,11 +47,12 @@ namespace ImpossibleOdds.Serialization.Processors
 			targetType.ThrowIfNull(nameof(targetType));
 			
 			return
-				(typeof(T) == targetType) &&	// Don't use AssignableFrom here, as it may trigger implicit conversions for certain types, e.g. Vector2 -> Vector3, ect.
-				(dataToDeserialize is IDictionary);
+				(typeof(TPrimitive) == targetType) &&	// Don't use AssignableFrom here, as it may trigger implicit conversions for certain types, e.g. Vector2 -> Vector3, ect.
+				(dataToDeserialize is IDictionary dictionaryToDeserialize) &&
+				Array.TrueForAll(Keys, key => dictionaryToDeserialize.Contains(key));
 		}
 
-		protected abstract IDictionary Serialize(T value);
-		protected abstract T Deserialize(IDictionary lookupData);
+		protected abstract IDictionary Serialize(TPrimitive value);
+		protected abstract TPrimitive Deserialize(IDictionary lookupData);
 	}
 }

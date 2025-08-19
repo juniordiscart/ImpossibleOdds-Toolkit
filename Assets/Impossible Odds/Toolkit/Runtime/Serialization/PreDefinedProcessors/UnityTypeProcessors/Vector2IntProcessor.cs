@@ -6,22 +6,11 @@ namespace ImpossibleOdds.Serialization.Processors
 {
 	public class Vector2IntSequenceProcessor : UnityPrimitiveSequenceProcessor<Vector2Int>
 	{
-		private const int Size = 2;
-
 		public Vector2IntSequenceProcessor(ISerializationDefinition definition, ISequenceSerializationConfiguration configuration)
 		: base(definition, configuration)
 		{ }
 
-		/// <inheritdoc />
-		public override bool CanDeserialize(Type targetType, object dataToDeserialize)
-		{
-			if (!base.CanDeserialize(targetType, dataToDeserialize))
-			{
-				return false;
-			}
-
-			return (dataToDeserialize is IList { Count: Size });
-		}
+		public override int Size => 2;
 
 		protected override Vector2Int Deserialize(IList sequenceData)
 		{
@@ -41,36 +30,26 @@ namespace ImpossibleOdds.Serialization.Processors
 
 	public class Vector2IntLookupProcessor : UnityPrimitiveLookupProcessor<Vector2Int>
 	{
-		private const string X = "x";
-		private const string Y = "y";
+		private static readonly string[] XY = { "x", "y" };
 
 		public Vector2IntLookupProcessor(ISerializationDefinition definition, ILookupSerializationConfiguration configuration)
 		: base(definition, configuration)
 		{ }
 
-		/// <inheritdoc />
-		public override bool CanDeserialize(Type targetType, object dataToDeserialize)
-		{
-			if (!base.CanDeserialize(targetType, dataToDeserialize))
-			{
-				return false;
-			}
-
-			return (dataToDeserialize is IDictionary lookUp) && lookUp.Contains(X) && lookUp.Contains(Y);
-		}
+		public override string[] Keys => XY;
 
 		protected override Vector2Int Deserialize(IDictionary lookupData)
 		{
 			return new Vector2Int(
-				Convert.ToInt32(lookupData[X]),
-				Convert.ToInt32(lookupData[Y]));
+				Convert.ToInt32(lookupData[XY[0]]),
+				Convert.ToInt32(lookupData[XY[1]]));
 		}
 
 		protected override IDictionary Serialize(Vector2Int value)
 		{
 			IDictionary result = Configuration.CreateLookupInstance(2);
-			result.Add(Serializer.Serialize(X, Definition), Serializer.Serialize(value.x, Definition));
-			result.Add(Serializer.Serialize(Y, Definition), Serializer.Serialize(value.y, Definition));
+			result.Add(Serializer.Serialize(XY[0], Definition), Serializer.Serialize(value.x, Definition));
+			result.Add(Serializer.Serialize(XY[1], Definition), Serializer.Serialize(value.y, Definition));
 			return result;
 		}
 	}

@@ -2,9 +2,6 @@
 
 namespace ImpossibleOdds.Serialization.Processors
 {
-    /// <summary>
-    /// A simple deserialization-only processor to process a value to a string.
-    /// </summary>
     public class StringProcessor : IDeserializationProcessor
     {
         public ISerializationDefinition Definition { get; }
@@ -18,10 +15,7 @@ namespace ImpossibleOdds.Serialization.Processors
         /// <inheritdoc />
         public virtual object Deserialize(Type targetType, object dataToDeserialize)
         {
-            if (!CanDeserialize(targetType, dataToDeserialize))
-            {
-                throw new SerializationException($"The provided data cannot be deserialized by this processor of type {nameof(StringProcessor)}.");
-            }
+            this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
 
             switch (dataToDeserialize)
             {
@@ -48,7 +42,7 @@ namespace ImpossibleOdds.Serialization.Processors
 
             return
                 typeof(string).IsAssignableFrom(targetType) &&
-                ((dataToDeserialize is string) || (dataToDeserialize is IConvertible));
+                (dataToDeserialize is string or IConvertible);
         }
     }
 }

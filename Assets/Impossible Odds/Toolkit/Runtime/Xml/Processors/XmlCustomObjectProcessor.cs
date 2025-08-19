@@ -37,10 +37,12 @@ namespace ImpossibleOdds.Xml.Processors
             {
                 return null;
             }
+            
+            XElement element = new XElement("Element"); // At this stage, we don't know the name yet.
 
-            InvokeOnSerializationCallback(objectToSerialize);
-            object serializedResult = Serialize(objectToSerialize.GetType(), objectToSerialize);
-            InvokeOnSerializedCallback(objectToSerialize);
+            InvokeOnSerializationCallback(objectToSerialize, element);
+            object serializedResult = Serialize(objectToSerialize, element);
+            InvokeOnSerializedCallback(objectToSerialize, element);
             return serializedResult;
         }
 
@@ -66,9 +68,9 @@ namespace ImpossibleOdds.Xml.Processors
                 return;
             }
 
-            InvokeOnDeserializationCallback(deserializationTarget);
+            InvokeOnDeserializationCallback(deserializationTarget, dataToDeserialize);
             Deserialize(deserializationTarget, (XElement)dataToDeserialize);
-            InvokeOnDeserializedCallback(deserializationTarget);
+            InvokeOnDeserializedCallback(deserializationTarget, dataToDeserialize);
         }
 
         /// <inheritdoc />
@@ -89,7 +91,7 @@ namespace ImpossibleOdds.Xml.Processors
                 return SerializationUtilities.IsNullableType(targetType);
             }
 
-            if (!(dataToDeserialize is XElement xElement))
+            if (dataToDeserialize is not XElement xElement)
             {
                 return false;
             }
@@ -104,9 +106,9 @@ namespace ImpossibleOdds.Xml.Processors
             return deserializationTarget != null && CanDeserialize(deserializationTarget.GetType(), dataToDeserialize);
         }
 
-        private XElement Serialize(Type sourceType, object source)
+        private XElement Serialize(object source, XElement element)
         {
-            XElement element = new XElement("Element"); // At this stage, we don't know the name yet.
+            Type sourceType = source.GetType();
             ISerializationReflectionMap sourceTypeCache = SerializationUtilities.GetTypeMap(sourceType);
             ISerializableMember[] elementFields = sourceTypeCache.GetUniqueSerializableMembers(typeof(AbstractXmlMemberAttribute));
 
@@ -116,9 +118,10 @@ namespace ImpossibleOdds.Xml.Processors
                 // in parallel for XML, the results are cached in an array, which is applied to the
                 // element in sequence.
                 XObject[] resultsCache = new XObject[elementFields.Length];
-                Parallel.For(0, resultsCache.Length, (int index) =>
+                Parallel.For(0, resultsCache.Length, index =>
                 {
-                    resultsCache[index] = SerializeMember(elementFields[index]);
+                    XObject serializedMember = SerializeMember(elementFields[index]);
+                    resultsCache[index] = serializedMember; // No need to lock because of fixed array size.
                 });
 
                 foreach (XObject xObject in resultsCache)
@@ -142,8 +145,8 @@ namespace ImpossibleOdds.Xml.Processors
             }
 
             // Find a type resolution key. If information is already filled
-            // in in the expected place, then this element is already done.
-            XName typeKey = typeResolveParameter.KeyOverride ?? (XName)TypeResolutionFeature.TypeResolutionKey;
+            // in the expected place, then this element is already done.
+            XName typeKey = typeResolveParameter.KeyOverride ?? TypeResolutionFeature.TypeResolutionKey;
             if ((element.Element(typeKey) != null) || (element.Attribute(typeKey) != null))
             {
                 return element;
@@ -175,7 +178,7 @@ namespace ImpossibleOdds.Xml.Processors
                     XmlElementAttribute elementAttribute => Serialize(value, sourceMember.Member, elementAttribute),
                     XmlListElementAttribute listElementAttribute => Serialize(value, sourceMember.Member, listElementAttribute),
                     XmlCDataAttribute cdataElementAttribute => Serialize(value, sourceMember.Member, cdataElementAttribute),
-                    _ => throw new XmlException("Unsupported XML serialization attribute of type {0}.", sourceMember.Attribute.GetType().Name)
+                    _ => throw new XmlException($"Unsupported XML serialization attribute of type {sourceMember.Attribute.GetType().Name}.")
                 };
             }
         }
@@ -184,7 +187,7 @@ namespace ImpossibleOdds.Xml.Processors
         {
             fieldValue = Serializer.Serialize(fieldValue, Definition);
 
-            if (!(fieldValue is XElement xmlElement))
+            if (fieldValue is not XElement xmlElement)
             {
                 return new XElement(GetElementKey(elementAttribute, memberInfo), fieldValue);
             }
@@ -200,9 +203,9 @@ namespace ImpossibleOdds.Xml.Processors
 
         private XElement Serialize(object fieldValue, MemberInfo memberInfo, XmlListElementAttribute listElementAttribute)
         {
-            if (!(fieldValue is IList))
+            if (fieldValue is not IList)
             {
-                throw new XmlException("The value of member {0} of type {1} is requested to be serialized as a list, but does not implement the {2} interface.", memberInfo.Name, memberInfo.DeclaringType?.Name, nameof(IList));
+                throw new XmlException($"The value of member {memberInfo.Name} of type {memberInfo.DeclaringType?.Name} is requested to be serialized as a list, but does not implement the {nameof(IList)} interface.");
             }
 
             fieldValue = Serializer.Serialize(fieldValue, Definition);
@@ -210,7 +213,7 @@ namespace ImpossibleOdds.Xml.Processors
             // If the serialized field is not an XML element, then we can't continue.
             if (!(fieldValue is XElement xmlElement))
             {
-                throw new XmlException("The serialized result of member {0} of type {1} did not return a valid {2} result.", memberInfo.Name, memberInfo.DeclaringType?.Name, nameof(XElement));
+                throw new XmlException($"The serialized result of member {memberInfo.Name} of type {memberInfo.DeclaringType?.Name} did not return a valid {nameof(XElement)} result.");
             }
 
             xmlElement.Name = GetElementKey(listElementAttribute, memberInfo);
@@ -248,11 +251,10 @@ namespace ImpossibleOdds.Xml.Processors
 
             if (XmlDefinition.ParallelProcessingEnabled && (members.Length > 1))
             {
-                object parallelLock = new object();
                 Parallel.ForEach(members, member =>
                 {
                     object result = DeserializeMember(member);
-                    lock (parallelLock) member.SetValue(target, result);
+                    lock (target) member.SetValue(target, result);
                 });
             }
             else
@@ -281,7 +283,7 @@ namespace ImpossibleOdds.Xml.Processors
                     return result;
                 }
 
-                if (SupportsRequiredValues && !RequiredValueFeature.IsValueValid(targetType, targetMember, result))
+                if (SupportsRequiredValues && !RequiredValueFeature.IsValueValid(targetType, targetMember, null))
                 {
                     throw new XmlException($"The member '{targetMember.Member.Name}' is marked as required on type {targetMember.Member.DeclaringType?.Name} but the value is null in the source.");
                 }
@@ -301,7 +303,7 @@ namespace ImpossibleOdds.Xml.Processors
 
             if (SupportsRequiredValues && typeMap.IsMemberRequired(memberInfo.Member, RequiredValueFeature.RequiredValueAttribute))
             {
-                throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType?.Name);
+                throw new XmlException($"The member '{memberInfo.Member.Name}' is marked as required on type {memberInfo.Member.DeclaringType?.Name} but is not present in the source.");
             }
 
             return SerializationUtilities.GetDefaultValue(memberInfo.MemberType);
@@ -317,7 +319,7 @@ namespace ImpossibleOdds.Xml.Processors
 
             if (SupportsRequiredValues && typeMap.IsMemberRequired(memberInfo.Member, RequiredValueFeature.RequiredValueAttribute))
             {
-                throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType?.Name);
+                throw new XmlException($"The member '{memberInfo.Member.Name}' is marked as required on type {memberInfo.Member.DeclaringType?.Name} but is not present in the source.");
             }
 
             return SerializationUtilities.GetDefaultValue(memberInfo.MemberType);
@@ -327,7 +329,7 @@ namespace ImpossibleOdds.Xml.Processors
         {
             if (!typeof(IList).IsAssignableFrom(memberInfo.MemberType))
             {
-                throw new XmlException("Member {0} of type {1} is marked as an XML List, but does not implement any {2} interface to receive these values.", memberInfo.Member.Name, memberInfo.Member.DeclaringType?.Name, nameof(IList));
+                throw new XmlException($"Member {memberInfo.Member.Name} of type {memberInfo.Member.DeclaringType?.Name} is marked as an XML List, but does not implement any {nameof(IList)} interface to receive these values.");
             }
 
             XElement childElement = source.Element(GetElementKey(listElementInfo, memberInfo.Member));
@@ -338,7 +340,7 @@ namespace ImpossibleOdds.Xml.Processors
 
             if (SupportsRequiredValues && typeMap.IsMemberRequired(memberInfo.Member, RequiredValueFeature.RequiredValueAttribute))
             {
-                throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType?.Name);
+                throw new XmlException($"The member '{memberInfo.Member.Name}' is marked as required on type {memberInfo.Member.DeclaringType?.Name} but is not present in the source.");
             }
 
             return SerializationUtilities.GetDefaultValue(memberInfo.MemberType);
@@ -351,7 +353,7 @@ namespace ImpossibleOdds.Xml.Processors
             {
                 if (SupportsRequiredValues && typeMap.IsMemberRequired(memberInfo.Member, RequiredValueFeature.RequiredValueAttribute))
                 {
-                    throw new XmlException("The member '{0}' is marked as required on type {1} but is not present in the source.", memberInfo.Member.Name, memberInfo.Member.DeclaringType?.Name);
+                    throw new XmlException($"The member '{memberInfo.Member.Name}' is marked as required on type {memberInfo.Member.DeclaringType?.Name} but is not present in the source.");
                 }
 
                 return SerializationUtilities.GetDefaultValue(memberInfo.MemberType);

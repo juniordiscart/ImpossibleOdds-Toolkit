@@ -78,7 +78,7 @@ namespace ImpossibleOdds.Xml
 			{
 				new NullValueProcessor(this),
 				new ExactMatchProcessor(this),
-				new EnumProcessor(this)
+				new XmlEnumProcessor(this)
 				{
 					AliasFeature = new EnumAliasFeature<XmlEnumStringAttribute, XmlEnumAliasAttribute>()
 				},

@@ -37,7 +37,7 @@ namespace ImpossibleOdds.Serialization
             sourceData.ThrowIfNull(nameof(sourceData));
             definition.ThrowIfNull(nameof(definition));
 
-            SequenceCollectionTypeInfo sourceCollectionInfo = SerializationUtilities.GetCollectionTypeInfo(sourceData);
+            ListCollectionTypeInfo sourceCollectionInfo = SerializationUtilities.GetCollectionTypeInfo(sourceData);
             ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(targetType).GetTypeResolutionParameters(TypeResolutionAttribute);
 
             Type resolvedType = targetType;
@@ -87,7 +87,7 @@ namespace ImpossibleOdds.Serialization
             serializedData.ThrowIfNull(nameof(serializedData));
             definition.ThrowIfNull(nameof(definition));
 
-            SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(serializedData);
+            ListCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(serializedData);
             ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(sourceType).GetTypeResolutionParameters(TypeResolutionAttribute);
             Dictionary<int, Type> insertedTypeInfo = new Dictionary<int, Type>();
 
@@ -111,7 +111,7 @@ namespace ImpossibleOdds.Serialization
 
                 object typeValue = typeResolutionParameter.Value ?? typeResolutionParameter.Target.Name;
                 typeValue = Serializer.Serialize(typeValue, definition);
-                SerializationUtilities.InsertInSequence(serializedData, collectionInfo, index, typeValue);
+                SerializationUtilities.InsertInList(serializedData, collectionInfo, index, typeValue);
                 insertedTypeInfo[index] = typeResolutionParameter.Target;
             }
         }

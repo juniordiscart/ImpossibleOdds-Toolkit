@@ -39,17 +39,24 @@ namespace ImpossibleOdds.Serialization.Processors
 			{
 				return null;
 			}
+			
+			// Check how many elements need to be stored.
+			int sequenceSize = Math.Max((SupportsTypeResolution ? TypeResolutionFeature.TypeResolutionIndex : 0), Configuration.GetMaxDefinedIndex(objectToSerialize.GetType()));
+			sequenceSize += (sequenceSize >= 0) ? 1 : 0;    // Increase by 1 because of 0-based index.
 
-			InvokeOnSerializationCallback(objectToSerialize);
-			object serializedResult = Serialize(objectToSerialize.GetType(), objectToSerialize);
-			InvokeOnSerializedCallback(objectToSerialize);
-			return serializedResult;
+			// Create the collection of result values.
+			IList targetSequence = Configuration.CreateSequenceInstance(sequenceSize);
+
+			InvokeOnSerializationCallback(objectToSerialize, targetSequence);
+			Serialize(objectToSerialize, targetSequence);
+			InvokeOnSerializedCallback(objectToSerialize, targetSequence);
+			return targetSequence;
 		}
 
 		/// <inheritdoc />
 		public override object Deserialize(Type targetType, object dataToDeserialize)
 		{
-			targetType.ThrowIfNull(nameof(targetType));
+			this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
 
 			Type instanceType = ResolveTypeFromSequence(targetType, (IList)dataToDeserialize);
 			object targetInstance = SerializationUtilities.CreateInstance(instanceType);
@@ -60,7 +67,7 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public void Deserialize(object deserializationTarget, object dataToDeserialize)
 		{
-			deserializationTarget.ThrowIfNull(nameof(deserializationTarget));
+			this.ThrowIfCantDeserializeToTarget(deserializationTarget, dataToDeserialize);
 
 			// If the source value is null, then there is little to do.
 			if (dataToDeserialize == null)
@@ -68,9 +75,9 @@ namespace ImpossibleOdds.Serialization.Processors
 				return;
 			}
 
-			InvokeOnDeserializationCallback(deserializationTarget);
+			InvokeOnDeserializationCallback(deserializationTarget, dataToDeserialize);
 			Deserialize(deserializationTarget, (IList)dataToDeserialize);
-			InvokeOnDeserializedCallback(deserializationTarget);
+			InvokeOnDeserializedCallback(deserializationTarget, dataToDeserialize);
 		}
 
 		/// <inheritdoc />
@@ -110,26 +117,20 @@ namespace ImpossibleOdds.Serialization.Processors
             return deserializationTarget != null && CanDeserialize(deserializationTarget.GetType(), dataToDeserialize);
         }
 
-		private IList Serialize(Type sourceType, object source)
+		private void Serialize(object source, IList targetSequence)
 		{
-			// Check how many elements need to be stored.
-			int maxIndex = Math.Max((SupportsTypeResolution ? TypeResolutionFeature.TypeResolutionIndex : 0), Configuration.GetMaxDefinedIndex(sourceType));
-			maxIndex += (maxIndex >= 0) ? 1 : 0;    // Increase by 1 because of 0-based index.
-
-			// Create the collection of result values.
-			IList processedValues = Configuration.CreateSequenceInstance(maxIndex);
-			SequenceCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(processedValues);
+			ListCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(targetSequence);
 
 			// Get the members that will be inserted in the collection. Filter out duplicate indices.
-			ISerializableMember[] sourceMembers = SerializationUtilities.GetTypeMap(sourceType).GetUniqueSerializableMembers(Configuration.MemberAttribute);
+			ISerializableMember[] sourceMembers = SerializationUtilities.GetTypeMap(source.GetType()).GetUniqueSerializableMembers(Configuration.MemberAttribute);
 
 			if (SupportsParallelProcessing)
 			{
-				object parallelLock = new object();
 				Parallel.ForEach(sourceMembers, sourceMember =>
 				{
 					object processedValue = Serializer.Serialize(sourceMember.GetValue(source), Definition);
-					lock (parallelLock) SerializationUtilities.InsertInSequence(processedValues, collectionInfo, Configuration.GetIndex(sourceMember), processedValue);
+					int sourceMemberIndex = Configuration.GetIndex(sourceMember);
+					lock (targetSequence) SerializationUtilities.InsertInList(targetSequence, collectionInfo, sourceMemberIndex, processedValue);
 				});
 			}
 			else
@@ -137,33 +138,30 @@ namespace ImpossibleOdds.Serialization.Processors
 				foreach (ISerializableMember sourceMember in sourceMembers)
 				{
 					object processedValue = Serializer.Serialize(sourceMember.GetValue(source), Definition);
-					SerializationUtilities.InsertInSequence(processedValues, collectionInfo, Configuration.GetIndex(sourceMember), processedValue);
+					SerializationUtilities.InsertInList(targetSequence, collectionInfo, Configuration.GetIndex(sourceMember), processedValue);
 				}
 			}
 
 			if (SupportsTypeResolution)
 			{
-				TypeResolutionFeature.InsertTypeInData(sourceType, processedValues, Definition);
+				TypeResolutionFeature.InsertTypeInData(source.GetType(), targetSequence, Definition);
 			}
-
-			return processedValues;
 		}
 
 		private void Deserialize(object target, IList source)
 		{
-			// Get all of the fields that would like to get their value filled in.
+			// Get all the fields that would like to get their value filled in.
 			ISerializableMember[] targetMembers = SerializationUtilities.GetTypeMap(target.GetType()).GetSerializableMembers(Configuration.MemberAttribute);
 
 			if (SupportsParallelProcessing)
 			{
-				object parallelLock = new object();
 				Parallel.ForEach(targetMembers, member =>
 				{
 					int index = Configuration.GetIndex(member);
 					if (source.Count > index)
 					{
 						object result = DeserializeMember(member, index);
-						lock (parallelLock) member.SetValue(target, result);
+						lock (target) member.SetValue(target, result);
 					}
 				});
 			}

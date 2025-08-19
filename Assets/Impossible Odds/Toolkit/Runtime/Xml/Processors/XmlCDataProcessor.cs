@@ -28,12 +28,12 @@ namespace ImpossibleOdds.Xml.Processors
 		{
 			this.ThrowIfCantSerialize(objectToSerialize);
 			
-			if ((objectToSerialize == null) || (objectToSerialize is string))
+			if (objectToSerialize is null or string)
 			{
 				return objectToSerialize;
 			}
 
-			byte[] binaryResult = null;
+			byte[] binaryResult;
 			if (objectToSerialize is byte[] bytes)
 			{
 				binaryResult = bytes;
@@ -54,6 +54,8 @@ namespace ImpossibleOdds.Xml.Processors
 		/// <inheritdoc />
 		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
+			this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
+			
 			// If the data is a string, then either assign it directly, or convert it to a binary string.
 			if ((dataToDeserialize is string stringData))
 			{
@@ -66,9 +68,9 @@ namespace ImpossibleOdds.Xml.Processors
 			}
 
 			// When the data is binary, then try to reconstruct it.
-			if (!(dataToDeserialize is byte[] binaryData))
+			if (dataToDeserialize is not byte[] binaryData)
 			{
-				throw new XmlException("The CDATA value could not be transformed to a valid instance of type {0} for further processing.", typeof(byte[]).Name);
+				throw new XmlException($"The CDATA value could not be transformed to a valid instance of type {typeof(byte[]).Name} for further processing.");
 			}
 
 			if (typeof(byte[]) == targetType)
@@ -87,7 +89,7 @@ namespace ImpossibleOdds.Xml.Processors
 
 			if (!targetType.IsInstanceOfType(deserializedResult))
 			{
-				throw new XmlException("The transformed result of type {0} could not be assigned to target type {1}.", deserializedResult.GetType().Name, targetType.Name);
+				throw new XmlException($"The transformed result of type {deserializedResult.GetType().Name} could not be assigned to target type {targetType.Name}.");
 			}
 
 			return deserializedResult;
@@ -107,7 +109,7 @@ namespace ImpossibleOdds.Xml.Processors
 
 			return
 				((dataToDeserialize != null) || !SerializationUtilities.IsNullableType(targetType)) &&
-				((dataToDeserialize is string) || (dataToDeserialize is byte[]));
+				(dataToDeserialize is string or byte[]);
 		}
 	}
 }

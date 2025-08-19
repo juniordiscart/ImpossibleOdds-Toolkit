@@ -37,7 +37,7 @@ namespace ImpossibleOdds.Serialization.Processors
 		}
 
 		/// <inheritdoc />
-		public virtual object Serialize(object objectToSerialize)
+		public object Serialize(object objectToSerialize)
 		{
 			return ProcessingMethod switch
 			{
@@ -48,20 +48,18 @@ namespace ImpossibleOdds.Serialization.Processors
 		}
 
 		/// <inheritdoc />
-		public virtual object Deserialize(Type targetType, object dataToDeserialize)
+		public object Deserialize(Type targetType, object dataToDeserialize)
 		{
-			// Deserialization does not depend on the processing method, but will pick the
-			// appropriate method for the provided data type.
-			return dataToDeserialize switch
+			return ProcessingMethod switch
 			{
-				IDictionary _ => LookupProcessor.Deserialize(targetType, dataToDeserialize),
-				IList _ => SequenceProcessor.Deserialize(targetType, dataToDeserialize),
-				_ => throw new SerializationException($"Unsupported data of type {dataToDeserialize.GetType().Name} to deserialize into an instance of type {typeof(TPrimitive).Name}.")
+				PrimitiveProcessingMethod.Sequence => SequenceProcessor.Deserialize(targetType, dataToDeserialize),
+				PrimitiveProcessingMethod.Lookup => LookupProcessor.Deserialize(targetType, dataToDeserialize),
+				_ => throw new SerializationException($"Unsupported processing method ('{ProcessingMethod.ToString()}') to deserialize the value.")
 			};
 		}
 
 		/// <inheritdoc />
-		public virtual bool CanSerialize(object objectToSerialize)
+		public bool CanSerialize(object objectToSerialize)
 		{
 			return ProcessingMethod switch
 			{
@@ -72,15 +70,8 @@ namespace ImpossibleOdds.Serialization.Processors
 		}
 
 		/// <inheritdoc />
-		public virtual bool CanDeserialize(Type targetType, object dataToDeserialize)
+		public bool CanDeserialize(Type targetType, object dataToDeserialize)
 		{
-			targetType.ThrowIfNull(nameof(targetType));
-
-			if (dataToDeserialize == null)
-			{
-				return false;
-			}
-
 			return ProcessingMethod switch
 			{
 				PrimitiveProcessingMethod.Sequence => SequenceProcessor.CanDeserialize(targetType, dataToDeserialize),

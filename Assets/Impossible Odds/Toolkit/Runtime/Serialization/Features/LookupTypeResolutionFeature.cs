@@ -38,7 +38,7 @@ namespace ImpossibleOdds.Serialization
             sourceData.ThrowIfNull(nameof(sourceData));
             definition.ThrowIfNull(nameof(definition));
 
-            LookupCollectionTypeInfo sourceCollectionInfo = SerializationUtilities.GetCollectionTypeInfo(sourceData);
+            DictionaryCollectionTypeInfo sourceCollectionInfo = SerializationUtilities.GetCollectionTypeInfo(sourceData);
             ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(targetType).GetTypeResolutionParameters(TypeResolutionAttribute);
 
             Type resolvedType = targetType;
@@ -91,7 +91,7 @@ namespace ImpossibleOdds.Serialization
             serializedData.ThrowIfNull(nameof(serializedData));
             definition.ThrowIfNull(nameof(definition));
 
-            LookupCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(serializedData);
+            DictionaryCollectionTypeInfo collectionInfo = SerializationUtilities.GetCollectionTypeInfo(serializedData);
             ITypeResolutionParameter[] typeResolutionParameters = SerializationUtilities.GetTypeMap(sourceType).GetTypeResolutionParameters(TypeResolutionAttribute);
             Dictionary<object, Type> insertedTypeInfo = new Dictionary<object, Type>(typeResolutionParameters.Length);
 

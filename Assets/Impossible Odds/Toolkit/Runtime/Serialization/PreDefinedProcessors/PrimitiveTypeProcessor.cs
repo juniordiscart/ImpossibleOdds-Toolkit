@@ -4,11 +4,11 @@ using System.Collections.Generic;
 namespace ImpossibleOdds.Serialization.Processors
 {
 	/// <summary>
-	/// A (de)serialization processor for primitive types, i.e. int, bool, float, ...
+	/// A (de)serialization processor for primitive types, e.g. int, bool, float, ...
 	/// If a primitive type is not supported by the serialization definition, it will
 	/// attempt to promote it to a type with a larger value range that is supported.
 	/// Note: this may not be suitable with binary serializers that will attempt to directly
-	/// match the the type to the value's binary representation. The type is recommended to
+	/// match the type to the value's binary representation. The type is recommended to
 	/// be directly supported by the serialization definition instead.
 	/// </summary>
 	public class PrimitiveTypeProcessor : ISerializationProcessor, IDeserializationProcessor
@@ -73,6 +73,8 @@ namespace ImpossibleOdds.Serialization.Processors
 		/// <inheritdoc />
 		public virtual object Deserialize(Type targetType, object dataToDeserialize)
 		{
+			this.ThrowIfCantDeserialize(targetType, dataToDeserialize);
+			
 			// For booleans, we do an additional test.
 			return
 				typeof(bool) == targetType ?

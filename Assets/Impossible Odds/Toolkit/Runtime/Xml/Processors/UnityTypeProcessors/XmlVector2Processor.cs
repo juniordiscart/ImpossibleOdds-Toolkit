@@ -5,56 +5,46 @@ namespace ImpossibleOdds.Xml.Processors
 {
 	public class XmlVector2AttributesProcessor : UnityPrimitiveXmlAttributesProcessor<Vector2>
 	{
-		private const string X = "x";
-		private const string Y = "y";
+		private static readonly string[] XY = {"x", "y"};
 
 		public XmlVector2AttributesProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
 
+		public override string[] Keys => XY;
+
 		protected override XElement Serialize(Vector2 value)
 		{
 			XElement xmlElement = new XElement(string.Empty);
-			xmlElement.SetAttributeValue(X, value.x);
-			xmlElement.SetAttributeValue(Y, value.y);
+			xmlElement.SetAttributeValue(XY[0], value.x);
+			xmlElement.SetAttributeValue(XY[1], value.y);
 			return xmlElement;
 		}
 
 		protected override Vector2 Deserialize(XElement xmlData)
 		{
 			return new Vector2(
-				float.Parse(xmlData.Attribute(X).Value),
-				float.Parse(xmlData.Attribute(Y).Value)
+				float.Parse(xmlData.Attribute(XY[0]).Value),
+				float.Parse(xmlData.Attribute(XY[1]).Value)
 			);
-		}
-
-		protected override bool CanSerialize(Vector2 primitive)
-		{
-			return true;
-		}
-
-		protected override bool CanDeserialize(XElement element)
-		{
-			return
-				(element.Attribute(X) != null) &&
-				(element.Attribute(Y) != null);
 		}
 	}
 
 	public class XmlVector2ElementsProcessor : UnityPrimitiveXmlElementsProcessor<Vector2>
 	{
-		private const string X = "x";
-		private const string Y = "y";
+		private static readonly string[] XY = {"x", "y"};
 
 		public XmlVector2ElementsProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
 
+		public override string[] Keys => XY;
+
 		protected override XElement Serialize(Vector2 value)
 		{
 			XElement xElement = new XElement(string.Empty);
-			xElement.Add(new XElement(X, value.x));
-			xElement.Add(new XElement(Y, value.y));
+			xElement.Add(new XElement(XY[0], value.x));
+			xElement.Add(new XElement(XY[1], value.y));
 
 			return xElement;
 		}
@@ -62,21 +52,9 @@ namespace ImpossibleOdds.Xml.Processors
 		protected override Vector2 Deserialize(XElement xmlData)
 		{
 			return new Vector2(
-				float.Parse(xmlData.Element(X).Value),
-				float.Parse(xmlData.Element(Y).Value)
+				float.Parse(xmlData.Element(XY[0]).Value),
+				float.Parse(xmlData.Element(XY[1]).Value)
 			);
-		}
-
-		protected override bool CanSerialize(Vector2 primitive)
-		{
-			return true;
-		}
-
-		protected override bool CanDeserialize(XElement element)
-		{
-			return
-				(element.Element(X) != null) &&
-				(element.Element(Y) != null);
 		}
 	}
 

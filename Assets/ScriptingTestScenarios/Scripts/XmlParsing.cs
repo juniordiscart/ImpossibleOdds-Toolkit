@@ -22,10 +22,8 @@ public class XmlParsing : MonoBehaviour
 		XDocument document = null;
 
 		using (StringReader textReader = new StringReader(xmlTextAsset.text))
-		using (XmlReader xmlReader = XmlReader.Create(textReader, readerSettings))
 		{
-			// DebugPrintXml(xmlReader);
-			// document = XmlProcessor.FromXml(xmlReader);
+			document = XmlProcessor.Deserialize(textReader);
 		}
 
 		StringBuilder textBuilder = new StringBuilder();

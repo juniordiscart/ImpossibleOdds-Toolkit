@@ -5,68 +5,52 @@ namespace ImpossibleOdds.Xml.Processors
 {
 	public class XmlQuaternionAttributesProcessor : UnityPrimitiveXmlAttributesProcessor<Quaternion>
 	{
-		private const string X = "x";
-		private const string Y = "y";
-		private const string Z = "z";
-		private const string W = "w";
+		private static readonly string[] XYZW = {"x", "y", "z", "w"};
 
 		public XmlQuaternionAttributesProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
 
+		public override string[] Keys => XYZW;
+
 		protected override XElement Serialize(Quaternion value)
 		{
 			XElement xmlElement = new XElement(string.Empty);
-			xmlElement.SetAttributeValue(X, value.x);
-			xmlElement.SetAttributeValue(Y, value.y);
-			xmlElement.SetAttributeValue(Z, value.z);
-			xmlElement.SetAttributeValue(W, value.w);
+			xmlElement.SetAttributeValue(XYZW[0], value.x);
+			xmlElement.SetAttributeValue(XYZW[1], value.y);
+			xmlElement.SetAttributeValue(XYZW[2], value.z);
+			xmlElement.SetAttributeValue(XYZW[3], value.w);
 			return xmlElement;
 		}
 
 		protected override Quaternion Deserialize(XElement xmlData)
 		{
 			return new Quaternion(
-				float.Parse(xmlData.Attribute(X).Value),
-				float.Parse(xmlData.Attribute(Y).Value),
-				float.Parse(xmlData.Attribute(Z).Value),
-				float.Parse(xmlData.Attribute(W).Value)
+				float.Parse(xmlData.Attribute(XYZW[0]).Value),
+				float.Parse(xmlData.Attribute(XYZW[1]).Value),
+				float.Parse(xmlData.Attribute(XYZW[2]).Value),
+				float.Parse(xmlData.Attribute(XYZW[3]).Value)
 			);
-		}
-
-		protected override bool CanSerialize(Quaternion primitive)
-		{
-			return true;
-		}
-
-		protected override bool CanDeserialize(XElement element)
-		{
-			return
-				(element.Attribute(X) != null) &&
-				(element.Attribute(Y) != null) &&
-				(element.Attribute(Z) != null) &&
-				(element.Attribute(W) != null);
 		}
 	}
 
 	public class XmlQuaternionElementsProcessor : UnityPrimitiveXmlElementsProcessor<Quaternion>
 	{
-		private const string X = "x";
-		private const string Y = "y";
-		private const string Z = "z";
-		private const string W = "w";
+		private static readonly string[] XYZW = {"x", "y", "z", "w"};
 
 		public XmlQuaternionElementsProcessor(XmlSerializationDefinition definition)
 		: base(definition)
 		{ }
 
+		public override string[] Keys => XYZW;
+
 		protected override XElement Serialize(Quaternion value)
 		{
 			XElement xElement = new XElement(string.Empty);
-			xElement.Add(new XElement(X, value.x));
-			xElement.Add(new XElement(Y, value.y));
-			xElement.Add(new XElement(Z, value.z));
-			xElement.Add(new XElement(W, value.w));
+			xElement.Add(new XElement(XYZW[0], value.x));
+			xElement.Add(new XElement(XYZW[1], value.y));
+			xElement.Add(new XElement(XYZW[2], value.z));
+			xElement.Add(new XElement(XYZW[3], value.w));
 
 			return xElement;
 		}
@@ -74,25 +58,11 @@ namespace ImpossibleOdds.Xml.Processors
 		protected override Quaternion Deserialize(XElement xmlData)
 		{
 			return new Quaternion(
-				float.Parse(xmlData.Element(X).Value),
-				float.Parse(xmlData.Element(Y).Value),
-				float.Parse(xmlData.Element(Z).Value),
-				float.Parse(xmlData.Element(W).Value)
+				float.Parse(xmlData.Element(XYZW[0]).Value),
+				float.Parse(xmlData.Element(XYZW[1]).Value),
+				float.Parse(xmlData.Element(XYZW[2]).Value),
+				float.Parse(xmlData.Element(XYZW[3]).Value)
 			);
-		}
-
-		protected override bool CanSerialize(Quaternion primitive)
-		{
-			return true;
-		}
-
-		protected override bool CanDeserialize(XElement element)
-		{
-			return
-				(element.Element(X) != null) &&
-				(element.Element(Y) != null) &&
-				(element.Element(Z) != null) &&
-				(element.Element(W) != null);
 		}
 	}
 

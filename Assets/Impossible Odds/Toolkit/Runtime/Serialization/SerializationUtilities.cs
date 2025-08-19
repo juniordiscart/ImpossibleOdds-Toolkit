@@ -10,8 +10,8 @@ namespace ImpossibleOdds.Serialization
 	public static class SerializationUtilities
 	{
 		private static readonly ConcurrentDictionary<Type, object> DefaultValueCache = new ConcurrentDictionary<Type, object>();
-		private static readonly ConcurrentDictionary<Type, LookupCollectionTypeInfo> LookupTypeInfoCache = new ConcurrentDictionary<Type, LookupCollectionTypeInfo>();
-		private static readonly ConcurrentDictionary<Type, SequenceCollectionTypeInfo> SequenceTypeInfoCache = new ConcurrentDictionary<Type, SequenceCollectionTypeInfo>();
+		private static readonly ConcurrentDictionary<Type, DictionaryCollectionTypeInfo> LookupTypeInfoCache = new ConcurrentDictionary<Type, DictionaryCollectionTypeInfo>();
+		private static readonly ConcurrentDictionary<Type, ListCollectionTypeInfo> SequenceTypeInfoCache = new ConcurrentDictionary<Type, ListCollectionTypeInfo>();
 		private static readonly ConcurrentDictionary<Type, ISerializationReflectionMap> TypeMapCache = new ConcurrentDictionary<Type, ISerializationReflectionMap>();
 		private static readonly HashSet<Type> IntegralTypes = new HashSet<Type>() { typeof(sbyte), typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(char) };
 
@@ -57,30 +57,29 @@ namespace ImpossibleOdds.Serialization
 		{
 			if (!genericTypeDefinition.IsGenericTypeDefinition)
 			{
-				throw new ArgumentException("The given type is not a generic type definition.");
+				throw new ArgumentException($"Parameter {nameof(genericTypeDefinition)} with value {genericTypeDefinition.Name} is not a generic type definition.");
 			}
-
-			if (givenType.IsGenericType && (givenType.GetGenericTypeDefinition() == genericTypeDefinition))
+			
+			while (true)
 			{
-				return givenType;
-			}
-
-			Type[] interfaceTypes = givenType.GetInterfaces();
-			foreach (Type it in interfaceTypes)
-			{
-				if (it.IsGenericType && (it.GetGenericTypeDefinition() == genericTypeDefinition))
+				if (givenType.IsGenericType && (givenType.GetGenericTypeDefinition() == genericTypeDefinition))
 				{
-					return it;
+					return givenType;
 				}
-			}
 
-			Type baseType = givenType.BaseType;
-			if (baseType == null)
-			{
-				return null;
-			}
+				Type[] interfaceTypes = givenType.GetInterfaces();
+				foreach (Type it in interfaceTypes)
+				{
+					if (it.IsGenericType && (it.GetGenericTypeDefinition() == genericTypeDefinition))
+					{
+						return it;
+					}
+				}
 
-			return GetGenericType(baseType, genericTypeDefinition);
+				Type baseType = givenType.BaseType;
+				if ((baseType == null)) return null;
+				givenType = baseType;
+			}
 		}
 
 		/// <summary>
@@ -107,11 +106,6 @@ namespace ImpossibleOdds.Serialization
 		/// <returns>Instance of the requested type.</returns>
 		public static object CreateInstance(Type instanceType)
 		{
-			if (instanceType.IsValueType)
-			{
-				return Activator.CreateInstance(instanceType, true);
-			}
-
 			if (instanceType.IsInterface)
 			{
 				throw new SerializationException($"Cannot create instance of type {instanceType.Name} because it is an interface.");
@@ -121,8 +115,8 @@ namespace ImpossibleOdds.Serialization
 			{
 				throw new SerializationException($"Cannot create instance of type {instanceType.Name} because it is abstract.");
 			}
-
-			return FormatterServices.GetUninitializedObject(instanceType);
+			
+			return instanceType.IsValueType ? Activator.CreateInstance(instanceType, true) : FormatterServices.GetUninitializedObject(instanceType);
 		}
 
 		/// <summary>
@@ -156,11 +150,9 @@ namespace ImpossibleOdds.Serialization
 				// Try to convert the value to the target type
 				return Convert.ChangeType(value, targetType);
 			}
-			else
-			{
-				Log.Warning("Target type {0} does not implement the {1} interface to post-process a value of type {2}.", targetType.Name, nameof(IConvertible), value.GetType().Name);
-				return value;
-			}
+
+			Log.Warning($"Target type {targetType.Name} does not implement the {nameof(IConvertible)} interface to post-process a value of type {value.GetType().Name}.");
+			return value;
 		}
 
 		/// <summary>
@@ -177,25 +169,25 @@ namespace ImpossibleOdds.Serialization
 		}
 
 		/// <summary>
-		/// Insert a value in the sequence at the defined index.
-		/// Depending on the type of the collection, it may alter its size to insert the value at the requested index.
+		/// Insert a value in the list at the defined index.
+		/// Depending on the type of the list, it may alter its size to insert the value at the requested index.
 		/// The value will be processed to a compatible element type if the collection enforces one.
 		/// </summary>
-		/// <param name="collection">The collection into which the value should be inserted.</param>
-		/// <param name="collectionInfo">Type information about the collection.</param>
+		/// <param name="list">The list into which the value should be inserted.</param>
+		/// <param name="listInfo">Type information about the list.</param>
 		/// <param name="index">Index at which the value should be inserted.</param>
 		/// <param name="value">The value to be inserted.</param>
-		public static void InsertInSequence(IList collection, SequenceCollectionTypeInfo collectionInfo, int index, object value)
+		public static void InsertInList(IList list, ListCollectionTypeInfo listInfo, int index, object value)
 		{
-			value = collectionInfo.PostProcessValue(value);
+			value = listInfo.PostProcessValue(value);
 
-			if (collection.IsReadOnly)
+			if (list.IsReadOnly)
 			{
-				throw new SerializationException($"The collection of type {collection.GetType().Name} is read-only. No elements can be inserted.");
+				throw new SerializationException($"The list of type {list.GetType().Name} is read-only. No elements can be inserted.");
 			}
 
-			// Arrays are treated differently compared to lists.
-			if (collectionInfo.isArray && (collection is Array array))
+			// Arrays are treated differently than lists.
+			if (listInfo.isArray && (list is Array array))
 			{
 				if (index >= array.Length)
 				{
@@ -206,49 +198,49 @@ namespace ImpossibleOdds.Serialization
 			}
 			else
 			{
-				if (index >= collection.Count)
+				if (index >= list.Count)
 				{
-					if (collection.IsFixedSize)
+					if (list.IsFixedSize)
 					{
-						throw new SerializationException($"The collection of type {collection.GetType().Name} has a fixed size ({collection.Count}). An element was requested to be inserted at index {index}.");
+						throw new SerializationException($"The list of type {list.GetType().Name} has a fixed size ({list.Count}). An element was requested to be inserted at index {index}.");
 					}
 
-					// Grow the collection until the value can be inserted.
-					object defaultValue = GetDefaultValue(collectionInfo.elementType);
+					// Grow the list until the value can be inserted.
+					object defaultValue = GetDefaultValue(listInfo.elementType);
 					do
 					{
-						collection.Add(defaultValue);
-					} while (index >= collection.Count);
+						list.Add(defaultValue);
+					} while (index >= list.Count);
 				}
 
-				collection[index] = value;
+				list[index] = value;
 			}
 		}
 
 		/// <summary>
-		/// Insert a key and value in the lookup structure.
+		/// Insert a key and value in the dictionary structure.
 		/// The key and value will be processed to a compatible key or value type if the collection enforces those.
 		/// </summary>
-		/// <param name="collection">The collection into which the key and value should be inserted.</param>
-		/// <param name="collectionInfo">Type information about the collection.</param>
+		/// <param name="dictionary">The dictionary into which the key and value should be inserted.</param>
+		/// <param name="dictionaryInfo">Type information about the dictionary.</param>
 		/// <param name="key">The key for the value that will be inserted.</param>
 		/// <param name="value">The value that will be inserted, associated with the key.</param>
-		public static void InsertInLookup(IDictionary collection, LookupCollectionTypeInfo collectionInfo, object key, object value)
+		public static void InsertInLookup(IDictionary dictionary, DictionaryCollectionTypeInfo dictionaryInfo, object key, object value)
 		{
-			key = collectionInfo.PostProcessKey(key);
-			value = collectionInfo.PostProcessValue(value);
+			key = dictionaryInfo.PostProcessKey(key);
+			value = dictionaryInfo.PostProcessValue(value);
 
-			if (collection.IsReadOnly)
+			if (dictionary.IsReadOnly)
 			{
-				throw new SerializationException($"The collection of type {collection.GetType().Name} is read-only. No elements can be inserted.");
+				throw new SerializationException($"The dictionary of type {dictionary.GetType().Name} is read-only. No elements can be inserted.");
 			}
 
-			if (collection.IsFixedSize)
+			if (dictionary.IsFixedSize)
 			{
-				throw new SerializationException($"The collection of type {collection.GetType().Name} has a fixed size. No elements can be inserted.");
+				throw new SerializationException($"The dictionary of type {dictionary.GetType().Name} has a fixed size. No elements can be inserted.");
 			}
 
-			collection[key] = value;
+			dictionary[key] = value;
 		}
 
 		/// <summary>
@@ -256,10 +248,10 @@ namespace ImpossibleOdds.Serialization
 		/// </summary>
 		/// <param name="instance">The instance for which to fetch additional information.</param>
 		/// <returns>Information about the collection's type.</returns>
-		public static LookupCollectionTypeInfo GetCollectionTypeInfo(IDictionary instance)
+		public static DictionaryCollectionTypeInfo GetCollectionTypeInfo(IDictionary instance)
 		{
 			instance.ThrowIfNull(nameof(instance));
-			return LookupTypeInfoCache.GetOrAdd(instance.GetType(), (type) => new LookupCollectionTypeInfo(type));
+			return LookupTypeInfoCache.GetOrAdd(instance.GetType(), (type) => new DictionaryCollectionTypeInfo(type));
 		}
 
 		/// <summary>
@@ -267,10 +259,10 @@ namespace ImpossibleOdds.Serialization
 		/// </summary>
 		/// <param name="instance">The instance for which to fetch additional information.</param>
 		/// <returns>Information about the collection's type.</returns>
-		public static SequenceCollectionTypeInfo GetCollectionTypeInfo(IList instance)
+		public static ListCollectionTypeInfo GetCollectionTypeInfo(IList instance)
 		{
 			instance.ThrowIfNull(nameof(instance));
-			return SequenceTypeInfoCache.GetOrAdd(instance.GetType(), (type) => new SequenceCollectionTypeInfo(type));
+			return SequenceTypeInfoCache.GetOrAdd(instance.GetType(), (type) => new ListCollectionTypeInfo(type));
 		}
 
 		/// <summary>
