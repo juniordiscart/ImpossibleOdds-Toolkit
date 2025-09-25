@@ -5,7 +5,7 @@ namespace ImpossibleOdds.DependencyInjection
 {
 	/// <summary>
 	/// Defines that a field, property or method should be injected.
-	/// Can optionally be set with an ID to restrict injections for certain sources.
+	/// Can optionally be set with a name to restrict injections for certain sources.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method | AttributeTargets.Constructor, AllowMultiple = true)]
 	public sealed class InjectAttribute : Attribute
@@ -14,24 +14,24 @@ namespace ImpossibleOdds.DependencyInjection
 
 		public bool HasNamedInjections => injectionNames != null;
 
-		public IReadOnlyCollection<string> InjectionIds => injectionNames;
+		public IReadOnlyCollection<string> InjectionNames => injectionNames;
 
 		public InjectAttribute()
 		{ }
 
-		public InjectAttribute(params string[] injectionIds)
+		public InjectAttribute(params string[] injectionNames)
 		{
-			this.injectionNames = new HashSet<string>(injectionIds);
+			this.injectionNames = new HashSet<string>(injectionNames);
 		}
 
-		public bool IsInjectionIdDefined(string injectionId)
+		public bool IsInjectionIdDefined(string injectionName)
 		{
-			if (string.IsNullOrEmpty(injectionId))
+			if (string.IsNullOrEmpty(injectionName))
 			{
 				return (injectionNames == null) || injectionNames.Contains(string.Empty);
 			}
 
-			return injectionNames?.Contains(injectionId) ?? false;
+			return injectionNames?.Contains(injectionName) ?? false;
 		}
 	}
 }

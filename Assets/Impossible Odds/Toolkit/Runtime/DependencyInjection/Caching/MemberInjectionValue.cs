@@ -4,18 +4,20 @@ using ImpossibleOdds.ReflectionCaching;
 
 namespace ImpossibleOdds.DependencyInjection
 {
-	internal struct MemberInjectionValue<TMemberInfo> : IMemberInjectionValue
+	internal readonly struct MemberInjectionValue<TMemberInfo> : IMemberInjectionValue
 	where TMemberInfo : MemberInfo
 	{
 		public MemberInjectionValue(TMemberInfo member, InjectAttribute injectAttribute)
 		{
 			member.ThrowIfNull(nameof(member));
 			injectAttribute.ThrowIfNull(nameof(injectAttribute));
-			this.Member = member;
-			this.Attribute = injectAttribute;
+			Member = member;
+			Attribute = injectAttribute;
 		}
 
-		/// <inheritdoc />
+		/// <summary>
+		/// The member the attribute is applied to.
+		/// </summary>
 		public TMemberInfo Member { get; }
 
 		/// <inheritdoc />

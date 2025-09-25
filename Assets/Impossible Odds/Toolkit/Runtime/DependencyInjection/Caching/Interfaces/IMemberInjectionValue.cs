@@ -2,7 +2,6 @@
 
 namespace ImpossibleOdds.DependencyInjection
 {
-
 	internal interface IMemberInjectionValue : IMemberAttributePair
 	{
 		/// <summary>

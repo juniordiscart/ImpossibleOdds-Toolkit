@@ -7,10 +7,10 @@ using ImpossibleOdds.ReflectionCaching;
 namespace ImpossibleOdds.DependencyInjection
 {
 
-	using InjectableField = MemberInjectionValue<System.Reflection.FieldInfo>;
-	using InjectableProperty = MemberInjectionValue<System.Reflection.PropertyInfo>;
-	using InjectableMethod = MemberInjectionValue<System.Reflection.MethodInfo>;
-	using InjectableConstructor = MemberInjectionValue<System.Reflection.ConstructorInfo>;
+	using InjectableField = MemberInjectionValue<FieldInfo>;
+	using InjectableProperty = MemberInjectionValue<PropertyInfo>;
+	using InjectableMethod = MemberInjectionValue<MethodInfo>;
+	using InjectableConstructor = MemberInjectionValue<ConstructorInfo>;
 
 	/// <summary>
 	/// Caching system for injectable members of a type.
